@@ -48,3 +48,5 @@ The technical documentation of the app is available [here](https://lbae-doc.epfl
 ## Citing
 
 If this app has been useful to your research work, you can cite our paper: XXX
+
+The app (frontend and backend) was developed by Colas Droin under the supervision of Gioele La Manno and Giovanni d'Angelo, as part of the Lipid Brain Atlas project. The final version was updated by Luca Fusar Bassini and Francesca Venturi.

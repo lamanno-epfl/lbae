@@ -8,15 +8,11 @@ The Lipid Brain Atlas Explorer is a Python Dash web-application developped as pa
 
 ## Data
 
-<p align="center"><img src="assets/ressources/data_acquisition.png" width="300" /></p>
-
 To update
 
 ## Alignment to the Allen Brain Atlas
 
 To update
-
-<p align="center"><img src="assets/ressources/slice_cleaning.png" width="900" /></p>
 
 ## Use and deployment
 

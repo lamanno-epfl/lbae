@@ -64,4 +64,4 @@ def write_readme():
         f.write(final_md)
 
 
-write_readme()
+# write_readme()

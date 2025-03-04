@@ -50,24 +50,6 @@ layout = html.Div(
                     vertical=True,
                     pills=True,
                     children=[
-                        # Link to page 1
-                        dbc.NavLink(
-                            href="/load-slice",
-                            active="exact",
-                            children=[
-                                html.I(
-                                    id="sidebar-page-1",
-                                    className="icon-slices fs-3",
-                                    style={"margin-left": "0.2em"},
-                                )
-                            ],
-                            className="mt-1 mb-2",
-                        ),
-                        dbc.Tooltip(
-                            children="Choose the slice you want to discover",
-                            target="sidebar-page-1",
-                            placement="right",
-                        ),
                         # Link to page 2
                         dbc.NavLink(
                             href="/lipid-selection",
@@ -125,23 +107,22 @@ layout = html.Div(
                             target="sidebar-page-4",
                             placement="right",
                         ),
-                        # Link to page 5
+                        # Link to numpy-3d
                         dbc.NavLink(
-                            href="/gene-data",
+                            href="/numpy-3d",
                             active="exact",
-                            # disabled=True,
                             children=[
                                 html.I(
-                                    id="sidebar-page-5",
-                                    className="icon-dna fs-5",
+                                    id="sidebar-page-6",
+                                    className="icon-3d fs-5",
                                     style={"margin-left": "0.7em"},
                                 )
                             ],
                             className="my-4",
                         ),
                         dbc.Tooltip(
-                            children="Compare with scRNAseq data",
-                            target="sidebar-page-5",
+                            children="3D Numpy Viewer",
+                            target="sidebar-page-6",
                             placement="right",
                         ),
                         # Link to documentation

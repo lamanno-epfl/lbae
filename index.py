@@ -20,15 +20,7 @@ import dash_mantine_components as dmc
 
 # LBAE modules
 from app import app, data, atlas
-from pages import (
-    sidebar,
-    home,
-    load_slice,
-    lipid_selection,
-    region_analysis,
-    threeD_exploration,
-    scRNAseq,
-)
+from pages import sidebar, home, lipid_selection, region_analysis, threeD_exploration, numpy_3d
 from in_app_documentation.documentation import return_documentation
 from config import basic_config
 from modules.tools.misc import logmem
@@ -206,11 +198,9 @@ def return_validation_layout(main_content, initial_slice=1, brain="brain_1"):
         [
             main_content,
             home.layout,
-            load_slice.return_layout(basic_config, initial_slice),
             lipid_selection.return_layout(basic_config, initial_slice),
             region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
-            scRNAseq.return_layout(basic_config, initial_slice, brain),
         ]
     )
 
@@ -236,9 +226,6 @@ def render_page_content(pathname, slice_index, brain):
     if pathname == "/":
         page = home.layout
 
-    elif pathname == "/load-slice":
-        page = load_slice.return_layout(basic_config, slice_index)
-
     elif pathname == "/lipid-selection":
         page = lipid_selection.return_layout(basic_config, slice_index)
 
@@ -248,8 +235,8 @@ def render_page_content(pathname, slice_index, brain):
     elif pathname == "/3D-exploration":
         page = threeD_exploration.return_layout(basic_config, slice_index)
 
-    elif pathname == "/gene-data":
-        page = scRNAseq.return_layout(basic_config, slice_index, brain)
+    elif pathname == "/numpy-3d":
+        page = numpy_3d.return_layout(basic_config, slice_index)
 
     else:
         # If the user tries to reach a different page, return a 404 message
@@ -289,11 +276,9 @@ def hide_slider(pathname):
 
     # Pages in which the slider is displayed
     l_path_with_slider = [
-        "/load-slice",
         "/lipid-selection",
         "/region-analysis",
         "/3D-exploration",
-        "/gene-data",
     ]
 
     # Set the content according to the current pathname
@@ -317,7 +302,6 @@ def hide_slider_but_leave_brain(pathname):
     # Pages in which the slider is displayed
     l_path_without_slider_but_with_brain = [
         "/3D-exploration",
-        "/gene-data",
     ]
 
     # Set the content according to the current pathname

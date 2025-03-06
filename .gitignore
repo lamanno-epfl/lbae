@@ -1,5 +1,6 @@
 .DS_Store
 data
+new_data
 notebooks/data_processing/data/
 **/__pycache__/
 **/.ipynb_checkpoints/

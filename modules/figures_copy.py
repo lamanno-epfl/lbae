@@ -129,9 +129,7 @@ class Figures:
     # --- Constructor
     # ==============================================================================================
 
-    def __init__(self, maldi_data, storage, atlas, 
-                brain_id, slice_index, lipid_name,
-                scRNAseq, sample=False):
+    def __init__(self, maldi_data, storage, atlas, scRNAseq, sample=False):
         """Initialize the Figures class.
 
         Args:
@@ -147,19 +145,19 @@ class Figures:
         # Attribute to easily access the maldi and allen brain atlas data
         self._data = maldi_data
         self._atlas = atlas
-        # self._scRNAseq = scRNAseq
+        self._scRNAseq = scRNAseq
 
         # attribute to access the shelve database
         self._storage = storage
 
-        # # Dic of normalization factors across slices for MAIA normalized lipids
-        # self.dic_normalization_factors = self._storage.return_shelved_object(
-        #     "figures/lipid_selection",
-        #     "dic_normalization_factors",
-        #     force_update=False,
-        #     compute_function=self.compute_normalization_factor_across_slices,
-        #     cache_flask=None,  # No cache since launched at startup
-        # )
+        # Dic of normalization factors across slices for MAIA normalized lipids
+        self.dic_normalization_factors = self._storage.return_shelved_object(
+            "figures/lipid_selection",
+            "dic_normalization_factors",
+            force_update=False,
+            compute_function=self.compute_normalization_factor_across_slices,
+            cache_flask=None,  # No cache since launched at startup
+        )
 
         # Check that treemaps has been computed already. If not, compute it and store it.
         if not self._storage.check_shelved_object("figures/atlas_page/3D", "treemaps"):
@@ -170,79 +168,79 @@ class Figures:
                 compute_function=self.compute_treemaps_figure,
             ),
 
-        # # Check that 3D slice figures have been computed already. If not, compute it and store it.
-        # for brain in ["brain_1", "brain_2"]:
-        #     if not self._storage.check_shelved_object("figures/3D_page", "slices_3D_" + brain):
-        #         self._storage.return_shelved_object(
-        #             "figures/3D_page",
-        #             "slices_3D",
-        #             force_update=False,
-        #             compute_function=self.compute_figure_slices_3D,
-        #             brain=brain,
-        #         )
+        # Check that 3D slice figures have been computed already. If not, compute it and store it.
+        for brain in ["brain_1", "brain_2"]:
+            if not self._storage.check_shelved_object("figures/3D_page", "slices_3D_" + brain):
+                self._storage.return_shelved_object(
+                    "figures/3D_page",
+                    "slices_3D",
+                    force_update=False,
+                    compute_function=self.compute_figure_slices_3D,
+                    brain=brain,
+                )
 
-        # # Check that the 3D root volume figure has been computed already. If not, compute it and
-        # # store it.
-        # if self._storage.check_shelved_object("figures/scRNAseq_page", "scatter3D"):
-        #     self._storage.return_shelved_object(
-        #         "figures/scRNAseq_page",
-        #         "scatter3D",
-        #         force_update=False,
-        #         compute_function=self.compute_scatter_3D,
-        #     )
+        # Check that the 3D root volume figure has been computed already. If not, compute it and
+        # store it.
+        if self._storage.check_shelved_object("figures/scRNAseq_page", "scatter3D"):
+            self._storage.return_shelved_object(
+                "figures/scRNAseq_page",
+                "scatter3D",
+                force_update=False,
+                compute_function=self.compute_scatter_3D,
+            )
 
-        # # Check that the 3D scatter plot for scRNAseq data has been computed already. If not,
-        # # compute it and store it.
-        # if not self._storage.check_shelved_object("figures/3D_page", "volume_root"):
-        #     self._storage.return_shelved_object(
-        #         "figures/3D_page",
-        #         "volume_root",
-        #         force_update=False,
-        #         compute_function=self.compute_3D_root_volume,
-        #     )
+        # Check that the 3D scatter plot for scRNAseq data has been computed already. If not,
+        # compute it and store it.
+        if not self._storage.check_shelved_object("figures/3D_page", "volume_root"):
+            self._storage.return_shelved_object(
+                "figures/3D_page",
+                "volume_root",
+                force_update=False,
+                compute_function=self.compute_3D_root_volume,
+            )
 
-        # # Check that the base figures for lipid/genes heatmap have been computed already. If not,
-        # # compute them and store them.
-        # if not self._storage.check_shelved_object(
-        #     "figures/scRNAseq_page", "base_heatmap_lipid_True"
-        # ) or not self._storage.check_shelved_object(
-        #     "figures/scRNAseq_page", "base_heatmap_lipid_False"
-        # ):
-        #     self._storage.return_shelved_object(
-        #         "figures/scRNAseq_page",
-        #         "base_heatmap_lipid",
-        #         force_update=False,
-        #         compute_function=self.compute_heatmap_lipid_genes,
-        #         brain_1=False,
-        #     ),
+        # Check that the base figures for lipid/genes heatmap have been computed already. If not,
+        # compute them and store them.
+        if not self._storage.check_shelved_object(
+            "figures/scRNAseq_page", "base_heatmap_lipid_True"
+        ) or not self._storage.check_shelved_object(
+            "figures/scRNAseq_page", "base_heatmap_lipid_False"
+        ):
+            self._storage.return_shelved_object(
+                "figures/scRNAseq_page",
+                "base_heatmap_lipid",
+                force_update=False,
+                compute_function=self.compute_heatmap_lipid_genes,
+                brain_1=False,
+            ),
 
-        #     self._storage.return_shelved_object(
-        #         "figures/scRNAseq_page",
-        #         "base_heatmap_lipid",
-        #         force_update=False,
-        #         compute_function=self.compute_heatmap_lipid_genes,
-        #         brain_1=True,
-        #     ),
+            self._storage.return_shelved_object(
+                "figures/scRNAseq_page",
+                "base_heatmap_lipid",
+                force_update=False,
+                compute_function=self.compute_heatmap_lipid_genes,
+                brain_1=True,
+            ),
 
-        # # Check that all basic figures in the load_slice page are present, if not, compute them
-        # if not self._storage.check_shelved_object(
-        #     "figures/load_page", "arrays_basic_figures_computed"
-        # ):
-        #     self.shelve_arrays_basic_figures()
+        # Check that all basic figures in the load_slice page are present, if not, compute them
+        if not self._storage.check_shelved_object(
+            "figures/load_page", "arrays_basic_figures_computed"
+        ):
+            self.shelve_arrays_basic_figures()
 
-        # # Check that the lipid distributions for all slices, and both brains, have been computed, if
-        # # not, compute them
-        # if not self._storage.check_shelved_object(
-        #     "figures/3D_page", "arrays_expression_True_computed"
-        # ):
-        #     self.shelve_all_l_array_2D(sample=sample, brain_1=True)
-        # if not self._storage.check_shelved_object(
-        #     "figures/3D_page", "arrays_expression_False_computed"
-        # ):
-        #     self.shelve_all_l_array_2D(sample=sample, brain_1=False)
-        # # Check that all arrays of annotations have been computed, if not, compute them
-        # if not self._storage.check_shelved_object("figures/3D_page", "arrays_annotation_computed"):
-        #     self.shelve_all_arrays_annotation()
+        # Check that the lipid distributions for all slices, and both brains, have been computed, if
+        # not, compute them
+        if not self._storage.check_shelved_object(
+            "figures/3D_page", "arrays_expression_True_computed"
+        ):
+            self.shelve_all_l_array_2D(sample=sample, brain_1=True)
+        if not self._storage.check_shelved_object(
+            "figures/3D_page", "arrays_expression_False_computed"
+        ):
+            self.shelve_all_l_array_2D(sample=sample, brain_1=False)
+        # Check that all arrays of annotations have been computed, if not, compute them
+        if not self._storage.check_shelved_object("figures/3D_page", "arrays_annotation_computed"):
+            self.shelve_all_arrays_annotation()
 
         logging.info("Figures object instantiated" + logmem())
 
@@ -250,372 +248,371 @@ class Figures:
     # --- Methods used mainly in load_slice
     # ==============================================================================================
 
-    # def compute_array_basic_images(self, type_figure="warped_data"):
-    #     """This function computes and returns a three-dimensional array representing all slices from
-    #     the maldi_data acquisition (TIC) or the corresponding image from the atlas. No spectral data
-    #     is read in the process, as the arrays corresponding to the images are directly stored as
-    #     tiff files in the dataset.
+    def compute_array_basic_images(self, type_figure="warped_data"):
+        """This function computes and returns a three-dimensional array representing all slices from
+        the maldi_data acquisition (TIC) or the corresponding image from the atlas. No spectral data
+        is read in the process, as the arrays corresponding to the images are directly stored as
+        tiff files in the dataset.
 
-    #     Args:
-    #         type_figure (str, optional): To be chosen among "original_data", "warped_data",
-    #             "projection_corrected", "atlas". Depending on the chosen type, the final array will
-    #             correspond to either the original images ("original_data"), the warped and upscaled
-    #             images ("warped_data"), the warped and upscaled images, whose pixels outside of
-    #             annotations regions have been zero-ed out ("projection_corrected"), or the images
-    #             from the Allen Brain atlas projected onto the same plane as the corresponding slice
-    #             from the MALDI data ("atlas"). Default to "warped_data".
+        Args:
+            type_figure (str, optional): To be chosen among "original_data", "warped_data",
+                "projection_corrected", "atlas". Depending on the chosen type, the final array will
+                correspond to either the original images ("original_data"), the warped and upscaled
+                images ("warped_data"), the warped and upscaled images, whose pixels outside of
+                annotations regions have been zero-ed out ("projection_corrected"), or the images
+                from the Allen Brain atlas projected onto the same plane as the corresponding slice
+                from the MALDI data ("atlas"). Default to "warped_data".
 
-    #     Returns:
-    #         (np.ndarray): A three-dimensional array representing all slices from the maldi_data
-    #             acquisition (TIC) or the corresponding image from the atlas. The first dimension
-    #             corresponds to the slices, the second and third to the images themselves.
-    #     """
+        Returns:
+            (np.ndarray): A three-dimensional array representing all slices from the maldi_data
+                acquisition (TIC) or the corresponding image from the atlas. The first dimension
+                corresponds to the slices, the second and third to the images themselves.
+        """
 
-        # # Check for all array types
-        # if type_figure == "original_data":
-        #     array_images = self._data.compute_padded_original_images()
+        # Check for all array types
+        if type_figure == "original_data":
+            array_images = self._data.compute_padded_original_images()
 
-        # if type_figure == "warped_data":
-        #     if self._data._sample_data:
-        #         with np.load("data_sample/tiff_files/warped_data.npz") as handle:
-        #             array_images = handle["array_warped_data"]
-        #     else:
-        #         array_images = io.imread("data/tiff_files/warped_data.tif")
-        # elif type_figure == "projection_corrected":
-        #     array_images = self._atlas.array_projection_corrected
-        # elif type_figure == "atlas":
-        #     (
-        #         array_projected_images_atlas,
-        #         array_projected_simplified_id,
-        #     ) = self._storage.return_shelved_object(
-        #         "atlas/atlas_objects",
-        #         "array_images_atlas",
-        #         force_update=False,
-        #         compute_function=self._atlas.prepare_and_compute_array_images_atlas,
-        #         zero_out_of_annotation=True,
-        #     )
-        #     array_images = array_projected_images_atlas
-        # else:
-        #     logging.warning('The type of requested array "{}" does not exist.'.format(type_figure))
-        #     return None
+        elif type_figure == "warped_data":
+            if self._data._sample_data:
+                with np.load("data_sample/tiff_files/warped_data.npz") as handle:
+                    array_images = handle["array_warped_data"]
+            else:
+                array_images = io.imread("data/tiff_files/warped_data.tif")
+        elif type_figure == "projection_corrected":
+            array_images = self._atlas.array_projection_corrected
+        elif type_figure == "atlas":
+            (
+                array_projected_images_atlas,
+                array_projected_simplified_id,
+            ) = self._storage.return_shelved_object(
+                "atlas/atlas_objects",
+                "array_images_atlas",
+                force_update=False,
+                compute_function=self._atlas.prepare_and_compute_array_images_atlas,
+                zero_out_of_annotation=True,
+            )
+            array_images = array_projected_images_atlas
+        else:
+            logging.warning('The type of requested array "{}" does not exist.'.format(type_figure))
+            return None
 
-        # # If the array is not uint8, convert it to gain space
-        # if array_images.dtype != np.uint8:
-        #     array_images = np.array(array_images, dtype=np.uint8)
-        # return array_images
+        # If the array is not uint8, convert it to gain space
+        if array_images.dtype != np.uint8:
+            array_images = np.array(array_images, dtype=np.uint8)
+        return array_images
 
-    # def compute_figure_basic_image(
-    #     self, type_figure, index_image, plot_atlas_contours=True, only_contours=False, draw=False
-    # ):
-    #     """This function computes and returns a figure representing slices from the maldi_data
-    #     acquisition (TIC) or the corresponding image from the atlas. The data is read directly from
-    #     the array computed in self.compute_array_basic_images().
+    def compute_figure_basic_image(
+        self, type_figure, index_image, plot_atlas_contours=True, only_contours=False, draw=False
+    ):
+        """This function computes and returns a figure representing slices from the maldi_data
+        acquisition (TIC) or the corresponding image from the atlas. The data is read directly from
+        the array computed in self.compute_array_basic_images().
 
-    #     Args:
-    #         type_figure (str): To be chosen among "original_data", "warped_data",
-    #             "projection_corrected", "atlas". Depending on the chosen type, the final figure will
-    #             correspond to either the original images ("original_data"), the warped and upscaled
-    #             images ("warped_data"), the warped and upscaled images, whose pixels outside of
-    #             annotations regions have been zero-ed out ("projection_corrected"), or the images
-    #             from the Allen Brain atlas projected onto the same plane as the corresponding slice
-    #             from the MALDI data ("atlas").
-    #         index_image (int): Index of the requested slice image.
-    #         plot_atlas_contours (bool, optional): If True, the atlas contours annotation is
-    #             superimposed with the slice image. Defaults to True.
-    #         only_contours (bool, optional): If True, only output the atlas contours annotation. All
-    #             the other arugments but plot_atlas_contours (which must be True) get ignored.
-    #             Defaults to False.
-    #         draw (bool, optional): If True, the figure can be drawed on (used for region selection,
-    #             in page region_analysis). Defaults to False.
+        Args:
+            type_figure (str): To be chosen among "original_data", "warped_data",
+                "projection_corrected", "atlas". Depending on the chosen type, the final figure will
+                correspond to either the original images ("original_data"), the warped and upscaled
+                images ("warped_data"), the warped and upscaled images, whose pixels outside of
+                annotations regions have been zero-ed out ("projection_corrected"), or the images
+                from the Allen Brain atlas projected onto the same plane as the corresponding slice
+                from the MALDI data ("atlas").
+            index_image (int): Index of the requested slice image.
+            plot_atlas_contours (bool, optional): If True, the atlas contours annotation is
+                superimposed with the slice image. Defaults to True.
+            only_contours (bool, optional): If True, only output the atlas contours annotation. All
+                the other arugments but plot_atlas_contours (which must be True) get ignored.
+                Defaults to False.
+            draw (bool, optional): If True, the figure can be drawed on (used for region selection,
+                in page region_analysis). Defaults to False.
 
-    #     Returns:
-    #         (go.Figure): A Plotly figure representing the requested slice image of the requested
-    #             type.
-    #     """
+        Returns:
+            (go.Figure): A Plotly figure representing the requested slice image of the requested
+                type.
+        """
 
-    #     # If only boundaries is requested, force the computation of atlas contours
-    #     if only_contours:
-    #         plot_atlas_contours = True
+        # If only boundaries is requested, force the computation of atlas contours
+        if only_contours:
+            plot_atlas_contours = True
 
-    #     else:
-    #         # Get array of images
-    #         array_images = self._storage.return_shelved_object(
-    #             "figures/load_page",
-    #             "array_basic_images",
-    #             force_update=False,
-    #             compute_function=self.compute_array_basic_images,
-    #             type_figure=type_figure,
-    #         )
+        else:
+            # Get array of images
+            array_images = self._storage.return_shelved_object(
+                "figures/load_page",
+                "array_basic_images",
+                force_update=False,
+                compute_function=self.compute_array_basic_images,
+                type_figure=type_figure,
+            )
 
-    #         # Get image at specified index
-    #         array_image = array_images[index_image]
+            # Get image at specified index
+            array_image = array_images[index_image]
 
-    #     # Add the contours if requested
-    #     if plot_atlas_contours:
-    #         array_image_atlas = self._atlas.list_projected_atlas_borders_arrays[index_image]
-    #     else:
-    #         array_image_atlas = None
+        # Add the contours if requested
+        if plot_atlas_contours:
+            array_image_atlas = self._atlas.list_projected_atlas_borders_arrays[index_image]
+        else:
+            array_image_atlas = None
 
-    #     # Create figure
-    #     fig = go.Figure()
+        # Create figure
+        fig = go.Figure()
 
-    #     # Compute image from our data if not only the atlas annotations are requested
-    #     if not only_contours:
-    #         fig.add_trace(
-    #             go.Image(
-    #                 visible=True,
-    #                 source=convert_image_to_base64(
-    #                     array_image, overlay=array_image_atlas, transparent_zeros=True
-    #                 ),
-    #                 hoverinfo="none",
-    #             )
-    #         )
+        # Compute image from our data if not only the atlas annotations are requested
+        if not only_contours:
+            fig.add_trace(
+                go.Image(
+                    visible=True,
+                    source=convert_image_to_base64(
+                        array_image, overlay=array_image_atlas, transparent_zeros=True
+                    ),
+                    hoverinfo="none",
+                )
+            )
 
-    #         # Add the labels only if it's not a simple annotation illustration
-    #         # fig.update_xaxes(
-    #         #     title_text=self._atlas.bg_atlas.space.axis_labels[0][1], title_standoff=0
-    #         # )
+            # Add the labels only if it's not a simple annotation illustration
+            # fig.update_xaxes(
+            #     title_text=self._atlas.bg_atlas.space.axis_labels[0][1], title_standoff=0
+            # )
 
-    #     else:
-    #         fig.add_trace(
-    #             go.Image(
-    #                 visible=True,
-    #                 source=convert_image_to_base64(
-    #                     array_image_atlas,
-    #                     optimize=True,
-    #                     binary=True,
-    #                     type="RGBA",
-    #                     decrease_resolution_factor=8,
-    #                 ),
-    #                 hoverinfo="none",
-    #             )
-    #         )
+        else:
+            fig.add_trace(
+                go.Image(
+                    visible=True,
+                    source=convert_image_to_base64(
+                        array_image_atlas,
+                        optimize=True,
+                        binary=True,
+                        type="RGBA",
+                        decrease_resolution_factor=8,
+                    ),
+                    hoverinfo="none",
+                )
+            )
 
-    #     # Improve layout
-    #     fig.update_xaxes(showticklabels=False)
-    #     fig.update_yaxes(showticklabels=False)
-    #     fig.update_layout(
-    #         margin=dict(t=0, r=0, b=0, l=0),
-    #         xaxis=dict(showgrid=False, zeroline=False),
-    #         yaxis=dict(showgrid=False, zeroline=False),
-    #         template="plotly_dark",
-    #         paper_bgcolor="rgba(0,0,0,0)",
-    #         plot_bgcolor="rgba(0,0,0,0)",
-    #     )
+        # Improve layout
+        fig.update_xaxes(showticklabels=False)
+        fig.update_yaxes(showticklabels=False)
+        fig.update_layout(
+            margin=dict(t=0, r=0, b=0, l=0),
+            xaxis=dict(showgrid=False, zeroline=False),
+            yaxis=dict(showgrid=False, zeroline=False),
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
 
-    #     if draw:
-    #         fig.update_layout(
-    #             dragmode="drawclosedpath",
-    #             newshape=dict(
-    #                 fillcolor=l_colors[0], opacity=0.7, line=dict(color="white", width=1)
-    #             ),
-    #             autosize=True,
-    #         )
+        if draw:
+            fig.update_layout(
+                dragmode="drawclosedpath",
+                newshape=dict(
+                    fillcolor=l_colors[0], opacity=0.7, line=dict(color="white", width=1)
+                ),
+                autosize=True,
+            )
 
-    #     return fig
+        return fig
 
-    # def compute_figure_slices_3D(self, reduce_resolution_factor=20, brain="brain_1"):
-    #     """This function computes and returns a figure representing the slices from the maldi data
-    #     in 3D.
+    def compute_figure_slices_3D(self, reduce_resolution_factor=20, brain="brain_1"):
+        """This function computes and returns a figure representing the slices from the maldi data
+        in 3D.
 
-    #     Args:
-    #         reduce_resolution_factor (int, optional): Divides (reduce) the initial resolution of the
-    #             data. Needed as the resulting figure can be very heavy. Defaults to 20.
-    #         brain (str, optional): Name of the brain to be used. Defaults to 'brain_1'.
+        Args:
+            reduce_resolution_factor (int, optional): Divides (reduce) the initial resolution of the
+                data. Needed as the resulting figure can be very heavy. Defaults to 20.
+            brain (str, optional): Name of the brain to be used. Defaults to 'brain_1'.
 
-    #     Returns:
-    #         (go.Figure): A Plotly figure representing the slices from the MALDI acquisitions in 3D.
-    #     """
-    #     # Get transform parameters (a,u,v) for each slice
-    #     l_transform_parameters = self._storage.return_shelved_object(
-    #         "atlas/atlas_objects",
-    #         "l_transform_parameters",
-    #         force_update=False,
-    #         compute_function=self._atlas.compute_projection_parameters,
-    #     )
+        Returns:
+            (go.Figure): A Plotly figure representing the slices from the MALDI acquisitions in 3D.
+        """
+        # Get transform parameters (a,u,v) for each slice
+        l_transform_parameters = self._storage.return_shelved_object(
+            "atlas/atlas_objects",
+            "l_transform_parameters",
+            force_update=False,
+            compute_function=self._atlas.compute_projection_parameters,
+        )
 
-    #     # Reduce resolution of the slices
-    #     new_dims = []
-    #     n_slices = self._atlas.array_coordinates_warped_data.shape[0]
-    #     d1 = self._atlas.array_coordinates_warped_data.shape[1]
-    #     d2 = self._atlas.array_coordinates_warped_data.shape[2]
-    #     for original_length, new_length in zip(
-    #         self._atlas.array_projection_corrected.shape,
-    #         (
-    #             n_slices,
-    #             int(round(d1 / reduce_resolution_factor)),
-    #             int(round(d2 / reduce_resolution_factor)),
-    #         ),
-    #     ):
-    #         new_dims.append(np.linspace(0, original_length - 1, new_length))
+        # Reduce resolution of the slices
+        new_dims = []
+        n_slices = self._atlas.array_coordinates_warped_data.shape[0]
+        d1 = self._atlas.array_coordinates_warped_data.shape[1]
+        d2 = self._atlas.array_coordinates_warped_data.shape[2]
+        for original_length, new_length in zip(
+            self._atlas.array_projection_corrected.shape,
+            (
+                n_slices,
+                int(round(d1 / reduce_resolution_factor)),
+                int(round(d2 / reduce_resolution_factor)),
+            ),
+        ):
+            new_dims.append(np.linspace(0, original_length - 1, new_length))
 
-    #     coords = np.meshgrid(*new_dims, indexing="ij")
-    #     array_projection_small = map_coordinates(self._atlas.array_projection_corrected, coords)
+        coords = np.meshgrid(*new_dims, indexing="ij")
+        array_projection_small = map_coordinates(self._atlas.array_projection_corrected, coords)
 
-    #     # Build Figure, with several frames as it will be slidable
-    #     fig = go.Figure(
-    #         frames=[
-    #             go.Frame(
-    #                 data=self.get_surface(
-    #                     slice_index - 1,
-    #                     l_transform_parameters,
-    #                     array_projection_small,
-    #                     reduce_resolution_factor,
-    #                 ),
-    #                 name=str(i + 1),
-    #             )
-    #             for i, slice_index in enumerate(self._data.get_slice_list(brain))
-    #         ]
-    #     )
-    #     fig.add_trace(
-    #         self.get_surface(
-    #             self._data.get_slice_list(brain)[0] - 1,
-    #             l_transform_parameters,
-    #             array_projection_small,
-    #             reduce_resolution_factor,
-    #         )
-    #     )
+        # Build Figure, with several frames as it will be slidable
+        fig = go.Figure(
+            frames=[
+                go.Frame(
+                    data=self.get_surface(
+                        slice_index - 1,
+                        l_transform_parameters,
+                        array_projection_small,
+                        reduce_resolution_factor,
+                    ),
+                    name=str(i + 1),
+                )
+                for i, slice_index in enumerate(self._data.get_slice_list(brain))
+            ]
+        )
+        fig.add_trace(
+            self.get_surface(
+                self._data.get_slice_list(brain)[0] - 1,
+                l_transform_parameters,
+                array_projection_small,
+                reduce_resolution_factor,
+            )
+        )
 
-    #     # Add a slider
-    #     def frame_args(duration):
-    #         return {
-    #             "frame": {"duration": duration},
-    #             "mode": "immediate",
-    #             "fromcurrent": True,
-    #             "transition": {"duration": duration, "easing": "linear"},
-    #         }
+        # Add a slider
+        def frame_args(duration):
+            return {
+                "frame": {"duration": duration},
+                "mode": "immediate",
+                "fromcurrent": True,
+                "transition": {"duration": duration, "easing": "linear"},
+            }
 
-    #     sliders = [
-    #         {
-    #             "pad": {"b": 5, "t": 10},
-    #             "len": 0.9,
-    #             "x": 0.05,
-    #             "y": 0,
-    #             "steps": [
-    #                 {
-    #                     "args": [[f.name], frame_args(0)],
-    #                     "label": str(k),
-    #                     "method": "animate",
-    #                 }
-    #                 for k, f in enumerate(fig.frames)
-    #             ],
-    #             "currentvalue": {
-    #                 "visible": False,
-    #             },
-    #         }
-    #     ]
+        sliders = [
+            {
+                "pad": {"b": 5, "t": 10},
+                "len": 0.9,
+                "x": 0.05,
+                "y": 0,
+                "steps": [
+                    {
+                        "args": [[f.name], frame_args(0)],
+                        "label": str(k),
+                        "method": "animate",
+                    }
+                    for k, f in enumerate(fig.frames)
+                ],
+                "currentvalue": {
+                    "visible": False,
+                },
+            }
+        ]
 
-    #     # Layout
-    #     fig.update_layout(
-    #         scene=dict(
-    #             aspectratio=dict(x=1.5, y=1, z=1),
-    #             yaxis=dict(
-    #                 range=[0.0, 0.35],
-    #                 autorange=False,
-    #                 backgroundcolor="rgba(0,0,0,0)",
-    #                 color="grey",
-    #                 gridcolor="grey",
-    #             ),
-    #             zaxis=dict(
-    #                 range=[0.2, -0.02],
-    #                 autorange=False,
-    #                 backgroundcolor="rgba(0,0,0,0)",
-    #                 color="grey",
-    #                 gridcolor="grey",
-    #             ),
-    #             xaxis=dict(
-    #                 range=[0.0, 0.35],
-    #                 autorange=False,
-    #                 backgroundcolor="rgba(0,0,0,0)",
-    #                 color="grey",
-    #                 gridcolor="grey",
-    #             ),
-    #         ),
-    #         margin=dict(t=0, r=0, b=0, l=0),
-    #         template="plotly_dark",
-    #         sliders=sliders,
-    #     )
+        # Layout
+        fig.update_layout(
+            scene=dict(
+                aspectratio=dict(x=1.5, y=1, z=1),
+                yaxis=dict(
+                    range=[0.0, 0.35],
+                    autorange=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                    color="grey",
+                    gridcolor="grey",
+                ),
+                zaxis=dict(
+                    range=[0.2, -0.02],
+                    autorange=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                    color="grey",
+                    gridcolor="grey",
+                ),
+                xaxis=dict(
+                    range=[0.0, 0.35],
+                    autorange=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                    color="grey",
+                    gridcolor="grey",
+                ),
+            ),
+            margin=dict(t=0, r=0, b=0, l=0),
+            template="plotly_dark",
+            sliders=sliders,
+        )
 
-    #     # No display of tick labels as they're wrong anyway
-    #     fig.update_layout(
-    #         scene=dict(
-    #             xaxis=dict(showticklabels=False),
-    #             yaxis=dict(showticklabels=False),
-    #             zaxis=dict(showticklabels=False),
-    #         ),
-    #         paper_bgcolor="rgba(0,0,0,0.)",
-    #         plot_bgcolor="rgba(0,0,0,0.)",
-    #     )
-    #     return fig
+        # No display of tick labels as they're wrong anyway
+        fig.update_layout(
+            scene=dict(
+                xaxis=dict(showticklabels=False),
+                yaxis=dict(showticklabels=False),
+                zaxis=dict(showticklabels=False),
+            ),
+            paper_bgcolor="rgba(0,0,0,0.)",
+            plot_bgcolor="rgba(0,0,0,0.)",
+        )
+        return fig
 
-    # # OVERKILL
-    # # Part of this function could probably be compiled with numba with some effort, but there's no
-    # # need as it's precomupted in a reasonable time anyway.
-    # def get_surface(
-    #     self, slice_index, l_transform_parameters, array_projection, reduce_resolution_factor
-    # ):
-    #     """This function returns a Plotly Surface representing the requested slice in 3D.
+    # Part of this function could probably be compiled with numba with some effort, but there's no
+    # need as it's precomupted in a reasonable time anyway.
+    def get_surface(
+        self, slice_index, l_transform_parameters, array_projection, reduce_resolution_factor
+    ):
+        """This function returns a Plotly Surface representing the requested slice in 3D.
 
-    #     Args:
-    #         slice_index (int): Index of the requested slice.
-    #         l_transform_parameters (list(np.ndarray)): A list of tuples containing the parameters
-    #             for the transformation of the slice coordinates from 2D to 3D and conversely.
-    #         array_projection (np.ndarray): The coordinates of the requested slice in 2D.
-    #         reduce_resolution_factor (int, optional): Divides (reduce) the initial resolution of the
-    #             data. Needed as the resulting figure can be very heavy. Defaults to 20.
-    #     Returns:
-    #         (go.Surface): A Plotly Surface representing the requested slice in 3D.
-    #     """
+        Args:
+            slice_index (int): Index of the requested slice.
+            l_transform_parameters (list(np.ndarray)): A list of tuples containing the parameters
+                for the transformation of the slice coordinates from 2D to 3D and conversely.
+            array_projection (np.ndarray): The coordinates of the requested slice in 2D.
+            reduce_resolution_factor (int, optional): Divides (reduce) the initial resolution of the
+                data. Needed as the resulting figure can be very heavy. Defaults to 20.
+        Returns:
+            (go.Surface): A Plotly Surface representing the requested slice in 3D.
+        """
 
-    #     #  Get the parameters for the transformation of the coordinats from 2D to 3D
-    #     a, u, v = l_transform_parameters[slice_index]
+        #  Get the parameters for the transformation of the coordinats from 2D to 3D
+        a, u, v = l_transform_parameters[slice_index]
 
-    #     # Build 3 empty lists, which will contain the 3D coordinates of the requested slice
-    #     ll_x = []
-    #     ll_y = []
-    #     ll_z = []
+        # Build 3 empty lists, which will contain the 3D coordinates of the requested slice
+        ll_x = []
+        ll_y = []
+        ll_z = []
 
-    #     # Loop over the first 2D coordinate of the slice
-    #     for i, lambd in enumerate(range(array_projection[slice_index].shape[0])):
-    #         l_x = []
-    #         l_y = []
-    #         l_z = []
+        # Loop over the first 2D coordinate of the slice
+        for i, lambd in enumerate(range(array_projection[slice_index].shape[0])):
+            l_x = []
+            l_y = []
+            l_z = []
 
-    #         # Loop over the second 2D coordinate of the slice
-    #         for j, mu in enumerate(range(array_projection[slice_index].shape[1])):
-    #             # Get rescaled 3D coordinates
-    #             x_atlas, y_atlas, z_atlas = (
-    #                 np.array(
-    #                     slice_to_atlas_transform(
-    #                         a, u, v, lambd * reduce_resolution_factor, mu * reduce_resolution_factor
-    #                     )
-    #                 )
-    #                 * self._atlas.resolution
-    #                 / 1000
-    #             )
-    #             l_x.append(z_atlas)
-    #             l_y.append(x_atlas)
-    #             l_z.append(y_atlas)
+            # Loop over the second 2D coordinate of the slice
+            for j, mu in enumerate(range(array_projection[slice_index].shape[1])):
+                # Get rescaled 3D coordinates
+                x_atlas, y_atlas, z_atlas = (
+                    np.array(
+                        slice_to_atlas_transform(
+                            a, u, v, lambd * reduce_resolution_factor, mu * reduce_resolution_factor
+                        )
+                    )
+                    * self._atlas.resolution
+                    / 1000
+                )
+                l_x.append(z_atlas)
+                l_y.append(x_atlas)
+                l_z.append(y_atlas)
 
-    #         # In case the 3D coordinate was not acquired, skip the current coordinate
-    #         if l_x != []:
-    #             ll_x.append(l_x)
-    #             ll_y.append(l_y)
-    #             ll_z.append(l_z)
+            # In case the 3D coordinate was not acquired, skip the current coordinate
+            if l_x != []:
+                ll_x.append(l_x)
+                ll_y.append(l_y)
+                ll_z.append(l_z)
 
-    #     # Build a 3D surface from the 3D coordinates for the current slice
-    #     surface = go.Surface(
-    #         z=np.array(ll_z),
-    #         x=np.array(ll_x),
-    #         y=np.array(ll_y),
-    #         surfacecolor=array_projection[slice_index].astype(np.int32),
-    #         cmin=0,
-    #         cmax=255,
-    #         colorscale="viridis",
-    #         opacityscale=[[0, 0], [0.1, 1], [1, 1]],
-    #         showscale=False,
-    #     )
-    #     return surface
+        # Build a 3D surface from the 3D coordinates for the current slice
+        surface = go.Surface(
+            z=np.array(ll_z),
+            x=np.array(ll_x),
+            y=np.array(ll_y),
+            surfacecolor=array_projection[slice_index].astype(np.int32),
+            cmin=0,
+            cmax=255,
+            colorscale="viridis",
+            opacityscale=[[0, 0], [0.1, 1], [1, 1]],
+            showscale=False,
+        )
+        return surface
 
     # ==============================================================================================
     # --- Methods used mainly in lipid_selection
@@ -624,13 +621,13 @@ class Figures:
     def compute_image_per_lipid(
         self,
         slice_index,
-        # lb_mz,
-        # hb_mz,
+        lb_mz,
+        hb_mz,
         RGB_format=True,
-        # normalize=True,
-        # log=False,
-        # projected_image=True,
-        # apply_transform=False,
+        normalize=True,
+        log=False,
+        projected_image=True,
+        apply_transform=False,
         lipid_name="",
         cache_flask=None,
     ):
@@ -673,162 +670,159 @@ class Figures:
         logging.info("Entering compute_image_per_lipid")
 
         # Get image from raw mass spec data
-        # image = compute_thread_safe_function(
-        #     compute_image_using_index_and_image_lookup,
-        #     cache_flask,
-        #     self._data,
-        #     slice_index,
-        #     lb_mz,
-        #     hb_mz,
-        #     self._data.get_array_spectra(slice_index),
-        #     self._data.get_array_lookup_pixels(slice_index),
-        #     self._data.get_image_shape(slice_index),
-        #     self._data.get_array_lookup_mz(slice_index),
-        #     self._data.get_array_cumulated_lookup_mz_image(slice_index),
-        #     self._data.get_divider_lookup(slice_index),
-        #     self._data.get_array_peaks_transformed_lipids(slice_index),
-        #     self._data.get_array_corrective_factors(slice_index).astype(np.float32),
-        #     apply_transform=apply_transform,
-        # )
-        image = self._data.extract_lipid_image(slice_index, lipid_name)
-
-        # # Log-transform the image if requested
-        # if log:
-        #     image = np.log(image + 1)
+        image = compute_thread_safe_function(
+            compute_image_using_index_and_image_lookup,
+            cache_flask,
+            self._data,
+            slice_index,
+            lb_mz,
+            hb_mz,
+            self._data.get_array_spectra(slice_index),
+            self._data.get_array_lookup_pixels(slice_index),
+            self._data.get_image_shape(slice_index),
+            self._data.get_array_lookup_mz(slice_index),
+            self._data.get_array_cumulated_lookup_mz_image(slice_index),
+            self._data.get_divider_lookup(slice_index),
+            self._data.get_array_peaks_transformed_lipids(slice_index),
+            self._data.get_array_corrective_factors(slice_index).astype(np.float32),
+            apply_transform=apply_transform,
+        )
+        # Log-transform the image if requested
+        if log:
+            image = np.log(image + 1)
 
         # In case of bug, return None
         if image is None:
             return None
 
-        # # Normalize the image if requested
-        # if normalize:
-        #     # Normalize across slice if the lipid has been MAIA transformed
-        #     if (
-        #         lipid_name,
-        #         self._data.is_brain_1(slice_index),
-        #     ) in self.dic_normalization_factors and apply_transform:
-        #         perc = self.dic_normalization_factors[
-        #             (lipid_name, self._data.is_brain_1(slice_index))
-        #         ]
-        #         logging.info(
-        #             "Normalization made with respect to percentile computed across all slices."
-        #         )
-        #     else:
-        #         # Normalize by 99 percentile
-        #         perc = np.percentile(image, 99.0)
-        #     if perc == 0:
-        #         perc = np.max(image)
-        #     if perc == 0:
-        #         perc = 1
-        #     image = image / perc
-        #     image = np.clip(0, 1, image)
+        # Normalize the image if requested
+        if normalize:
+            # Normalize across slice if the lipid has been MAIA transformed
+            if (
+                lipid_name,
+                self._data.is_brain_1(slice_index),
+            ) in self.dic_normalization_factors and apply_transform:
+                perc = self.dic_normalization_factors[
+                    (lipid_name, self._data.is_brain_1(slice_index))
+                ]
+                logging.info(
+                    "Normalization made with respect to percentile computed across all slices."
+                )
+            else:
+                # Normalize by 99 percentile
+                perc = np.percentile(image, 99.0)
+            if perc == 0:
+                perc = np.max(image)
+            if perc == 0:
+                perc = 1
+            image = image / perc
+            image = np.clip(0, 1, image)
 
         # Turn to RGB format if requested
-        # HOUSEKEEPING: normalize data in 0-1 for plotting, right now they are MAIA scale
         if RGB_format:
             image *= 255
 
-        # # Change dtype if normalized and RGB to save space
-        # if normalize and RGB_format:
-        #     image = np.round(image).astype(np.uint8)
+        # Change dtype if normalized and RGB to save space
+        if normalize and RGB_format:
+            image = np.round(image).astype(np.uint8)
 
-        # # Project image into cleaned and higher resolution version
-        # if projected_image:
-        #     image = project_image(
-        #         slice_index, image, self._atlas.array_projection_correspondence_corrected
-        #     )
+        # Project image into cleaned and higher resolution version
+        if projected_image:
+            image = project_image(
+                slice_index, image, self._atlas.array_projection_correspondence_corrected
+            )
         return image
 
-    # def compute_normalization_factor_across_slices(self, cache_flask=None):
-    #     """This function computes a dictionnary of normalization factors (used for MAIA-transformed
-    #     lipids) across all slices (99th percentile of expression).
+    def compute_normalization_factor_across_slices(self, cache_flask=None):
+        """This function computes a dictionnary of normalization factors (used for MAIA-transformed
+        lipids) across all slices (99th percentile of expression).
 
-    #     Args:
-    #         cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
-    #             None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
-    #             None.
-    #     Returns:
-    #         (dict): A dictionnary associating, for each MAIA-transformed lipid name, the 99th
-    #             percentile of the intensity across all slices.
-    #     """
-    #     logging.info(
-    #         "Compute normalization factor across slices for MAIA transformed lipids..."
-    #         + " It may takes a while"
-    #     )
+        Args:
+            cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
+                None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
+                None.
+        Returns:
+            (dict): A dictionnary associating, for each MAIA-transformed lipid name, the 99th
+                percentile of the intensity across all slices.
+        """
+        logging.info(
+            "Compute normalization factor across slices for MAIA transformed lipids..."
+            + " It may takes a while"
+        )
 
-    #     # Dictionnnary that will contain the percentile across all slices of a given brain
-    #     dic_max_percentile = {}
+        # Dictionnnary that will contain the percentile across all slices of a given brain
+        dic_max_percentile = {}
 
-    #     # Function to compute the percentile across all slices
-    #     def _compute_percentile_across_slices(name, structure, cation, brain_1):
-    #         max_perc = 0
-    #         lipid_string = ""
-    #         for slice_index in self._data.get_slice_list(
-    #             indices="brain_1" if brain_1 else "brain_2"
-    #         ):
-    #             # Find lipid location
-    #             l_lipid_loc = (
-    #                 self._data.get_annotations()
-    #                 .index[
-    #                     (self._data.get_annotations()["name"] == name)
-    #                     & (self._data.get_annotations()["structure"] == structure)
-    #                     & (self._data.get_annotations()["slice"] == slice_index)
-    #                     & (self._data.get_annotations()["cation"] == cation)
-    #                 ]
-    #                 .tolist()
-    #             )
+        # Function to compute the percentile across all slices
+        def _compute_percentile_across_slices(name, structure, cation, brain_1):
+            max_perc = 0
+            lipid_string = ""
+            for slice_index in self._data.get_slice_list(
+                indices="brain_1" if brain_1 else "brain_2"
+            ):
+                # Find lipid location
+                l_lipid_loc = (
+                    self._data.get_annotations()
+                    .index[
+                        (self._data.get_annotations()["name"] == name)
+                        & (self._data.get_annotations()["structure"] == structure)
+                        & (self._data.get_annotations()["slice"] == slice_index)
+                        & (self._data.get_annotations()["cation"] == cation)
+                    ]
+                    .tolist()
+                )
 
-    #             # If several lipids correspond to the selection, we have a problem...
-    #             if len(l_lipid_loc) >= 1:
-    #                 index = l_lipid_loc[-1]
+                # If several lipids correspond to the selection, we have a problem...
+                if len(l_lipid_loc) >= 1:
+                    index = l_lipid_loc[-1]
 
-    #                 # get final lipid name
-    #                 lipid_string = name + "_" + structure + "_" + cation
+                    # get final lipid name
+                    lipid_string = name + "_" + structure + "_" + cation
 
-    #                 # get lipid bounds
-    #                 lb_mz = float(self._data.get_annotations().iloc[index]["min"])
-    #                 hb_mz = float(self._data.get_annotations().iloc[index]["max"])
+                    # get lipid bounds
+                    lb_mz = float(self._data.get_annotations().iloc[index]["min"])
+                    hb_mz = float(self._data.get_annotations().iloc[index]["max"])
 
-    #                 # Get corresponding image
-    #                 image = compute_thread_safe_function(
-    #                     compute_image_using_index_and_image_lookup,
-    #                     cache_flask,
-    #                     self._data,
-    #                     slice_index,
-    #                     lb_mz,
-    #                     hb_mz,
-    #                     self._data.get_array_spectra(slice_index),
-    #                     self._data.get_array_lookup_pixels(slice_index),
-    #                     self._data.get_image_shape(slice_index),
-    #                     self._data.get_array_lookup_mz(slice_index),
-    #                     self._data.get_array_cumulated_lookup_mz_image(slice_index),
-    #                     self._data.get_divider_lookup(slice_index),
-    #                     self._data.get_array_peaks_transformed_lipids(slice_index),
-    #                     self._data.get_array_corrective_factors(slice_index).astype(np.float32),
-    #                     apply_transform=False,
-    #                 )
+                    # Get corresponding image
+                    image = compute_thread_safe_function(
+                        compute_image_using_index_and_image_lookup,
+                        cache_flask,
+                        self._data,
+                        slice_index,
+                        lb_mz,
+                        hb_mz,
+                        self._data.get_array_spectra(slice_index),
+                        self._data.get_array_lookup_pixels(slice_index),
+                        self._data.get_image_shape(slice_index),
+                        self._data.get_array_lookup_mz(slice_index),
+                        self._data.get_array_cumulated_lookup_mz_image(slice_index),
+                        self._data.get_divider_lookup(slice_index),
+                        self._data.get_array_peaks_transformed_lipids(slice_index),
+                        self._data.get_array_corrective_factors(slice_index).astype(np.float32),
+                        apply_transform=False,
+                    )
 
-    #                 # Check 99th percentile for normalization
-    #                 perc = np.percentile(image, 99.0)
+                    # Check 99th percentile for normalization
+                    perc = np.percentile(image, 99.0)
 
-    #                 # perc must be quite small in theory... otherwise it's a bug
-    #                 if perc > max_perc:  # and perc<1:
-    #                     max_perc = perc
-    #         return max_perc, lipid_string
+                    # perc must be quite small in theory... otherwise it's a bug
+                    if perc > max_perc:  # and perc<1:
+                        max_perc = perc
+            return max_perc, lipid_string
 
-    #     # Simulate a click on all MAIA transformed lipids
-    #     for brain_1 in [True, False]:
-    #         for (
-    #             index,
-    #             (name, structure, cation, mz),
-    #         ) in self._data.get_annotations_MAIA_transformed_lipids(brain_1=brain_1).iterrows():
-    #             max_perc, lipid_string = _compute_percentile_across_slices(
-    #                 name, structure, cation, brain_1
-    #             )
-    #             # Store max percentile across slices
-    #             dic_max_percentile[(lipid_string, brain_1)] = max_perc
+        # Simulate a click on all MAIA transformed lipids
+        for brain_1 in [True, False]:
+            for (
+                index,
+                (name, structure, cation, mz),
+            ) in self._data.get_annotations_MAIA_transformed_lipids(brain_1=brain_1).iterrows():
+                max_perc, lipid_string = _compute_percentile_across_slices(
+                    name, structure, cation, brain_1
+                )
+                # Store max percentile across slices
+                dic_max_percentile[(lipid_string, brain_1)] = max_perc
 
-    #     return dic_max_percentile
+        return dic_max_percentile
 
     def build_lipid_heatmap_from_image(
         self,
@@ -912,74 +906,74 @@ class Figures:
 
         return fig
 
-    # def compute_heatmap_per_mz(
-    #     self,
-    #     slice_index,
-    #     # lb_mz=None,
-    #     # hb_mz=None,
-    #     draw=False,
-    #     # projected_image=True,
-    #     return_base64_string=False,
-    #     cache_flask=None,
-    # ):
-    #     """This function takes two boundaries and a slice index, and returns a heatmap of the lipid
-    #     expressed in the slice whose m/z is between the two boundaries.
+    def compute_heatmap_per_mz(
+        self,
+        slice_index,
+        lb_mz=None,
+        hb_mz=None,
+        draw=False,
+        projected_image=True,
+        return_base64_string=False,
+        cache_flask=None,
+    ):
+        """This function takes two boundaries and a slice index, and returns a heatmap of the lipid
+        expressed in the slice whose m/z is between the two boundaries.
 
-    #     Args:
-    #         slice_index (int): The index of the requested slice.
-    #         lb_mz (float, optional): The lower m/z boundary. Defaults to None.
-    #         hb_mz (float, optional): The higher m/z boundary. Defaults to None.
-    #         draw (bool, optional): If True, the user will have the possibility to draw on the
-    #             resulting Plotly Figure. Defaults to False.
-    #         projected_image (bool, optional): If True, the pixels of the original acquisition get
-    #             matched to a higher-resolution, warped space. The gaps are filled by duplicating the
-    #             most appropriate pixels (see dosctring of Atlas.project_image() for more
-    #             information). Defaults to True.
-    #         return_base64_string (bool, optional): If True, the base64 string of the image is
-    #             returned directly, before any figure building. Defaults to False.
-    #         cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
-    #             None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
-    #             None.
-    #     Returns:
-    #         Depending on the value return_base64_string, may either return a base64 string, or
-    #             a Plotly Figure.
-    #     """
+        Args:
+            slice_index (int): The index of the requested slice.
+            lb_mz (float, optional): The lower m/z boundary. Defaults to None.
+            hb_mz (float, optional): The higher m/z boundary. Defaults to None.
+            draw (bool, optional): If True, the user will have the possibility to draw on the
+                resulting Plotly Figure. Defaults to False.
+            projected_image (bool, optional): If True, the pixels of the original acquisition get
+                matched to a higher-resolution, warped space. The gaps are filled by duplicating the
+                most appropriate pixels (see dosctring of Atlas.project_image() for more
+                information). Defaults to True.
+            return_base64_string (bool, optional): If True, the base64 string of the image is
+                returned directly, before any figure building. Defaults to False.
+            cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
+                None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
+                None.
+        Returns:
+            Depending on the value return_base64_string, may either return a base64 string, or
+                a Plotly Figure.
+        """
 
-    #     logging.info("Starting figure computation, from mz boundaries")
+        logging.info("Starting figure computation, from mz boundaries")
 
-    #     # Upper bound lower than the lowest m/z value and higher that the highest m/z value
-    #     if lb_mz is None:
-    #         lb_mz = 200
-    #     if hb_mz is None:
-    #         hb_mz = 1800
+        # Upper bound lower than the lowest m/z value and higher that the highest m/z value
+        if lb_mz is None:
+            lb_mz = 200
+        if hb_mz is None:
+            hb_mz = 1800
 
-    #     logging.info("Getting image array")
+        logging.info("Getting image array")
 
-    #     # Compute image with given bounds
-    #     image = self.compute_image_per_lipid(
-    #         slice_index,
-    #         # lb_mz,
-    #         # hb_mz,
-    #         RGB_format=True,
-    #         # projected_image=projected_image,
-    #         cache_flask=cache_flask,
-    #     )
+        # Compute image with given bounds
+        image = self.compute_image_per_lipid(
+            slice_index,
+            lb_mz,
+            hb_mz,
+            RGB_format=True,
+            projected_image=projected_image,
+            cache_flask=cache_flask,
+        )
 
-    #     # Compute corresponding figure
-    #     fig = self.build_lipid_heatmap_from_image(
-    #         image, return_base64_string=return_base64_string, draw=draw
-    #     )
+        # Compute corresponding figure
+        fig = self.build_lipid_heatmap_from_image(
+            image, return_base64_string=return_base64_string, draw=draw
+        )
 
-    #     return fig
+        return fig
 
     def compute_heatmap_per_lipid_selection(
         self,
         slice_index,
-        # ll_t_bounds,
-        # normalize=True,
-        # projected_image=True,
-        # apply_transform=False,
-        ll_lipid_names,
+        ll_t_bounds,
+        normalize=True,
+        projected_image=True,
+        apply_transform=False,
+        ll_lipid_names=None,
         return_base64_string=False,
         cache_flask=None,
     ):
@@ -1018,28 +1012,37 @@ class Figures:
                 a Plotly Figure.
         """
 
-        logging.info("Compute heatmap per multi-lipid selection")
+        logging.info("Compute heatmap per lipid selection" + str(ll_t_bounds))
 
         # Start from empty image and add selected lipids
         # * Caution: array must be int, float gets badly converted afterwards
         image = np.zeros(self._atlas.image_shape, dtype=np.int32)
 
-        # # Build empty lipid names if not provided
-        # if ll_lipid_names is None:
-        #     ll_lipid_names = [["" for y in l_t_bounds] for l_t_bounds in ll_t_bounds]
+        # Build empty lipid names if not provided
+        if ll_lipid_names is None:
+            ll_lipid_names = [["" for y in l_t_bounds] for l_t_bounds in ll_t_bounds]
 
-        # TYPE: possible inconsistency, for us lipid_names would be a list of strings, not a list of lists
         # Loop over channels
-        for l_lipid_names in ll_lipid_names:
-            # Compute expression image per lipid
-            image_temp = self.compute_image_per_lipid(
-                slice_index,
-                RGB_format=True,
-                lipid_name=l_lipid_names,
-                cache_flask=cache_flask,
-            )
-            # TYPE: RGB image, expected 3 channels, not sum values elementwise
-            image += image_temp
+        for l_t_bounds, l_lipid_names in zip(ll_t_bounds, ll_lipid_names):
+            if l_t_bounds is not None:
+                # Loop over lipids
+                for boundaries, lipid_name in zip(l_t_bounds, l_lipid_names):
+                    if boundaries is not None:
+                        (lb_mz, hb_mz) = boundaries
+
+                        # Cmpute expression image per lipid
+                        image_temp = self.compute_image_per_lipid(
+                            slice_index,
+                            lb_mz,
+                            hb_mz,
+                            RGB_format=True,
+                            normalize=normalize,
+                            projected_image=projected_image,
+                            apply_transform=apply_transform,
+                            lipid_name=lipid_name,
+                            cache_flask=cache_flask,
+                        )
+                        image += image_temp
 
         # Compute corresponding figure
         fig = self.build_lipid_heatmap_from_image(image, return_base64_string=return_base64_string)
@@ -1214,207 +1217,207 @@ class Figures:
             return_go_image=return_image,
         )
 
-    # def compute_spectrum_low_res(self, slice_index, annotations=None):
-    #     """This function returns the full (low-resolution) spectrum of the requested slice.
+    def compute_spectrum_low_res(self, slice_index, annotations=None):
+        """This function returns the full (low-resolution) spectrum of the requested slice.
 
-    #     Args:
-    #         slice_index (int): The slice index of the requested slice.
-    #         annotations (list(tuple), optional): A list of m/z boundaries (one for each lipid to
-    #             annotate), corresponding to the position of colored box superimposed on the spectra.
-    #             Defaults to None.
-    #     Returns:
-    #         (go.Figure): A Plotly Figure representing the low-resolution spectrum.
-    #     """
+        Args:
+            slice_index (int): The slice index of the requested slice.
+            annotations (list(tuple), optional): A list of m/z boundaries (one for each lipid to
+                annotate), corresponding to the position of colored box superimposed on the spectra.
+                Defaults to None.
+        Returns:
+            (go.Figure): A Plotly Figure representing the low-resolution spectrum.
+        """
 
-    #     # Define figure data
-    #     data = go.Scattergl(
-    #         x=self._data.get_array_avg_spectrum_downsampled(slice_index)[0, :],
-    #         y=self._data.get_array_avg_spectrum_downsampled(slice_index)[1, :],
-    #         visible=True,
-    #         line_color=dic_colors["blue"],
-    #         fill="tozeroy",
-    #     )
-    #     # Define figure layout
-    #     layout = go.Layout(
-    #         margin=dict(t=50, r=0, b=10, l=0),
-    #         showlegend=False,
-    #         xaxis=dict(rangeslider={"visible": False}, title="m/z"),
-    #         yaxis=dict(fixedrange=False, title="Intensity"),
-    #         template="plotly_dark",
-    #         autosize=True,
-    #         title={
-    #             "text": "Low resolution spectrum (averaged across pixels)",
-    #             "y": 0.92,
-    #             "x": 0.5,
-    #             "xanchor": "center",
-    #             "yanchor": "top",
-    #             "font": dict(
-    #                 size=14,
-    #             ),
-    #         },
-    #         paper_bgcolor="rgba(0,0,0,0.3)",
-    #         plot_bgcolor="rgba(0,0,0,0.3)",
-    #     )
+        # Define figure data
+        data = go.Scattergl(
+            x=self._data.get_array_avg_spectrum_downsampled(slice_index)[0, :],
+            y=self._data.get_array_avg_spectrum_downsampled(slice_index)[1, :],
+            visible=True,
+            line_color=dic_colors["blue"],
+            fill="tozeroy",
+        )
+        # Define figure layout
+        layout = go.Layout(
+            margin=dict(t=50, r=0, b=10, l=0),
+            showlegend=False,
+            xaxis=dict(rangeslider={"visible": False}, title="m/z"),
+            yaxis=dict(fixedrange=False, title="Intensity"),
+            template="plotly_dark",
+            autosize=True,
+            title={
+                "text": "Low resolution spectrum (averaged across pixels)",
+                "y": 0.92,
+                "x": 0.5,
+                "xanchor": "center",
+                "yanchor": "top",
+                "font": dict(
+                    size=14,
+                ),
+            },
+            paper_bgcolor="rgba(0,0,0,0.3)",
+            plot_bgcolor="rgba(0,0,0,0.3)",
+        )
 
-    #     # Build figure
-    #     fig = go.Figure(data=data, layout=layout)
+        # Build figure
+        fig = go.Figure(data=data, layout=layout)
 
-    #     # Annotate selected lipids with vertical bars
-    #     if annotations is not None:
-    #         for color, annot in zip(["red", "green", "blue"], annotations):
-    #             if annot is not None:
-    #                 fig.add_vrect(
-    #                     x0=annot[0],
-    #                     x1=annot[1],
-    #                     fillcolor=dic_colors[color],
-    #                     opacity=0.4,
-    #                     line_color=dic_colors[color],
-    #                 )
-    #     return fig
+        # Annotate selected lipids with vertical bars
+        if annotations is not None:
+            for color, annot in zip(["red", "green", "blue"], annotations):
+                if annot is not None:
+                    fig.add_vrect(
+                        x0=annot[0],
+                        x1=annot[1],
+                        fillcolor=dic_colors[color],
+                        opacity=0.4,
+                        line_color=dic_colors[color],
+                    )
+        return fig
 
-    # def compute_spectrum_high_res(
-    #     self,
-    #     slice_index,
-    #     lb=None,
-    #     hb=None,
-    #     annotations=None,
-    #     force_xlim=False,
-    #     plot=True,
-    #     standardization=False,
-    #     cache_flask=None,
-    # ):
-    #     """This function returns the high-resolution spectrum of the requested slice between the two
-    #     provided m/z boundaries lb and hb. If boundaries are not provided, it returns an empty
-    #     spectrum.
+    def compute_spectrum_high_res(
+        self,
+        slice_index,
+        lb=None,
+        hb=None,
+        annotations=None,
+        force_xlim=False,
+        plot=True,
+        standardization=False,
+        cache_flask=None,
+    ):
+        """This function returns the high-resolution spectrum of the requested slice between the two
+        provided m/z boundaries lb and hb. If boundaries are not provided, it returns an empty
+        spectrum.
 
-    #     Args:
-    #         slice_index (int): The slice index of the requested slice.
-    #         lb (float, optional): The lower m/z boundary below which the spectrum to display must
-    #             be cropped. Defaults to None.
-    #         hb (float, optional): The higher m/z boundary below which the spectrum to display must
-    #             be cropped. Defaults to None.
-    #         annotations (list(tuple), optional): A list of m/z boundaries (one for each lipid to
-    #             annotate), corresponding to the position of colored box superimposed on the spectra.
-    #             Defaults to None.
-    #         force_xlim (bool, optional): If Truen the zoom level will be set to enclose lb and hb,
-    #             although that may not be the tightest region to enclose the data. Defaults to False.
-    #         plot (bool, optional): If False, only the plotting data (m/z and intensities arrays)
-    #             will be returned. Defaults to True.
-    #         standardization (bool, optional): If True, the displayed spectrum is standardized with
-    #             MAIA when possible.
-    #         cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
-    #             None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
-    #             None.
-    #     Returns:
-    #         Depending on the value of the boundaries, and the plot parameter, it may return a Plotly
-    #             Figure containing an empty spectrum, or a spectrum between the two
-    #             provided boundaries, or the corresponding data of such a spectrum.
-    #     """
+        Args:
+            slice_index (int): The slice index of the requested slice.
+            lb (float, optional): The lower m/z boundary below which the spectrum to display must
+                be cropped. Defaults to None.
+            hb (float, optional): The higher m/z boundary below which the spectrum to display must
+                be cropped. Defaults to None.
+            annotations (list(tuple), optional): A list of m/z boundaries (one for each lipid to
+                annotate), corresponding to the position of colored box superimposed on the spectra.
+                Defaults to None.
+            force_xlim (bool, optional): If Truen the zoom level will be set to enclose lb and hb,
+                although that may not be the tightest region to enclose the data. Defaults to False.
+            plot (bool, optional): If False, only the plotting data (m/z and intensities arrays)
+                will be returned. Defaults to True.
+            standardization (bool, optional): If True, the displayed spectrum is standardized with
+                MAIA when possible.
+            cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
+                None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
+                None.
+        Returns:
+            Depending on the value of the boundaries, and the plot parameter, it may return a Plotly
+                Figure containing an empty spectrum, or a spectrum between the two
+                provided boundaries, or the corresponding data of such a spectrum.
+        """
 
-    #     # Define default values for graph (empty)
-    #     if lb is None and hb is None:
-    #         x = ([],)
-    #         y = ([],)
+        # Define default values for graph (empty)
+        if lb is None and hb is None:
+            x = ([],)
+            y = ([],)
 
-    #     # If boundaries are provided, get their index
-    #     else:
-    #         index_lb, index_hb = compute_thread_safe_function(
-    #             compute_index_boundaries,
-    #             cache_flask,
-    #             self._data,
-    #             slice_index,
-    #             lb,
-    #             hb,
-    #             array_spectra_avg=self._data.get_array_avg_spectrum(
-    #                 slice_index, standardization=standardization
-    #             ),
-    #             lookup_table=self._data.get_array_lookup_mz_avg(slice_index),
-    #         )
+        # If boundaries are provided, get their index
+        else:
+            index_lb, index_hb = compute_thread_safe_function(
+                compute_index_boundaries,
+                cache_flask,
+                self._data,
+                slice_index,
+                lb,
+                hb,
+                array_spectra_avg=self._data.get_array_avg_spectrum(
+                    slice_index, standardization=standardization
+                ),
+                lookup_table=self._data.get_array_lookup_mz_avg(slice_index),
+            )
 
-    #         def return_x_y(array):
-    #             x = np.copy(array[0, index_lb:index_hb])
-    #             y = np.copy(array[1, index_lb:index_hb])
-    #             return x, y
+            def return_x_y(array):
+                x = np.copy(array[0, index_lb:index_hb])
+                y = np.copy(array[1, index_lb:index_hb])
+                return x, y
 
-    #         # Get x, y in a thread safe fashion
-    #         # No need to clean memory as it's really small
-    #         x, y = compute_thread_safe_function(
-    #             return_x_y,
-    #             cache_flask,
-    #             self._data,
-    #             slice_index,
-    #             self._data.get_array_avg_spectrum(slice_index, standardization=standardization),
-    #         )
+            # Get x, y in a thread safe fashion
+            # No need to clean memory as it's really small
+            x, y = compute_thread_safe_function(
+                return_x_y,
+                cache_flask,
+                self._data,
+                slice_index,
+                self._data.get_array_avg_spectrum(slice_index, standardization=standardization),
+            )
 
-    #     # In case download without plotting
-    #     if not plot:
-    #         return x, y
+        # In case download without plotting
+        if not plot:
+            return x, y
 
-    #     # Define figure data
-    #     data = go.Scattergl(x=x, y=y, visible=True, line_color=dic_colors["blue"], fill="tozeroy")
+        # Define figure data
+        data = go.Scattergl(x=x, y=y, visible=True, line_color=dic_colors["blue"], fill="tozeroy")
 
-    #     # Define figure layout
-    #     layout = go.Layout(
-    #         margin=dict(t=50, r=0, b=10, l=0),
-    #         showlegend=False,
-    #         xaxis=dict(rangeslider={"visible": False}, title="m/z"),
-    #         yaxis=dict(fixedrange=True, title="Intensity"),
-    #         template="plotly_dark",
-    #         title={
-    #             "text": "High resolution spectrum (averaged across pixels)",
-    #             "y": 0.92,
-    #             "x": 0.5,
-    #             "xanchor": "center",
-    #             "yanchor": "top",
-    #             "font": dict(
-    #                 size=14,
-    #             ),
-    #         },
-    #         paper_bgcolor="rgba(0,0,0,0.3)",
-    #         plot_bgcolor="rgba(0,0,0,0.3)",
-    #     )
-    #     # Build figure layout
-    #     fig = go.Figure(data=data, layout=layout)
+        # Define figure layout
+        layout = go.Layout(
+            margin=dict(t=50, r=0, b=10, l=0),
+            showlegend=False,
+            xaxis=dict(rangeslider={"visible": False}, title="m/z"),
+            yaxis=dict(fixedrange=True, title="Intensity"),
+            template="plotly_dark",
+            title={
+                "text": "High resolution spectrum (averaged across pixels)",
+                "y": 0.92,
+                "x": 0.5,
+                "xanchor": "center",
+                "yanchor": "top",
+                "font": dict(
+                    size=14,
+                ),
+            },
+            paper_bgcolor="rgba(0,0,0,0.3)",
+            plot_bgcolor="rgba(0,0,0,0.3)",
+        )
+        # Build figure layout
+        fig = go.Figure(data=data, layout=layout)
 
-    #     # Annotate selected lipids with vertical bars
-    #     if annotations is not None:
-    #         for color, x in zip(["red", "green", "blue"], annotations):
-    #             if x is not None:
-    #                 if x[0] >= lb and x[-1] <= hb:
-    #                     fig.add_vrect(
-    #                         x0=x[0], x1=x[1], line_width=0, fillcolor=dic_colors[color], opacity=0.4
-    #                     )
+        # Annotate selected lipids with vertical bars
+        if annotations is not None:
+            for color, x in zip(["red", "green", "blue"], annotations):
+                if x is not None:
+                    if x[0] >= lb and x[-1] <= hb:
+                        fig.add_vrect(
+                            x0=x[0], x1=x[1], line_width=0, fillcolor=dic_colors[color], opacity=0.4
+                        )
 
-    #     # In case we don't want to zoom in too much on the selected lipid
-    #     if force_xlim:
-    #         fig.update_xaxes(range=[lb, hb])
-    #     return fig
+        # In case we don't want to zoom in too much on the selected lipid
+        if force_xlim:
+            fig.update_xaxes(range=[lb, hb])
+        return fig
 
-    # def return_empty_spectrum(self):
-    #     """This function returns an empty spectrum, used to display when no spectrum is available.
+    def return_empty_spectrum(self):
+        """This function returns an empty spectrum, used to display when no spectrum is available.
 
-    #     Returns:
-    #         (Plotly Figure): A Plotly Figure representing an empty spectrum."""
+        Returns:
+            (Plotly Figure): A Plotly Figure representing an empty spectrum."""
 
-    #     # Define empty figure data
-    #     data = (go.Scattergl(x=[], y=[], visible=True),)
+        # Define empty figure data
+        data = (go.Scattergl(x=[], y=[], visible=True),)
 
-    #     # Define figure layout
-    #     layout = go.Layout(
-    #         margin=dict(t=5, r=0, b=10, l=0),
-    #         showlegend=True,
-    #         xaxis=dict(title="m/z"),
-    #         yaxis=dict(title="Intensity"),
-    #         template="plotly_dark",
-    #     )
+        # Define figure layout
+        layout = go.Layout(
+            margin=dict(t=5, r=0, b=10, l=0),
+            showlegend=True,
+            xaxis=dict(title="m/z"),
+            yaxis=dict(title="Intensity"),
+            template="plotly_dark",
+        )
 
-    #     # Build figure
-    #     fig = go.Figure(data=data, layout=layout)
+        # Build figure
+        fig = go.Figure(data=data, layout=layout)
 
-    #     # Transparent background
-    #     fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
-    #     fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
-    #     return fig
+        # Transparent background
+        fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
+        fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
+        return fig
 
     # ==============================================================================================
     # --- Methods used mainly in region_analysis

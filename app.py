@@ -26,6 +26,7 @@ from modules.tools.misc import logmem
 
 logging.info("Memory use before any LBAE import" + logmem())
 
+import new_storage
 from modules.maldi_data import MaldiData
 
 logging.info("Memory use after MaldiData import" + logmem())

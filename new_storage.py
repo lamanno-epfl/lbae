@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
+from time import time
 from typing import Dict, List, Optional, Tuple
 
 # Set up logging
@@ -105,21 +106,21 @@ class MaldiData:
     #     with shelve.open(os.path.join(self.path_db, "metadata")) as db:
     #         return list(db["brain_info"].keys())
     
-    # def get_available_slices(self, brain_id: str) -> List[int]:
-    #     """Get list of available slice indices for a given brain."""
-    #     with shelve.open(os.path.join(self.path_db, "metadata")) as db:
-    #         brain_info = db["brain_info"]
-    #         if brain_id not in brain_info:
-    #             return []
-    #         return list(brain_info[brain_id].keys())
+    def get_available_slices(self, brain_id: str) -> List[int]:
+        """Get list of available slice indices for a given brain."""
+        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
+            brain_info = db["brain_info"]
+            if brain_id not in brain_info:
+                return []
+            return list(brain_info[brain_id].keys())
     
-    # def get_available_lipids(self, brain_id: str, slice_index: int) -> List[str]:
-    #     """Get list of available lipids for a given brain and slice."""
-    #     with shelve.open(os.path.join(self.path_db, "metadata")) as db:
-    #         brain_info = db["brain_info"]
-    #         if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
-    #             return []
-    #         return brain_info[brain_id][slice_index]
+    def get_available_lipids(self, brain_id: str, slice_index: int) -> List[str]:
+        """Get list of available lipids for a given brain and slice."""
+        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
+            brain_info = db["brain_info"]
+            if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
+                return []
+            return brain_info[brain_id][slice_index]
 
     def extract_lipid_image(self, slice_index, lipid_name):
         lipid_data = self.get_lipid_image(slice_index, lipid_name)
@@ -136,16 +137,45 @@ class MaldiData:
         return arr
 
     def get_brain_id_from_sliceindex(self, slice_index):
-        lookup_brainid = pd.read_csv(os.join.path(self.path_db, "lookup_brainid.csv"), index_col=0)
+        lookup_brainid = pd.read_csv(os.path.join(self.path_db, "lookup_brainid.csv"), index_col=0)
 
         try:
-            sample = lookup_brainid.loc[lookup_brainid['SectionID'] == slice_index, 'Sample'].values
+            sample = lookup_brainid.loc[lookup_brainid['SectionID'] == slice_index, 'Sample'].values[0]
             return sample
 
         except:
             print("Missing sample")
             return np.nan
+    
+    def get_slice_number(self):
+        """Getter for the number of slice present in the dataset.
 
+        Returns:
+            (int): The number of slices in the dataset.
+        """
+        return [len(self.get_available_slices(b_id)) for b_id in self.get_available_brains()].sum()
+
+    def get_slice_list(self, indices="all"):
+        """Getter for the list of slice indices.
+
+        Args:
+            indices (str, optional): If "all", return the list of all slice indices. If "brain_1",
+                return the list of slice indices for brain 1. If "brain_2", return the list of
+                slice indices for brain 2. Defaults to "all". Indices start at 1.
+
+        Returns:
+            (list): The list of requested slice indices.
+        """
+        # if indices == "all":
+        #     return self._l_slices
+        # elif indices == "brain_1":
+        #     return self._l_slices_brain_1
+        # elif indices == "brain_2":
+        #     return self._l_slices_brain_2
+        # else:
+        #     raise ValueError("Invalid string for indices")
+        return self.get_available_slices(indices)
+    
     """
     def empty_database(self):
         # Remove all data from the database.

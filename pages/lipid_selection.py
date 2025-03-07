@@ -27,7 +27,6 @@ from app import app, figures, data, storage, cache_flask
 
 
 def return_layout(basic_config, slice_index):
-
     page = (
         html.Div(
             style={
@@ -73,7 +72,7 @@ def return_layout(basic_config, slice_index):
                                 },
                                 figure=figures.compute_heatmap_per_lipid(
                                     slice_index,
-                                    'SM 34:1;O2',
+                                    "SM 34:1;O2",
                                     cache_flask=cache_flask,
                                 ),
                             ),
@@ -150,7 +149,7 @@ def return_layout(basic_config, slice_index):
                         ),
                         dmc.Text(
                             id="page-2-badge-input",
-                            children="Current input: ",#  + "m/z boundaries",
+                            children="Current input: ",  #  + "m/z boundaries",
                             class_name="position-absolute",
                             style={"right": "1%", "top": "1em"},
                         ),
@@ -515,7 +514,6 @@ def page_2_plot_graph_heatmap_mz_selection(
         )
     ):
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-
             # Build the list of mz boundaries for each peak
             ll_lipid_bounds = [
                 [
@@ -619,14 +617,14 @@ def page_2_plot_graph_heatmap_mz_selection(
             # No lipid has been selected, return image from boundaries
             if lb is not None and hb is not None:
                 return (
-                        figures.compute_heatmap_per_mz(slice_index, lb, hb, cache_flask=cache_flask),
-                        "Current input: " + "m/z boundaries",
-                    )
+                    figures.compute_heatmap_per_mz(slice_index, lb, hb, cache_flask=cache_flask),
+                    "Current input: " + "m/z boundaries",
+                )
             else:
                 return (
-                        figures.compute_heatmap_per_mz(slice_index, 500, 500, cache_flask=cache_flask),
-                        "Current input: " + "m/z boundaries",
-                    )                
+                    figures.compute_heatmap_per_mz(slice_index, 500, 500, cache_flask=cache_flask),
+                    "Current input: " + "m/z boundaries",
+                )
     # Case trigger is range slider from high resolution spectrum
     if id_input == "boundaries-high-resolution-mz-plot" or (
         id_input == "main-slider"
@@ -714,9 +712,7 @@ def page_2_plot_graph_low_res_spectrum(
             )
         )
     ):
-
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-
             # build the list of mz boundaries for each peak
             l_lipid_bounds = [
                 (
@@ -836,7 +832,6 @@ def page_2_plot_graph_high_res_spectrum(
     ):
         # If at least one lipid index has been recorded
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-
             # Build the list of mz boundaries for each peak
             l_indexes = [lipid_1_index, lipid_2_index, lipid_3_index]
             l_lipid_bounds = [
@@ -1028,13 +1023,10 @@ def page_2_add_toast_selection(
     if (
         id_input == "page-2-dropdown-lipids" and l_lipid_names is not None
     ) or id_input == "main-slider":
-
         # If a new slice has been selected
         if id_input == "main-slider":
-
             # for each lipid, get lipid name, structure and cation
             for header in [header_1, header_2, header_3]:
-
                 if len(header) > 2:
                     name, structure, cation = header.split(" ")
 
@@ -1139,7 +1131,6 @@ def page_2_add_toast_selection(
 
             # If it's a new lipid selection, fill the first available header
             if lipid_string not in [header_1, header_2, header_2]:
-
                 # Check first slot available
                 if class_name_badge_1 == "d-none":
                     header_1 = lipid_string
@@ -1239,7 +1230,6 @@ def page_2_download(
         graph_input == "Current input: " + "Lipid selection colormap"
         or graph_input == "Current input: " + "Lipid selection RGB"
     ):
-
         l_lipids_indexes = [
             x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x is not None and x != -1
         ]
@@ -1284,7 +1274,6 @@ def page_2_download(
         if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
 
             def to_excel(bytes_io):
-
                 # Get spectral data
                 mz, intensity = figures.compute_spectrum_high_res(
                     slice_index,
@@ -1313,7 +1302,6 @@ def page_2_download(
             if bound_high_res[1] - bound_high_res[0] <= 3:
 
                 def to_excel(bytes_io):
-
                     # Get spectral data
                     bound_high_res = json.loads(bound_high_res)
                     mz, intensity = figures.compute_spectrum_high_res(

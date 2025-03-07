@@ -57,7 +57,7 @@ class Figures:
         _data (MaldiData): MaldiData object, used to manipulate the raw MALDI data.
         _storage (Storage): Used to access the shelve database.
         _atlas (Atlas): Used to manipulate the objects coming from the Allen Brain Atlas.
-        
+
     Methods:
         __init__(): Initialize the Figures class.
         compute_array_basic_images(): Computes a three-dimensional array representing all slices
@@ -126,10 +126,14 @@ class Figures:
     # --- Constructor
     # ==============================================================================================
 
-    def __init__(self, maldi_data, storage, atlas, 
-                # brain_id, slice_index, lipid_name,
-                # scRNAseq, sample=False
-                ):
+    def __init__(
+        self,
+        maldi_data,
+        storage,
+        atlas,
+        # brain_id, slice_index, lipid_name,
+        # scRNAseq, sample=False
+    ):
         """Initialize the Figures class.
 
         Args:
@@ -269,38 +273,38 @@ class Figures:
     #             corresponds to the slices, the second and third to the images themselves.
     #     """
 
-        # # Check for all array types
-        # if type_figure == "original_data":
-        #     array_images = self._data.compute_padded_original_images()
+    # # Check for all array types
+    # if type_figure == "original_data":
+    #     array_images = self._data.compute_padded_original_images()
 
-        # if type_figure == "warped_data":
-        #     if self._data._sample_data:
-        #         with np.load("data_sample/tiff_files/warped_data.npz") as handle:
-        #             array_images = handle["array_warped_data"]
-        #     else:
-        #         array_images = io.imread("data/tiff_files/warped_data.tif")
-        # elif type_figure == "projection_corrected":
-        #     array_images = self._atlas.array_projection_corrected
-        # elif type_figure == "atlas":
-        #     (
-        #         array_projected_images_atlas,
-        #         array_projected_simplified_id,
-        #     ) = self._storage.return_shelved_object(
-        #         "atlas/atlas_objects",
-        #         "array_images_atlas",
-        #         force_update=False,
-        #         compute_function=self._atlas.prepare_and_compute_array_images_atlas,
-        #         zero_out_of_annotation=True,
-        #     )
-        #     array_images = array_projected_images_atlas
-        # else:
-        #     logging.warning('The type of requested array "{}" does not exist.'.format(type_figure))
-        #     return None
+    # if type_figure == "warped_data":
+    #     if self._data._sample_data:
+    #         with np.load("data_sample/tiff_files/warped_data.npz") as handle:
+    #             array_images = handle["array_warped_data"]
+    #     else:
+    #         array_images = io.imread("data/tiff_files/warped_data.tif")
+    # elif type_figure == "projection_corrected":
+    #     array_images = self._atlas.array_projection_corrected
+    # elif type_figure == "atlas":
+    #     (
+    #         array_projected_images_atlas,
+    #         array_projected_simplified_id,
+    #     ) = self._storage.return_shelved_object(
+    #         "atlas/atlas_objects",
+    #         "array_images_atlas",
+    #         force_update=False,
+    #         compute_function=self._atlas.prepare_and_compute_array_images_atlas,
+    #         zero_out_of_annotation=True,
+    #     )
+    #     array_images = array_projected_images_atlas
+    # else:
+    #     logging.warning('The type of requested array "{}" does not exist.'.format(type_figure))
+    #     return None
 
-        # # If the array is not uint8, convert it to gain space
-        # if array_images.dtype != np.uint8:
-        #     array_images = np.array(array_images, dtype=np.uint8)
-        # return array_images
+    # # If the array is not uint8, convert it to gain space
+    # if array_images.dtype != np.uint8:
+    #     array_images = np.array(array_images, dtype=np.uint8)
+    # return array_images
 
     # def compute_figure_basic_image(
     #     self, type_figure, index_image, plot_atlas_contours=True, only_contours=False, draw=False
@@ -1023,7 +1027,6 @@ class Figures:
 
         return fig
 
-
     # USELESS
     # def compute_heatmap_per_lipid_selection(
     #     self,
@@ -1182,7 +1185,7 @@ class Figures:
             # if image_temp is not None:
             #     image += image_temp
 
-            l_images.append(image_temp) #####
+            l_images.append(image_temp)  #####
 
         # Reoder axis to match plotly go.image requirements
         array_image = np.moveaxis(np.array(l_images), 0, 2)
@@ -2859,3 +2862,103 @@ class Figures:
 
         # Variable to signal everything has been computed
         self._storage.dump_shelved_object("figures/3D_page", "arrays_annotation_computed", True)
+
+    def compute_heatmap_grid_per_lipid(
+        self,
+        lipid_name,
+        draw=False,
+        return_base64_string=False,
+        cache_flask=None,
+    ):
+        """This function creates a grid of heatmaps showing the lipid expression across all slices.
+
+        Args:
+            lipid_name (str): Name of the lipid to display
+            draw (bool, optional): If True, the user will have the possibility to draw on the
+                resulting Plotly Figure. Defaults to False.
+            return_base64_string (bool, optional): If True, the base64 string of the image is
+                returned directly, before any figure building. Defaults to False.
+            cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
+                None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
+                None.
+
+        Returns:
+            go.Figure: A Plotly figure containing a grid of heatmaps for all slices
+        """
+        logging.info("Starting grid figure computation")
+
+        # Get total number of slices from MaldiData
+        n_slices = self._data.get_slice_number()
+
+        print(n_slices)
+
+        # Calculate grid dimensions (14 columns, 9 rows)
+        n_cols = 14
+        n_rows = 9
+
+        # Create subplots
+        fig = make_subplots(
+            rows=n_rows,
+            cols=n_cols,
+            #subplot_titles=[f"Slice {i+1}" for i in range(n_slices)],
+            horizontal_spacing=0.01,
+            vertical_spacing=0.01,
+        )
+        
+        # Add heatmaps for each slice
+        for slice_index in range(1, n_slices+1):
+
+            try:
+                # Calculate row and column position (1-based indexing)
+                row = (slice_index // n_cols) + 1
+                col = (slice_index % n_cols) + 1
+    
+                print(slice_index)
+                print(lipid_name)
+                
+                # Get lipid image directly from MaldiData
+                image = self._data.extract_lipid_image(float(slice_index), lipid_name)
+    
+                print(image.shape)
+    
+                # Add heatmap to subplot
+                fig.add_trace(
+                    go.Heatmap(
+                        z=image,
+                        visible=True,
+                        hoverinfo="none",
+                        colorscale="viridis",
+                        showscale=False,
+                    ),
+                    row=row,
+                    col=col,
+                )
+
+            except:
+                continue
+
+        # Update layout
+        fig.update_layout(
+            height=900,  # Adjust based on your needs
+            width=1400,  # Adjust based on your needs
+            showlegend=False,
+            margin=dict(t=50, r=0, b=0, l=0),
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
+
+        # Update axes
+        fig.update_xaxes(showticklabels=False)
+        fig.update_yaxes(showticklabels=False)
+
+        if draw:
+            fig.update_layout(
+                dragmode="drawclosedpath",
+                newshape=dict(
+                    fillcolor=l_colors[0], opacity=0.7, line=dict(color="white", width=1)
+                ),
+                autosize=True,
+            )
+
+        return fig

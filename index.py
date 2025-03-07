@@ -184,7 +184,7 @@ def return_main_content():
     return main_content
 
 
-def return_validation_layout(main_content, initial_slice=1, brain="ReferenceAtlas"):
+def return_validation_layout(main_content, initial_slice=1):
     """This function compute the layout of the app, including the main container, the sidebar and
     the different pages.
 
@@ -200,7 +200,7 @@ def return_validation_layout(main_content, initial_slice=1, brain="ReferenceAtla
         [
             main_content,
             home.layout,
-            lipid_selection.return_layout(basic_config, initial_slice),
+            # lipid_selection.return_layout(basic_config, initial_slice),
             # region_analysis.return_layout(basic_config, initial_slice),
             # threeD_exploration.return_layout(basic_config, initial_slice),
         ]
@@ -215,9 +215,9 @@ def return_validation_layout(main_content, initial_slice=1, brain="ReferenceAtla
     Output("empty-content", "children"),
     Input("url", "pathname"),
     State("main-slider", "data"),
-    State("main-brain", "value"),
+    # State("main-brain", "value"),
 )
-def render_page_content(pathname, slice_index, brain):
+def render_page_content(pathname, slice_index):#, brain):
     """This callback is used as a URL router."""
 
     # Keep track of the page in the console

@@ -416,139 +416,139 @@ class Figures:
 
     #     return fig
 
-    # def compute_figure_slices_3D(self, reduce_resolution_factor=20, brain="brain_1"):
-    #     """This function computes and returns a figure representing the slices from the maldi data
-    #     in 3D.
+    def compute_figure_slices_3D(self, reduce_resolution_factor=20, brain="brain_1"):
+        """This function computes and returns a figure representing the slices from the maldi data
+        in 3D.
 
-    #     Args:
-    #         reduce_resolution_factor (int, optional): Divides (reduce) the initial resolution of the
-    #             data. Needed as the resulting figure can be very heavy. Defaults to 20.
-    #         brain (str, optional): Name of the brain to be used. Defaults to 'brain_1'.
+        Args:
+            reduce_resolution_factor (int, optional): Divides (reduce) the initial resolution of the
+                data. Needed as the resulting figure can be very heavy. Defaults to 20.
+            brain (str, optional): Name of the brain to be used. Defaults to 'brain_1'.
 
-    #     Returns:
-    #         (go.Figure): A Plotly figure representing the slices from the MALDI acquisitions in 3D.
-    #     """
-    #     # Get transform parameters (a,u,v) for each slice
-    #     l_transform_parameters = self._storage.return_shelved_object(
-    #         "atlas/atlas_objects",
-    #         "l_transform_parameters",
-    #         force_update=False,
-    #         compute_function=self._atlas.compute_projection_parameters,
-    #     )
+        Returns:
+            (go.Figure): A Plotly figure representing the slices from the MALDI acquisitions in 3D.
+        """
+        # Get transform parameters (a,u,v) for each slice
+        l_transform_parameters = self._storage.return_shelved_object(
+            "atlas/atlas_objects",
+            "l_transform_parameters",
+            force_update=False,
+            compute_function=self._atlas.compute_projection_parameters,
+        )
 
-    #     # Reduce resolution of the slices
-    #     new_dims = []
-    #     n_slices = self._atlas.array_coordinates_warped_data.shape[0]
-    #     d1 = self._atlas.array_coordinates_warped_data.shape[1]
-    #     d2 = self._atlas.array_coordinates_warped_data.shape[2]
-    #     for original_length, new_length in zip(
-    #         self._atlas.array_projection_corrected.shape,
-    #         (
-    #             n_slices,
-    #             int(round(d1 / reduce_resolution_factor)),
-    #             int(round(d2 / reduce_resolution_factor)),
-    #         ),
-    #     ):
-    #         new_dims.append(np.linspace(0, original_length - 1, new_length))
+        # Reduce resolution of the slices
+        new_dims = []
+        n_slices = self._atlas.array_coordinates_warped_data.shape[0]
+        d1 = self._atlas.array_coordinates_warped_data.shape[1]
+        d2 = self._atlas.array_coordinates_warped_data.shape[2]
+        for original_length, new_length in zip(
+            self._atlas.array_projection_corrected.shape,
+            (
+                n_slices,
+                int(round(d1 / reduce_resolution_factor)),
+                int(round(d2 / reduce_resolution_factor)),
+            ),
+        ):
+            new_dims.append(np.linspace(0, original_length - 1, new_length))
 
-    #     coords = np.meshgrid(*new_dims, indexing="ij")
-    #     array_projection_small = map_coordinates(self._atlas.array_projection_corrected, coords)
+        coords = np.meshgrid(*new_dims, indexing="ij")
+        array_projection_small = map_coordinates(self._atlas.array_projection_corrected, coords)
 
-    #     # Build Figure, with several frames as it will be slidable
-    #     fig = go.Figure(
-    #         frames=[
-    #             go.Frame(
-    #                 data=self.get_surface(
-    #                     slice_index - 1,
-    #                     l_transform_parameters,
-    #                     array_projection_small,
-    #                     reduce_resolution_factor,
-    #                 ),
-    #                 name=str(i + 1),
-    #             )
-    #             for i, slice_index in enumerate(self._data.get_slice_list(brain))
-    #         ]
-    #     )
-    #     fig.add_trace(
-    #         self.get_surface(
-    #             self._data.get_slice_list(brain)[0] - 1,
-    #             l_transform_parameters,
-    #             array_projection_small,
-    #             reduce_resolution_factor,
-    #         )
-    #     )
+        # Build Figure, with several frames as it will be slidable
+        fig = go.Figure(
+            frames=[
+                go.Frame(
+                    data=self.get_surface(
+                        slice_index - 1,
+                        l_transform_parameters,
+                        array_projection_small,
+                        reduce_resolution_factor,
+                    ),
+                    name=str(i + 1),
+                )
+                for i, slice_index in enumerate(self._data.get_slice_list(brain))
+            ]
+        )
+        fig.add_trace(
+            self.get_surface(
+                self._data.get_slice_list(brain)[0] - 1,
+                l_transform_parameters,
+                array_projection_small,
+                reduce_resolution_factor,
+            )
+        )
 
-    #     # Add a slider
-    #     def frame_args(duration):
-    #         return {
-    #             "frame": {"duration": duration},
-    #             "mode": "immediate",
-    #             "fromcurrent": True,
-    #             "transition": {"duration": duration, "easing": "linear"},
-    #         }
+        # Add a slider
+        def frame_args(duration):
+            return {
+                "frame": {"duration": duration},
+                "mode": "immediate",
+                "fromcurrent": True,
+                "transition": {"duration": duration, "easing": "linear"},
+            }
 
-    #     sliders = [
-    #         {
-    #             "pad": {"b": 5, "t": 10},
-    #             "len": 0.9,
-    #             "x": 0.05,
-    #             "y": 0,
-    #             "steps": [
-    #                 {
-    #                     "args": [[f.name], frame_args(0)],
-    #                     "label": str(k),
-    #                     "method": "animate",
-    #                 }
-    #                 for k, f in enumerate(fig.frames)
-    #             ],
-    #             "currentvalue": {
-    #                 "visible": False,
-    #             },
-    #         }
-    #     ]
+        sliders = [
+            {
+                "pad": {"b": 5, "t": 10},
+                "len": 0.9,
+                "x": 0.05,
+                "y": 0,
+                "steps": [
+                    {
+                        "args": [[f.name], frame_args(0)],
+                        "label": str(k),
+                        "method": "animate",
+                    }
+                    for k, f in enumerate(fig.frames)
+                ],
+                "currentvalue": {
+                    "visible": False,
+                },
+            }
+        ]
 
-    #     # Layout
-    #     fig.update_layout(
-    #         scene=dict(
-    #             aspectratio=dict(x=1.5, y=1, z=1),
-    #             yaxis=dict(
-    #                 range=[0.0, 0.35],
-    #                 autorange=False,
-    #                 backgroundcolor="rgba(0,0,0,0)",
-    #                 color="grey",
-    #                 gridcolor="grey",
-    #             ),
-    #             zaxis=dict(
-    #                 range=[0.2, -0.02],
-    #                 autorange=False,
-    #                 backgroundcolor="rgba(0,0,0,0)",
-    #                 color="grey",
-    #                 gridcolor="grey",
-    #             ),
-    #             xaxis=dict(
-    #                 range=[0.0, 0.35],
-    #                 autorange=False,
-    #                 backgroundcolor="rgba(0,0,0,0)",
-    #                 color="grey",
-    #                 gridcolor="grey",
-    #             ),
-    #         ),
-    #         margin=dict(t=0, r=0, b=0, l=0),
-    #         template="plotly_dark",
-    #         sliders=sliders,
-    #     )
+        # Layout
+        fig.update_layout(
+            scene=dict(
+                aspectratio=dict(x=1.5, y=1, z=1),
+                yaxis=dict(
+                    range=[0.0, 0.35],
+                    autorange=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                    color="grey",
+                    gridcolor="grey",
+                ),
+                zaxis=dict(
+                    range=[0.2, -0.02],
+                    autorange=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                    color="grey",
+                    gridcolor="grey",
+                ),
+                xaxis=dict(
+                    range=[0.0, 0.35],
+                    autorange=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                    color="grey",
+                    gridcolor="grey",
+                ),
+            ),
+            margin=dict(t=0, r=0, b=0, l=0),
+            template="plotly_dark",
+            sliders=sliders,
+        )
 
-    #     # No display of tick labels as they're wrong anyway
-    #     fig.update_layout(
-    #         scene=dict(
-    #             xaxis=dict(showticklabels=False),
-    #             yaxis=dict(showticklabels=False),
-    #             zaxis=dict(showticklabels=False),
-    #         ),
-    #         paper_bgcolor="rgba(0,0,0,0.)",
-    #         plot_bgcolor="rgba(0,0,0,0.)",
-    #     )
-    #     return fig
+        # No display of tick labels as they're wrong anyway
+        fig.update_layout(
+            scene=dict(
+                xaxis=dict(showticklabels=False),
+                yaxis=dict(showticklabels=False),
+                zaxis=dict(showticklabels=False),
+            ),
+            paper_bgcolor="rgba(0,0,0,0.)",
+            plot_bgcolor="rgba(0,0,0,0.)",
+        )
+        return fig
 
     # # OVERKILL
     # # Part of this function could probably be compiled with numba with some effort, but there's no
@@ -741,96 +741,96 @@ class Figures:
         #     )
         return image
 
-    # def compute_normalization_factor_across_slices(self, cache_flask=None):
-    #     """This function computes a dictionnary of normalization factors (used for MAIA-transformed
-    #     lipids) across all slices (99th percentile of expression).
+    def compute_normalization_factor_across_slices(self, cache_flask=None):
+        """This function computes a dictionnary of normalization factors (used for MAIA-transformed
+        lipids) across all slices (99th percentile of expression).
 
-    #     Args:
-    #         cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
-    #             None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
-    #             None.
-    #     Returns:
-    #         (dict): A dictionnary associating, for each MAIA-transformed lipid name, the 99th
-    #             percentile of the intensity across all slices.
-    #     """
-    #     logging.info(
-    #         "Compute normalization factor across slices for MAIA transformed lipids..."
-    #         + " It may takes a while"
-    #     )
+        Args:
+            cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
+                None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
+                None.
+        Returns:
+            (dict): A dictionnary associating, for each MAIA-transformed lipid name, the 99th
+                percentile of the intensity across all slices.
+        """
+        logging.info(
+            "Compute normalization factor across slices for MAIA transformed lipids..."
+            + " It may takes a while"
+        )
 
-    #     # Dictionnnary that will contain the percentile across all slices of a given brain
-    #     dic_max_percentile = {}
+        # Dictionnnary that will contain the percentile across all slices of a given brain
+        dic_max_percentile = {}
 
-    #     # Function to compute the percentile across all slices
-    #     def _compute_percentile_across_slices(name, structure, cation, brain_1):
-    #         max_perc = 0
-    #         lipid_string = ""
-    #         for slice_index in self._data.get_slice_list(
-    #             indices="brain_1" if brain_1 else "brain_2"
-    #         ):
-    #             # Find lipid location
-    #             l_lipid_loc = (
-    #                 self._data.get_annotations()
-    #                 .index[
-    #                     (self._data.get_annotations()["name"] == name)
-    #                     & (self._data.get_annotations()["structure"] == structure)
-    #                     & (self._data.get_annotations()["slice"] == slice_index)
-    #                     & (self._data.get_annotations()["cation"] == cation)
-    #                 ]
-    #                 .tolist()
-    #             )
+        # # Function to compute the percentile across all slices
+        # def _compute_percentile_across_slices(name, structure, cation, brain_1):
+        #     max_perc = 0
+        #     lipid_string = ""
+        #     for slice_index in self._data.get_slice_list(
+        #         indices="brain_1" if brain_1 else "brain_2"
+        #     ):
+        #         # Find lipid location
+        #         l_lipid_loc = (
+        #             self._data.get_annotations()
+        #             .index[
+        #                 (self._data.get_annotations()["name"] == name)
+        #                 & (self._data.get_annotations()["structure"] == structure)
+        #                 & (self._data.get_annotations()["slice"] == slice_index)
+        #                 & (self._data.get_annotations()["cation"] == cation)
+        #             ]
+        #             .tolist()
+        #         )
 
-    #             # If several lipids correspond to the selection, we have a problem...
-    #             if len(l_lipid_loc) >= 1:
-    #                 index = l_lipid_loc[-1]
+        #         # If several lipids correspond to the selection, we have a problem...
+        #         if len(l_lipid_loc) >= 1:
+        #             index = l_lipid_loc[-1]
 
-    #                 # get final lipid name
-    #                 lipid_string = name + "_" + structure + "_" + cation
+        #             # get final lipid name
+        #             lipid_string = name + "_" + structure + "_" + cation
 
-    #                 # get lipid bounds
-    #                 lb_mz = float(self._data.get_annotations().iloc[index]["min"])
-    #                 hb_mz = float(self._data.get_annotations().iloc[index]["max"])
+        #             # get lipid bounds
+        #             lb_mz = float(self._data.get_annotations().iloc[index]["min"])
+        #             hb_mz = float(self._data.get_annotations().iloc[index]["max"])
 
-    #                 # Get corresponding image
-    #                 image = compute_thread_safe_function(
-    #                     compute_image_using_index_and_image_lookup,
-    #                     cache_flask,
-    #                     self._data,
-    #                     slice_index,
-    #                     lb_mz,
-    #                     hb_mz,
-    #                     self._data.get_array_spectra(slice_index),
-    #                     self._data.get_array_lookup_pixels(slice_index),
-    #                     self._data.get_image_shape(slice_index),
-    #                     self._data.get_array_lookup_mz(slice_index),
-    #                     self._data.get_array_cumulated_lookup_mz_image(slice_index),
-    #                     self._data.get_divider_lookup(slice_index),
-    #                     self._data.get_array_peaks_transformed_lipids(slice_index),
-    #                     self._data.get_array_corrective_factors(slice_index).astype(np.float32),
-    #                     apply_transform=False,
-    #                 )
+        #             # Get corresponding image
+        #             image = compute_thread_safe_function(
+        #                 compute_image_using_index_and_image_lookup,
+        #                 cache_flask,
+        #                 self._data,
+        #                 slice_index,
+        #                 lb_mz,
+        #                 hb_mz,
+        #                 self._data.get_array_spectra(slice_index),
+        #                 self._data.get_array_lookup_pixels(slice_index),
+        #                 self._data.get_image_shape(slice_index),
+        #                 self._data.get_array_lookup_mz(slice_index),
+        #                 self._data.get_array_cumulated_lookup_mz_image(slice_index),
+        #                 self._data.get_divider_lookup(slice_index),
+        #                 self._data.get_array_peaks_transformed_lipids(slice_index),
+        #                 self._data.get_array_corrective_factors(slice_index).astype(np.float32),
+        #                 apply_transform=False,
+        #             )
 
-    #                 # Check 99th percentile for normalization
-    #                 perc = np.percentile(image, 99.0)
+        #             # Check 99th percentile for normalization
+        #             perc = np.percentile(image, 99.0)
 
-    #                 # perc must be quite small in theory... otherwise it's a bug
-    #                 if perc > max_perc:  # and perc<1:
-    #                     max_perc = perc
-    #         return max_perc, lipid_string
+        #             # perc must be quite small in theory... otherwise it's a bug
+        #             if perc > max_perc:  # and perc<1:
+        #                 max_perc = perc
+        #     return max_perc, lipid_string
 
-    #     # Simulate a click on all MAIA transformed lipids
-    #     for brain_1 in [True, False]:
-    #         for (
-    #             index,
-    #             (name, structure, cation, mz),
-    #         ) in self._data.get_annotations_MAIA_transformed_lipids(brain_1=brain_1).iterrows():
-    #             max_perc, lipid_string = _compute_percentile_across_slices(
-    #                 name, structure, cation, brain_1
-    #             )
-    #             # Store max percentile across slices
-    #             dic_max_percentile[(lipid_string, brain_1)] = max_perc
+        # # Simulate a click on all MAIA transformed lipids
+        # for brain_1 in [True, False]:
+        #     for (
+        #         index,
+        #         (name, structure, cation, mz),
+        #     ) in self._data.get_annotations_MAIA_transformed_lipids(brain_1=brain_1).iterrows():
+        #         max_perc, lipid_string = _compute_percentile_across_slices(
+        #             name, structure, cation, brain_1
+        #         )
+        #         # Store max percentile across slices
+        #         dic_max_percentile[(lipid_string, brain_1)] = max_perc
 
-    #     return dic_max_percentile
+        return None # dic_max_percentile
 
     def build_lipid_heatmap_from_image(
         self,

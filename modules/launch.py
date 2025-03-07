@@ -329,70 +329,71 @@ class Launch:
 
         # Simulate the user drawing one region (here on slice 1), and compute the corresponding
         # spectral data
-        def draw_region_and_compute_spectral_data():
-            # Define function parameters
-            slice_index = 1
-            # path = np.array(
-            #     [(53, 108), (54, 102), (59, 101), (58, 103), (56, 105), (53, 108)], dtype=np.int32
-            # )
+        # def draw_region_and_compute_spectral_data():
+        #     # Define function parameters
+        #     slice_index = 1
+        #     path = np.array(
+        #         [(53, 108), (54, 102), (59, 101), (58, 103), (56, 105), (53, 108)], dtype=np.int32
+        #     )
 
-            # # Force compile numba functions executing them
-            # list_index_bound_rows, list_index_bound_column_per_row = sample_rows_from_path(path)
-            # grah_scattergl_data = compute_spectrum_per_row_selection(
-            #     list_index_bound_rows,
-            #     list_index_bound_column_per_row,
-            #     self.data.get_array_spectra(slice_index),
-            #     self.data.get_array_lookup_pixels(slice_index),
-            #     self.data.get_image_shape(slice_index),
-            #     self.data.get_array_peaks_transformed_lipids(slice_index),
-            #     self.data.get_array_corrective_factors(slice_index).astype(np.float32),
-            #     zeros_extend=False,
-            #     apply_correction=False,
-            # )
-            # grah_scattergl_data = convert_array_to_fine_grained(
-            #     grah_scattergl_data,
-            #     10**-3,
-            #     lb=350,
-            #     hb=1250,
-            # )
-            # grah_scattergl_data = strip_zeros(grah_scattergl_data)
-            # l_idx_labels = np.array([-1, 2, -1], dtype=np.int32)
-            # return_idx_sup(l_idx_labels)
-            # return_idx_inf(l_idx_labels)
-            # add_zeros_to_spectrum(
-            #     grah_scattergl_data,
-            #     pad_individual_peaks=True,
-            #     padding=10**-4,
-            # )
+        #     # Force compile numba functions executing them
+        #     list_index_bound_rows, list_index_bound_column_per_row = sample_rows_from_path(path)
+        #     grah_scattergl_data = compute_spectrum_per_row_selection(
+        #         list_index_bound_rows,
+        #         list_index_bound_column_per_row,
+        #         self.data.get_array_spectra(slice_index),
+        #         self.data.get_array_lookup_pixels(slice_index),
+        #         self.data.get_image_shape(slice_index),
+        #         self.data.get_array_peaks_transformed_lipids(slice_index),
+        #         self.data.get_array_corrective_factors(slice_index).astype(np.float32),
+        #         zeros_extend=False,
+        #         apply_correction=False,
+        #     )
+        #     grah_scattergl_data = convert_array_to_fine_grained(
+        #         grah_scattergl_data,
+        #         10**-3,
+        #         lb=350,
+        #         hb=1250,
+        #     )
+        #     grah_scattergl_data = strip_zeros(grah_scattergl_data)
+        #     l_idx_labels = np.array([-1, 2, -1], dtype=np.int32)
+        #     return_idx_sup(l_idx_labels)
+        #     return_idx_inf(l_idx_labels)
+        #     add_zeros_to_spectrum(
+        #         grah_scattergl_data,
+        #         pad_individual_peaks=True,
+        #         padding=10**-4,
+        #     )
 
-            # array_intensity_with_lipids = np.array(
-            #     [1.21864345e-04, 9.33317497e-05, 6.23099259e-05], dtype=np.float32
-            # )
-            # array_idx_labels = np.array([-1 - 1 - 1], dtype=np.int32)
-            # compute_avg_intensity_per_lipid(array_intensity_with_lipids, array_idx_labels)
-            # compute_image_using_index_and_image_lookup(
-            #     500.1,
-            #     500.2,
-            #     self.data.get_array_spectra(slice_index),
-            #     self.data.get_array_lookup_pixels(slice_index),
-            #     self.data.get_image_shape(slice_index),
-            #     self.data.get_array_lookup_mz(slice_index),
-            #     self.data.get_array_cumulated_lookup_mz_image(slice_index),
-            #     self.data.get_divider_lookup(slice_index),
-            #     self.data.get_array_peaks_transformed_lipids(slice_index),
-            #     self.data.get_array_corrective_factors(slice_index).astype(np.float32),
-            #     apply_transform=False,
-            # )
+        #     array_intensity_with_lipids = np.array(
+        #         [1.21864345e-04, 9.33317497e-05, 6.23099259e-05], dtype=np.float32
+        #     )
+        #     array_idx_labels = np.array([-1 - 1 - 1], dtype=np.int32)
+        #     compute_avg_intensity_per_lipid(array_intensity_with_lipids, array_idx_labels)
+        #     compute_image_using_index_and_image_lookup(
+        #         500.1,
+        #         500.2,
+        #         self.data.get_array_spectra(slice_index),
+        #         self.data.get_array_lookup_pixels(slice_index),
+        #         self.data.get_image_shape(slice_index),
+        #         self.data.get_array_lookup_mz(slice_index),
+        #         self.data.get_array_cumulated_lookup_mz_image(slice_index),
+        #         self.data.get_divider_lookup(slice_index),
+        #         self.data.get_array_peaks_transformed_lipids(slice_index),
+        #         self.data.get_array_corrective_factors(slice_index).astype(np.float32),
+        #         apply_transform=False,
+        #     )
 
-        # def select_lipid_and_region_and_plot_volume():
-        #     ll_t_bounds = [[None, None, None] for i in self.data.get_slice_list(indices="brain_1")]
-        #     ll_t_bounds[0] = [[(622.61, 622.62)], None, None]
-        #     set_id_regions = {1006}
-        #     self.figures.compute_3D_volume_figure(None, ll_t_bounds, set_id_regions=set_id_regions)
+        def select_lipid_and_region_and_plot_volume():
+            # ll_t_bounds = [[None, None, None] for i in self.data.get_slice_list(indices="brain_1")]
+            # ll_t_bounds[0] = [[(622.61, 622.62)], None, None]
+            # set_id_regions = {1006}
+            # self.figures.compute_3D_volume_figure(None, ll_t_bounds, set_id_regions=set_id_regions)
+            self.figures.compute_heatmap_per_lipid(1.0, "SM 34:1;O2")
 
-        # logging.info("Please wait while compiled functions are executed...")
+        logging.info("Please wait while compiled functions are executed...")
         # draw_region_and_compute_spectral_data()
-        # select_lipid_and_region_and_plot_volume()
+        select_lipid_and_region_and_plot_volume()
         # Clean memory as it has not been done since compute_thread_safe function wasn't used
         # self.data.clean_memory(slice_index=1)
         logging.info("Compiled functions executed.")

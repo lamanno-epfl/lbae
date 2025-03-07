@@ -35,6 +35,7 @@ from modules.tools.misc import logmem
 
 ABA_DIM = (528, 320, 456)
 
+
 # ==================================================================================================
 # --- Class
 # ==================================================================================================
@@ -195,7 +196,8 @@ class Atlas:
         )
 
         # Record shape of the warped data
-        self.image_shape = [ABA_DIM[2], ABA_DIM[1]] # list(self.array_coordinates_warped_data.shape[1:-1])
+        self.image_shape = list(self.array_coordinates_warped_data.shape[1:-1])
+        # self.image_shape = [ABA_DIM[2], ABA_DIM[1]]
 
         # Record dict that associate brain region (complete string) to specific id (short label),
         # along with graph of structures (l_nodes and l_parents). Although the treemap graph is

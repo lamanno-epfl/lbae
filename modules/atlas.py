@@ -33,6 +33,7 @@ from modules.tools.spectra import compute_spectrum_per_row_selection, compute_th
 from modules.atlas_labels import Labels
 from modules.tools.misc import logmem
 
+ABA_DIM = (528, 320, 456)
 
 # ==================================================================================================
 # --- Class
@@ -134,16 +135,16 @@ class Atlas:
         self.data = maldi_data
         self.storage = storage
 
-        # Correct atlas resolution to 100 if sampled app
-        if maldi_data._sample_data:
-            logging.info("Atlas resolution set to 100um as the sampled data is used.")
-            self.resolution = 100
+        # # Correct atlas resolution to 100 if sampled app
+        # if maldi_data._sample_data:
+        #     logging.info("Atlas resolution set to 100um as the sampled data is used.")
+        #     self.resolution = 100
 
-        # Load or download the atlas if it's the first time BrainGlobeAtlas is used
-        if maldi_data._sample_data:
-            brainglobe_dir = "data_sample/atlas/"
-        else:
-            brainglobe_dir = "data/atlas/"
+        # # Load or download the atlas if it's the first time BrainGlobeAtlas is used
+        # if maldi_data._sample_data:
+        #     brainglobe_dir = "data_sample/atlas/"
+        # else:
+        brainglobe_dir = "data/atlas/"
         os.makedirs(brainglobe_dir, exist_ok=True)
         self.bg_atlas = BrainGlobeAtlas(
             "allen_mouse_" + str(self.resolution) + "um",
@@ -154,13 +155,13 @@ class Atlas:
         # Correct path for resolution
         appendix = "_v1.2" if self.resolution == 100 else ""
 
-        # Remove the meshes in the sampled app as they're not used
-        if maldi_data._sample_data and "meshes" in os.listdir(
-            brainglobe_dir + "allen_mouse_" + str(self.resolution) + "um" + appendix
-        ):
-            shutil.rmtree(
-                brainglobe_dir + "allen_mouse_" + str(self.resolution) + "um" + appendix + "/meshes"
-            )
+        # # Remove the meshes in the sampled app as they're not used
+        # if maldi_data._sample_data and "meshes" in os.listdir(
+        #     brainglobe_dir + "allen_mouse_" + str(self.resolution) + "um" + appendix
+        # ):
+        #     shutil.rmtree(
+        #         brainglobe_dir + "allen_mouse_" + str(self.resolution) + "um" + appendix + "/meshes"
+        #     )
 
         # When computing an array of figures with a slider to explore the atlas, subsample in the
         # longitudinal direction, otherwise it's too heavy
@@ -184,17 +185,17 @@ class Atlas:
 
         # Load array of coordinates for warped data (can't be loaded on the fly from shelve as used
         # with hovering). Weights ~225mb
-        if maldi_data._sample_data:
-            with np.load("data_sample/tiff_files/coordinates_warped_data.npz") as handle:
-                self.array_coordinates_warped_data = handle["array_coordinates_warped_data"]
+        # if maldi_data._sample_data:
+        #     with np.load("data_sample/tiff_files/coordinates_warped_data.npz") as handle:
+        #         self.array_coordinates_warped_data = handle["array_coordinates_warped_data"]
 
-        else:
-            self.array_coordinates_warped_data = skimage.io.imread(
-                "data/tiff_files/coordinates_warped_data.tif"
-            )
+        # else:
+        self.array_coordinates_warped_data = skimage.io.imread(
+            "data/tiff_files/coordinates_warped_data.tif"
+        )
 
         # Record shape of the warped data
-        self.image_shape = list(self.array_coordinates_warped_data.shape[1:-1])
+        self.image_shape = [ABA_DIM[2], ABA_DIM[1]] # list(self.array_coordinates_warped_data.shape[1:-1])
 
         # Record dict that associate brain region (complete string) to specific id (short label),
         # along with graph of structures (l_nodes and l_parents). Although the treemap graph is
@@ -212,6 +213,7 @@ class Atlas:
             compute_function=self.compute_hierarchy_list,
         )
 
+        # TODO: harmonize with current data (maybe upscale delle coordinate dell'allen?)
         # Array_projection_corrected is used a lot for lipid expression plots, as it encodes the
         # warping transformation of the data. Therefore it shouldn't be used a as a property.
         # Weights ~150mb
@@ -236,6 +238,7 @@ class Atlas:
             atlas_correction=True,
         )[2]
 
+        # TODO: recompute the masks for 3D region identification
         # Dictionnary of existing masks per slice, which associates slice index (key) to a set of
         # masks acronyms
         if self.storage.check_shelved_object("atlas/atlas_objects", "dic_existing_masks"):
@@ -250,10 +253,10 @@ class Atlas:
             # Since this function is called at startup, no data locking is needed
             self.save_all_projected_masks_and_spectra(cache_flask=None, sample=sample)
 
-        # These attributes are defined later as properties as they are only used during
-        # precomputations
-        self._array_projection_corrected = None
-        self._list_projected_atlas_borders_arrays = None
+        # # These attributes are defined later as properties as they are only used during
+        # # precomputations
+        # self._array_projection_corrected = None
+        # self._list_projected_atlas_borders_arrays = None
 
         logging.info("Atlas object instantiated" + logmem())
 
@@ -261,53 +264,53 @@ class Atlas:
     # --- Properties
     # ==============================================================================================
 
-    @property
-    def array_projection_corrected(self):
-        """Load arrays of images using atlas projection. It's a property to save memory as it is
-        only used with objects that should also be precomputed.
+    # @property
+    # def array_projection_corrected(self):
+    #     """Load arrays of images using atlas projection. It's a property to save memory as it is
+    #     only used with objects that should also be precomputed.
 
-        Returns:
-            (np.ndarray): A three-dimensional array which contains the data (one integer per
-                coordinate, corresponding to a pixel intensity) from our original acquisition.
-        """
-        if self._array_projection_corrected is None:
-            logging.info(
-                "array_projection_corrected is being loaded. This should only happen during"
-                " precomputations."
-                + logmem()
-            )
-            self._array_projection_corrected = self.storage.return_shelved_object(
-                "atlas/atlas_objects",
-                "arrays_projection_corrected",
-                force_update=False,
-                compute_function=self.compute_array_projection,
-                nearest_neighbour_correction=True,
-                atlas_correction=True,
-            )[0]
-        return self._array_projection_corrected
+    #     Returns:
+    #         (np.ndarray): A three-dimensional array which contains the data (one integer per
+    #             coordinate, corresponding to a pixel intensity) from our original acquisition.
+    #     """
+    #     if self._array_projection_corrected is None:
+    #         logging.info(
+    #             "array_projection_corrected is being loaded. This should only happen during"
+    #             " precomputations."
+    #             + logmem()
+    #         )
+    #         self._array_projection_corrected = self.storage.return_shelved_object(
+    #             "atlas/atlas_objects",
+    #             "arrays_projection_corrected",
+    #             force_update=False,
+    #             compute_function=self.compute_array_projection,
+    #             nearest_neighbour_correction=True,
+    #             atlas_correction=True,
+    #         )[0]
+    #     return self._array_projection_corrected
 
-    @property
-    def list_projected_atlas_borders_arrays(self):
-        """Load array of projected atlas borders (i.e. image of atlas annotations). It's a property
-        to save memory as it is only used with objects that should also be precomputed.
+    # @property
+    # def list_projected_atlas_borders_arrays(self):
+    #     """Load array of projected atlas borders (i.e. image of atlas annotations). It's a property
+    #     to save memory as it is only used with objects that should also be precomputed.
 
-        Returns:
-            (list(np.ndarray)): A list of arrays, one per slice, which contains the atlas
-                borders projected on our data.
-        """
-        if self._list_projected_atlas_borders_arrays is None:
-            logging.info(
-                "list_projected_atlas_borders_arrays is being loaded. This should only happen"
-                " during precomputations."
-                + logmem()
-            )
-            self._list_projected_atlas_borders_arrays = self.storage.return_shelved_object(
-                "atlas/atlas_objects",
-                "list_projected_atlas_borders_arrays",
-                force_update=False,
-                compute_function=self.compute_list_projected_atlas_borders_figures,
-            )
-        return self._list_projected_atlas_borders_arrays
+    #     Returns:
+    #         (list(np.ndarray)): A list of arrays, one per slice, which contains the atlas
+    #             borders projected on our data.
+    #     """
+    #     if self._list_projected_atlas_borders_arrays is None:
+    #         logging.info(
+    #             "list_projected_atlas_borders_arrays is being loaded. This should only happen"
+    #             " during precomputations."
+    #             + logmem()
+    #         )
+    #         self._list_projected_atlas_borders_arrays = self.storage.return_shelved_object(
+    #             "atlas/atlas_objects",
+    #             "list_projected_atlas_borders_arrays",
+    #             force_update=False,
+    #             compute_function=self.compute_list_projected_atlas_borders_figures,
+    #         )
+    #     return self._list_projected_atlas_borders_arrays
 
     # ==============================================================================================
     # --- Methods

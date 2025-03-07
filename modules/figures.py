@@ -57,10 +57,7 @@ class Figures:
         _data (MaldiData): MaldiData object, used to manipulate the raw MALDI data.
         _storage (Storage): Used to access the shelve database.
         _atlas (Atlas): Used to manipulate the objects coming from the Allen Brain Atlas.
-        _scRNAseq (ScRNAseq): Used to manipulate the objects coming from the scRNAseq dataset.
-        dic_normalization_factors (dict): Dictionnary of normalization factors across slices for
-            MAIA.
-
+        
     Methods:
         __init__(): Initialize the Figures class.
         compute_array_basic_images(): Computes a three-dimensional array representing all slices
@@ -123,15 +120,16 @@ class Figures:
             used in a 3D representation of the brain.
     """
 
-    __slots__ = ["_data", "_atlas", "_scRNAseq", "_storage", "dic_normalization_factors"]
+    __slots__ = ["_data", "_atlas", "_storage"]
 
     # ==============================================================================================
     # --- Constructor
     # ==============================================================================================
 
     def __init__(self, maldi_data, storage, atlas, 
-                brain_id, slice_index, lipid_name,
-                scRNAseq, sample=False):
+                # brain_id, slice_index, lipid_name,
+                # scRNAseq, sample=False
+                ):
         """Initialize the Figures class.
 
         Args:
@@ -972,88 +970,143 @@ class Figures:
 
     #     return fig
 
-    def compute_heatmap_per_lipid_selection(
+    # KEY: invece che fare compute_image_per_mz, fare compute_image_per_lipid (vedi lipid_selection.py, line 74)
+    def compute_heatmap_per_lipid(
         self,
         slice_index,
-        # ll_t_bounds,
-        # normalize=True,
+        lipid_name,
+        draw=False,
         # projected_image=True,
-        # apply_transform=False,
-        ll_lipid_names,
         return_base64_string=False,
         cache_flask=None,
     ):
-        """This function is very similar to compute_heatmap_per_mz, but it takes a list of lipid
-        boundaries, possibly along with lipid names, instead of just two boundaries. It returns a
-        heatmap of the sum of expression of the requested lipids in the slice.
+        """This function takes two boundaries and a slice index, and returns a heatmap of the lipid
+        expressed in the slice whose m/z is between the two boundaries.
 
         Args:
             slice_index (int): The index of the requested slice.
-            ll_t_bounds (list(list(tuple))): A list of lists of lipid boundaries (tuples). The first
-                list is used to separate image channels (although this is not used in the function).
-                The second list is used to separate lipid.
-            normalize (bool, optional): If True, and the lipid has been MAIA transformed (and is
-                provided with the parameter lipid_name) and apply_transform is True, the resulting
-                array is normalized according to a factor computed across all slice. If MAIA has not
-                been applied to the current selection or apply_transform is False, it is normalized
-                according to the 99th percentile. Else, it is not normalized. Defaults to True.
+            lb_mz (float, optional): The lower m/z boundary. Defaults to None.
+            hb_mz (float, optional): The higher m/z boundary. Defaults to None.
+            draw (bool, optional): If True, the user will have the possibility to draw on the
+                resulting Plotly Figure. Defaults to False.
             projected_image (bool, optional): If True, the pixels of the original acquisition get
                 matched to a higher-resolution, warped space. The gaps are filled by duplicating the
                 most appropriate pixels (see dosctring of Atlas.project_image() for more
                 information). Defaults to True.
-            apply_transform (bool, optional): If True, applies the MAIA transform (if possible) to
-                the current selection, given that the parameter normalize is also True, and that
-                lipid_name corresponds to an existing lipid. Defaults to False.
-            ll_lipid_names (list(list(int)), optional): List of list of lipid names that must be
-                MAIA-transformed, if apply_transform and normalize are True. The first list is used
-                to separate channels, when applicable. Defaults to None.
             return_base64_string (bool, optional): If True, the base64 string of the image is
                 returned directly, before any figure building. Defaults to False.
             cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
                 None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
                 None.
-
         Returns:
             Depending on the value return_base64_string, may either return a base64 string, or
                 a Plotly Figure.
         """
 
-        logging.info("Compute heatmap per multi-lipid selection")
+        logging.info("Starting figure computation")
 
-        # Start from empty image and add selected lipids
-        # * Caution: array must be int, float gets badly converted afterwards
-        image = np.zeros(self._atlas.image_shape, dtype=np.int32)
+        logging.info("Getting image array")
 
-        # # Build empty lipid names if not provided
-        # if ll_lipid_names is None:
-        #     ll_lipid_names = [["" for y in l_t_bounds] for l_t_bounds in ll_t_bounds]
-
-        # TYPE: possible inconsistency, for us lipid_names would be a list of strings, not a list of lists
-        # Loop over channels
-        for l_lipid_names in ll_lipid_names:
-            # Compute expression image per lipid
-            image_temp = self.compute_image_per_lipid(
-                slice_index,
-                RGB_format=True,
-                lipid_name=l_lipid_names,
-                cache_flask=cache_flask,
-            )
-            # TYPE: RGB image, expected 3 channels, not sum values elementwise
-            image += image_temp
+        # Compute image with given bounds
+        image = self.compute_image_per_lipid(
+            slice_index,
+            RGB_format=True,
+            lipid_name=lipid_name,
+            # projected_image=projected_image,
+            cache_flask=cache_flask,
+        )
 
         # Compute corresponding figure
-        fig = self.build_lipid_heatmap_from_image(image, return_base64_string=return_base64_string)
+        fig = self.build_lipid_heatmap_from_image(
+            image, return_base64_string=return_base64_string, draw=draw
+        )
 
         return fig
+
+
+    # USELESS
+    # def compute_heatmap_per_lipid_selection(
+    #     self,
+    #     slice_index,
+    #     # ll_t_bounds,
+    #     # normalize=True,
+    #     # projected_image=True,
+    #     # apply_transform=False,
+    #     ll_lipid_names,
+    #     return_base64_string=False,
+    #     cache_flask=None,
+    # ):
+    #     """This function is very similar to compute_heatmap_per_mz, but it takes a list of lipid
+    #     boundaries, possibly along with lipid names, instead of just two boundaries. It returns a
+    #     heatmap of the sum of expression of the requested lipids in the slice.
+
+    #     Args:
+    #         slice_index (int): The index of the requested slice.
+    #         ll_t_bounds (list(list(tuple))): A list of lists of lipid boundaries (tuples). The first
+    #             list is used to separate image channels (although this is not used in the function).
+    #             The second list is used to separate lipid.
+    #         normalize (bool, optional): If True, and the lipid has been MAIA transformed (and is
+    #             provided with the parameter lipid_name) and apply_transform is True, the resulting
+    #             array is normalized according to a factor computed across all slice. If MAIA has not
+    #             been applied to the current selection or apply_transform is False, it is normalized
+    #             according to the 99th percentile. Else, it is not normalized. Defaults to True.
+    #         projected_image (bool, optional): If True, the pixels of the original acquisition get
+    #             matched to a higher-resolution, warped space. The gaps are filled by duplicating the
+    #             most appropriate pixels (see dosctring of Atlas.project_image() for more
+    #             information). Defaults to True.
+    #         apply_transform (bool, optional): If True, applies the MAIA transform (if possible) to
+    #             the current selection, given that the parameter normalize is also True, and that
+    #             lipid_name corresponds to an existing lipid. Defaults to False.
+    #         ll_lipid_names (list(list(int)), optional): List of list of lipid names that must be
+    #             MAIA-transformed, if apply_transform and normalize are True. The first list is used
+    #             to separate channels, when applicable. Defaults to None.
+    #         return_base64_string (bool, optional): If True, the base64 string of the image is
+    #             returned directly, before any figure building. Defaults to False.
+    #         cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
+    #             None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
+    #             None.
+
+    #     Returns:
+    #         Depending on the value return_base64_string, may either return a base64 string, or
+    #             a Plotly Figure.
+    #     """
+
+    #     logging.info("Compute heatmap per multi-lipid selection")
+
+    #     # Start from empty image and add selected lipids
+    #     # * Caution: array must be int, float gets badly converted afterwards
+    #     image = np.zeros(self._atlas.image_shape, dtype=np.int32)
+
+    #     # # Build empty lipid names if not provided
+    #     # if ll_lipid_names is None:
+    #     #     ll_lipid_names = [["" for y in l_t_bounds] for l_t_bounds in ll_t_bounds]
+
+    #     # TYPE: possible inconsistency, for us lipid_names would be a list of strings, not a list of lists
+    #     # Loop over channels
+    #     for l_lipid_names in ll_lipid_names:
+    #         # Compute expression image per lipid
+    #         image_temp = self.compute_image_per_lipid(
+    #             slice_index,
+    #             RGB_format=True,
+    #             lipid_name=l_lipid_names,
+    #             cache_flask=cache_flask,
+    #         )
+    #         # TYPE: RGB image, expected 3 channels, not sum values elementwise
+    #         image += image_temp
+
+    #     # Compute corresponding figure
+    #     fig = self.build_lipid_heatmap_from_image(image, return_base64_string=return_base64_string)
+
+    #     return fig
 
     def compute_rgb_array_per_lipid_selection(
         self,
         slice_index,
-        ll_t_bounds,
-        normalize_independently=True,
-        projected_image=True,
-        log=False,
-        apply_transform=False,
+        # ll_t_bounds,
+        # normalize_independently=True,
+        # projected_image=True,
+        # log=False,
+        # apply_transform=False,
         ll_lipid_names=None,
         cache_flask=None,
     ):
@@ -1089,46 +1142,47 @@ class Figures:
                 corresponds to the channels.
         """
 
-        # Empty lipid names if no names provided
-        if ll_lipid_names is None:
-            ll_lipid_names = [
-                ["" for y in l_t_bounds] if l_t_bounds is not None else [""]
-                for l_t_bounds in ll_t_bounds
-            ]
+        # # Empty lipid names if no names provided
+        # if ll_lipid_names is None:
+        #     ll_lipid_names = [
+        #         ["" for y in l_t_bounds] if l_t_bounds is not None else [""]
+        #         for l_t_bounds in ll_t_bounds
+        #     ]
 
         # Build a list of empty images and add selected lipids for each channel
         l_images = []
 
         # Loop over channels
-        for l_boundaries, l_names in zip(ll_t_bounds, ll_lipid_names):
-            image = np.zeros(
-                self._atlas.image_shape
-                if projected_image
-                else self._data.get_image_shape(slice_index)
+        # TYPE: possible inconsistency, for us lipid_names would be a list of strings, not a list of lists
+        for lipid_name in ll_lipid_names:
+            # image = np.zeros(
+            #     self._atlas.image_shape
+            #     # if projected_image
+            #     # else self._data.get_image_shape(slice_index)
+            # )
+            # if l_boundaries is not None:
+            #     # Loop over lipids
+            #     for boundaries, lipid_name in zip(l_boundaries, l_names):
+            #         if boundaries is not None:
+            #             (lb_mz, hb_mz) = boundaries
+
+            # Cmpute expression image per lipid
+            image_temp = self.compute_image_per_lipid(
+                slice_index,
+                # lb_mz,
+                # hb_mz,
+                RGB_format=True,
+                # normalize=normalize_independently,
+                # projected_image=projected_image,
+                # log=log,
+                # apply_transform=apply_transform,
+                lipid_name=lipid_name,
+                cache_flask=cache_flask,
             )
-            if l_boundaries is not None:
-                # Loop over lipids
-                for boundaries, lipid_name in zip(l_boundaries, l_names):
-                    if boundaries is not None:
-                        (lb_mz, hb_mz) = boundaries
+            # if image_temp is not None:
+            #     image += image_temp
 
-                        # Cmpute expression image per lipid
-                        image_temp = self.compute_image_per_lipid(
-                            slice_index,
-                            lb_mz,
-                            hb_mz,
-                            RGB_format=True,
-                            normalize=normalize_independently,
-                            projected_image=projected_image,
-                            log=log,
-                            apply_transform=apply_transform,
-                            lipid_name=lipid_name,
-                            cache_flask=cache_flask,
-                        )
-                        if image_temp is not None:
-                            image += image_temp
-
-            l_images.append(image)
+            l_images.append(image_temp) #####
 
         # Reoder axis to match plotly go.image requirements
         array_image = np.moveaxis(np.array(l_images), 0, 2)
@@ -1138,12 +1192,12 @@ class Figures:
     def compute_rgb_image_per_lipid_selection(
         self,
         slice_index,
-        ll_t_bounds,
-        normalize_independently=True,
-        projected_image=True,
-        log=False,
+        # ll_t_bounds,
+        # normalize_independently=True,
+        # projected_image=True,
+        # log=False,
         return_image=False,
-        apply_transform=False,
+        # apply_transform=False,
         ll_lipid_names=None,
         return_base64_string=False,
         cache_flask=None,
@@ -1185,20 +1239,20 @@ class Figures:
 
         logging.info("Started RGB image computation for slice " + str(slice_index) + logmem())
 
-        # Empty lipid names if no names provided
-        if ll_lipid_names is None:
-            ll_lipid_names = [["" for y in l_t_bounds] for l_t_bounds in ll_t_bounds]
+        # # Empty lipid names if no names provided
+        # if ll_lipid_names is None:
+        #     ll_lipid_names = [["" for y in l_t_bounds] for l_t_bounds in ll_t_bounds]
 
         logging.info("Acquiring array_image for slice " + str(slice_index) + logmem())
 
         # Get RGB array for the current lipid selection
         array_image = self.compute_rgb_array_per_lipid_selection(
             slice_index,
-            ll_t_bounds,
-            normalize_independently=normalize_independently,
-            projected_image=projected_image,
-            log=log,
-            apply_transform=apply_transform,
+            # ll_t_bounds,
+            # normalize_independently=normalize_independently,
+            # projected_image=projected_image,
+            # log=log,
+            # apply_transform=apply_transform,
             ll_lipid_names=ll_lipid_names,
             cache_flask=cache_flask,
         )
@@ -2036,757 +2090,757 @@ class Figures:
 
         return fig
 
-    def compute_clustergram_figure(
-        self,
-        set_progress,
-        cache_flask,
-        l_selected_regions,
-        percentile=90,
-        brain_1=False,
-    ):
-        """This function computes a Plotly Clustergram figure, allowing to cluster and compare the
-        expression of all the MAIA-transformed lipids in the dataset in the selected regions.
-
-        Args:
-            set_progress: Used as part of the Plotly long callbacks, to indicate the progress of the
-                computation in the corresponding progress bar.
-            cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
-                None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
-                None.
-            l_selected_regions (list(int), optional): A list containing the identifiers of the brain
-                regions (at the very bottom of the hierarchy) whose border must be annotated.
-            percentile (int, optional): The percentile of average expression below which the lipids
-                must be discarded (to get rid of low expression noise). Defaults to 90.
-            brain_1 (bool): If True, the brain 1 data is used. Else, the brain 2 data is used.
-                Defaults to False.
-
-        Returns:
-            (go.Figure): a Plotly Clustergram figure clustering and comparing the expression of all
-                the MAIA-transformed lipids in the dataset in the selected regions.
-        """
-        logging.info("Starting computing clustergram figure")
-
-        # Memoize result as it's called everytime a filtering is done
-        @cache_flask.memoize()
-        def return_df_avg_lipids(l_selected_regions):
-            dic_avg_lipids = {}
-            l_slices = self._data.get_slice_list(indices="brain_1" if brain_1 else "brain_2")
-            for slice_index in l_slices:
-                # Display progress every 10 slices
-                if slice_index % 10 == 0:
-                    set_progress(
-                        (
-                            int(slice_index / len(l_slices) * 100),
-                            "Loading slice n°" + str(slice_index),
-                        )
-                    )
-
-                l_spectra = []
-                for region in l_selected_regions:
-                    long_region = self._atlas.dic_acronym_name[region]
-                    if slice_index - 1 in self._atlas.dic_existing_masks:
-                        if region in self._atlas.dic_existing_masks[slice_index - 1]:
-                            grah_scattergl_data = self._atlas.get_projected_mask_and_spectrum(
-                                slice_index - 1, long_region, MAIA_correction=True
-                            )[1]
-                            l_spectra.append(grah_scattergl_data)
-                        else:
-                            l_spectra.append(None)
-                    else:
-                        raise Exception(
-                            "The masks have not been precomputed. Please precompute them before"
-                            " running this function."
-                        )
-                ll_idx_labels = global_lipid_index_store(self._data, slice_index - 1, l_spectra)
-                logging.info("Computing dictionnary for averaging slice " + str(slice_index))
-
-                # Compute average expression for each lipid and each selection
-                set_lipids_idx = set()
-                ll_lipids_idx = []
-                ll_avg_intensity = []
-                n_sel = len(l_spectra)
-                for spectrum, l_idx_labels in zip(l_spectra, ll_idx_labels):
-                    if spectrum is not None:
-                        array_intensity_with_lipids = np.array(spectrum, dtype=np.float32)[1, :]
-                        array_idx_labels = np.array(l_idx_labels, dtype=np.int32)
-
-                        l_lipids_idx, l_avg_intensity = compute_avg_intensity_per_lipid(
-                            array_intensity_with_lipids, array_idx_labels
-                        )
-                        set_lipids_idx.update(l_lipids_idx)
-                    else:
-                        l_lipids_idx = None
-                        l_avg_intensity = None
-
-                    ll_lipids_idx.append(l_lipids_idx)
-                    ll_avg_intensity.append(l_avg_intensity)
-
-                for i, (l_lipids, l_avg_intensity) in enumerate(
-                    zip(ll_lipids_idx, ll_avg_intensity)
-                ):
-                    if l_lipids is not None:
-                        for lipid, intensity in zip(l_lipids, l_avg_intensity):
-                            if lipid not in dic_avg_lipids:
-                                dic_avg_lipids[lipid] = []
-                                for j in range(n_sel):
-                                    dic_avg_lipids[lipid].append([])
-                            dic_avg_lipids[lipid][i].append(intensity)
-
-            logging.info("Averaging all lipid values across slices")
-
-            # Average intensity per slice
-            for lipid in dic_avg_lipids:
-                for i in range(n_sel):
-                    if len(dic_avg_lipids[lipid][i]) > 0:
-                        dic_avg_lipids[lipid][i] = np.mean(dic_avg_lipids[lipid][i])
-                    else:
-                        dic_avg_lipids[lipid][i] = 0
-
-            df_avg_intensity_lipids = pd.DataFrame.from_dict(
-                dic_avg_lipids,
-                orient="index",
-                columns=[l_selected_regions[i] for i in range(n_sel)],
-            )
-            return df_avg_intensity_lipids
-
-        df_avg_intensity_lipids = return_df_avg_lipids(l_selected_regions)
-        logging.info("Averaging done for all slices")
-        set_progress((90, "Loading data"))
-
-        # Exclude very lowly expressed lipids
-        df_min_expression = df_avg_intensity_lipids.min(axis=1)
-        df_avg_intensity_lipids = df_avg_intensity_lipids[
-            df_min_expression > df_min_expression.quantile(q=int(percentile) / 100)
-        ]
-
-        if len(l_selected_regions) > 1:
-            df_avg_intensity_lipids = df_avg_intensity_lipids.iloc[
-                (df_avg_intensity_lipids.mean(axis=1)).argsort(), :
-            ]
-        else:
-            df_avg_intensity_lipids.sort_values(by=l_selected_regions[0], inplace=True)
-        logging.info("Lowly expressed lipids excluded")
-
-        # Replace idx_lipids by actual name
-        df_names = self._data.get_annotations()
-        df_avg_intensity_lipids.index = df_avg_intensity_lipids.index.map(
-            lambda idx: df_names.iloc[idx]["name"]
-            + "_"
-            + df_names.iloc[idx]["structure"]
-            + "_"
-            + df_names.iloc[idx]["cation"]
-        )
-        logging.info("Lipid indexes replaced by names")
-        logging.info("Preparing plot")
-        # Plot
-        data_array = df_avg_intensity_lipids.to_numpy()
-        fig_heatmap_lipids = Clustergram(
-            data=data_array
-            + data_array.min(axis=0),  # Add min per column to remove negative values
-            column_labels=df_avg_intensity_lipids.columns.to_list(),
-            row_labels=df_avg_intensity_lipids.index.to_list(),
-            hidden_labels="row" if len(df_avg_intensity_lipids.index.to_list()) > 100 else None,
-            color_map="Viridis",
-            height=800,
-            width=1000,
-            display_ratio=[0.2, 0.01],
-        )
-
-        # Set background color to zero
-        fig_heatmap_lipids.layout.template = "plotly_dark"
-        fig_heatmap_lipids.layout.plot_bgcolor = "rgba(0,0,0,0)"
-        fig_heatmap_lipids.layout.paper_bgcolor = "rgba(0,0,0,0)"
-
-        set_progress((100, "Returning figure"))
-        logging.info("Returning figure")
-        return fig_heatmap_lipids
-
-    # ==============================================================================================
-    # --- Methods used in scRNAseq page
-    # ==============================================================================================
-
-    def compute_scatter_3D(self):
-        """This functions computes a figure representing, in a 3D scatter plot, the spots acquired
-        using spatial scRNAseq experiments.
-
-        Returns:
-            (Plotly.Figure): A Plotly Figure containing a go.Scatter3d object representing the
-                acquired spots.
-        """
-
-        logging.info("Starting computing 3D scatter plot for scRNAseq experiments" + logmem())
-
-        # Get scatter figure for the scRNAseq spots
-        scatter = go.Scatter3d(
-            x=self._scRNAseq.xmol,
-            y=self._scRNAseq.zmol,
-            z=-self._scRNAseq.ymol,
-            mode="markers",
-            marker=dict(size=2.5, opacity=0.8, color=dic_colors["blue"]),
-        )
-
-        # Get root figure
-        root_data = self._storage.return_shelved_object(
-            "figures/3D_page",
-            "volume_root",
-            force_update=False,
-            compute_function=self.compute_3D_root_volume,
-            differentiate_borders=True,
-        )
-
-        # Remove inside of volume
-        root_data["value"] = np.where(
-            (root_data["value"] == -0.01) | (root_data["value"] == -2.0), -2.0, root_data["value"]
-        )
-
-        # Change orientation
-        root_data_y = copy.deepcopy(root_data["y"])
-        root_data_z = copy.deepcopy(root_data["z"])
-        root_data["y"] = root_data_z
-        root_data["z"] = -root_data_y
-
-        # Remove parts of brain that prevent from clicking points
-        root_data["x"] = root_data["x"][(root_data["y"] < 6) & (root_data["z"] < -3)]
-        root_data["value"] = root_data["value"][(root_data["y"] < 6) & (root_data["z"] < -3)]
-        root_data_y_copy = copy.deepcopy(root_data["y"])
-        root_data["y"] = root_data["y"][(root_data["y"] < 6) & (root_data["z"] < -3)]
-        root_data["z"] = root_data["z"][(root_data["z"] < -3) & (root_data_y_copy < 6)]
-
-        # Block interaction for skull
-        root_data["hoverinfo"] = "skip"
-        scatter["hoverinfo"] = "all"
-
-        # Build figure
-        fig = go.Figure(data=[root_data, scatter])
-
-        # Hide background
-        fig.update_layout(
-            title_text="Click on a point to see the corresponding scRNAseq data",
-            title_x=0.5,
-            margin=dict(r=0, b=0, l=0),
-            scene=dict(
-                xaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
-                yaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
-                zaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
-            ),
-        )
-
-        # Set background color to zero
-        fig.layout.template = "plotly_dark"
-        fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
-        fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
-
-        # Change orientation to have scatter dots face the reader
-        x_eye = 0.01 * 2
-        y_eye = 1.0 * 2
-        z_eye = 0.5 * 2
-
-        camera = dict(
-            # up=dict(x=0, y=0, z=0),
-            # center=dict(x=0, y=0, z=0),
-            eye=dict(x=x_eye, y=y_eye, z=z_eye),
-        )
-        fig.update_layout(scene_camera=camera)
-
-        return fig
-
-    def compute_barplots_enrichment(self, brain_1=False, idx_dot=None):
-        """This functions computes two figures representing, in barplots, the lipid expression in
-        the spots acquired using spatial scRNAseq experiments, as well as how it can be explained by
-        an elastic net regression using gene expression as explaing factors.
-
-        Args:
-            brain_1 (bool, optional): If True, the barplot will be displayed with the regression
-                coefficients computed from for the first brain.
-
-        Returns:
-            (Plotly.Figure, Plotly.Figure, list(str), list(str)): Two Plotly Figures containing each
-                a go.Bar object representing the standardized lipid expression in the scRNAseq
-                spots, and the elastic net regression coefficients for each lipid (bar). The two
-                lists contain the corresponding names of the genes and lipids represented.
-        """
-
-        logging.info("Starting computing barplot for scRNAseq experiments" + logmem())
-
-        if brain_1:
-            x = self._scRNAseq.l_name_lipids_brain_1
-            y = self._scRNAseq.array_coef_brain_1
-            names = self._scRNAseq.l_genes_brain_1
-            expression = self._scRNAseq.array_exp_lipids_brain_1
-            l_score = self._scRNAseq.l_score_brain_1
-        else:
-            x = self._scRNAseq.l_name_lipids_brain_2
-            y = self._scRNAseq.array_coef_brain_2
-            names = self._scRNAseq.l_genes_brain_2
-            expression = self._scRNAseq.array_exp_lipids_brain_2
-            l_score = self._scRNAseq.l_score_brain_2
-
-        # Turn expression into enrichment score
-        expression = (expression - np.mean(expression, axis=0)) / np.std(expression, axis=0)
-
-        # Take the average expression across all spots, or the expression in the selected spot
-        if idx_dot is None:
-            expression = np.mean(expression, axis=0)
-        else:
-            expression = expression[idx_dot, :]
-
-        # Sort lipids by enrichment
-        index_sorted = np.argsort(expression)[::-1]
-        expression = expression[index_sorted]
-
-        # Get arrays for plotting
-        x = np.array(x)[index_sorted]
-        y = y[index_sorted, :]
-        l_score = np.array(l_score)[index_sorted]
-
-        # Limit to the 24 most expressed genes (in the most enriched lipid),
-        # for only 24 colors are sharply distinguishable by naked eye
-        index_sorted = np.argsort(y[0, :])[::-1]
-        y = y[:, index_sorted[:24]]
-        names = np.array(names)[index_sorted[:24]]
-
-        # Normalize to 1
-        # y = (y.T / np.sum(abs(y), axis=1) * expression).T
-        y = (y.T / np.sum(abs(y), axis=1)).T
-
-        # Incorporate score in the mix
-        # y = np.vstack((y.T * l_score, (1 - l_score) * expression * np.ones((len(y),)))).T
-        y = np.vstack((y.T * l_score, (1 - l_score) * 1.0 * np.ones((len(y),)))).T
-        names = np.append(names, "Unexplained")
-
-        # Limit to 40 lipids for clarity
-        x = x[:40]
-        y = y[:40, :]
-        expression = expression[:40]
-
-        # Plot figure
-        fig_lipids = go.Figure()
-        fig_lipids.add_trace(
-            go.Bar(
-                x=x,
-                y=expression,
-            )
-        )
-
-        # Hide background
-        fig_lipids.update_layout(
-            title_text="Lipid expression enrichment in selected spot (z-score)",
-            title_x=0.5,
-            barmode="relative",
-            # margin=dict(t=0, r=0, b=0, l=0),
-            scene=dict(
-                xaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
-                yaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
-                zaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
-            ),
-        )
-
-        # Set background color to zero
-        fig_lipids.layout.template = "plotly_dark"
-        fig_lipids.layout.plot_bgcolor = "rgba(0,0,0,0)"
-        fig_lipids.layout.paper_bgcolor = "rgba(0,0,0,0)"
-
-        # Plot figure
-        fig_genes = go.Figure()
-        for idx, (y_gene, name) in enumerate(zip(y.T, names)):
-            fig_genes.add_trace(
-                go.Bar(
-                    x=x,
-                    y=abs(y_gene),
-                    name=name,
-                    marker_pattern_shape=["+" if t > 0 else "-" for t in y_gene],  # Doesn't work...
-                    marker_color=px.colors.qualitative.Dark24[idx] if idx <= 23 else "grey",
-                    hovertext=[
-                        "{:.2f}".format(y[idx_lipid, idx] / np.sum(abs(y[idx_lipid, :])) * 1.0)
-                        + " (Fraction of (absolute) total elastic net coefficients)"
-                        for idx_lipid in range(len(y))
-                    ],
-                )
-            )
-
-        # Hide background
-        fig_genes.update_layout(
-            title_text=(
-                "Elastic net coefficients, representing how lipid is explained by the corresponding"
-                " gene"
-            ),
-            title_x=0.5,
-            barmode="relative",
-            # margin=dict(t=0, r=0, b=0, l=0),
-            scene=dict(
-                xaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
-                yaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
-                zaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
-            ),
-        )
-
-        # Set background color to zero
-        fig_genes.layout.template = "plotly_dark"
-        fig_genes.layout.plot_bgcolor = "rgba(0,0,0,0)"
-        fig_genes.layout.paper_bgcolor = "rgba(0,0,0,0)"
-
-        return fig_lipids, fig_genes, names, x
-
-    def compute_heatmap_lipid_genes(
-        self,
-        lipid=None,
-        l_genes=None,
-        initial_frame=5,
-        brain_1=False,
-        set_progress=None,
-    ):
-        """This functions computes a heatmap representing, on the left side, the expression of a
-        given lipid in the (low-resolution, interpolated) MALDI data, and the right side, the
-        expressions of the selected genes (in l_genes) in the scRNAseq experiments from the
-        molecular atlas data.
-
-        Args:
-            lipid (str): The name of the lipid to be displayed. If None, the most expressed lipid
-                will be displayed. Defaults to None.
-            l_genes (list): The list of gene names to be displayed. If None, the three most
-                expressed genes will be displayed. Defaults to None.
-            initial_frame   (int, optional): The frame on which the slider is initialized.
-            brain_1 (bool, optional): If True, the heatmap will be computed with the data coming
-                from the first brain. Else, from the 2nd brain. Defaults to False.
-            set_progress: Used as part of the Plotly long callbacks, to indicate the progress of the
-                computation in the corresponding progress bar.
-
-        Returns:
-            (Plotly.Figure): A Plotly Figure containing a go.Heatmap object representing the
-                expression of the selected lipid and genes.
-        """
-
-        logging.info("Starting computing heatmap for scRNAseq experiments" + logmem())
-
-        if set_progress is not None:
-            set_progress((5, "Loading data"))
-
-        if brain_1:
-            x = self._scRNAseq.l_name_lipids_brain_1
-            y = self._scRNAseq.array_coef_brain_1
-            name_genes = self._scRNAseq.l_genes_brain_1
-            name_lipids = self._scRNAseq.l_name_lipids_brain_1
-            array_lipids = self._scRNAseq.array_exp_lipids_brain_1
-            array_genes = self._scRNAseq.array_exp_genes_brain_1
-        else:
-            x = self._scRNAseq.l_name_lipids_brain_2
-            y = self._scRNAseq.array_coef_brain_2
-            name_genes = self._scRNAseq.l_genes_brain_2
-            name_lipids = self._scRNAseq.l_name_lipids_brain_2
-            array_lipids = self._scRNAseq.array_exp_lipids_brain_2
-            array_genes = self._scRNAseq.array_exp_genes_brain_2
-
-        # Get the most expressed lipid and genes if not provided
-        if lipid is None and l_genes is None:
-            expression = np.mean(array_lipids, axis=0)
-            index_sorted = np.argsort(expression)[::-1]
-            expression = expression[index_sorted]
-            lipids = np.array(x)[index_sorted]
-            y_sorted = y[index_sorted, :]
-            index_sorted = np.argsort(y_sorted[0, :])[::-1]
-            y_sorted = y_sorted[:, index_sorted]
-            genes = np.array(name_genes)[index_sorted]
-            lipid = lipids[0]
-            l_genes = genes[:3]
-
-        # Get coordinates
-        x = self._scRNAseq.xmol
-        y = -self._scRNAseq.ymol
-        z = self._scRNAseq.zmol
-
-        # Get idx lipid and genes
-        if lipid is not None:
-            idx_lipid = list(name_lipids).index(lipid)
-        else:
-            idx_lipid = None
-
-        l_idx_genes_with_None = [
-            list(name_genes).index(gene) if gene is not None else None for gene in l_genes
-        ]
-        l_idx_genes = [idx_gene for idx_gene in l_idx_genes_with_None if idx_gene is not None]
-
-        # Build grids on which the data will be interpolated
-        x_domain = np.arange(np.min(x), np.max(x), 0.5)
-        y_domain = np.arange(np.min(y), np.max(y), 0.1)
-        z_domain = np.arange(np.min(z), np.max(z), 0.1)
-        x_grid, y_grid, z_grid = np.meshgrid(x_domain, y_domain, z_domain, indexing="ij")
-
-        if set_progress is not None:
-            set_progress((15, "Preparing interpolation"))
-
-        # Build data from interpolation since sampling is irregular
-        if idx_lipid is not None:
-            grid_lipid = griddata(
-                np.vstack((x, y, z)).T,
-                array_lipids[:, idx_lipid],
-                (x_grid, y_grid, z_grid),
-                method="linear",
-            )
-        else:
-            grid_lipid = None
-
-        if len(l_idx_genes) == 1:
-            grid_genes = griddata(
-                np.vstack((x, y, z)).T,
-                array_genes[:, l_idx_genes[0]],
-                (x_grid, y_grid, z_grid),
-                method="linear",
-            )
-        elif len(l_idx_genes) > 1:
-            grid_genes = np.moveaxis(
-                np.stack(
-                    [
-                        griddata(
-                            np.vstack((x, y, z)).T,
-                            array_genes[:, idx_genes],
-                            (x_grid, y_grid, z_grid),
-                            method="linear",
-                        )
-                        if idx_genes is not None
-                        else np.zeros_like(x_grid)
-                        for idx_genes in l_idx_genes_with_None
-                    ]
-                ),
-                0,
-                -1,
-            )
-        else:
-            grid_genes = None
-
-        if set_progress is not None:
-            set_progress((75, "Finished interpolation... Building figure"))
-        fig = make_subplots(1, 2)
-
-        # Build Figure, with several frames as it will be slidable
-        if grid_lipid is not None:
-            for i in range(0, grid_lipid.shape[0], 1):
-                fig.add_heatmap(
-                    z=grid_lipid[i, :, :],
-                    row=1,
-                    col=1,
-                    colorscale="Viridis",
-                    visible=True if i == initial_frame else False,
-                    showscale=False,
-                )
-        if grid_genes is not None:
-            if len(grid_genes.shape) == 3:
-                for i in range(0, grid_genes.shape[0], 1):
-                    fig.add_heatmap(
-                        z=grid_genes[i, :, :],
-                        row=1,
-                        col=2,
-                        colorscale="Viridis",
-                        visible=True if i == initial_frame else False,
-                        showscale=False,
-                    )
-            elif len(grid_genes.shape) == 4:
-                for i in range(0, grid_genes.shape[0], 1):
-                    fig.add_image(
-                        z=grid_genes[i, :, :, :],
-                        row=1,
-                        col=2,
-                        visible=True if i == initial_frame else False,
-                    )
-        if grid_genes is not None or grid_lipid is not None:
-            steps = []
-            for i in range(grid_lipid.shape[0]):
-                step = dict(
-                    method="restyle",
-                    args=["visible", [False] * len(fig.data)],
-                    label=str(i),
-                )
-                if grid_lipid is not None and grid_genes is not None:
-                    step["args"][1][i] = True
-                    step["args"][1][i + grid_lipid.shape[0]] = True
-                elif grid_lipid is not None or grid_genes is not None:
-                    step["args"][1][i] = True
-                steps.append(step)
-
-            sliders = [
-                dict(
-                    active=initial_frame,
-                    steps=steps,
-                    pad={"b": 5, "t": 10},
-                    len=0.9,
-                    x=0.05,
-                    y=0.0,
-                    currentvalue={
-                        "visible": False,
-                    },
-                )
-            ]
-
-            # Layout
-            fig.update_layout(
-                title_text="Comparison between lipid and gene expression",
-                title_x=0.5,
-                title_y=0.98,
-                margin=dict(t=20, r=20, b=20, l=20),
-                template="plotly_dark",
-                sliders=sliders,
-            )
-
-            # No display of tick labels as they're wrong anyway
-            fig.update_layout(
-                scene=dict(
-                    xaxis=dict(showticklabels=False),
-                    yaxis=dict(showticklabels=False),
-                ),
-                paper_bgcolor="rgba(0,0,0,0.)",
-                plot_bgcolor="rgba(0,0,0,0.)",
-                yaxis_scaleanchor="x",
-            )
-
-            # Reverse y axis if Image has been used
-            if grid_genes is not None:
-                if len(grid_genes.shape) == 4:
-                    fig.update_yaxes(autorange=True, row=1, col=2)
-
-            # Remove tick labels
-            fig.update_xaxes(showticklabels=False)  # Hide x axis ticks
-            fig.update_yaxes(showticklabels=False)  # Hide y axis ticks
-
-            if set_progress is not None:
-                set_progress((90, "Returning figure"))
-            return fig
+    # def compute_clustergram_figure(
+    #     self,
+    #     set_progress,
+    #     cache_flask,
+    #     l_selected_regions,
+    #     percentile=90,
+    #     brain_1=False,
+    # ):
+    #     """This function computes a Plotly Clustergram figure, allowing to cluster and compare the
+    #     expression of all the MAIA-transformed lipids in the dataset in the selected regions.
+
+    #     Args:
+    #         set_progress: Used as part of the Plotly long callbacks, to indicate the progress of the
+    #             computation in the corresponding progress bar.
+    #         cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
+    #             None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
+    #             None.
+    #         l_selected_regions (list(int), optional): A list containing the identifiers of the brain
+    #             regions (at the very bottom of the hierarchy) whose border must be annotated.
+    #         percentile (int, optional): The percentile of average expression below which the lipids
+    #             must be discarded (to get rid of low expression noise). Defaults to 90.
+    #         brain_1 (bool): If True, the brain 1 data is used. Else, the brain 2 data is used.
+    #             Defaults to False.
+
+    #     Returns:
+    #         (go.Figure): a Plotly Clustergram figure clustering and comparing the expression of all
+    #             the MAIA-transformed lipids in the dataset in the selected regions.
+    #     """
+    #     logging.info("Starting computing clustergram figure")
+
+    #     # Memoize result as it's called everytime a filtering is done
+    #     @cache_flask.memoize()
+    #     def return_df_avg_lipids(l_selected_regions):
+    #         dic_avg_lipids = {}
+    #         l_slices = self._data.get_slice_list(indices="brain_1" if brain_1 else "brain_2")
+    #         for slice_index in l_slices:
+    #             # Display progress every 10 slices
+    #             if slice_index % 10 == 0:
+    #                 set_progress(
+    #                     (
+    #                         int(slice_index / len(l_slices) * 100),
+    #                         "Loading slice n°" + str(slice_index),
+    #                     )
+    #                 )
+
+    #             l_spectra = []
+    #             for region in l_selected_regions:
+    #                 long_region = self._atlas.dic_acronym_name[region]
+    #                 if slice_index - 1 in self._atlas.dic_existing_masks:
+    #                     if region in self._atlas.dic_existing_masks[slice_index - 1]:
+    #                         grah_scattergl_data = self._atlas.get_projected_mask_and_spectrum(
+    #                             slice_index - 1, long_region, MAIA_correction=True
+    #                         )[1]
+    #                         l_spectra.append(grah_scattergl_data)
+    #                     else:
+    #                         l_spectra.append(None)
+    #                 else:
+    #                     raise Exception(
+    #                         "The masks have not been precomputed. Please precompute them before"
+    #                         " running this function."
+    #                     )
+    #             ll_idx_labels = global_lipid_index_store(self._data, slice_index - 1, l_spectra)
+    #             logging.info("Computing dictionnary for averaging slice " + str(slice_index))
+
+    #             # Compute average expression for each lipid and each selection
+    #             set_lipids_idx = set()
+    #             ll_lipids_idx = []
+    #             ll_avg_intensity = []
+    #             n_sel = len(l_spectra)
+    #             for spectrum, l_idx_labels in zip(l_spectra, ll_idx_labels):
+    #                 if spectrum is not None:
+    #                     array_intensity_with_lipids = np.array(spectrum, dtype=np.float32)[1, :]
+    #                     array_idx_labels = np.array(l_idx_labels, dtype=np.int32)
+
+    #                     l_lipids_idx, l_avg_intensity = compute_avg_intensity_per_lipid(
+    #                         array_intensity_with_lipids, array_idx_labels
+    #                     )
+    #                     set_lipids_idx.update(l_lipids_idx)
+    #                 else:
+    #                     l_lipids_idx = None
+    #                     l_avg_intensity = None
+
+    #                 ll_lipids_idx.append(l_lipids_idx)
+    #                 ll_avg_intensity.append(l_avg_intensity)
+
+    #             for i, (l_lipids, l_avg_intensity) in enumerate(
+    #                 zip(ll_lipids_idx, ll_avg_intensity)
+    #             ):
+    #                 if l_lipids is not None:
+    #                     for lipid, intensity in zip(l_lipids, l_avg_intensity):
+    #                         if lipid not in dic_avg_lipids:
+    #                             dic_avg_lipids[lipid] = []
+    #                             for j in range(n_sel):
+    #                                 dic_avg_lipids[lipid].append([])
+    #                         dic_avg_lipids[lipid][i].append(intensity)
+
+    #         logging.info("Averaging all lipid values across slices")
+
+    #         # Average intensity per slice
+    #         for lipid in dic_avg_lipids:
+    #             for i in range(n_sel):
+    #                 if len(dic_avg_lipids[lipid][i]) > 0:
+    #                     dic_avg_lipids[lipid][i] = np.mean(dic_avg_lipids[lipid][i])
+    #                 else:
+    #                     dic_avg_lipids[lipid][i] = 0
+
+    #         df_avg_intensity_lipids = pd.DataFrame.from_dict(
+    #             dic_avg_lipids,
+    #             orient="index",
+    #             columns=[l_selected_regions[i] for i in range(n_sel)],
+    #         )
+    #         return df_avg_intensity_lipids
+
+    #     df_avg_intensity_lipids = return_df_avg_lipids(l_selected_regions)
+    #     logging.info("Averaging done for all slices")
+    #     set_progress((90, "Loading data"))
+
+    #     # Exclude very lowly expressed lipids
+    #     df_min_expression = df_avg_intensity_lipids.min(axis=1)
+    #     df_avg_intensity_lipids = df_avg_intensity_lipids[
+    #         df_min_expression > df_min_expression.quantile(q=int(percentile) / 100)
+    #     ]
+
+    #     if len(l_selected_regions) > 1:
+    #         df_avg_intensity_lipids = df_avg_intensity_lipids.iloc[
+    #             (df_avg_intensity_lipids.mean(axis=1)).argsort(), :
+    #         ]
+    #     else:
+    #         df_avg_intensity_lipids.sort_values(by=l_selected_regions[0], inplace=True)
+    #     logging.info("Lowly expressed lipids excluded")
+
+    #     # Replace idx_lipids by actual name
+    #     df_names = self._data.get_annotations()
+    #     df_avg_intensity_lipids.index = df_avg_intensity_lipids.index.map(
+    #         lambda idx: df_names.iloc[idx]["name"]
+    #         + "_"
+    #         + df_names.iloc[idx]["structure"]
+    #         + "_"
+    #         + df_names.iloc[idx]["cation"]
+    #     )
+    #     logging.info("Lipid indexes replaced by names")
+    #     logging.info("Preparing plot")
+    #     # Plot
+    #     data_array = df_avg_intensity_lipids.to_numpy()
+    #     fig_heatmap_lipids = Clustergram(
+    #         data=data_array
+    #         + data_array.min(axis=0),  # Add min per column to remove negative values
+    #         column_labels=df_avg_intensity_lipids.columns.to_list(),
+    #         row_labels=df_avg_intensity_lipids.index.to_list(),
+    #         hidden_labels="row" if len(df_avg_intensity_lipids.index.to_list()) > 100 else None,
+    #         color_map="Viridis",
+    #         height=800,
+    #         width=1000,
+    #         display_ratio=[0.2, 0.01],
+    #     )
+
+    #     # Set background color to zero
+    #     fig_heatmap_lipids.layout.template = "plotly_dark"
+    #     fig_heatmap_lipids.layout.plot_bgcolor = "rgba(0,0,0,0)"
+    #     fig_heatmap_lipids.layout.paper_bgcolor = "rgba(0,0,0,0)"
+
+    #     set_progress((100, "Returning figure"))
+    #     logging.info("Returning figure")
+    #     return fig_heatmap_lipids
+
+    # # ==============================================================================================
+    # # --- Methods used in scRNAseq page
+    # # ==============================================================================================
+    # # MIGHT be useful for lipizones
+    # def compute_scatter_3D(self):
+    #     """This functions computes a figure representing, in a 3D scatter plot, the spots acquired
+    #     using spatial scRNAseq experiments.
+
+    #     Returns:
+    #         (Plotly.Figure): A Plotly Figure containing a go.Scatter3d object representing the
+    #             acquired spots.
+    #     """
+
+    #     logging.info("Starting computing 3D scatter plot for scRNAseq experiments" + logmem())
+
+    #     # Get scatter figure for the scRNAseq spots
+    #     scatter = go.Scatter3d(
+    #         x=self._scRNAseq.xmol,
+    #         y=self._scRNAseq.zmol,
+    #         z=-self._scRNAseq.ymol,
+    #         mode="markers",
+    #         marker=dict(size=2.5, opacity=0.8, color=dic_colors["blue"]),
+    #     )
+
+    #     # Get root figure
+    #     root_data = self._storage.return_shelved_object(
+    #         "figures/3D_page",
+    #         "volume_root",
+    #         force_update=False,
+    #         compute_function=self.compute_3D_root_volume,
+    #         differentiate_borders=True,
+    #     )
+
+    #     # Remove inside of volume
+    #     root_data["value"] = np.where(
+    #         (root_data["value"] == -0.01) | (root_data["value"] == -2.0), -2.0, root_data["value"]
+    #     )
+
+    #     # Change orientation
+    #     root_data_y = copy.deepcopy(root_data["y"])
+    #     root_data_z = copy.deepcopy(root_data["z"])
+    #     root_data["y"] = root_data_z
+    #     root_data["z"] = -root_data_y
+
+    #     # Remove parts of brain that prevent from clicking points
+    #     root_data["x"] = root_data["x"][(root_data["y"] < 6) & (root_data["z"] < -3)]
+    #     root_data["value"] = root_data["value"][(root_data["y"] < 6) & (root_data["z"] < -3)]
+    #     root_data_y_copy = copy.deepcopy(root_data["y"])
+    #     root_data["y"] = root_data["y"][(root_data["y"] < 6) & (root_data["z"] < -3)]
+    #     root_data["z"] = root_data["z"][(root_data["z"] < -3) & (root_data_y_copy < 6)]
+
+    #     # Block interaction for skull
+    #     root_data["hoverinfo"] = "skip"
+    #     scatter["hoverinfo"] = "all"
+
+    #     # Build figure
+    #     fig = go.Figure(data=[root_data, scatter])
+
+    #     # Hide background
+    #     fig.update_layout(
+    #         title_text="Click on a point to see the corresponding scRNAseq data",
+    #         title_x=0.5,
+    #         margin=dict(r=0, b=0, l=0),
+    #         scene=dict(
+    #             xaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
+    #             yaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
+    #             zaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
+    #         ),
+    #     )
+
+    #     # Set background color to zero
+    #     fig.layout.template = "plotly_dark"
+    #     fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
+    #     fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
+
+    #     # Change orientation to have scatter dots face the reader
+    #     x_eye = 0.01 * 2
+    #     y_eye = 1.0 * 2
+    #     z_eye = 0.5 * 2
+
+    #     camera = dict(
+    #         # up=dict(x=0, y=0, z=0),
+    #         # center=dict(x=0, y=0, z=0),
+    #         eye=dict(x=x_eye, y=y_eye, z=z_eye),
+    #     )
+    #     fig.update_layout(scene_camera=camera)
+
+    #     return fig
+
+    # def compute_barplots_enrichment(self, brain_1=False, idx_dot=None):
+    #     """This functions computes two figures representing, in barplots, the lipid expression in
+    #     the spots acquired using spatial scRNAseq experiments, as well as how it can be explained by
+    #     an elastic net regression using gene expression as explaing factors.
+
+    #     Args:
+    #         brain_1 (bool, optional): If True, the barplot will be displayed with the regression
+    #             coefficients computed from for the first brain.
+
+    #     Returns:
+    #         (Plotly.Figure, Plotly.Figure, list(str), list(str)): Two Plotly Figures containing each
+    #             a go.Bar object representing the standardized lipid expression in the scRNAseq
+    #             spots, and the elastic net regression coefficients for each lipid (bar). The two
+    #             lists contain the corresponding names of the genes and lipids represented.
+    #     """
+
+    #     logging.info("Starting computing barplot for scRNAseq experiments" + logmem())
+
+    #     if brain_1:
+    #         x = self._scRNAseq.l_name_lipids_brain_1
+    #         y = self._scRNAseq.array_coef_brain_1
+    #         names = self._scRNAseq.l_genes_brain_1
+    #         expression = self._scRNAseq.array_exp_lipids_brain_1
+    #         l_score = self._scRNAseq.l_score_brain_1
+    #     else:
+    #         x = self._scRNAseq.l_name_lipids_brain_2
+    #         y = self._scRNAseq.array_coef_brain_2
+    #         names = self._scRNAseq.l_genes_brain_2
+    #         expression = self._scRNAseq.array_exp_lipids_brain_2
+    #         l_score = self._scRNAseq.l_score_brain_2
+
+    #     # Turn expression into enrichment score
+    #     expression = (expression - np.mean(expression, axis=0)) / np.std(expression, axis=0)
+
+    #     # Take the average expression across all spots, or the expression in the selected spot
+    #     if idx_dot is None:
+    #         expression = np.mean(expression, axis=0)
+    #     else:
+    #         expression = expression[idx_dot, :]
+
+    #     # Sort lipids by enrichment
+    #     index_sorted = np.argsort(expression)[::-1]
+    #     expression = expression[index_sorted]
+
+    #     # Get arrays for plotting
+    #     x = np.array(x)[index_sorted]
+    #     y = y[index_sorted, :]
+    #     l_score = np.array(l_score)[index_sorted]
+
+    #     # Limit to the 24 most expressed genes (in the most enriched lipid),
+    #     # for only 24 colors are sharply distinguishable by naked eye
+    #     index_sorted = np.argsort(y[0, :])[::-1]
+    #     y = y[:, index_sorted[:24]]
+    #     names = np.array(names)[index_sorted[:24]]
+
+    #     # Normalize to 1
+    #     # y = (y.T / np.sum(abs(y), axis=1) * expression).T
+    #     y = (y.T / np.sum(abs(y), axis=1)).T
+
+    #     # Incorporate score in the mix
+    #     # y = np.vstack((y.T * l_score, (1 - l_score) * expression * np.ones((len(y),)))).T
+    #     y = np.vstack((y.T * l_score, (1 - l_score) * 1.0 * np.ones((len(y),)))).T
+    #     names = np.append(names, "Unexplained")
+
+    #     # Limit to 40 lipids for clarity
+    #     x = x[:40]
+    #     y = y[:40, :]
+    #     expression = expression[:40]
+
+    #     # Plot figure
+    #     fig_lipids = go.Figure()
+    #     fig_lipids.add_trace(
+    #         go.Bar(
+    #             x=x,
+    #             y=expression,
+    #         )
+    #     )
+
+    #     # Hide background
+    #     fig_lipids.update_layout(
+    #         title_text="Lipid expression enrichment in selected spot (z-score)",
+    #         title_x=0.5,
+    #         barmode="relative",
+    #         # margin=dict(t=0, r=0, b=0, l=0),
+    #         scene=dict(
+    #             xaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
+    #             yaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
+    #             zaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
+    #         ),
+    #     )
+
+    #     # Set background color to zero
+    #     fig_lipids.layout.template = "plotly_dark"
+    #     fig_lipids.layout.plot_bgcolor = "rgba(0,0,0,0)"
+    #     fig_lipids.layout.paper_bgcolor = "rgba(0,0,0,0)"
+
+    #     # Plot figure
+    #     fig_genes = go.Figure()
+    #     for idx, (y_gene, name) in enumerate(zip(y.T, names)):
+    #         fig_genes.add_trace(
+    #             go.Bar(
+    #                 x=x,
+    #                 y=abs(y_gene),
+    #                 name=name,
+    #                 marker_pattern_shape=["+" if t > 0 else "-" for t in y_gene],  # Doesn't work...
+    #                 marker_color=px.colors.qualitative.Dark24[idx] if idx <= 23 else "grey",
+    #                 hovertext=[
+    #                     "{:.2f}".format(y[idx_lipid, idx] / np.sum(abs(y[idx_lipid, :])) * 1.0)
+    #                     + " (Fraction of (absolute) total elastic net coefficients)"
+    #                     for idx_lipid in range(len(y))
+    #                 ],
+    #             )
+    #         )
+
+    #     # Hide background
+    #     fig_genes.update_layout(
+    #         title_text=(
+    #             "Elastic net coefficients, representing how lipid is explained by the corresponding"
+    #             " gene"
+    #         ),
+    #         title_x=0.5,
+    #         barmode="relative",
+    #         # margin=dict(t=0, r=0, b=0, l=0),
+    #         scene=dict(
+    #             xaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
+    #             yaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
+    #             zaxis=dict(backgroundcolor="rgba(0,0,0,0)"),
+    #         ),
+    #     )
+
+    #     # Set background color to zero
+    #     fig_genes.layout.template = "plotly_dark"
+    #     fig_genes.layout.plot_bgcolor = "rgba(0,0,0,0)"
+    #     fig_genes.layout.paper_bgcolor = "rgba(0,0,0,0)"
+
+    #     return fig_lipids, fig_genes, names, x
+
+    # def compute_heatmap_lipid_genes(
+    #     self,
+    #     lipid=None,
+    #     l_genes=None,
+    #     initial_frame=5,
+    #     brain_1=False,
+    #     set_progress=None,
+    # ):
+    #     """This functions computes a heatmap representing, on the left side, the expression of a
+    #     given lipid in the (low-resolution, interpolated) MALDI data, and the right side, the
+    #     expressions of the selected genes (in l_genes) in the scRNAseq experiments from the
+    #     molecular atlas data.
+
+    #     Args:
+    #         lipid (str): The name of the lipid to be displayed. If None, the most expressed lipid
+    #             will be displayed. Defaults to None.
+    #         l_genes (list): The list of gene names to be displayed. If None, the three most
+    #             expressed genes will be displayed. Defaults to None.
+    #         initial_frame   (int, optional): The frame on which the slider is initialized.
+    #         brain_1 (bool, optional): If True, the heatmap will be computed with the data coming
+    #             from the first brain. Else, from the 2nd brain. Defaults to False.
+    #         set_progress: Used as part of the Plotly long callbacks, to indicate the progress of the
+    #             computation in the corresponding progress bar.
+
+    #     Returns:
+    #         (Plotly.Figure): A Plotly Figure containing a go.Heatmap object representing the
+    #             expression of the selected lipid and genes.
+    #     """
+
+    #     logging.info("Starting computing heatmap for scRNAseq experiments" + logmem())
+
+    #     if set_progress is not None:
+    #         set_progress((5, "Loading data"))
+
+    #     if brain_1:
+    #         x = self._scRNAseq.l_name_lipids_brain_1
+    #         y = self._scRNAseq.array_coef_brain_1
+    #         name_genes = self._scRNAseq.l_genes_brain_1
+    #         name_lipids = self._scRNAseq.l_name_lipids_brain_1
+    #         array_lipids = self._scRNAseq.array_exp_lipids_brain_1
+    #         array_genes = self._scRNAseq.array_exp_genes_brain_1
+    #     else:
+    #         x = self._scRNAseq.l_name_lipids_brain_2
+    #         y = self._scRNAseq.array_coef_brain_2
+    #         name_genes = self._scRNAseq.l_genes_brain_2
+    #         name_lipids = self._scRNAseq.l_name_lipids_brain_2
+    #         array_lipids = self._scRNAseq.array_exp_lipids_brain_2
+    #         array_genes = self._scRNAseq.array_exp_genes_brain_2
+
+    #     # Get the most expressed lipid and genes if not provided
+    #     if lipid is None and l_genes is None:
+    #         expression = np.mean(array_lipids, axis=0)
+    #         index_sorted = np.argsort(expression)[::-1]
+    #         expression = expression[index_sorted]
+    #         lipids = np.array(x)[index_sorted]
+    #         y_sorted = y[index_sorted, :]
+    #         index_sorted = np.argsort(y_sorted[0, :])[::-1]
+    #         y_sorted = y_sorted[:, index_sorted]
+    #         genes = np.array(name_genes)[index_sorted]
+    #         lipid = lipids[0]
+    #         l_genes = genes[:3]
+
+    #     # Get coordinates
+    #     x = self._scRNAseq.xmol
+    #     y = -self._scRNAseq.ymol
+    #     z = self._scRNAseq.zmol
+
+    #     # Get idx lipid and genes
+    #     if lipid is not None:
+    #         idx_lipid = list(name_lipids).index(lipid)
+    #     else:
+    #         idx_lipid = None
+
+    #     l_idx_genes_with_None = [
+    #         list(name_genes).index(gene) if gene is not None else None for gene in l_genes
+    #     ]
+    #     l_idx_genes = [idx_gene for idx_gene in l_idx_genes_with_None if idx_gene is not None]
+
+    #     # Build grids on which the data will be interpolated
+    #     x_domain = np.arange(np.min(x), np.max(x), 0.5)
+    #     y_domain = np.arange(np.min(y), np.max(y), 0.1)
+    #     z_domain = np.arange(np.min(z), np.max(z), 0.1)
+    #     x_grid, y_grid, z_grid = np.meshgrid(x_domain, y_domain, z_domain, indexing="ij")
+
+    #     if set_progress is not None:
+    #         set_progress((15, "Preparing interpolation"))
+
+    #     # Build data from interpolation since sampling is irregular
+    #     if idx_lipid is not None:
+    #         grid_lipid = griddata(
+    #             np.vstack((x, y, z)).T,
+    #             array_lipids[:, idx_lipid],
+    #             (x_grid, y_grid, z_grid),
+    #             method="linear",
+    #         )
+    #     else:
+    #         grid_lipid = None
+
+    #     if len(l_idx_genes) == 1:
+    #         grid_genes = griddata(
+    #             np.vstack((x, y, z)).T,
+    #             array_genes[:, l_idx_genes[0]],
+    #             (x_grid, y_grid, z_grid),
+    #             method="linear",
+    #         )
+    #     elif len(l_idx_genes) > 1:
+    #         grid_genes = np.moveaxis(
+    #             np.stack(
+    #                 [
+    #                     griddata(
+    #                         np.vstack((x, y, z)).T,
+    #                         array_genes[:, idx_genes],
+    #                         (x_grid, y_grid, z_grid),
+    #                         method="linear",
+    #                     )
+    #                     if idx_genes is not None
+    #                     else np.zeros_like(x_grid)
+    #                     for idx_genes in l_idx_genes_with_None
+    #                 ]
+    #             ),
+    #             0,
+    #             -1,
+    #         )
+    #     else:
+    #         grid_genes = None
+
+    #     if set_progress is not None:
+    #         set_progress((75, "Finished interpolation... Building figure"))
+    #     fig = make_subplots(1, 2)
+
+    #     # Build Figure, with several frames as it will be slidable
+    #     if grid_lipid is not None:
+    #         for i in range(0, grid_lipid.shape[0], 1):
+    #             fig.add_heatmap(
+    #                 z=grid_lipid[i, :, :],
+    #                 row=1,
+    #                 col=1,
+    #                 colorscale="Viridis",
+    #                 visible=True if i == initial_frame else False,
+    #                 showscale=False,
+    #             )
+    #     if grid_genes is not None:
+    #         if len(grid_genes.shape) == 3:
+    #             for i in range(0, grid_genes.shape[0], 1):
+    #                 fig.add_heatmap(
+    #                     z=grid_genes[i, :, :],
+    #                     row=1,
+    #                     col=2,
+    #                     colorscale="Viridis",
+    #                     visible=True if i == initial_frame else False,
+    #                     showscale=False,
+    #                 )
+    #         elif len(grid_genes.shape) == 4:
+    #             for i in range(0, grid_genes.shape[0], 1):
+    #                 fig.add_image(
+    #                     z=grid_genes[i, :, :, :],
+    #                     row=1,
+    #                     col=2,
+    #                     visible=True if i == initial_frame else False,
+    #                 )
+    #     if grid_genes is not None or grid_lipid is not None:
+    #         steps = []
+    #         for i in range(grid_lipid.shape[0]):
+    #             step = dict(
+    #                 method="restyle",
+    #                 args=["visible", [False] * len(fig.data)],
+    #                 label=str(i),
+    #             )
+    #             if grid_lipid is not None and grid_genes is not None:
+    #                 step["args"][1][i] = True
+    #                 step["args"][1][i + grid_lipid.shape[0]] = True
+    #             elif grid_lipid is not None or grid_genes is not None:
+    #                 step["args"][1][i] = True
+    #             steps.append(step)
+
+    #         sliders = [
+    #             dict(
+    #                 active=initial_frame,
+    #                 steps=steps,
+    #                 pad={"b": 5, "t": 10},
+    #                 len=0.9,
+    #                 x=0.05,
+    #                 y=0.0,
+    #                 currentvalue={
+    #                     "visible": False,
+    #                 },
+    #             )
+    #         ]
+
+    #         # Layout
+    #         fig.update_layout(
+    #             title_text="Comparison between lipid and gene expression",
+    #             title_x=0.5,
+    #             title_y=0.98,
+    #             margin=dict(t=20, r=20, b=20, l=20),
+    #             template="plotly_dark",
+    #             sliders=sliders,
+    #         )
+
+    #         # No display of tick labels as they're wrong anyway
+    #         fig.update_layout(
+    #             scene=dict(
+    #                 xaxis=dict(showticklabels=False),
+    #                 yaxis=dict(showticklabels=False),
+    #             ),
+    #             paper_bgcolor="rgba(0,0,0,0.)",
+    #             plot_bgcolor="rgba(0,0,0,0.)",
+    #             yaxis_scaleanchor="x",
+    #         )
+
+    #         # Reverse y axis if Image has been used
+    #         if grid_genes is not None:
+    #             if len(grid_genes.shape) == 4:
+    #                 fig.update_yaxes(autorange=True, row=1, col=2)
+
+    #         # Remove tick labels
+    #         fig.update_xaxes(showticklabels=False)  # Hide x axis ticks
+    #         fig.update_yaxes(showticklabels=False)  # Hide y axis ticks
+
+    #         if set_progress is not None:
+    #             set_progress((90, "Returning figure"))
+    #         return fig
 
     # ==============================================================================================
     # --- Methods used for shelving results
     # ==============================================================================================
 
-    def shelve_arrays_basic_figures(self, force_update=False):
-        """This function shelves in the database all the arrays of basic images computed in
-        self.compute_figure_basic_image(), across all slices and all types of arrays. This forces
-        the precomputations of these arrays, and allows to access them faster. Once everything has
-        been shelved, a boolean value is stored in the shelve database, to indicate that the arrays
-        do not need to be recomputed at next app startup.
+    # def shelve_arrays_basic_figures(self, force_update=False):
+    #     """This function shelves in the database all the arrays of basic images computed in
+    #     self.compute_figure_basic_image(), across all slices and all types of arrays. This forces
+    #     the precomputations of these arrays, and allows to access them faster. Once everything has
+    #     been shelved, a boolean value is stored in the shelve database, to indicate that the arrays
+    #     do not need to be recomputed at next app startup.
 
-        Args:
-            force_update (bool, optional): If True, the function will not overwrite existing files.
-                Defaults to False.
-        """
-        for idx_slice in range(self._data.get_slice_number()):
-            for type_figure in ["original_data", "warped_data", "projection_corrected", "atlas"]:
-                for display_annotations in [True, False]:
-                    # Force no annotation for the original data
-                    self._storage.return_shelved_object(
-                        "figures/load_page",
-                        "figure_basic_image",
-                        force_update=force_update,
-                        compute_function=self.compute_figure_basic_image,
-                        type_figure=type_figure,
-                        index_image=idx_slice,
-                        plot_atlas_contours=display_annotations
-                        if type_figure != "original_data"
-                        else False,
-                    )
+    #     Args:
+    #         force_update (bool, optional): If True, the function will not overwrite existing files.
+    #             Defaults to False.
+    #     """
+    #     for idx_slice in range(self._data.get_slice_number()):
+    #         for type_figure in ["original_data", "warped_data", "projection_corrected", "atlas"]:
+    #             for display_annotations in [True, False]:
+    #                 # Force no annotation for the original data
+    #                 self._storage.return_shelved_object(
+    #                     "figures/load_page",
+    #                     "figure_basic_image",
+    #                     force_update=force_update,
+    #                     compute_function=self.compute_figure_basic_image,
+    #                     type_figure=type_figure,
+    #                     index_image=idx_slice,
+    #                     plot_atlas_contours=display_annotations
+    #                     if type_figure != "original_data"
+    #                     else False,
+    #                 )
 
-        self._storage.dump_shelved_object(
-            "figures/load_page", "arrays_basic_figures_computed", True
-        )
+    #     self._storage.dump_shelved_object(
+    #         "figures/load_page", "arrays_basic_figures_computed", True
+    #     )
 
-    def shelve_all_l_array_2D(self, force_update=False, sample=False, brain_1=True):
-        """This functions precomputes and shelves all the arrays of lipid expression used in a 3D
-        representation of the brain (through self.compute_3D_volume_figure()). Once everything has
-        been shelved, a boolean value is stored in the shelve database, to indicate that the arrays
-        do not need to be recomputed at next app startup.
+    # def shelve_all_l_array_2D(self, force_update=False, sample=False, brain_1=True):
+    #     """This functions precomputes and shelves all the arrays of lipid expression used in a 3D
+    #     representation of the brain (through self.compute_3D_volume_figure()). Once everything has
+    #     been shelved, a boolean value is stored in the shelve database, to indicate that the arrays
+    #     do not need to be recomputed at next app startup.
 
-        Args:
-            force_update (bool, optional): If True, the function will not overwrite existing files.
-                Defaults to False.
-            sample (bool, optional): If True, only a fraction of the precomputations are made (for
-                debug). Default to False.
-            brain_1 (bool, optional): If True, the data is precomputed for the brain 1. Else for
-                the brain 2. Defaults to True.
-        """
+    #     Args:
+    #         force_update (bool, optional): If True, the function will not overwrite existing files.
+    #             Defaults to False.
+    #         sample (bool, optional): If True, only a fraction of the precomputations are made (for
+    #             debug). Default to False.
+    #         brain_1 (bool, optional): If True, the data is precomputed for the brain 1. Else for
+    #             the brain 2. Defaults to True.
+    #     """
 
-        # Count number of lipids processed for sampling
-        n_processed = 0
-        if sample:
-            logging.warning("Only a sample of the lipid arrays will be computed!")
+    #     # Count number of lipids processed for sampling
+    #     n_processed = 0
+    #     if sample:
+    #         logging.warning("Only a sample of the lipid arrays will be computed!")
 
-        # Simulate a click on all lipid names
-        df_annotations_MAIA = self._data.get_annotations_MAIA_transformed_lipids(brain_1=brain_1)
-        for name in sorted(df_annotations_MAIA.name.unique()):
-            structures = df_annotations_MAIA[df_annotations_MAIA["name"] == name].structure.unique()
-            for structure in sorted(structures):
-                cations = df_annotations_MAIA[
-                    (df_annotations_MAIA["name"] == name)
-                    & (df_annotations_MAIA["structure"] == structure)
-                ].cation.unique()
-                for cation in sorted(cations):
-                    l_selected_lipids = []
-                    for slice_index in self._data.get_slice_list(
-                        indices="brain_1" if brain_1 else "brain_2"
-                    ):
-                        # Find lipid location
-                        l_lipid_loc = (
-                            self._data.get_annotations()
-                            .index[
-                                (self._data.get_annotations()["name"] == name)
-                                & (self._data.get_annotations()["structure"] == structure)
-                                & (self._data.get_annotations()["slice"] == slice_index)
-                                & (self._data.get_annotations()["cation"] == cation)
-                            ]
-                            .tolist()
-                        )
+    #     # Simulate a click on all lipid names
+    #     df_annotations_MAIA = self._data.get_annotations_MAIA_transformed_lipids(brain_1=brain_1)
+    #     for name in sorted(df_annotations_MAIA.name.unique()):
+    #         structures = df_annotations_MAIA[df_annotations_MAIA["name"] == name].structure.unique()
+    #         for structure in sorted(structures):
+    #             cations = df_annotations_MAIA[
+    #                 (df_annotations_MAIA["name"] == name)
+    #                 & (df_annotations_MAIA["structure"] == structure)
+    #             ].cation.unique()
+    #             for cation in sorted(cations):
+    #                 l_selected_lipids = []
+    #                 for slice_index in self._data.get_slice_list(
+    #                     indices="brain_1" if brain_1 else "brain_2"
+    #                 ):
+    #                     # Find lipid location
+    #                     l_lipid_loc = (
+    #                         self._data.get_annotations()
+    #                         .index[
+    #                             (self._data.get_annotations()["name"] == name)
+    #                             & (self._data.get_annotations()["structure"] == structure)
+    #                             & (self._data.get_annotations()["slice"] == slice_index)
+    #                             & (self._data.get_annotations()["cation"] == cation)
+    #                         ]
+    #                         .tolist()
+    #                     )
 
-                        # If several lipids correspond to the selection, we have a problem...
-                        if len(l_lipid_loc) > 1:
-                            logging.warning("More than one lipid corresponds to the selection")
-                            l_lipid_loc = [l_lipid_loc[-1]]
-                        # If no lipid correspond to the selection, set to -1
-                        if len(l_lipid_loc) == 0:
-                            l_lipid_loc = [-1]
+    #                     # If several lipids correspond to the selection, we have a problem...
+    #                     if len(l_lipid_loc) > 1:
+    #                         logging.warning("More than one lipid corresponds to the selection")
+    #                         l_lipid_loc = [l_lipid_loc[-1]]
+    #                     # If no lipid correspond to the selection, set to -1
+    #                     if len(l_lipid_loc) == 0:
+    #                         l_lipid_loc = [-1]
 
-                        # add lipid index for each slice
-                        l_selected_lipids.append(l_lipid_loc[0])
+    #                     # add lipid index for each slice
+    #                     l_selected_lipids.append(l_lipid_loc[0])
 
-                    # Get final lipid name
-                    lipid_string = name + " " + structure + " " + cation
+    #                 # Get final lipid name
+    #                 lipid_string = name + " " + structure + " " + cation
 
-                    # If lipid is present in at least one slice
-                    if np.sum(l_selected_lipids) > -len(
-                        self._data.get_slice_list(indices="brain_1" if brain_1 else "brain_2")
-                    ):
-                        # Build the list of mz boundaries for each peak and each index
-                        lll_lipid_bounds = [
-                            [
-                                [
-                                    (
-                                        float(self._data.get_annotations().iloc[index]["min"]),
-                                        float(self._data.get_annotations().iloc[index]["max"]),
-                                    )
-                                ]
-                                if index != -1
-                                else None
-                                for index in [lipid_1_index, -1, -1]
-                            ]
-                            for lipid_1_index in l_selected_lipids
-                        ]
+    #                 # If lipid is present in at least one slice
+    #                 if np.sum(l_selected_lipids) > -len(
+    #                     self._data.get_slice_list(indices="brain_1" if brain_1 else "brain_2")
+    #                 ):
+    #                     # Build the list of mz boundaries for each peak and each index
+    #                     lll_lipid_bounds = [
+    #                         [
+    #                             [
+    #                                 (
+    #                                     float(self._data.get_annotations().iloc[index]["min"]),
+    #                                     float(self._data.get_annotations().iloc[index]["max"]),
+    #                                 )
+    #                             ]
+    #                             if index != -1
+    #                             else None
+    #                             for index in [lipid_1_index, -1, -1]
+    #                         ]
+    #                         for lipid_1_index in l_selected_lipids
+    #                     ]
 
-                        # Compute 3D figures, selection is limited to one lipid
-                        name_lipid = lipid_string
+    #                     # Compute 3D figures, selection is limited to one lipid
+    #                     name_lipid = lipid_string
 
-                        self._storage.return_shelved_object(
-                            "figures/3D_page",
-                            "arrays_expression_" + str(brain_1) + "_" + name_lipid + "__",
-                            force_update=force_update,
-                            compute_function=self.compute_l_array_2D,
-                            ignore_arguments_naming=True,
-                            ll_t_bounds=lll_lipid_bounds,
-                            brain_1=brain_1,
-                            cache_flask=None,  # No cache needed since launched at startup
-                        )
+    #                     self._storage.return_shelved_object(
+    #                         "figures/3D_page",
+    #                         "arrays_expression_" + str(brain_1) + "_" + name_lipid + "__",
+    #                         force_update=force_update,
+    #                         compute_function=self.compute_l_array_2D,
+    #                         ignore_arguments_naming=True,
+    #                         ll_t_bounds=lll_lipid_bounds,
+    #                         brain_1=brain_1,
+    #                         cache_flask=None,  # No cache needed since launched at startup
+    #                     )
 
-                        n_processed += 1
-                        if n_processed >= 10 and sample:
-                            return None
+    #                     n_processed += 1
+    #                     if n_processed >= 10 and sample:
+    #                         return None
 
-        # Variable to signal everything has been computed
-        self._storage.dump_shelved_object(
-            "figures/3D_page", "arrays_expression_" + str(brain_1) + "_computed", True
-        )
+    #     # Variable to signal everything has been computed
+    #     self._storage.dump_shelved_object(
+    #         "figures/3D_page", "arrays_expression_" + str(brain_1) + "_computed", True
+    #     )
 
     def shelve_all_arrays_annotation(self):
         """This functions precomputes and shelves the array of structure annotation used in a

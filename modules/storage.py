@@ -138,7 +138,7 @@ class Storage:
         """
         # Define database path
         db_path = self.path_db
-
+        
         # Get complete file name
         complete_file_name = data_folder + "/" + file_name
 

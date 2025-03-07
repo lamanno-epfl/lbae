@@ -86,7 +86,7 @@ storage = Storage(path_db)
 
 # Load data
 logging.info("Loading MALDI data..." + logmem())
-data = MaldiData(path_data)
+data = MaldiData(path_data, path_annotations)
 
 # Load Atlas and Figures objects
 logging.info("Loading Atlas..." + logmem())

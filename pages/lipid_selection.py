@@ -71,10 +71,9 @@ def return_layout(basic_config, slice_index):
                                     "top": "0",
                                     "background-color": "#1d1c1f",
                                 },
-                                figure=figures.compute_heatmap_per_mz(
+                                figure=figures.compute_heatmap_per_lipid(
                                     slice_index,
-                                    800,
-                                    802,
+                                    'SM 34:1;O2',
                                     cache_flask=cache_flask,
                                 ),
                             ),
@@ -94,12 +93,13 @@ def return_layout(basic_config, slice_index):
                                     children=[
                                         dmc.MultiSelect(
                                             id="page-2-dropdown-lipids",
-                                            data=storage.return_shelved_object(
-                                                "annotations",
-                                                "lipid_options",
-                                                force_update=False,
-                                                compute_function=data.return_lipid_options,
-                                            ),
+                                            data=data.return_lipid_options(),
+                                            # storage.return_shelved_object(
+                                            #     "annotations",
+                                            #     "lipid_options",
+                                            #     force_update=False,
+                                            #     compute_function=data.return_lipid_options, ################################### UNDERSTAND HEREEEEEEEEE
+                                            # ),
                                             searchable=True,
                                             nothingFound="No lipid found",
                                             radius="md",
@@ -136,21 +136,21 @@ def return_layout(basic_config, slice_index):
                                             compact=False,
                                             loading=False,
                                         ),
-                                        dmc.Switch(
-                                            id="page-2-toggle-apply-transform",
-                                            label="Apply MAIA transform (if applicable)",
-                                            checked=True,
-                                            color="cyan",
-                                            radius="xl",
-                                            size="sm",
-                                        ),
+                                        # dmc.Switch(
+                                        #     id="page-2-toggle-apply-transform",
+                                        #     label="Apply MAIA transform (if applicable)",
+                                        #     checked=True,
+                                        #     color="cyan",
+                                        #     radius="xl",
+                                        #     size="sm",
+                                        # ),
                                     ],
                                 ),
                             ],
                         ),
                         dmc.Text(
                             id="page-2-badge-input",
-                            children="Current input: " + "m/z boundaries",
+                            children="Current input: ",#  + "m/z boundaries",
                             class_name="position-absolute",
                             style={"right": "1%", "top": "1em"},
                         ),
@@ -178,86 +178,86 @@ def return_layout(basic_config, slice_index):
                             class_name="d-none",
                             style={"right": "1%", "top": "8em"},
                         ),
-                        dmc.Group(
-                            spacing="xs",
-                            align="flex-end",
-                            children=[
-                                dmc.Group(
-                                    direction="column",
-                                    spacing=0,
-                                    children=[
-                                        dmc.Tooltip(
-                                            wrapLines=True,
-                                            width=220,
-                                            withArrow=True,
-                                            transition="fade",
-                                            transitionDuration=200,
-                                            label="Your selection can't exceed a range of "
-                                            + "10m/z, and must be comprised in-between 400 "
-                                            + "and 1600.",
-                                            children=[
-                                                dmc.NumberInput(
-                                                    id="page-2-lower-bound",
-                                                    min=380,
-                                                    max=1600,
-                                                    precision=3,
-                                                    radius="md",
-                                                    size="xs",
-                                                    value=800,
-                                                    hideControls=True,
-                                                    label="Lower bound (m/z)",
-                                                ),
-                                            ],
-                                        ),
-                                    ],
-                                ),
-                                dmc.Group(
-                                    direction="column",
-                                    spacing=0,
-                                    children=[
-                                        dmc.Tooltip(
-                                            wrapLines=True,
-                                            width=220,
-                                            withArrow=True,
-                                            transition="fade",
-                                            transitionDuration=200,
-                                            label="Your selection can't exceed a range of "
-                                            + "10m/z, and must be comprised in-between"
-                                            + " 400 and 1600.",
-                                            children=[
-                                                dmc.NumberInput(
-                                                    id="page-2-upper-bound",
-                                                    min=380,
-                                                    max=1600,
-                                                    precision=3,
-                                                    radius="md",
-                                                    size="xs",
-                                                    value=802,
-                                                    hideControls=True,
-                                                    label="Upper bound (m/z)",
-                                                ),
-                                            ],
-                                        ),
-                                    ],
-                                ),
-                                dmc.Button(
-                                    children="Display as colormap",
-                                    id="page-2-button-bounds",
-                                    variant="filled",
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                ),
-                            ],
-                            style={
-                                "width": "35em",
-                                "left": "1%",
-                                "bottom": "4rem",
-                            },
-                            class_name="position-absolute",
-                        ),
+                        # dmc.Group(
+                        #     spacing="xs",
+                        #     align="flex-end",
+                        #     children=[
+                        #         dmc.Group(
+                        #             direction="column",
+                        #             spacing=0,
+                        #             children=[
+                        #                 dmc.Tooltip(
+                        #                     wrapLines=True,
+                        #                     width=220,
+                        #                     withArrow=True,
+                        #                     transition="fade",
+                        #                     transitionDuration=200,
+                        #                     label="Your selection can't exceed a range of "
+                        #                     + "10m/z, and must be comprised in-between 400 "
+                        #                     + "and 1600.",
+                        #                     children=[
+                        #                         dmc.NumberInput(
+                        #                             id="page-2-lower-bound",
+                        #                             min=380,
+                        #                             max=1600,
+                        #                             precision=3,
+                        #                             radius="md",
+                        #                             size="xs",
+                        #                             value=800,
+                        #                             hideControls=True,
+                        #                             label="Lower bound (m/z)",
+                        #                         ),
+                        #                     ],
+                        #                 ),
+                        #             ],
+                        #         ),
+                        #         dmc.Group(
+                        #             direction="column",
+                        #             spacing=0,
+                        #             children=[
+                        #                 dmc.Tooltip(
+                        #                     wrapLines=True,
+                        #                     width=220,
+                        #                     withArrow=True,
+                        #                     transition="fade",
+                        #                     transitionDuration=200,
+                        #                     label="Your selection can't exceed a range of "
+                        #                     + "10m/z, and must be comprised in-between"
+                        #                     + " 400 and 1600.",
+                        #                     children=[
+                        #                         dmc.NumberInput(
+                        #                             id="page-2-upper-bound",
+                        #                             min=380,
+                        #                             max=1600,
+                        #                             precision=3,
+                        #                             radius="md",
+                        #                             size="xs",
+                        #                             value=802,
+                        #                             hideControls=True,
+                        #                             label="Upper bound (m/z)",
+                        #                         ),
+                        #                     ],
+                        #                 ),
+                        #             ],
+                        #         ),
+                        #         dmc.Button(
+                        #             children="Display as colormap",
+                        #             id="page-2-button-bounds",
+                        #             variant="filled",
+                        #             color="cyan",
+                        #             radius="md",
+                        #             size="xs",
+                        #             compact=False,
+                        #             loading=False,
+                        #         ),
+                        #     ],
+                        #     style={
+                        #         "width": "35em",
+                        #         "left": "1%",
+                        #         "bottom": "4rem",
+                        #     },
+                        #     class_name="position-absolute",
+                        # ),
                         dmc.Group(
                             position="right",
                             direction="column",
@@ -322,120 +322,120 @@ def return_layout(basic_config, slice_index):
                 ),
             ],
         ),
-        html.Div(
-            children=[
-                dbc.Offcanvas(
-                    id="page-2-drawer-low-res-spectra",
-                    backdrop=True,
-                    placement="end",
-                    style={"width": "30%"},
-                    children=[
-                        html.Div(
-                            className="loading-wrapper",
-                            style={"margin-top": "5%"},
-                            children=[
-                                dbc.Spinner(
-                                    color="dark",
-                                    children=[
-                                        html.Div(
-                                            children=[
-                                                dmc.Button(
-                                                    children="Hide spectrum",
-                                                    id="page-2-close-low-res-spectrum-button",
-                                                    variant="filled",
-                                                    disabled=False,
-                                                    color="red",
-                                                    radius="md",
-                                                    size="xs",
-                                                    compact=False,
-                                                    loading=False,
-                                                ),
-                                                dcc.Graph(
-                                                    id="page-2-graph-low-resolution-spectrum",
-                                                    figure=figures.compute_spectrum_low_res(
-                                                        slice_index
-                                                    ),
-                                                    style={
-                                                        "height": 280,
-                                                        "width": "100%",
-                                                    },
-                                                    responsive=True,
-                                                    config=basic_config
-                                                    | {
-                                                        "toImageButtonOptions": {
-                                                            "format": "png",
-                                                            "filename": "full_spectrum_low_res",
-                                                            "scale": 2,
-                                                        }
-                                                    },
-                                                ),
-                                            ],
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                    ],
-                ),
-                dbc.Offcanvas(
-                    id="page-2-drawer-high-res-spectra",
-                    backdrop=True,
-                    placement="end",
-                    style={"width": "30%"},
-                    children=[
-                        html.Div(
-                            className="loading-wrapper",
-                            style={"margin-top": "5%"},
-                            children=[
-                                dbc.Spinner(
-                                    color="dark",
-                                    children=[
-                                        html.Div(
-                                            className="",
-                                            children=[
-                                                html.Div(
-                                                    id="page-2-alert",
-                                                    className="text-center mt-2",
-                                                    children=html.Strong(
-                                                        children="Please select a lipid or zoom "
-                                                        + "more on the left graph to display the "
-                                                        + "high-resolution spectrum",
-                                                        style={"color": "#df5034"},
-                                                    ),
-                                                ),
-                                            ],
-                                        ),
-                                        dmc.Button(
-                                            children="Hide spectrum",
-                                            id="page-2-close-high-res-spectrum-button",
-                                            variant="filled",
-                                            disabled=False,
-                                            color="red",
-                                            radius="md",
-                                            size="xs",
-                                            compact=False,
-                                            loading=False,
-                                        ),
-                                        dcc.Graph(
-                                            id="page-2-graph-high-resolution-spectrum",
-                                            style={"display": "none"},
-                                            config=basic_config
-                                            | {
-                                                "toImageButtonOptions": {
-                                                    "format": "png",
-                                                    "filename": "spectrum_selection_high_res",
-                                                    "scale": 2,
-                                                }
-                                            },
-                                        ),
-                                    ],
-                                ),
-                            ],
-                        ),
-                    ],
-                ),
-            ],
-        ),
+        # html.Div(
+        #     children=[
+        #         dbc.Offcanvas(
+        #             id="page-2-drawer-low-res-spectra",
+        #             backdrop=True,
+        #             placement="end",
+        #             style={"width": "30%"},
+        #             children=[
+        #                 html.Div(
+        #                     className="loading-wrapper",
+        #                     style={"margin-top": "5%"},
+        #                     children=[
+        #                         dbc.Spinner(
+        #                             color="dark",
+        #                             children=[
+        #                                 html.Div(
+        #                                     children=[
+        #                                         dmc.Button(
+        #                                             children="Hide spectrum",
+        #                                             id="page-2-close-low-res-spectrum-button",
+        #                                             variant="filled",
+        #                                             disabled=False,
+        #                                             color="red",
+        #                                             radius="md",
+        #                                             size="xs",
+        #                                             compact=False,
+        #                                             loading=False,
+        #                                         ),
+        #                                         dcc.Graph(
+        #                                             id="page-2-graph-low-resolution-spectrum",
+        #                                             figure=figures.compute_spectrum_low_res(
+        #                                                 slice_index
+        #                                             ),
+        #                                             style={
+        #                                                 "height": 280,
+        #                                                 "width": "100%",
+        #                                             },
+        #                                             responsive=True,
+        #                                             config=basic_config
+        #                                             | {
+        #                                                 "toImageButtonOptions": {
+        #                                                     "format": "png",
+        #                                                     "filename": "full_spectrum_low_res",
+        #                                                     "scale": 2,
+        #                                                 }
+        #                                             },
+        #                                         ),
+        #                                     ],
+        #                                 ),
+        #                             ],
+        #                         ),
+        #                     ],
+        #                 ),
+        #             ],
+        #         ),
+        #         dbc.Offcanvas(
+        #             id="page-2-drawer-high-res-spectra",
+        #             backdrop=True,
+        #             placement="end",
+        #             style={"width": "30%"},
+        #             children=[
+        #                 html.Div(
+        #                     className="loading-wrapper",
+        #                     style={"margin-top": "5%"},
+        #                     children=[
+        #                         dbc.Spinner(
+        #                             color="dark",
+        #                             children=[
+        #                                 html.Div(
+        #                                     className="",
+        #                                     children=[
+        #                                         html.Div(
+        #                                             id="page-2-alert",
+        #                                             className="text-center mt-2",
+        #                                             children=html.Strong(
+        #                                                 children="Please select a lipid or zoom "
+        #                                                 + "more on the left graph to display the "
+        #                                                 + "high-resolution spectrum",
+        #                                                 style={"color": "#df5034"},
+        #                                             ),
+        #                                         ),
+        #                                     ],
+        #                                 ),
+        #                                 dmc.Button(
+        #                                     children="Hide spectrum",
+        #                                     id="page-2-close-high-res-spectrum-button",
+        #                                     variant="filled",
+        #                                     disabled=False,
+        #                                     color="red",
+        #                                     radius="md",
+        #                                     size="xs",
+        #                                     compact=False,
+        #                                     loading=False,
+        #                                 ),
+        #                                 dcc.Graph(
+        #                                     id="page-2-graph-high-resolution-spectrum",
+        #                                     style={"display": "none"},
+        #                                     config=basic_config
+        #                                     | {
+        #                                         "toImageButtonOptions": {
+        #                                             "format": "png",
+        #                                             "filename": "spectrum_selection_high_res",
+        #                                             "scale": 2,
+        #                                         }
+        #                                     },
+        #                                 ),
+        #                             ],
+        #                         ),
+        #                     ],
+        #                 ),
+        #             ],
+        #         ),
+        #     ],
+        # ),
     )
 
     return page
@@ -465,16 +465,16 @@ def return_layout(basic_config, slice_index):
 )
 def page_2_plot_graph_heatmap_mz_selection(
     slice_index,
-    bound_high_res,
-    bound_low_res,
+    # bound_high_res,
+    # bound_low_res,
     lipid_1_index,
     lipid_2_index,
     lipid_3_index,
     n_clicks_button_rgb,
     n_clicks_button_colormap,
     n_clicks_button_bounds,
-    lb,
-    hb,
+    # lb,
+    # hb,
     graph_input,
     apply_transform,
 ):

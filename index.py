@@ -38,7 +38,7 @@ def return_main_content():
         (html.Div): A div containing the corresponding elements.
     """
     # List of empty lipid indexes for the dropdown of page 4, assuming brain 1 is initially selected
-    empty_lipid_list = [-1 for i in data.get_slice_list(indices="brain_1")]
+    empty_lipid_list = [-1 for i in data.get_slice_list(indices="ReferenceAtlas")]
 
     # Record session id in case sessions need to be individualized
     session_id = str(uuid.uuid4())
@@ -105,54 +105,56 @@ def return_main_content():
                             ),
                             dmc.Slider(
                                 id="main-slider-1",
-                                min=data.get_slice_list(indices="brain_1")[0],
-                                max=data.get_slice_list(indices="brain_1")[-1],
+                                min=data.get_slice_list(indices="ReferenceAtlas")[0],
+                                max=data.get_slice_list(indices="ReferenceAtlas")[-1],
                                 step=1,
                                 marks=[
                                     {
                                         "value": slice_index,
                                         # Use x coordinate for label
                                         "label": "{:.2f}".format(
-                                            atlas.l_original_coor[slice_index - 1][0, 0][0]
+                                            # TYPE: int
+                                            atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
                                         ),
                                     }
-                                    for slice_index in data.get_slice_list(indices="brain_1")[::3]
+                                    for slice_index in data.get_slice_list(indices="ReferenceAtlas")[::3]
                                 ],
                                 size="xs",
-                                value=data.get_slice_list(indices="brain_1")[0],
+                                value=data.get_slice_list(indices="ReferenceAtlas")[0],
                                 color="cyan",
                                 class_name="mt-2 mr-5 ml-2 mb-1 w-50",
                             ),
-                            dmc.Slider(
-                                id="main-slider-2",
-                                min=data.get_slice_list(indices="brain_2")[0],
-                                max=data.get_slice_list(indices="brain_2")[-1],
-                                step=1,
-                                marks=[
-                                    {
-                                        "value": slice_index,
-                                        # Use x coordinate for label
-                                        "label": "{:.2f}".format(
-                                            atlas.l_original_coor[slice_index - 1][0, 0][0]
-                                        ),
-                                    }
-                                    for slice_index in data.get_slice_list(indices="brain_2")[::3]
-                                ],
-                                size="xs",
-                                value=data.get_slice_list(indices="brain_2")[0],
-                                color="cyan",
-                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
-                            ),
-                            dmc.Chips(
-                                id="main-brain",
-                                data=[
-                                    {"value": "brain_1", "label": "Brain 1"},
-                                    {"value": "brain_2", "label": "Brain 2"},
-                                ],
-                                value="brain_1",
-                                class_name="pl-2 pt-1",
-                                color="cyan",
-                            ),
+                            # dmc.Slider(
+                            #     id="main-slider-2",
+                            #     min=data.get_slice_list(indices="SecondAtlas")[0],
+                            #     max=data.get_slice_list(indices="SecondAtlas")[-1],
+                            #     step=1,
+                            #     marks=[
+                            #         {
+                            #             "value": slice_index,
+                            #             # Use x coordinate for label
+                            #             "label": "{:.2f}".format(
+                            #                 # TYPE: int 
+                            #                 atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
+                            #             ),
+                            #         }
+                            #         for slice_index in data.get_slice_list(indices="SecondAtlas")[::3]
+                            #     ],
+                            #     size="xs",
+                            #     value=data.get_slice_list(indices="SecondAtlas")[0],
+                            #     color="cyan",
+                            #     class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            # ),
+                            # dmc.Chips(
+                            #     id="main-brain",
+                            #     data=[
+                            #         {"value": "ReferenceAtlas", "label": "Brain 1"},
+                            #         {"value": "SecondAtlas", "label": "Brain 2"},
+                            #     ],
+                            #     value="ReferenceAtlas",
+                            #     class_name="pl-2 pt-1",
+                            #     color="cyan",
+                            # ),
                         ],
                     ),
                     # Documentation in a bottom drawer
@@ -182,7 +184,7 @@ def return_main_content():
     return main_content
 
 
-def return_validation_layout(main_content, initial_slice=1, brain="brain_1"):
+def return_validation_layout(main_content, initial_slice=1, brain="ReferenceAtlas"):
     """This function compute the layout of the app, including the main container, the sidebar and
     the different pages.
 
@@ -199,8 +201,8 @@ def return_validation_layout(main_content, initial_slice=1, brain="brain_1"):
             main_content,
             home.layout,
             lipid_selection.return_layout(basic_config, initial_slice),
-            region_analysis.return_layout(basic_config, initial_slice),
-            threeD_exploration.return_layout(basic_config, initial_slice),
+            # region_analysis.return_layout(basic_config, initial_slice),
+            # threeD_exploration.return_layout(basic_config, initial_slice),
         ]
     )
 
@@ -229,14 +231,14 @@ def render_page_content(pathname, slice_index, brain):
     elif pathname == "/lipid-selection":
         page = lipid_selection.return_layout(basic_config, slice_index)
 
-    elif pathname == "/region-analysis":
-        page = region_analysis.return_layout(basic_config, slice_index)
+    # elif pathname == "/region-analysis":
+    #     page = region_analysis.return_layout(basic_config, slice_index)
 
-    elif pathname == "/3D-exploration":
-        page = threeD_exploration.return_layout(basic_config, slice_index)
+    # elif pathname == "/3D-exploration":
+    #     page = threeD_exploration.return_layout(basic_config, slice_index)
 
-    elif pathname == "/numpy-3d":
-        page = numpy_3d.return_layout(basic_config, slice_index)
+    # elif pathname == "/numpy-3d":
+    #     page = numpy_3d.return_layout(basic_config, slice_index)
 
     else:
         # If the user tries to reach a different page, return a 404 message
@@ -324,21 +326,21 @@ def hide_slider_but_leave_brain(pathname):
 )
 def hide_useless_slider(brain, value_1, value_2):
     """This callback is used to update the slider indices with the selected brain."""
-    if brain == "brain_1":
-        value_1 = value_2 - data.get_slice_list(indices="brain_1")[-1]
+    if brain == "ReferenceAtlas":
+        value_1 = value_2 - data.get_slice_list(indices="ReferenceAtlas")[-1]
         return "mt-2 mr-5 ml-2 mb-1 w-50", "mt-2 mr-5 ml-2 mb-1 w-50 d-none", value_1, value_2
-    elif brain == "brain_2":
-        value_2 = value_1 + data.get_slice_list(indices="brain_1")[-1]
+    elif brain == "SecondAtlas":
+        value_2 = value_1 + data.get_slice_list(indices="ReferenceAtlas")[-1]
         return "mt-2 mr-5 ml-2 mb-1 w-50 d-none", "mt-2 mr-5 ml-2 mb-1 w-50", value_1, value_2
 
 
 app.clientside_callback(
     """
     function(value_1, value_2, brain){
-        if(brain == 'brain_1'){
+        if(brain == 'ReferenceAtlas'){
             return value_1;
         }
-        else if(brain == 'brain_2'){
+        else if(brain == 'SecondAtlas'){
             return value_2;
             }
     }

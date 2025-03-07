@@ -26,7 +26,7 @@ from modules.tools.misc import logmem
 
 logging.info("Memory use before any LBAE import" + logmem())
 
-import new_storage
+# from new_storage import MaldiData
 from modules.maldi_data import MaldiData
 
 logging.info("Memory use after MaldiData import" + logmem())
@@ -56,26 +56,45 @@ if SAMPLE_DATA:
     path_db = "data_sample/app_data/data.db"
     cache_dir = "data_sample/cache/"
 else:
-    path_data = "data/whole_dataset/"
-    path_annotations = "data/annotations/"
-    path_db = "data/app_data/data.db"
+    # path_data = "data/whole_dataset/"
+    # path_annotations = "data/annotations/"
+    # path_db = "data/app_data/data.db"
     cache_dir = "data/cache/"
+    path_data = "./new_data/"
+    path_annotations = "./data/annotations/"
+    path_db = "./data/app_data/data.db"
+
+# # Load shelve database
+# storage = Storage(path_db)
+
+# # Load data
+# data = MaldiData(path_data, path_annotations, sample_data=SAMPLE_DATA)
+
+# # If True, only a small portions of the figures are precomputed (if precomputation has not already
+# # been done). Used for debugging purposes.
+# sample = False
+
+# # Load Atlas and Figures objects. At first launch, many objects will be precomputed and shelved in
+# # the classes Atlas and Figures.
+# atlas = Atlas(data, storage, resolution=25, sample=sample)
+# scRNAseq = ScRNAseq()
+# figures = Figures(data, storage, atlas, scRNAseq, sample=sample)
 
 # Load shelve database
+logging.info("Loading storage..." + logmem())
 storage = Storage(path_db)
 
 # Load data
-data = MaldiData(path_data, path_annotations, sample_data=SAMPLE_DATA)
+logging.info("Loading MALDI data..." + logmem())
+data = MaldiData(path_data)
 
-# If True, only a small portions of the figures are precomputed (if precomputation has not already
-# been done). Used for debugging purposes.
-sample = False
+# Load Atlas and Figures objects
+logging.info("Loading Atlas..." + logmem())
+atlas = Atlas(data, storage, resolution=25)
 
-# Load Atlas and Figures objects. At first launch, many objects will be precomputed and shelved in
-# the classes Atlas and Figures.
-atlas = Atlas(data, storage, resolution=25, sample=sample)
-scRNAseq = ScRNAseq()
-figures = Figures(data, storage, atlas, scRNAseq, sample=sample)
+logging.info("Loading Figures..." + logmem())
+figures = Figures(data, storage, atlas)
+
 logging.info("Memory use after three main object have been instantiated" + logmem())
 
 

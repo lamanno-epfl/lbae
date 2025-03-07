@@ -5,6 +5,5 @@ notebooks/data_processing/data/
 **/__pycache__/
 **/.ipynb_checkpoints/
 nohup.out
-notebooks/scRNAseq/data/
-notebooks/scRNAseq/temp/
-notebooks/scRNAseq/output/
+notebooks/
+prove.ipynb

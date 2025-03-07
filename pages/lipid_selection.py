@@ -477,26 +477,28 @@ def page_2_plot_graph_heatmap_mz_selection(
     graph_input,
     apply_transform,
 ):
-    """This callback plots the heatmap of the selected lipid(s) or m/z range."""
+    """This callback plots the heatmap of the selected lipid(s)."""
+    print(f"========== HEREEEE {slice_index} {logmem()} ==========")
+    print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
 
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
 
-    # Case a two mz bounds values have been inputed
-    if id_input == "page-2-button-bounds" or (
-        id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
-    ):
-        if lb is not None and hb is not None:
-            lb, hb = float(lb), float(hb)
-            if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
-                return (
-                    figures.compute_heatmap_per_mz(slice_index, lb, hb, cache_flask=cache_flask),
-                    "Current input: " + "m/z boundaries",
-                )
+    # # Case a two mz bounds values have been inputed
+    # if id_input == "page-2-button-bounds" or (
+    #     id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
+    # ):
+    #     if lb is not None and hb is not None:
+    #         lb, hb = float(lb), float(hb)
+    #         if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
+    #             return (
+    #                 figures.compute_heatmap_per_mz(slice_index, lb, hb, cache_flask=cache_flask),
+    #                 "Current input: " + "m/z boundaries",
+    #             )
 
-        return dash.no_update
+    #     return dash.no_update
 
     # If a lipid selection has been done
     if (
@@ -515,25 +517,25 @@ def page_2_plot_graph_heatmap_mz_selection(
     ):
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
             # Build the list of mz boundaries for each peak
-            ll_lipid_bounds = [
-                [
-                    (
-                        float(data.get_annotations().iloc[index]["min"]),
-                        float(data.get_annotations().iloc[index]["max"]),
-                    )
-                ]
-                if index != -1
-                else None
-                for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-            ]
+            # ll_lipid_bounds = [
+            #     [
+            #         (
+            #             float(data.get_annotations().iloc[index]["min"]),
+            #             float(data.get_annotations().iloc[index]["max"]),
+            #         )
+            #     ]
+            #     if index != -1
+            #     else None
+            #     for index in [lipid_1_index, lipid_2_index, lipid_3_index]
+            # ]
 
             ll_lipid_names = [
                 [
                     data.get_annotations().iloc[index]["name"]
                     + "_"
                     + data.get_annotations().iloc[index]["structure"]
-                    + "_"
-                    + data.get_annotations().iloc[index]["cation"]
+                    # + "_"
+                    # + data.get_annotations().iloc[index]["cation"]
                 ]
                 if index != -1
                 else None
@@ -970,7 +972,8 @@ def page_2_add_toast_selection(
     header_3,
 ):
     """This callback adds the selected lipid to the selection."""
-
+    print(f"========== HEREEEE {slice_index} ==========")
+    print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
     logging.info("Entering function to update lipid data")
 
     # Find out which input triggered the function
@@ -1080,7 +1083,7 @@ def page_2_add_toast_selection(
         # If lipids have been added from dropdown menu
         elif id_input == "page-2-dropdown-lipids":
             # Get the lipid name and structure
-            name, structure, cation = l_lipid_names[-1].split(" ")
+            name, structure = l_lipid_names[-1].split(" ")
 
             # Find lipid location
             l_lipid_loc = (

@@ -1028,79 +1028,81 @@ class Figures:
         return fig
 
     # USELESS
-    # def compute_heatmap_per_lipid_selection(
-    #     self,
-    #     slice_index,
-    #     # ll_t_bounds,
-    #     # normalize=True,
-    #     # projected_image=True,
-    #     # apply_transform=False,
-    #     ll_lipid_names,
-    #     return_base64_string=False,
-    #     cache_flask=None,
-    # ):
-    #     """This function is very similar to compute_heatmap_per_mz, but it takes a list of lipid
-    #     boundaries, possibly along with lipid names, instead of just two boundaries. It returns a
-    #     heatmap of the sum of expression of the requested lipids in the slice.
+    def compute_heatmap_per_lipid_selection(
+        self,
+        slice_index,
+        # ll_t_bounds,
+        # normalize=True,
+        # projected_image=True,
+        # apply_transform=False,
+        ll_lipid_names,
+        return_base64_string=False,
+        cache_flask=None,
+    ):
+        """This function is very similar to compute_heatmap_per_mz, but it takes a list of lipid
+        boundaries, possibly along with lipid names, instead of just two boundaries. It returns a
+        heatmap of the sum of expression of the requested lipids in the slice.
 
-    #     Args:
-    #         slice_index (int): The index of the requested slice.
-    #         ll_t_bounds (list(list(tuple))): A list of lists of lipid boundaries (tuples). The first
-    #             list is used to separate image channels (although this is not used in the function).
-    #             The second list is used to separate lipid.
-    #         normalize (bool, optional): If True, and the lipid has been MAIA transformed (and is
-    #             provided with the parameter lipid_name) and apply_transform is True, the resulting
-    #             array is normalized according to a factor computed across all slice. If MAIA has not
-    #             been applied to the current selection or apply_transform is False, it is normalized
-    #             according to the 99th percentile. Else, it is not normalized. Defaults to True.
-    #         projected_image (bool, optional): If True, the pixels of the original acquisition get
-    #             matched to a higher-resolution, warped space. The gaps are filled by duplicating the
-    #             most appropriate pixels (see dosctring of Atlas.project_image() for more
-    #             information). Defaults to True.
-    #         apply_transform (bool, optional): If True, applies the MAIA transform (if possible) to
-    #             the current selection, given that the parameter normalize is also True, and that
-    #             lipid_name corresponds to an existing lipid. Defaults to False.
-    #         ll_lipid_names (list(list(int)), optional): List of list of lipid names that must be
-    #             MAIA-transformed, if apply_transform and normalize are True. The first list is used
-    #             to separate channels, when applicable. Defaults to None.
-    #         return_base64_string (bool, optional): If True, the base64 string of the image is
-    #             returned directly, before any figure building. Defaults to False.
-    #         cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
-    #             None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
-    #             None.
+        Args:
+            slice_index (int): The index of the requested slice.
+            ll_t_bounds (list(list(tuple))): A list of lists of lipid boundaries (tuples). The first
+                list is used to separate image channels (although this is not used in the function).
+                The second list is used to separate lipid.
+            normalize (bool, optional): If True, and the lipid has been MAIA transformed (and is
+                provided with the parameter lipid_name) and apply_transform is True, the resulting
+                array is normalized according to a factor computed across all slice. If MAIA has not
+                been applied to the current selection or apply_transform is False, it is normalized
+                according to the 99th percentile. Else, it is not normalized. Defaults to True.
+            projected_image (bool, optional): If True, the pixels of the original acquisition get
+                matched to a higher-resolution, warped space. The gaps are filled by duplicating the
+                most appropriate pixels (see dosctring of Atlas.project_image() for more
+                information). Defaults to True.
+            apply_transform (bool, optional): If True, applies the MAIA transform (if possible) to
+                the current selection, given that the parameter normalize is also True, and that
+                lipid_name corresponds to an existing lipid. Defaults to False.
+            ll_lipid_names (list(list(int)), optional): List of list of lipid names that must be
+                MAIA-transformed, if apply_transform and normalize are True. The first list is used
+                to separate channels, when applicable. Defaults to None.
+            return_base64_string (bool, optional): If True, the base64 string of the image is
+                returned directly, before any figure building. Defaults to False.
+            cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
+                None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
+                None.
 
-    #     Returns:
-    #         Depending on the value return_base64_string, may either return a base64 string, or
-    #             a Plotly Figure.
-    #     """
+        Returns:
+            Depending on the value return_base64_string, may either return a base64 string, or
+                a Plotly Figure.
+        """
 
-    #     logging.info("Compute heatmap per multi-lipid selection")
+        logging.info("Compute heatmap per multi-lipid selection")
 
-    #     # Start from empty image and add selected lipids
-    #     # * Caution: array must be int, float gets badly converted afterwards
-    #     image = np.zeros(self._atlas.image_shape, dtype=np.int32)
+        # Start from empty image and add selected lipids
+        # * Caution: array must be int, float gets badly converted afterwards
+        image = np.zeros(self._atlas.image_shape, dtype=np.int32)
 
-    #     # # Build empty lipid names if not provided
-    #     # if ll_lipid_names is None:
-    #     #     ll_lipid_names = [["" for y in l_t_bounds] for l_t_bounds in ll_t_bounds]
+        # # Build empty lipid names if not provided
+        # if ll_lipid_names is None:
+        #     ll_lipid_names = [["" for y in l_t_bounds] for l_t_bounds in ll_t_bounds]
 
-    #     # TYPE: possible inconsistency, for us lipid_names would be a list of strings, not a list of lists
-    #     # Loop over channels
-    #     for l_lipid_names in ll_lipid_names:
-    #         # Compute expression image per lipid
-    #         image_temp = self.compute_image_per_lipid(
-    #             slice_index,
-    #             RGB_format=True,
-    #             lipid_name=l_lipid_names,
-    #             cache_flask=cache_flask,
-    #         )
-    #         # TYPE: RGB image, expected 3 channels, not sum values elementwise
-    #         image += image_temp
+        # TYPE: possible inconsistency, for us lipid_names would be a list of strings, not a list of lists
+        # Loop over channels
+        for l_lipid_names in ll_lipid_names:
+            # Compute expression image per lipid
+            image_temp = self.compute_image_per_lipid(
+                slice_index,
+                RGB_format=True,
+                lipid_name=l_lipid_names,
+                cache_flask=cache_flask,
+            )
+            # TYPE: RGB image, expected 3 channels, not sum values elementwise
+            print("image_temp", image_temp.shape)
+            print("image", image.shape)
+            image += image_temp
 
-    #     # Compute corresponding figure
-    #     fig = self.build_lipid_heatmap_from_image(image, return_base64_string=return_base64_string)
+        # Compute corresponding figure
+        fig = self.build_lipid_heatmap_from_image(image, return_base64_string=return_base64_string)
 
-    #     return fig
+        return fig
 
     def compute_rgb_array_per_lipid_selection(
         self,
@@ -1182,13 +1184,19 @@ class Figures:
                 lipid_name=lipid_name,
                 cache_flask=cache_flask,
             )
+            print("image_temp", image_temp.shape if image_temp is not None else "None")
             # if image_temp is not None:
             #     image += image_temp
 
             l_images.append(image_temp)  #####
 
-        # Reoder axis to match plotly go.image requirements
-        array_image = np.moveaxis(np.array(l_images), 0, 2)
+        # Reoder axis to match plotly go.image requirementss
+        # array_image = np.moveaxis(np.array(l_images), 0, 2)
+        array_image = np.array(l_images)
+
+        # TODO: there is a problem with the shape of the array_image because the shapes if less than 3 lipids are selected are not the same
+        # if 3 are selected, still there is no image displayed (check that the content of the image is valid)
+        print("array_image", array_image.shape)
 
         return np.asarray(array_image, dtype=np.uint8)
 

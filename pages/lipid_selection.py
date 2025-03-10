@@ -97,7 +97,7 @@ def return_layout(basic_config, slice_index):
                                             #     "annotations",
                                             #     "lipid_options",
                                             #     force_update=False,
-                                            #     compute_function=data.return_lipid_options, ################################### UNDERSTAND HEREEEEEEEEE
+                                            #     compute_function=data.return_lipid_options,
                                             # ),
                                             searchable=True,
                                             nothingFound="No lipid found",
@@ -449,18 +449,18 @@ def return_layout(basic_config, slice_index):
     Output("page-2-graph-heatmap-mz-selection", "figure"),
     Output("page-2-badge-input", "children"),
     Input("main-slider", "data"),
-    Input("boundaries-high-resolution-mz-plot", "data"),
-    Input("boundaries-low-resolution-mz-plot", "data"),
+    # Input("boundaries-high-resolution-mz-plot", "data"),
+    # Input("boundaries-low-resolution-mz-plot", "data"),
     Input("page-2-selected-lipid-1", "data"),
     Input("page-2-selected-lipid-2", "data"),
     Input("page-2-selected-lipid-3", "data"),
     Input("page-2-rgb-button", "n_clicks"),
     Input("page-2-colormap-button", "n_clicks"),
-    Input("page-2-button-bounds", "n_clicks"),
-    State("page-2-lower-bound", "value"),
-    State("page-2-upper-bound", "value"),
+    # Input("page-2-button-bounds", "n_clicks"),
+    # State("page-2-lower-bound", "value"),
+    # State("page-2-upper-bound", "value"),
     State("page-2-badge-input", "children"),
-    Input("page-2-toggle-apply-transform", "checked"),
+    # Input("page-2-toggle-apply-transform", "checked"),
 )
 def page_2_plot_graph_heatmap_mz_selection(
     slice_index,
@@ -471,20 +471,21 @@ def page_2_plot_graph_heatmap_mz_selection(
     lipid_3_index,
     n_clicks_button_rgb,
     n_clicks_button_colormap,
-    n_clicks_button_bounds,
+    # n_clicks_button_bounds,
     # lb,
     # hb,
     graph_input,
-    apply_transform,
+    # apply_transform,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
-    print(f"========== HEREEEE {slice_index} {logmem()} ==========")
+    print(f"\n========== page_2_plot_graph_heatmap_mz_selection ==========")
     print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
 
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    print(f"id_input: {id_input}")    
 
     # # Case a two mz bounds values have been inputed
     # if id_input == "page-2-button-bounds" or (
@@ -508,7 +509,7 @@ def page_2_plot_graph_heatmap_mz_selection(
         or id_input == "page-2-rgb-button"
         or id_input == "page-2-colormap-button"
         or (
-            (id_input == "main-slider" or id_input == "page-2-toggle-apply-transform")
+            (id_input == "main-slider") # or id_input == "page-2-toggle-apply-transform")
             and (
                 graph_input == "Current input: " + "Lipid selection colormap"
                 or graph_input == "Current input: " + "Lipid selection RGB"
@@ -530,31 +531,35 @@ def page_2_plot_graph_heatmap_mz_selection(
             # ]
 
             ll_lipid_names = [
-                [
+                # [
                     data.get_annotations().iloc[index]["name"]
-                    + "_"
+                    + " "
                     + data.get_annotations().iloc[index]["structure"]
                     # + "_"
                     # + data.get_annotations().iloc[index]["cation"]
-                ]
+                # ]
                 if index != -1
                 else None
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
+            print("ll_lipid_names:", ll_lipid_names)
 
-            # Check that annotations do not intercept with each other
-            l_lipid_bounds_clean = [
-                x
-                for l_lipid_bounds in ll_lipid_bounds
-                if l_lipid_bounds is not None
-                for x in l_lipid_bounds
-            ]
-            if len(l_lipid_bounds_clean) >= 2:
-                l_t_bounds_sorted = sorted(l_lipid_bounds_clean)
-                for t_bounds_1, t_bounds_2 in zip(l_t_bounds_sorted[:-1], l_t_bounds_sorted[1:]):
-                    if t_bounds_1[1] > t_bounds_2[0]:
-                        logging.warning("Some pixel annotations intercept each other")
+            # # Check that annotations do not intercept with each other
+            # l_lipid_bounds_clean = [
+            #     x
+            #     for l_lipid_bounds in ll_lipid_bounds
+            #     if l_lipid_bounds is not None
+            #     for x in l_lipid_bounds
+            # ]
+            # if len(l_lipid_bounds_clean) >= 2:
+            #     l_t_bounds_sorted = sorted(l_lipid_bounds_clean)
+            #     for t_bounds_1, t_bounds_2 in zip(l_t_bounds_sorted[:-1], l_t_bounds_sorted[1:]):
+            #         if t_bounds_1[1] > t_bounds_2[0]:
+            #             logging.warning("Some pixel annotations intercept each other")
 
+            # TODO: plotting a heatmap for more than one lipid is meaningless. 
+            # If more than one lipid is selected, only the rgb plot is available
+            
             # Check if the current plot must be a heatmap
             if (
                 id_input == "page-2-colormap-button"
@@ -562,16 +567,16 @@ def page_2_plot_graph_heatmap_mz_selection(
                     id_input == "main-slider"
                     and graph_input == "Current input: " + "Lipid selection colormap"
                 )
-                or (
-                    id_input == "page-2-toggle-apply-transform"
-                    and graph_input == "Current input: " + "Lipid selection colormap"
-                )
+                # or (
+                #     id_input == "page-2-toggle-apply-transform"
+                #     and graph_input == "Current input: " + "Lipid selection colormap"
+                # )
             ):
                 return (
                     figures.compute_heatmap_per_lipid_selection(
                         slice_index,
-                        ll_lipid_bounds,
-                        apply_transform=apply_transform,
+                        # ll_lipid_bounds,
+                        # apply_transform=apply_transform,
                         ll_lipid_names=ll_lipid_names,
                         cache_flask=cache_flask,
                     ),
@@ -593,8 +598,8 @@ def page_2_plot_graph_heatmap_mz_selection(
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
-                        ll_lipid_bounds,
-                        apply_transform=apply_transform,
+                        # ll_lipid_bounds,
+                        # apply_transform=apply_transform,
                         ll_lipid_names=ll_lipid_names,
                         cache_flask=cache_flask,
                     ),
@@ -607,8 +612,8 @@ def page_2_plot_graph_heatmap_mz_selection(
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
-                        ll_lipid_bounds,
-                        apply_transform=apply_transform,
+                        # ll_lipid_bounds,
+                        # apply_transform=apply_transform,
                         ll_lipid_names=ll_lipid_names,
                         cache_flask=cache_flask,
                     ),
@@ -617,32 +622,35 @@ def page_2_plot_graph_heatmap_mz_selection(
 
         else:
             # No lipid has been selected, return image from boundaries
-            if lb is not None and hb is not None:
-                return (
-                    figures.compute_heatmap_per_mz(slice_index, lb, hb, cache_flask=cache_flask),
-                    "Current input: " + "m/z boundaries",
-                )
-            else:
-                return (
-                    figures.compute_heatmap_per_mz(slice_index, 500, 500, cache_flask=cache_flask),
-                    "Current input: " + "m/z boundaries",
-                )
-    # Case trigger is range slider from high resolution spectrum
-    if id_input == "boundaries-high-resolution-mz-plot" or (
-        id_input == "main-slider"
-        and graph_input == "Current input: " + "Selection from high-res m/z graph"
-    ):
-        if bound_high_res is not None:
-            bound_high_res = json.loads(bound_high_res)
+            # if lb is not None and hb is not None:
             return (
-                figures.compute_heatmap_per_mz(
-                    slice_index,
-                    bound_high_res[0],
-                    bound_high_res[1],
-                    cache_flask=cache_flask,
-                ),
-                "Current input: " + "Selection from high-res m/z graph",
+                figures.compute_heatmap_per_lipid(slice_index, 
+                                                "SM 34:1;O2",
+                                                # lb, hb, 
+                                                cache_flask=cache_flask),
+                "Current input: ",# + "m/z boundaries",
             )
+            # else:
+            #     return (
+            #         figures.compute_heatmap_per_mz(slice_index, 500, 500, cache_flask=cache_flask),
+            #         "Current input: " + "m/z boundaries",
+            #     )
+    # # Case trigger is range slider from high resolution spectrum
+    # if id_input == "boundaries-high-resolution-mz-plot" or (
+    #     id_input == "main-slider"
+    #     and graph_input == "Current input: " + "Selection from high-res m/z graph"
+    # ):
+    #     if bound_high_res is not None:
+    #         bound_high_res = json.loads(bound_high_res)
+    #         return (
+    #             figures.compute_heatmap_per_mz(
+    #                 slice_index,
+    #                 bound_high_res[0],
+    #                 bound_high_res[1],
+    #                 cache_flask=cache_flask,
+    #             ),
+    #             "Current input: " + "Selection from high-res m/z graph",
+    #         )
 
     # Case trigger is range slider from low resolution spectrum
     if id_input == "boundaries-low-resolution-mz-plot" or (
@@ -666,274 +674,274 @@ def page_2_plot_graph_heatmap_mz_selection(
         return dash.no_update
 
 
-@app.callback(
-    Output("page-2-graph-low-resolution-spectrum", "figure"),
-    Input("main-slider", "data"),
-    State("page-2-selected-lipid-1", "data"),
-    State("page-2-selected-lipid-2", "data"),
-    State("page-2-selected-lipid-3", "data"),
-    Input("page-2-rgb-button", "n_clicks"),
-    Input("page-2-colormap-button", "n_clicks"),
-    Input("page-2-button-bounds", "n_clicks"),
-    State("page-2-lower-bound", "value"),
-    State("page-2-upper-bound", "value"),
-    State("page-2-badge-input", "children"),
-    State("page-2-graph-low-resolution-spectrum", "relayoutData"),
-)
-def page_2_plot_graph_low_res_spectrum(
-    slice_index,
-    lipid_1_index,
-    lipid_2_index,
-    lipid_3_index,
-    n_clicks_rgb,
-    n_clicks_colormap,
-    n_clicks_button_bounds,
-    lb,
-    hb,
-    graph_input,
-    relayoutData,
-):
-    """This callbacks generates the graph of the low resolution spectrum when the current input
-    gets updated."""
+# @app.callback(
+#     Output("page-2-graph-low-resolution-spectrum", "figure"),
+#     Input("main-slider", "data"),
+#     State("page-2-selected-lipid-1", "data"),
+#     State("page-2-selected-lipid-2", "data"),
+#     State("page-2-selected-lipid-3", "data"),
+#     Input("page-2-rgb-button", "n_clicks"),
+#     Input("page-2-colormap-button", "n_clicks"),
+#     Input("page-2-button-bounds", "n_clicks"),
+#     State("page-2-lower-bound", "value"),
+#     State("page-2-upper-bound", "value"),
+#     State("page-2-badge-input", "children"),
+#     State("page-2-graph-low-resolution-spectrum", "relayoutData"),
+# )
+# def page_2_plot_graph_low_res_spectrum(
+#     slice_index,
+#     lipid_1_index,
+#     lipid_2_index,
+#     lipid_3_index,
+#     n_clicks_rgb,
+#     n_clicks_colormap,
+#     n_clicks_button_bounds,
+#     lb,
+#     hb,
+#     graph_input,
+#     relayoutData,
+# ):
+#     """This callbacks generates the graph of the low resolution spectrum when the current input
+#     gets updated.""
 
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+#     # Find out which input triggered the function
+#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
 
-    # If a lipid selection has been done
-    if (
-        id_input == "page-2-selected-lipid-1"
-        or id_input == "page-2-selected-lipid-2"
-        or id_input == "page-2-selected-lipid-3"
-        or id_input == "page-2-rgb-button"
-        or id_input == "page-2-colormap-button"
-        or (
-            id_input == "main-slider"
-            and (
-                graph_input == "Current input: " + "Lipid selection colormap"
-                or graph_input == "Current input: " + "Lipid selection RGB"
-            )
-        )
-    ):
-        if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-            # build the list of mz boundaries for each peak
-            l_lipid_bounds = [
-                (
-                    float(data.get_annotations().iloc[index]["min"]),
-                    float(data.get_annotations().iloc[index]["max"]),
-                )
-                if index != -1
-                else None
-                for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-            ]
-            return figures.compute_spectrum_low_res(slice_index, l_lipid_bounds)
+#     # If a lipid selection has been done
+#     if (
+#         id_input == "page-2-selected-lipid-1"
+#         or id_input == "page-2-selected-lipid-2"
+#         or id_input == "page-2-selected-lipid-3"
+#         or id_input == "page-2-rgb-button"
+#         or id_input == "page-2-colormap-button"
+#         or (
+#             id_input == "main-slider"
+#             and (
+#                 graph_input == "Current input: " + "Lipid selection colormap"
+#                 or graph_input == "Current input: " + "Lipid selection RGB"
+#             )
+#         )
+#     ):
+#         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
+#             # build the list of mz boundaries for each peak
+#             l_lipid_bounds = [
+#                 (
+#                     float(data.get_annotations().iloc[index]["min"]),
+#                     float(data.get_annotations().iloc[index]["max"]),
+#                 )
+#                 if index != -1
+#                 else None
+#                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
+#             ]
+#             return figures.compute_spectrum_low_res(slice_index, l_lipid_bounds)
 
-        else:
-            # Probably the page has just been loaded, so load new figure with default parameters
-            return dash.no_update
+#         else:
+#             # Probably the page has just been loaded, so load new figure with default parameters
+#             return dash.no_update
 
-    # Or if the plot has been updated from range or slider
-    elif id_input == "page-2-button-bounds" or (
-        id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
-    ):
-        lb, hb = float(lb), float(hb)
-        if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
-            l_lipid_bounds = [(lb, hb), None, None]
-            return figures.compute_spectrum_low_res(slice_index, l_lipid_bounds)
+#     # Or if the plot has been updated from range or slider
+#     elif id_input == "page-2-button-bounds" or (
+#         id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
+#     ):
+#         lb, hb = float(lb), float(hb)
+#         if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
+#             l_lipid_bounds = [(lb, hb), None, None]
+#             return figures.compute_spectrum_low_res(slice_index, l_lipid_bounds)
 
-    elif (
-        id_input == "main-slider"
-        and graph_input == "Current input: " + "Selection from low-res m/z graph"
-    ):
-        # TODO : find a way to set relayoutdata properly
-        pass
+#     elif (
+#         id_input == "main-slider"
+#         and graph_input == "Current input: " + "Selection from low-res m/z graph"
+#     ):
+#         # TODO : find a way to set relayoutdata properly
+#         pass
 
-    return dash.no_update
-
-
-@app.callback(
-    Output("boundaries-low-resolution-mz-plot", "data"),
-    Input("page-2-graph-low-resolution-spectrum", "relayoutData"),
-    State("main-slider", "data"),
-)
-def page_2_store_boundaries_mz_from_graph_low_res_spectrum(relayoutData, slice_index):
-    """This callback stores in a dcc store the m/z boundaries of the low resolution spectrum when
-    they are updated."""
-
-    # If the plot has been updated from the low resolution spectrum
-    if relayoutData is not None:
-        if "xaxis.range[0]" in relayoutData:
-            return json.dumps([relayoutData["xaxis.range[0]"], relayoutData["xaxis.range[1]"]])
-        elif "xaxis.range" in relayoutData:
-            return json.dumps(relayoutData["xaxis.range"])
-
-        # If the range is re-initialized, need to explicitely pass the first
-        # and last values of the spectrum to the figure
-        elif "xaxis.autorange" in relayoutData:
-            return json.dumps(
-                [
-                    data.get_array_avg_spectrum_downsampled(slice_index)[0, 0].astype("float"),
-                    data.get_array_avg_spectrum_downsampled(slice_index)[0, -1].astype("float"),
-                ]
-            )
-
-    # When the app is launched, or when the plot is displayed and autoresized,
-    # no boundaries are passed not to update the heatmap for nothing
-    return dash.no_update
+#     return dash.no_update
 
 
-@app.callback(
-    Output("page-2-graph-high-resolution-spectrum", "figure"),
-    Input("main-slider", "data"),
-    Input("boundaries-low-resolution-mz-plot", "data"),
-    Input("page-2-selected-lipid-1", "data"),
-    Input("page-2-selected-lipid-2", "data"),
-    Input("page-2-selected-lipid-3", "data"),
-    Input("page-2-rgb-button", "n_clicks"),
-    Input("page-2-colormap-button", "n_clicks"),
-    Input("page-2-button-bounds", "n_clicks"),
-    State("page-2-lower-bound", "value"),
-    State("page-2-upper-bound", "value"),
-    State("page-2-badge-input", "children"),
-    Input("page-2-toggle-apply-transform", "checked"),
-)
-def page_2_plot_graph_high_res_spectrum(
-    slice_index,
-    bound_high_res,
-    lipid_1_index,
-    lipid_2_index,
-    lipid_3_index,
-    n_clicks_rgb,
-    n_clicks_colormap,
-    n_clicks_button_bounds,
-    lb,
-    hb,
-    graph_input,
-    apply_transform,
-):
-    """This callback generates the graph of the high resolution spectrum when the current input has
-    a small enough m/z range."""
+# @app.callback(
+#     Output("boundaries-low-resolution-mz-plot", "data"),
+#     Input("page-2-graph-low-resolution-spectrum", "relayoutData"),
+#     State("main-slider", "data"),
+# )
+# def page_2_store_boundaries_mz_from_graph_low_res_spectrum(relayoutData, slice_index):
+#     """This callback stores in a dcc store the m/z boundaries of the low resolution spectrum when
+#     they are updated."""
 
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+#     # If the plot has been updated from the low resolution spectrum
+#     if relayoutData is not None:
+#         if "xaxis.range[0]" in relayoutData:
+#             return json.dumps([relayoutData["xaxis.range[0]"], relayoutData["xaxis.range[1]"]])
+#         elif "xaxis.range" in relayoutData:
+#             return json.dumps(relayoutData["xaxis.range"])
 
-    # If a lipid selection has been done
-    if (
-        id_input == "page-2-selected-lipid-1"
-        or id_input == "page-2-selected-lipid-2"
-        or id_input == "page-2-selected-lipid-3"
-        or id_input == "page-2-rgb-button"
-        or id_input == "page-2-colormap-button"
-        or id_input == "page-2-last-selected-lipids"
-        or (
-            id_input == "main-slider"
-            and (
-                graph_input == "Current input: " + "Lipid selection colormap"
-                or graph_input == "Current input: " + "Lipid selection RGB"
-            )
-        )
-    ):
-        # If at least one lipid index has been recorded
-        if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-            # Build the list of mz boundaries for each peak
-            l_indexes = [lipid_1_index, lipid_2_index, lipid_3_index]
-            l_lipid_bounds = [
-                (
-                    float(data.get_annotations().iloc[index]["min"]),
-                    float(data.get_annotations().iloc[index]["max"]),
-                )
-                if index != -1
-                else None
-                for index in l_indexes
-            ]
-            if lipid_3_index >= 0:
-                current_lipid_index = 2
-            elif lipid_2_index >= 0:
-                current_lipid_index = 1
-            else:
-                current_lipid_index = 0
-            return figures.compute_spectrum_high_res(
-                slice_index,
-                l_lipid_bounds[current_lipid_index][0] - 10**-2,
-                l_lipid_bounds[current_lipid_index][1] + 10**-2,
-                annotations=l_lipid_bounds,
-                force_xlim=True,
-                standardization=apply_transform,
-                cache_flask=cache_flask,
-            )
+#         # If the range is re-initialized, need to explicitely pass the first
+#         # and last values of the spectrum to the figure
+#         elif "xaxis.autorange" in relayoutData:
+#             return json.dumps(
+#                 [
+#                     data.get_array_avg_spectrum_downsampled(slice_index)[0, 0].astype("float"),
+#                     data.get_array_avg_spectrum_downsampled(slice_index)[0, -1].astype("float"),
+#                 ]
+#             )
 
-    # If the user has selected a new m/z range
-    elif id_input == "page-2-button-bounds" or (
-        id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
-    ):
-        lb, hb = float(lb), float(hb)
-        if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
-            # l_lipid_bounds = [(lb, hb), None, None]
-            return figures.compute_spectrum_high_res(
-                slice_index,
-                lb - 10**-2,
-                hb + 10**-2,
-                force_xlim=True,  # annotations=l_lipid_bounds,
-                standardization=apply_transform,
-                cache_flask=cache_flask,
-            )
-
-    # If the figure is created at app launch or after load button is cliked, or with an empty lipid
-    # selection, don't plot anything
-    elif "page-2-selected-lipid" in id_input:
-        return dash.no_update
-
-    # Otherwise, if new boundaries have been selected on the low-resolution spectrum
-    elif id_input == "boundaries-low-resolution-mz-plot" and bound_high_res is not None:
-        bound_high_res = json.loads(bound_high_res)
-
-        # Case the zoom is high enough
-        if bound_high_res[1] - bound_high_res[0] <= 3:
-            return figures.compute_spectrum_high_res(
-                slice_index,
-                bound_high_res[0],
-                bound_high_res[1],
-                standardization=apply_transform,
-                cache_flask=cache_flask,
-            )
-        # Otherwise just return default (empty) graph
-        else:
-            return dash.no_update
-
-    # The page has just been loaded, no spectrum is displayed
-    return dash.no_update
+#     # When the app is launched, or when the plot is displayed and autoresized,
+#     # no boundaries are passed not to update the heatmap for nothing
+#     return dash.no_update
 
 
-@app.callback(
-    Output("boundaries-high-resolution-mz-plot", "data"),
-    Input("page-2-graph-high-resolution-spectrum", "relayoutData"),
-    Input("boundaries-low-resolution-mz-plot", "data"),
-)
-def page_2_store_boundaries_mz_from_graph_high_res_spectrum(relayoutData, bound_low_res):
-    """This callback records the m/z boundaries of the high resolution spectrum in a dcc store."""
+# @app.callback(
+#     Output("page-2-graph-high-resolution-spectrum", "figure"),
+#     Input("main-slider", "data"),
+#     Input("boundaries-low-resolution-mz-plot", "data"),
+#     Input("page-2-selected-lipid-1", "data"),
+#     Input("page-2-selected-lipid-2", "data"),
+#     Input("page-2-selected-lipid-3", "data"),
+#     Input("page-2-rgb-button", "n_clicks"),
+#     Input("page-2-colormap-button", "n_clicks"),
+#     Input("page-2-button-bounds", "n_clicks"),
+#     State("page-2-lower-bound", "value"),
+#     State("page-2-upper-bound", "value"),
+#     State("page-2-badge-input", "children"),
+#     Input("page-2-toggle-apply-transform", "checked"),
+# )
+# def page_2_plot_graph_high_res_spectrum(
+#     slice_index,
+#     bound_high_res,
+#     lipid_1_index,
+#     lipid_2_index,
+#     lipid_3_index,
+#     n_clicks_rgb,
+#     n_clicks_colormap,
+#     n_clicks_button_bounds,
+#     lb,
+#     hb,
+#     graph_input,
+#     apply_transform,
+# ):
+#     """This callback generates the graph of the high resolution spectrum when the current input has
+#     a small enough m/z range."""
 
-    # Primarily update high-res boundaries with high-res range slider
-    if relayoutData is not None:
-        if "xaxis.range[0]" in relayoutData:
-            return json.dumps([relayoutData["xaxis.range[0]"], relayoutData["xaxis.range[1]"]])
-        elif "xaxis.range" in relayoutData:
-            return json.dumps(relayoutData["xaxis.range"])
+#     # Find out which input triggered the function
+#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
 
-        # If the range is re-initialized, need to explicitely pass the low-res value of the slider
-        elif "xaxis.autorange" in relayoutData:
-            if bound_low_res is not None:
-                bound_low_res = json.loads(bound_low_res)
-                if bound_low_res[1] - bound_low_res[0] <= 3:
-                    return json.dumps(bound_low_res)
+#     # If a lipid selection has been done
+#     if (
+#         id_input == "page-2-selected-lipid-1"
+#         or id_input == "page-2-selected-lipid-2"
+#         or id_input == "page-2-selected-lipid-3"
+#         or id_input == "page-2-rgb-button"
+#         or id_input == "page-2-colormap-button"
+#         or id_input == "page-2-last-selected-lipids"
+#         or (
+#             id_input == "main-slider"
+#             and (
+#                 graph_input == "Current input: " + "Lipid selection colormap"
+#                 or graph_input == "Current input: " + "Lipid selection RGB"
+#             )
+#         )
+#     ):
+#         # If at least one lipid index has been recorded
+#         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
+#             # Build the list of mz boundaries for each peak
+#             l_indexes = [lipid_1_index, lipid_2_index, lipid_3_index]
+#             l_lipid_bounds = [
+#                 (
+#                     float(data.get_annotations().iloc[index]["min"]),
+#                     float(data.get_annotations().iloc[index]["max"]),
+#                 )
+#                 if index != -1
+#                 else None
+#                 for index in l_indexes
+#             ]
+#             if lipid_3_index >= 0:
+#                 current_lipid_index = 2
+#             elif lipid_2_index >= 0:
+#                 current_lipid_index = 1
+#             else:
+#                 current_lipid_index = 0
+#             return figures.compute_spectrum_high_res(
+#                 slice_index,
+#                 l_lipid_bounds[current_lipid_index][0] - 10**-2,
+#                 l_lipid_bounds[current_lipid_index][1] + 10**-2,
+#                 annotations=l_lipid_bounds,
+#                 force_xlim=True,
+#                 standardization=apply_transform,
+#                 cache_flask=cache_flask,
+#             )
 
-    # But also needs to be updated when low-res slider is changed and is zoomed enough
-    elif bound_low_res is not None:
-        bound_low_res = json.loads(bound_low_res)
-        if bound_low_res[1] - bound_low_res[0] <= 3:
-            return json.dumps(bound_low_res)
+#     # If the user has selected a new m/z range
+#     elif id_input == "page-2-button-bounds" or (
+#         id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
+#     ):
+#         lb, hb = float(lb), float(hb)
+#         if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
+#             # l_lipid_bounds = [(lb, hb), None, None]
+#             return figures.compute_spectrum_high_res(
+#                 slice_index,
+#                 lb - 10**-2,
+#                 hb + 10**-2,
+#                 force_xlim=True,  # annotations=l_lipid_bounds,
+#                 standardization=apply_transform,
+#                 cache_flask=cache_flask,
+#             )
 
-    # Page has just been loaded, do nothing
-    else:
-        return dash.no_update
+#     # If the figure is created at app launch or after load button is cliked, or with an empty lipid
+#     # selection, don't plot anything
+#     elif "page-2-selected-lipid" in id_input:
+#         return dash.no_update
+
+#     # Otherwise, if new boundaries have been selected on the low-resolution spectrum
+#     elif id_input == "boundaries-low-resolution-mz-plot" and bound_high_res is not None:
+#         bound_high_res = json.loads(bound_high_res)
+
+#         # Case the zoom is high enough
+#         if bound_high_res[1] - bound_high_res[0] <= 3:
+#             return figures.compute_spectrum_high_res(
+#                 slice_index,
+#                 bound_high_res[0],
+#                 bound_high_res[1],
+#                 standardization=apply_transform,
+#                 cache_flask=cache_flask,
+#             )
+#         # Otherwise just return default (empty) graph
+#         else:
+#             return dash.no_update
+
+#     # The page has just been loaded, no spectrum is displayed
+#     return dash.no_update
+
+
+# @app.callback(
+#     Output("boundaries-high-resolution-mz-plot", "data"),
+#     Input("page-2-graph-high-resolution-spectrum", "relayoutData"),
+#     Input("boundaries-low-resolution-mz-plot", "data"),
+# )
+# def page_2_store_boundaries_mz_from_graph_high_res_spectrum(relayoutData, bound_low_res):
+#     """This callback records the m/z boundaries of the high resolution spectrum in a dcc store."""
+
+#     # Primarily update high-res boundaries with high-res range slider
+#     if relayoutData is not None:
+#         if "xaxis.range[0]" in relayoutData:
+#             return json.dumps([relayoutData["xaxis.range[0]"], relayoutData["xaxis.range[1]"]])
+#         elif "xaxis.range" in relayoutData:
+#             return json.dumps(relayoutData["xaxis.range"])
+
+#         # If the range is re-initialized, need to explicitely pass the low-res value of the slider
+#         elif "xaxis.autorange" in relayoutData:
+#             if bound_low_res is not None:
+#                 bound_low_res = json.loads(bound_low_res)
+#                 if bound_low_res[1] - bound_low_res[0] <= 3:
+#                     return json.dumps(bound_low_res)
+
+#     # But also needs to be updated when low-res slider is changed and is zoomed enough
+#     elif bound_low_res is not None:
+#         bound_low_res = json.loads(bound_low_res)
+#         if bound_low_res[1] - bound_low_res[0] <= 3:
+#             return json.dumps(bound_low_res)
+
+#     # Page has just been loaded, do nothing
+#     else:
+#         return dash.no_update
 
 
 @app.callback(
@@ -972,14 +980,11 @@ def page_2_add_toast_selection(
     header_3,
 ):
     """This callback adds the selected lipid to the selection."""
-    print(f"========== HEREEEE {slice_index} ==========")
-    print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
     logging.info("Entering function to update lipid data")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-
     # if page-2-dropdown-lipids is called while there's no lipid name defined, it means the page
     # just got loaded
     if len(id_input) == 0 or (id_input == "page-2-dropdown-lipids" and l_lipid_names is None):
@@ -1032,14 +1037,13 @@ def page_2_add_toast_selection(
             for header in [header_1, header_2, header_3]:
                 if len(header) > 2:
                     name, structure, cation = header.split(" ")
-
+                
                     # Find lipid location
                     l_lipid_loc_temp = (
                         data.get_annotations()
                         .index[
                             (data.get_annotations()["name"] == name)
                             & (data.get_annotations()["structure"] == structure)
-                            & (data.get_annotations()["cation"] == cation)
                         ]
                         .tolist()
                     )
@@ -1084,6 +1088,7 @@ def page_2_add_toast_selection(
         elif id_input == "page-2-dropdown-lipids":
             # Get the lipid name and structure
             name, structure = l_lipid_names[-1].split(" ")
+    
 
             # Find lipid location
             l_lipid_loc = (
@@ -1092,10 +1097,10 @@ def page_2_add_toast_selection(
                     (data.get_annotations()["name"] == name)
                     & (data.get_annotations()["structure"] == structure)
                     & (data.get_annotations()["slice"] == slice_index)
-                    & (data.get_annotations()["cation"] == cation)
                 ]
                 .tolist()
             )
+    
 
             # If several lipids correspond to the selection, we have a problem...
             if len(l_lipid_loc) > 1:
@@ -1109,7 +1114,6 @@ def page_2_add_toast_selection(
                     .index[
                         (data.get_annotations()["name"] == name)
                         & (data.get_annotations()["structure"] == structure)
-                        & (data.get_annotations()["cation"] == cation)
                     ]
                     .tolist()
                 )[:1]
@@ -1117,7 +1121,7 @@ def page_2_add_toast_selection(
 
             # Record location and lipid name
             lipid_index = l_lipid_loc[0]
-            lipid_string = name + " " + structure + " " + cation
+            lipid_string = name + " " + structure
 
             change_made = False
 
@@ -1175,29 +1179,29 @@ def page_2_add_toast_selection(
     return dash.no_update
 
 
-@app.callback(
-    Output("page-2-graph-high-resolution-spectrum", "style"),
-    Input("page-2-graph-high-resolution-spectrum", "figure"),
-)
-def page_2_display_high_res_mz_plot(figure):
-    """This callback is used to turn visible the high-resolution m/z plot."""
-    if figure is not None:
-        if figure["data"][0]["x"] != [[]]:
-            return {"height": 280}
+# @app.callback(
+#     Output("page-2-graph-high-resolution-spectrum", "style"),
+#     Input("page-2-graph-high-resolution-spectrum", "figure"),
+# )
+# def page_2_display_high_res_mz_plot(figure):
+#     """This callback is used to turn visible the high-resolution m/z plot."""
+#     if figure is not None:
+#         if figure["data"][0]["x"] != [[]]:
+#             return {"height": 280}
 
-    return {"display": "none"}
+#     return {"display": "none"}
 
 
-@app.callback(
-    Output("page-2-alert", "style"),
-    Input("page-2-graph-high-resolution-spectrum", "figure"),
-)
-def page_2_display_alert(figure):
-    """This callback is used to turn visible the alert regarding the high-res m/z plot."""
-    if figure is not None:
-        if figure["data"][0]["x"] != [[]]:
-            return {"display": "none"}
-    return {}
+# @app.callback(
+#     Output("page-2-alert", "style"),
+#     Input("page-2-graph-high-resolution-spectrum", "figure"),
+# )
+# def page_2_display_alert(figure):
+#     """This callback is used to turn visible the alert regarding the high-res m/z plot."""
+#     if figure is not None:
+#         if figure["data"][0]["x"] != [[]]:
+#             return {"display": "none"}
+#     return {}
 
 
 @app.callback(
@@ -1247,10 +1251,8 @@ def page_2_download(
                 for i, index in enumerate(l_lipids_indexes):
                     name = (
                         data.get_annotations().iloc[index]["name"]
-                        + "_"
+                        + " "
                         + data.get_annotations().iloc[index]["structure"]
-                        + "_"
-                        + data.get_annotations().iloc[index]["cation"]
                     )
 
                     # Need to clean name to use it as a sheet name
@@ -1355,56 +1357,61 @@ clientside_callback(
     Input("page-2-selected-lipid-3", "data"),
 )
 def page_2_active_download(lipid_1_index, lipid_2_index, lipid_3_index):
+    print("lipid_1_index", lipid_1_index)
+    print("lipid_2_index", lipid_2_index)
+    print("lipid_3_index", lipid_3_index)
     """This callback is used to toggle on/off the display rgb and colormap buttons."""
-
+    # logging.info("Enabled rgb and colormap buttons")
     # Get the current lipid selection
     l_lipids_indexes = [
         x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x is not None and x != -1
     ]
     # If lipids has been selected from the dropdown, activate button
     if len(l_lipids_indexes) > 0:
+        print("=============Disabled rgb and colormap buttons=============")
         return False, False
     else:
+        print("=============Enabled rgb and colormap buttons=============")
         return True, True
 
 
-@app.callback(
-    Output("page-2-button-bounds", "disabled"),
-    Input("page-2-lower-bound", "value"),
-    Input("page-2-upper-bound", "value"),
-)
-def page_2_button_window(lb, hb):
-    """This callaback is used to toggle on/off the display heatmap from bounds button."""
+# @app.callback(
+#     Output("page-2-button-bounds", "disabled"),
+#     Input("page-2-lower-bound", "value"),
+#     Input("page-2-upper-bound", "value"),
+# )
+# def page_2_button_window(lb, hb):
+#     """This callaback is used to toggle on/off the display heatmap from bounds button."""
 
-    # Check that the user has inputted something
-    if lb is not None and hb is not None:
-        lb, hb = float(lb), float(hb)
-        if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
-            return False
-    return True
-
-
-@app.callback(
-    Output("page-2-drawer-low-res-spectra", "is_open"),
-    Input("page-2-show-low-res-spectrum-button", "n_clicks"),
-    Input("page-2-close-low-res-spectrum-button", "n_clicks"),
-    [State("page-2-drawer-low-res-spectra", "is_open")],
-)
-def toggle_offcanvas(n1, n2, is_open):
-    """This callback is used to toggle the low-res spectra drawer."""
-    if n1 or n2:
-        return not is_open
-    return is_open
+#     # Check that the user has inputted something
+#     if lb is not None and hb is not None:
+#         lb, hb = float(lb), float(hb)
+#         if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
+#             return False
+#     return True
 
 
-@app.callback(
-    Output("page-2-drawer-high-res-spectra", "is_open"),
-    Input("page-2-show-high-res-spectrum-button", "n_clicks"),
-    Input("page-2-close-high-res-spectrum-button", "n_clicks"),
-    [State("page-2-drawer-high-res-spectra", "is_open")],
-)
-def toggle_offcanvas_high_res(n1, n2, is_open):
-    """This callback is used to toggle the high-res spectra drawer."""
-    if n1 or n2:
-        return not is_open
-    return is_open
+# @app.callback(
+#     Output("page-2-drawer-low-res-spectra", "is_open"),
+#     Input("page-2-show-low-res-spectrum-button", "n_clicks"),
+#     Input("page-2-close-low-res-spectrum-button", "n_clicks"),
+#     [State("page-2-drawer-low-res-spectra", "is_open")],
+# )
+# def toggle_offcanvas(n1, n2, is_open):
+#     """This callback is used to toggle the low-res spectra drawer."""
+#     if n1 or n2:
+#         return not is_open
+#     return is_open
+
+
+# @app.callback(
+#     Output("page-2-drawer-high-res-spectra", "is_open"),
+#     Input("page-2-show-high-res-spectrum-button", "n_clicks"),
+#     Input("page-2-close-high-res-spectrum-button", "n_clicks"),
+#     [State("page-2-drawer-high-res-spectra", "is_open")],
+# )
+# def toggle_offcanvas_high_res(n1, n2, is_open):
+#     """This callback is used to toggle the high-res spectra drawer."""
+#     if n1 or n2:
+#         return not is_open
+#     return is_open

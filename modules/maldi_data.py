@@ -157,6 +157,19 @@ class MaldiData:
         """
         try:
             # Use the parameters passed to the function
+    def extract_lipid_image(self, slice_index, lipid_name, fill_holes=True):
+        """Extract a lipid image from scatter data with optional hole filling.
+        
+        Args:
+            slice_index: Index of the slice
+            lipid_name: Name of the lipid
+            fill_holes: Whether to fill holes using nearest neighbor interpolation
+            
+        Returns:
+            2D numpy array with the lipid distribution or None if not found
+        """
+        try:
+            # Use the parameters passed to the function
             lipid_data = self.get_lipid_image(slice_index, lipid_name)
             
             if lipid_data is None:

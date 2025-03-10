@@ -1546,6 +1546,7 @@ class Figures:
 
         return fig
 
+    '''
     def compute_3D_root_volume(self, decrease_dimensionality_factor=7, differentiate_borders=False):
         """This function is used to generate a go.Isosurface of the Allen Brain root structure,
         which will be used to enclose the display of lipid expression of other structures in the
@@ -1569,13 +1570,14 @@ class Figures:
             ::decrease_dimensionality_factor,
         ]
 
+
         # Bug correction for the last slice
-        array_annotation_root = np.concatenate(
-            (
-                array_annotation_root,
-                np.zeros((1, array_annotation_root.shape[1], array_annotation_root.shape[2])),
-            )
-        )
+        #array_annotation_root = np.concatenate(
+        #    (
+        #        array_annotation_root,
+        #        np.zeros((1, array_annotation_root.shape[1], array_annotation_root.shape[2])),
+        #    )
+        #)
 
         # Get the volume array
         array_atlas_borders_root = fill_array_borders(
@@ -1585,6 +1587,8 @@ class Figures:
             keep_structure_id=None,
         )
 
+        print(array_atlas_borders_root.shape)
+        
         # Compute the 3D grid
         X_root, Y_root, Z_root = np.mgrid[
             0 : array_atlas_borders_root.shape[0]
@@ -1620,6 +1624,55 @@ class Figures:
         )
 
         return brain_root_data
+    '''
+
+    def compute_3D_root_volume(self, decrease_dimensionality_factor=7, differentiate_borders=False):
+        """This function is used to generate a go.Volume (changed from Isosurface) of the Allen Brain root structure,
+        which will be used to enclose the display of lipid expression of other structures in the brain.
+        
+        Args:
+            decrease_dimensionality_factor (int, optional): Decrease the dimensionality of the
+                brain to display, to get a lighter output. Defaults to 7.
+        Returns:
+            (go.Volume): A semi-transparent go.Volume of the Allen Brain root structure.
+        """
+        # Get array of annotations, which associate coordinate to id
+        array_annotation_root = np.array(self._atlas.bg_atlas.annotation, dtype=np.int32)
+        
+        # Subsample array of annotation
+        array_annotation_root = array_annotation_root[
+            ::decrease_dimensionality_factor,
+            ::decrease_dimensionality_factor,
+            ::decrease_dimensionality_factor,
+        ]
+        
+        # Get the volume array
+        array_atlas_borders_root = fill_array_borders(
+            array_annotation_root,
+            differentiate_borders=differentiate_borders,
+            color_near_borders=False,
+            keep_structure_id=None,
+        )
+        print(array_atlas_borders_root.shape)
+        
+        # IMPORTANT CHANGE: Use np.indices instead of np.mgrid to match the lipid visualization
+        # Create coordinate grid based on array shape
+        z_root, y_root, x_root = np.indices(array_atlas_borders_root.shape)
+        
+        # Compute the plot, now using go.Volume instead of go.Isosurface
+        brain_root_data = go.Volume(
+            x=x_root.flatten(),
+            y=y_root.flatten(),
+            z=z_root.flatten(),
+            value=array_atlas_borders_root.flatten(),
+            isomin=-0.21,
+            isomax=2.55,
+            opacity=0.1,
+            surface_count=2,
+            colorscale="Greys",
+            caps=dict(x_show=False, y_show=False, z_show=False)
+        )
+        return brain_root_data
 
     def get_array_of_annotations(self, decrease_dimensionality_factor):
         """This function returns the array of annotations from the Allen Brain Atlas, subsampled to
@@ -1643,15 +1696,16 @@ class Figures:
         )
 
         # Bug correction for the last slice
-        array_annotation = np.concatenate(
-            (
-                array_annotation,
-                np.zeros((1, array_annotation.shape[1], array_annotation.shape[2])),
-            )
-        )
+        # array_annotation = np.concatenate(
+        #     (
+        #         array_annotation,
+        #         np.zeros((1, array_annotation.shape[1], array_annotation.shape[2])),
+        #     )
+        # )
 
         return array_annotation
 
+    '''
     def compute_l_array_2D(
         self,
         ll_t_bounds,
@@ -1816,7 +1870,7 @@ class Figures:
 
         # Return the arrays for the 3D figure
         return array_x, array_y, array_z, array_c
-
+    
     def compute_3D_volume_figure(
         self,
         set_progress=None,
@@ -1825,7 +1879,7 @@ class Figures:
         name_lipid_2="",
         name_lipid_3="",
         set_id_regions=None,
-        decrease_dimensionality_factor=6,
+        decrease_dimensionality_factor=4,
         cache_flask=None,
         structure_guided_interpolation=True,
         return_interpolated_array=False,
@@ -2092,7 +2146,7 @@ class Figures:
             set_progress((90, "Returning figure"))
 
         return fig
-
+    '''
     # def compute_clustergram_figure(
     #     self,
     #     set_progress,
@@ -2871,94 +2925,172 @@ class Figures:
         cache_flask=None,
     ):
         """This function creates a grid of heatmaps showing the lipid expression across all slices.
-
+        
         Args:
             lipid_name (str): Name of the lipid to display
-            draw (bool, optional): If True, the user will have the possibility to draw on the
-                resulting Plotly Figure. Defaults to False.
-            return_base64_string (bool, optional): If True, the base64 string of the image is
-                returned directly, before any figure building. Defaults to False.
-            cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
-                None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
-                None.
-
+            draw (bool, optional): If True, enables drawing on the figure. Defaults to False.
+            return_base64_string (bool, optional): If True, returns base64 string. Defaults to False.
+            cache_flask (flask_caching.Cache, optional): Flask cache. Defaults to None.
+    
         Returns:
             go.Figure: A Plotly figure containing a grid of heatmaps for all slices
         """
         logging.info("Starting grid figure computation")
-
+    
         # Get total number of slices from MaldiData
         n_slices = self._data.get_slice_number()
-
-        print(n_slices)
-
-        # Calculate grid dimensions (14 columns, 9 rows)
-        n_cols = 14
-        n_rows = 9
-
+        
+        # Calculate grid dimensions, convert to Python int to avoid numpy integer issues
+        n_cols = 12
+        n_rows = int((n_slices + n_cols - 1) // n_cols)  # Ceiling division with explicit int conversion
+        
         # Create subplots
         fig = make_subplots(
             rows=n_rows,
             cols=n_cols,
-            #subplot_titles=[f"Slice {i+1}" for i in range(n_slices)],
             horizontal_spacing=0.01,
             vertical_spacing=0.01,
         )
         
         # Add heatmaps for each slice
+        valid_count = 0
+        max_height = 0
+        max_width = 0
+        
+        # First pass to determine maximum dimensions for aspect ratio consistency
         for slice_index in range(1, n_slices+1):
-
             try:
-                # Calculate row and column position (1-based indexing)
-                row = (slice_index // n_cols) + 1
-                col = (slice_index % n_cols) + 1
-    
-                print(slice_index)
-                print(lipid_name)
+                image = self._data.extract_lipid_image(float(slice_index), lipid_name)
+                if image is not None and image.size > 0:
+                    max_height = max(max_height, image.shape[0])
+                    max_width = max(max_width, image.shape[1])
+            except:
+                continue
+        
+        # Calculate cell size to maintain aspect ratio
+        aspect_ratio = max_height / max_width if max_width > 0 else 1
+        cell_width = 100
+        cell_height = int(cell_width * aspect_ratio)
+        
+        # Second pass to add the traces
+        for slice_index in range(1, n_slices+1):
+            try:
+                # Calculate row and column position (1-based indexing for subplot)
+                row = (valid_count // n_cols) + 1
+                col = (valid_count % n_cols) + 1
                 
                 # Get lipid image directly from MaldiData
                 image = self._data.extract_lipid_image(float(slice_index), lipid_name)
-    
-                print(image.shape)
-    
+                
+                # Skip if image is None or empty
+                if image is None or image.size == 0:
+                    continue
+                    
+                # Flip the image vertically
+                image = np.flip(image.T, np.flipud(image), axis=0)
+                
                 # Add heatmap to subplot
                 fig.add_trace(
                     go.Heatmap(
                         z=image,
-                        visible=True,
-                        hoverinfo="none",
-                        colorscale="viridis",
                         showscale=False,
+                        colorscale="viridis",
+                        hoverinfo="none",  # Disable hover to simplify
                     ),
                     row=row,
                     col=col,
                 )
-
-            except:
+                
+                # Add a simple text annotation for slice number
+                fig.add_annotation(
+                    text=f"{slice_index}",
+                    x=0.5,
+                    y=0.9,
+                    xref=f"x{valid_count+1}",
+                    yref=f"y{valid_count+1}",
+                    showarrow=False,
+                    font=dict(color="white", size=10),
+                )
+                
+                valid_count += 1
+                
+            except Exception as e:
+                logging.warning(f"Error processing slice {slice_index}: {str(e)}")
                 continue
-
+    
         # Update layout
         fig.update_layout(
-            height=900,  # Adjust based on your needs
-            width=1400,  # Adjust based on your needs
+            height=cell_height * n_rows + 100,
+            width=cell_width * n_cols + 100,
             showlegend=False,
-            margin=dict(t=50, r=0, b=0, l=0),
+            margin=dict(t=30, r=10, b=10, l=10),
             template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",  # Darker background
+            plot_bgcolor="rgba(0,0,0,0)",  # Darker background
+            clickmode="event+select",  # Enable click events
         )
-
-        # Update axes
-        fig.update_xaxes(showticklabels=False)
-        fig.update_yaxes(showticklabels=False)
-
-        if draw:
-            fig.update_layout(
-                dragmode="drawclosedpath",
-                newshape=dict(
-                    fillcolor=l_colors[0], opacity=0.7, line=dict(color="white", width=1)
-                ),
-                autosize=True,
-            )
-
+    
+        # Remove all axes, grids and ticks
+        fig.update_xaxes(
+            visible=False,
+            showgrid=False,
+            zeroline=False,
+            constrain="domain",  # Maintain aspect ratio
+            scaleanchor="y",     # Keep x and y scales linked
+        )
+        
+        fig.update_yaxes(
+            visible=False,
+            showgrid=False,
+            zeroline=False,
+            constrain="domain",  # Maintain aspect ratio
+            scaleanchor="x",     # Keep x and y scales linked
+        )
+        
+        # Add a callback for handling double-click events
+        fig.update_layout(
+            updatemenus=[
+                dict(
+                    type="buttons",
+                    showactive=False,
+                    buttons=[
+                        dict(
+                            label="Reset View",
+                            method="relayout",
+                            args=[{"xaxis.autorange": True, "yaxis.autorange": True}],
+                        )
+                    ],
+                    x=0.05,
+                    y=0.05,
+                    xanchor="left",
+                    yanchor="bottom",
+                )
+            ]
+        )
+    
+        # Add JavaScript for double-click zooming functionality
+        fig.update_layout(
+            annotations=[
+                dict(
+                    x=0,
+                    y=0,
+                    xref="paper",
+                    yref="paper",
+                    text="Double-click on a plot to zoom in",
+                    showarrow=False,
+                    font=dict(size=10, color="white"),
+                    opacity=0.7,
+                    align="left",
+                )
+            ]
+        )
+        
+        # Add custom JavaScript for double-click zooming
+        fig.update_layout(
+            newshape=dict(line_color="yellow"),  # Just to add a hook for the JavaScript
+        )
+        
+        # Add setup for callback via JavaScript with plotly_doubleclick event
+        fig._config = {"responsive": True}
+        
         return fig

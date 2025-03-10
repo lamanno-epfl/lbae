@@ -39,7 +39,9 @@ class MaldiData:
     3. Access metadata about the stored data
     """
 
-    def __init__(self, path_db: str = "../new_data/", path_annotations: str = "../data/annotations/"):
+    def __init__(
+        self, path_db: str = "../new_data/", path_annotations: str = "../data/annotations/"
+    ):
         """Initialize the storage system.
 
         Args:
@@ -143,132 +145,131 @@ class MaldiData:
             if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
                 return []
             return brain_info[brain_id][slice_index]
+            # Use the parameters passed to the function
 
     def extract_lipid_image(self, slice_index, lipid_name, fill_holes=True):
         """Extract a lipid image from scatter data with optional hole filling.
-        
+
         Args:
             slice_index: Index of the slice
             lipid_name: Name of the lipid
             fill_holes: Whether to fill holes using nearest neighbor interpolation
-            
-        Returns:
-            2D numpy array with the lipid distribution or None if not found
-        """
-        try:
-            # Use the parameters passed to the function
-    def extract_lipid_image(self, slice_index, lipid_name, fill_holes=True):
-        """Extract a lipid image from scatter data with optional hole filling.
-        
-        Args:
-            slice_index: Index of the slice
-            lipid_name: Name of the lipid
-            fill_holes: Whether to fill holes using nearest neighbor interpolation
-            
+
         Returns:
             2D numpy array with the lipid distribution or None if not found
         """
         try:
             # Use the parameters passed to the function
             lipid_data = self.get_lipid_image(slice_index, lipid_name)
-            
+
             if lipid_data is None:
                 print(f"{lipid_name} in slice {slice_index} was not found.")
                 return None
-                
+
             # Check if it's scatter data
             if not lipid_data.is_scatter:
                 # If it's already an image, just return it
                 return lipid_data.image
-                
+
             # Convert scatter data to image
             scatter_points = lipid_data.image  # This is a numpy array with shape (N, 3)
-            
+
             # Create a DataFrame from the scatter points
             scatter = pd.DataFrame(scatter_points, columns=["x", "y", "value"])
-            
+
             # Create an empty array to hold the image
             arr = np.full((456, 320), np.nan)  # Adjust dimensions if needed
-            
+
             # Convert coordinates to integers for indexing
             x_indices = scatter["x"].astype(int).values
             y_indices = scatter["y"].astype(int).values
-            
+
             # Ensure indices are within bounds
-            valid_indices = (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
-            
+            valid_indices = (
+                (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
+            )
+
             # Fill the array with values at the specified coordinates
-            arr[x_indices[valid_indices], y_indices[valid_indices]] = scatter["value"].values[valid_indices]
-            
+            arr[x_indices[valid_indices], y_indices[valid_indices]] = scatter["value"].values[
+                valid_indices
+            ]
+
             # Check if we need to fill holes
             if fill_holes:
                 # Count how many NaN values we have
                 nan_count_before = np.isnan(arr).sum()
                 print(f"Found {nan_count_before} NaN values (holes) in the image")
-                
+
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
                     filled_arr = self._fill_holes_nearest_neighbor(arr)
-                    
+
                     # Count remaining NaN values after filling
                     nan_count_after = np.isnan(filled_arr).sum()
                     print(f"After filling: {nan_count_after} NaN values remain")
-                    
+
                     return filled_arr
-                
+
             return arr
-            
+
         except Exception as e:
             print(f"Error extracting {lipid_name} in slice {slice_index}: {str(e)}")
             return None
-            
+
     def _fill_holes_nearest_neighbor(self, arr, max_distance=5):
         """Fill holes (NaN values) using nearest neighbor interpolation.
-        
+
         Args:
             arr: 2D numpy array with potential NaN values
             max_distance: Maximum distance to search for neighbors
-            
+
         Returns:
             2D numpy array with holes filled
         """
         # Make a copy to avoid modifying the original
         filled = arr.copy()
-        
+
         # Find indices of NaN values
         nan_indices = np.where(np.isnan(arr))
-        
+
         # No NaN values, return the original array
         if len(nan_indices[0]) == 0:
             return filled
-        
+
         # Find indices of non-NaN values
         valid_indices = np.where(~np.isnan(arr))
         valid_values = arr[valid_indices]
-        
+
         # For each NaN point, find the nearest non-NaN neighbor
         for i in range(len(nan_indices[0])):
             x, y = nan_indices[0][i], nan_indices[1][i]
-            
+
             # Skip if we're at the boundary
-            if x < max_distance or y < max_distance or x >= arr.shape[0] - max_distance or y >= arr.shape[1] - max_distance:
+            if (
+                x < max_distance
+                or y < max_distance
+                or x >= arr.shape[0] - max_distance
+                or y >= arr.shape[1] - max_distance
+            ):
                 continue
-                
+
             # Extract a window around the NaN point
-            window = arr[x-max_distance:x+max_distance+1, y-max_distance:y+max_distance+1]
-            
+            window = arr[
+                x - max_distance : x + max_distance + 1, y - max_distance : y + max_distance + 1
+            ]
+
             # Skip if all values in the window are NaN
             if np.all(np.isnan(window)):
                 continue
-                
+
             # Get the nearest non-NaN value
             window_values = window.flatten()
             non_nan_values = window_values[~np.isnan(window_values)]
-            
+
             if len(non_nan_values) > 0:
                 # Use the mean of nearby non-NaN values
                 filled[x, y] = np.mean(non_nan_values)
-    
+
         """
         # Optional: For remaining NaN values, use a more aggressive approach
         # This is a simple approach - for any remaining NaNs, find the nearest
@@ -296,7 +297,7 @@ class MaldiData:
                 # Use the value from the nearest valid point
                 filled[x, y] = arr[nearest_x, nearest_y]
         """
-        
+
         return filled
 
     def get_slice_number(self):
@@ -351,8 +352,6 @@ class MaldiData:
             return self.get_available_slices(brain_id="Pregnant4")
         else:
             raise ValueError("Invalid string for indices")
-        
-       
 
     def return_lipid_options(self):
         """Computes and returns the list of lipid names, structures and cation.

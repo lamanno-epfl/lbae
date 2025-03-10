@@ -10,7 +10,6 @@ from typing import Dict, List, Optional, Tuple
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-
 @dataclass
 class LipidImage:
     """Class to store lipid image data and metadata.
@@ -51,6 +50,7 @@ class MaldiData:
         if not os.path.exists(self.path_db):
             os.makedirs(self.path_db)
         self._df_annotations = pd.read_csv(os.path.join(path_annotations, "lipid_annotation.csv"))
+        
         # Initialize the metadata file if it doesn't exist
         self._init_metadata()
 
@@ -324,14 +324,13 @@ class MaldiData:
         if indices == "all":
             slices = []
             brains = self.get_available_brains()
-            print(brains)
             for brain in brains:
                 slices.extend(self.get_available_slices(brain))
             return slices
         elif indices == "ReferenceAtlas":
             return self.get_available_slices(brain_id="ReferenceAtlas")
         elif indices == "SecondAtlas":
-            return self.get_available_slices(brain_id="ReferenceAtlas")
+            return self.get_available_slices(brain_id="SecondAtlas")
         elif indices == "Female1":
             return self.get_available_slices(brain_id="Female1")
         elif indices == "Female2":
@@ -359,12 +358,11 @@ class MaldiData:
         Returns:
             (list): List of lipid names, structures and cations.
         """
-
         return [
             {
-                "label": ln.split(" ")[0] + " " + ln.split(" ")[1],
-                "value": ln.split(" ")[0] + " " + ln.split(" ")[1],
-                "group": ln.split(" ")[0],
+                "label": ln,
+                "value": ln,
+                "group": "Multiple matches" if len([ln.split(" ")[i] for i in range(0, len(ln.split(" ")), 2)]) > 1 else ln.split(" ")[0],
             }
             for ln in self.get_available_lipids(1)
         ]

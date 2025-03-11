@@ -111,50 +111,50 @@ def return_main_content():
                                 marks=[
                                     {
                                         "value": slice_index,
-                                        # Use x coordinate for label
-                                        "label": "{:.2f}".format(
-                                            # TYPE: int
-                                            atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
-                                        ),
+                                        # # Use x coordinate for label
+                                        # "label": "{:.2f}".format(
+                                        #     # TYPE: int
+                                        #     atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
+                                        # ),
                                     }
-                                    for slice_index in data.get_slice_list(indices="ReferenceAtlas")[::3]
+                                    for slice_index in data.get_slice_list(indices="ReferenceAtlas")# [::3]
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="ReferenceAtlas")[0],
                                 color="cyan",
                                 class_name="mt-2 mr-5 ml-2 mb-1 w-50",
                             ),
-                            # dmc.Slider(
-                            #     id="main-slider-2",
-                            #     min=data.get_slice_list(indices="SecondAtlas")[0],
-                            #     max=data.get_slice_list(indices="SecondAtlas")[-1],
-                            #     step=1,
-                            #     marks=[
-                            #         {
-                            #             "value": slice_index,
-                            #             # Use x coordinate for label
-                            #             "label": "{:.2f}".format(
-                            #                 # TYPE: int 
-                            #                 atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
-                            #             ),
-                            #         }
-                            #         for slice_index in data.get_slice_list(indices="SecondAtlas")[::3]
-                            #     ],
-                            #     size="xs",
-                            #     value=data.get_slice_list(indices="SecondAtlas")[0],
-                            #     color="cyan",
-                            #     class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
-                            # ),
-                            # dmc.Chips(
-                            #     id="main-brain",
-                            #     data=[
-                            #         {"value": "ReferenceAtlas", "label": "Brain 1"},
-                            #         {"value": "SecondAtlas", "label": "Brain 2"},
-                            #     ],
-                            #     value="ReferenceAtlas",
-                            #     class_name="pl-2 pt-1",
-                            #     color="cyan",
-                            # ),
+                            dmc.Slider(
+                                id="main-slider-2",
+                                min=data.get_slice_list(indices="SecondAtlas")[0],
+                                max=data.get_slice_list(indices="SecondAtlas")[-1],
+                                step=1,
+                                marks=[
+                                    {
+                                        "value": slice_index,
+                                        # Use x coordinate for label
+                                        # "label": "{:.2f}".format(
+                                        #     # TYPE: int 
+                                        #     atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
+                                        # ),
+                                    }
+                                    for slice_index in data.get_slice_list(indices="SecondAtlas")# [::3]
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="SecondAtlas")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
+                            dmc.Chips(
+                                id="main-brain",
+                                data=[
+                                    {"value": "ReferenceAtlas", "label": "Brain 1"},
+                                    {"value": "SecondAtlas", "label": "Brain 2"},
+                                ],
+                                value="ReferenceAtlas",
+                                class_name="pl-2 pt-1",
+                                color="cyan",
+                            ),
                         ],
                     ),
                     # Documentation in a bottom drawer
@@ -200,7 +200,7 @@ def return_validation_layout(main_content, initial_slice=1):
         [
             main_content,
             home.layout,
-            # lipid_selection.return_layout(basic_config, initial_slice),
+            lipid_selection.return_layout(basic_config, initial_slice),
             # region_analysis.return_layout(basic_config, initial_slice),
             # threeD_exploration.return_layout(basic_config, initial_slice),
         ]
@@ -215,9 +215,9 @@ def return_validation_layout(main_content, initial_slice=1):
     Output("empty-content", "children"),
     Input("url", "pathname"),
     State("main-slider", "data"),
-    # State("main-brain", "value"),
+    State("main-brain", "value"),
 )
-def render_page_content(pathname, slice_index):#, brain):
+def render_page_content(pathname, slice_index, brain):
     """This callback is used as a URL router."""
 
     # Keep track of the page in the console

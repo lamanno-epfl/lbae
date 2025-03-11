@@ -479,13 +479,13 @@ def page_2_plot_graph_heatmap_mz_selection(
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
     print(f"\n========== page_2_plot_graph_heatmap_mz_selection ==========")
-    print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
-
+    # print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
+    # print(f"slice_index: {slice_index}")
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    print(f"id_input: {id_input}")    
+    # print(f"id_input: {id_input}")    
 
     # # Case a two mz bounds values have been inputed
     # if id_input == "page-2-button-bounds" or (
@@ -532,9 +532,14 @@ def page_2_plot_graph_heatmap_mz_selection(
 
             ll_lipid_names = [
                 # [
-                    data.get_annotations().iloc[index]["name"]
-                    + " "
-                    + data.get_annotations().iloc[index]["structure"]
+                    ' '.join([
+                        data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
+                        + data.get_annotations().iloc[index]["structure"].split('_')[i] 
+                        for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
+                        ])
+                    # data.get_annotations().iloc[index]["name"]
+                    # + " "
+                    # + data.get_annotations().iloc[index]["structure"]
                     # + "_"
                     # + data.get_annotations().iloc[index]["cation"]
                 # ]
@@ -542,7 +547,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                 else None
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
-            print("ll_lipid_names:", ll_lipid_names)
+            # print("ll_lipid_names:", ll_lipid_names)
 
             # # Check that annotations do not intercept with each other
             # l_lipid_bounds_clean = [
@@ -557,7 +562,8 @@ def page_2_plot_graph_heatmap_mz_selection(
             #         if t_bounds_1[1] > t_bounds_2[0]:
             #             logging.warning("Some pixel annotations intercept each other")
 
-            # TODO: plotting a heatmap for more than one lipid is meaningless. 
+            
+            # TODO : plotting a heatmap for more than one lipid is meaningless. 
             # If more than one lipid is selected, only the rgb plot is available
             
             # Check if the current plot must be a heatmap
@@ -572,16 +578,38 @@ def page_2_plot_graph_heatmap_mz_selection(
                 #     and graph_input == "Current input: " + "Lipid selection colormap"
                 # )
             ):
-                return (
-                    figures.compute_heatmap_per_lipid_selection(
+                # you also need to check that only one lipid is selected
+                if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
+                    nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
+                    image = figures.compute_image_per_lipid(
                         slice_index,
-                        # ll_lipid_bounds,
-                        # apply_transform=apply_transform,
-                        ll_lipid_names=ll_lipid_names,
+                        RGB_format=True,
+                        lipid_name=nonull_ll_lipid_names,
                         cache_flask=cache_flask,
-                    ),
+                    )
+                    return (
+                        figures.build_lipid_heatmap_from_image(
+                            image, 
+                            return_base64_string=False)
+                        # figures.compute_heatmap_per_lipid_selection(
+                        #     slice_index,
+                        # # ll_lipid_bounds,
+                        # # apply_transform=apply_transform,
+                        # ll_lipid_names=ll_lipid_names,
+                        # cache_flask=cache_flask,
+                    ,
                     "Current input: " + "Lipid selection colormap",
                 )
+                else:
+                    logging.info("Trying to plot a heatmap for more than one lipid, not possible. Return the rgb plot instead")
+                    return (
+                        figures.compute_rgb_image_per_lipid_selection(
+                            slice_index,
+                            ll_lipid_names=ll_lipid_names,
+                            cache_flask=cache_flask,
+                        ),
+                        "Current input: " + "Lipid selection RGB",
+                    )
 
             # Or if the current plot must be an RGB image
             elif (
@@ -652,22 +680,22 @@ def page_2_plot_graph_heatmap_mz_selection(
     #             "Current input: " + "Selection from high-res m/z graph",
     #         )
 
-    # Case trigger is range slider from low resolution spectrum
-    if id_input == "boundaries-low-resolution-mz-plot" or (
-        id_input == "main-slider"
-        and graph_input == "Current input: " + "Selection from low-res m/z graph"
-    ):
-        if bound_low_res is not None:
-            bound_low_res = json.loads(bound_low_res)
-            return (
-                figures.compute_heatmap_per_mz(
-                    slice_index,
-                    bound_low_res[0],
-                    bound_low_res[1],
-                    cache_flask=cache_flask,
-                ),
-                "Current input: " + "Selection from low-res m/z graph",
-            )
+    # # Case trigger is range slider from low resolution spectrum
+    # if id_input == "boundaries-low-resolution-mz-plot" or (
+    #     id_input == "main-slider"
+    #     and graph_input == "Current input: " + "Selection from low-res m/z graph"
+    # ):
+    #     if bound_low_res is not None:
+    #         bound_low_res = json.loads(bound_low_res)
+    #         return (
+    #             figures.compute_heatmap_per_mz(
+    #                 slice_index,
+    #                 bound_low_res[0],
+    #                 bound_low_res[1],
+    #                 cache_flask=cache_flask,
+    #             ),
+    #             "Current input: " + "Selection from low-res m/z graph",
+    #         )
 
     # If no trigger, the page has just been loaded, so load new figure with default parameters
     else:
@@ -981,10 +1009,12 @@ def page_2_add_toast_selection(
 ):
     """This callback adds the selected lipid to the selection."""
     logging.info("Entering function to update lipid data")
-
+    # print("\n================ page_2_add_toast_selection ================")
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
+    # print(f"id_input: {id_input}")
+    # print(f"value_input: {value_input}")
     # if page-2-dropdown-lipids is called while there's no lipid name defined, it means the page
     # just got loaded
     if len(id_input) == 0 or (id_input == "page-2-dropdown-lipids" and l_lipid_names is None):
@@ -1031,45 +1061,59 @@ def page_2_add_toast_selection(
     if (
         id_input == "page-2-dropdown-lipids" and l_lipid_names is not None
     ) or id_input == "main-slider":
+
         # If a new slice has been selected
         if id_input == "main-slider":
+            # print(f"header_1: {header_1}")
+            # print(f"header_2: {header_2}")
+            # print(f"header_3: {header_3}")
             # for each lipid, get lipid name, structure and cation
             for header in [header_1, header_2, header_3]:
-                if len(header) > 2:
-                    name, structure, cation = header.split(" ")
-                
-                    # Find lipid location
-                    l_lipid_loc_temp = (
-                        data.get_annotations()
-                        .index[
-                            (data.get_annotations()["name"] == name)
-                            & (data.get_annotations()["structure"] == structure)
-                        ]
-                        .tolist()
-                    )
-                    l_lipid_loc = [
-                        l_lipid_loc_temp[i]
-                        for i, x in enumerate(
-                            data.get_annotations().iloc[l_lipid_loc_temp]["slice"] == slice_index
-                        )
-                        if x
+                # if len(header) > 1:
+                if len(header.split(" ")) == 2:
+                    name, structure = header.split(" ")
+                else:   
+                    name = "_".join(header.split(" ")[::2])
+                    structure = "_".join(header.split(" ")[1::2])
+                # print(f"name: {name}")
+                # print(f"structure: {structure}")
+                # name, structure = header.split(" ")
+                # print(f"name: {name}")
+                # print(f"structure: {structure}")
+            
+                # Find lipid location
+                l_lipid_loc_temp = (
+                    data.get_annotations()
+                    .index[
+                        (data.get_annotations()["name"] == name)
+                        & (data.get_annotations()["structure"] == structure)
                     ]
+                    .tolist()
+                )
+                # print(f"l_lipid_loc_temp: {l_lipid_loc_temp}")
+                l_lipid_loc = [
+                    l_lipid_loc_temp[i]
+                    for i, x in enumerate(
+                        data.get_annotations().iloc[l_lipid_loc_temp]["slice"] == slice_index
+                    )
+                    if x
+                ]
+                # print(f"l_lipid_loc: {l_lipid_loc}")
+                # # Fill list with first annotation that exists if it can't find one for the
+                # # current slice
+                # if len(l_lipid_loc) == 0:
+                #     l_lipid_loc = l_lipid_loc_temp[:1]
 
-                    # Fill list with first annotation that exists if it can't find one for the
-                    # current slice
-                    if len(l_lipid_loc) == 0:
-                        l_lipid_loc = l_lipid_loc_temp[:1]
+                # Record location and lipid name
+                lipid_index = l_lipid_loc[0] if len(l_lipid_loc) > 0 else -1
 
-                    # Record location and lipid name
-                    lipid_index = l_lipid_loc[0]
-
-                    # If lipid has already been selected before, replace the index
-                    if header_1 == header:
-                        lipid_1_index = lipid_index
-                    elif header_2 == header:
-                        lipid_2_index = lipid_index
-                    elif header_3 == header:
-                        lipid_3_index = lipid_index
+                # If lipid has already been selected before, replace the index
+                if header_1 == header:
+                    lipid_1_index = lipid_index
+                elif header_2 == header:
+                    lipid_2_index = lipid_index
+                elif header_3 == header:
+                    lipid_3_index = lipid_index
 
             logging.info("Returning updated lipid data")
             return (
@@ -1086,9 +1130,22 @@ def page_2_add_toast_selection(
 
         # If lipids have been added from dropdown menu
         elif id_input == "page-2-dropdown-lipids":
+            # print(f"header_1: {header_1}")
+            # print(f"header_2: {header_2}")
+            # print(f"header_3: {header_3}")
+            
             # Get the lipid name and structure
-            name, structure = l_lipid_names[-1].split(" ")
-    
+            # name, structure = l_lipid_names[-1].split(" ")
+
+            # print(f"l_lipid_names[-1]: {l_lipid_names[-1]}")
+
+            if len(l_lipid_names[-1]) == 2:
+                name, structure = l_lipid_names[-1].split(" ")
+            else:   
+                name = "_".join(l_lipid_names[-1].split(" ")[::2])
+                structure = "_".join(l_lipid_names[-1].split(" ")[1::2])
+            # print(f"name: {name}")
+            # print(f"structure: {structure}")
 
             # Find lipid location
             l_lipid_loc = (
@@ -1100,7 +1157,7 @@ def page_2_add_toast_selection(
                 ]
                 .tolist()
             )
-    
+            # print(f"l_lipid_loc: {l_lipid_loc}")
 
             # If several lipids correspond to the selection, we have a problem...
             if len(l_lipid_loc) > 1:
@@ -1121,12 +1178,13 @@ def page_2_add_toast_selection(
 
             # Record location and lipid name
             lipid_index = l_lipid_loc[0]
-            lipid_string = name + " " + structure
+            lipid_string = l_lipid_names[-1] # name + " " + structure ################################
 
             change_made = False
 
             # If lipid has already been selected before, replace the index
             if header_1 == lipid_string:
+                # print("I am here")
                 lipid_1_index = lipid_index
                 change_made = True
             elif header_2 == lipid_string:
@@ -1161,6 +1219,16 @@ def page_2_add_toast_selection(
                     "Changes have been made to the lipid selection or indexation,"
                     + " propagating callback."
                 )
+                # print("just before returning")
+                # print(f"header_1: {header_1}")
+                # print(f"header_2: {header_2}")
+                # print(f"header_3: {header_3}")
+                # print(f"lipid_1_index: {lipid_1_index}")
+                # print(f"lipid_2_index: {lipid_2_index}")
+                # print(f"lipid_3_index: {lipid_3_index}")
+                # print(f"class_name_badge_1: {class_name_badge_1}")
+                # print(f"class_name_badge_2: {class_name_badge_2}")
+                # print(f"class_name_badge_3: {class_name_badge_3}")
                 return (
                     header_1,
                     header_2,
@@ -1357,9 +1425,9 @@ clientside_callback(
     Input("page-2-selected-lipid-3", "data"),
 )
 def page_2_active_download(lipid_1_index, lipid_2_index, lipid_3_index):
-    print("lipid_1_index", lipid_1_index)
-    print("lipid_2_index", lipid_2_index)
-    print("lipid_3_index", lipid_3_index)
+    # print("lipid_1_index", lipid_1_index)
+    # print("lipid_2_index", lipid_2_index)
+    # print("lipid_3_index", lipid_3_index)
     """This callback is used to toggle on/off the display rgb and colormap buttons."""
     # logging.info("Enabled rgb and colormap buttons")
     # Get the current lipid selection
@@ -1368,10 +1436,10 @@ def page_2_active_download(lipid_1_index, lipid_2_index, lipid_3_index):
     ]
     # If lipids has been selected from the dropdown, activate button
     if len(l_lipids_indexes) > 0:
-        print("=============Disabled rgb and colormap buttons=============")
+        # print("=============Disabled rgb and colormap buttons=============")
         return False, False
     else:
-        print("=============Enabled rgb and colormap buttons=============")
+        # print("=============Enabled rgb and colormap buttons=============")
         return True, True
 
 

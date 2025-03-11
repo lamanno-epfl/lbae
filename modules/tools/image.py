@@ -84,6 +84,7 @@ def convert_image_to_base64(
     # Convert 1D array into a PIL image
     if type is None:
         # Map image to a colormap and convert to uint8
+        image_array = np.array(image_array, dtype=np.float64)
         img = np.uint8(colormap(image_array) * 255)
 
         # Turn array into PIL image object

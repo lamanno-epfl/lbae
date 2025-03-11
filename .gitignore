@@ -1,6 +1,7 @@
 .DS_Store
 data
 new_data
+new_data_TMP
 program_data
 notebooks/data_processing/data/
 **/__pycache__/

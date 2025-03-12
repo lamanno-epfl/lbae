@@ -674,6 +674,10 @@ class Figures:
                 slice_index.
         """
         logging.info("Entering compute_image_per_lipid")
+        print("===================== entering compute_image_per_lipid ===========================")
+        print("RGB_format:", RGB_format)
+        print("lipid_name:", lipid_name)
+        print("slice_index:", slice_index)
 
         # Get image from raw mass spec data
         # image = compute_thread_safe_function(
@@ -695,9 +699,12 @@ class Figures:
         # )
 
         # print all the attributes and methods of the data object
+        # print the class of the data object
+        print(f"self._data: {type(self._data)}")
+        
         image = self._data.extract_lipid_image(slice_index, lipid_name)
-        print("\nimage.min():", np.nanmin(image))
-        print("image.max():", np.nanmax(image))
+        # print("\nimage.min():", np.nanmin(image))
+        # print("image.max():", np.nanmax(image))
 
         # # Log-transform the image if requested
         # if log:
@@ -731,13 +738,11 @@ class Figures:
         #     image = np.clip(0, 1, image)
 
         # Turn to RGB format if requested
-        # HOUSEKEEPING: normalize data in 0-1 for plotting, right now they are MAIA scale
-        # if RGB_format:
-        #     image *= 255
-
-        # # Change dtype if normalized and RGB to save space
-        # if normalize and RGB_format:
-        #     image = np.round(image).astype(np.uint8)
+        if RGB_format:
+            image *= 255
+            # # Change dtype if normalized and RGB to save space
+            # if normalize and RGB_format:
+            # image = np.round(image).astype(np.uint8)
 
         # # Project image into cleaned and higher resolution version
         # if projected_image:
@@ -868,6 +873,7 @@ class Figures:
         """
 
         logging.info("Converting image to string")
+        print("image.shape:", image.shape)
 
         # Set optimize to False to gain computation time
         base64_string = convert_image_to_base64(
@@ -1019,7 +1025,7 @@ class Figures:
         # Compute image with given bounds
         image = self.compute_image_per_lipid(
             slice_index,
-            RGB_format=True,
+            RGB_format=False,
             lipid_name=lipid_name,
             # projected_image=projected_image,
             cache_flask=cache_flask,
@@ -1096,7 +1102,7 @@ class Figures:
     #         # Compute expression image per lipid
     #         image_temp = self.compute_image_per_lipid(
     #             slice_index,
-    #             RGB_format=True,
+    #             RGB_format=False,
     #             lipid_name=l_lipid_names,
     #             cache_flask=cache_flask,
     #         ) if l_lipid_names is not None else np.zeros(self._atlas.image_shape)
@@ -1176,38 +1182,40 @@ class Figures:
             #             (lb_mz, hb_mz) = boundaries
 
             # Cmpute expression image per lipid
-            image_temp = (
-                self.compute_image_per_lipid(
-                    slice_index,
-                    # lb_mz,
-                    # hb_mz,
-                    RGB_format=True,
-                    # normalize=normalize_independently,
-                    # projected_image=projected_image,
-                    # log=log,
-                    # apply_transform=apply_transform,
-                    lipid_name=lipid_name,
-                    cache_flask=cache_flask,
-                )
-                if lipid_name is not None
-                else np.zeros(self._atlas.image_shape)
-            )
-            # print("image_temp", np.isnan(image_temp).sum(), image_temp.shape[0] * image_temp.shape[1])
+            image_temp = self.compute_image_per_lipid(
+                slice_index,
+                # lb_mz,
+                # hb_mz,
+                RGB_format=True,
+                # normalize=normalize_independently,
+                # projected_image=projected_image,
+                # log=log,
+                # apply_transform=apply_transform,
+                lipid_name=lipid_name,
+                cache_flask=cache_flask,
+            ) if lipid_name is not None else np.full(self._data.image_shape, np.nan) #np.zeros(self._atlas.image_shape)
+            print("--------- image_temp ---------", np.isnan(image_temp).sum(), image_temp.shape[0] * image_temp.shape[1])
             # if image_temp is not None:
             #     image += image_temp
 
             l_images.append(image_temp)  #####
 
         # Reoder axis to match plotly go.image requirementss
-        # array_image = np.moveaxis(np.array(l_images), 0, 2)
-        array_image = np.array(l_images)
+        print("np.array(l_images).shape", np.array(l_images).shape)
+        print("np.array(l_images)[0].shape", np.array(l_images)[0].shape)
+        print("np.array(l_images)[1].shape", np.array(l_images)[1].shape)
+        print("np.array(l_images)[2].shape", np.array(l_images)[2].shape)
+        array_image = np.moveaxis(np.array(l_images), 0, 2)
+        # count the nan values in the array_image
+        print("nan values in array_image", np.isnan(array_image).sum())
+        # array_image = np.array(l_images)
 
         # TODO: there is a problem with the shape of the array_image because the shapes if less than 3 lipids are selected are not the same
         # if 3 are selected, still there is no image displayed (check that the content of the image is valid)
         # print("array_image", array_image)
         # print("array_image.shape", array_image.shape)
 
-        return np.asarray(array_image, dtype=np.uint8)
+        return array_image # np.asarray(array_image, dtype=np.uint8) # here translating all the nans to zeros
 
     def compute_rgb_image_per_lipid_selection(
         self,
@@ -1276,8 +1284,10 @@ class Figures:
             ll_lipid_names=ll_lipid_names,
             cache_flask=cache_flask,
         )
-        print("\narray_image.shape", array_image.shape)
-        print("array_image", array_image.max(), array_image.min())
+        print("\narray_image.shape", array_image.shape, np.isnan(array_image).sum())
+        print("array_image first channel", array_image[:,:,0].max(), array_image[:,:,0].min(), np.isnan(array_image[:,:,0]).sum())
+        print("array_image second channel", array_image[:,:,1].max(), array_image[:,:,1].min(), np.isnan(array_image[:,:,1]).sum())
+        print("array_image third channel", array_image[:,:,2].max(), array_image[:,:,2].min(), np.isnan(array_image[:,:,2]).sum())
 
         logging.info("Returning fig for slice " + str(slice_index) + logmem())
 

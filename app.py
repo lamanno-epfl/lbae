@@ -24,21 +24,20 @@ from modules.scRNAseq import ScRNAseq
 
 # LBAE modules
 from modules.tools.misc import logmem
-
 logging.info("Memory use before any LBAE import" + logmem())
 
 from modules.maldi_data import MaldiData
-
 logging.info("Memory use after MaldiData import" + logmem())
 
-from modules.figures import Figures
+from modules.program_data import LipiMapData
+logging.info("Memory use after LipiMapData import" + logmem())
 
+from modules.figures import Figures
 logging.info("Memory use after Figures import" + logmem())
 
 from modules.atlas import Atlas
 from modules.launch import Launch
 from modules.storage import Storage
-from modules.scRNAseq import ScRNAseq
 
 # ==================================================================================================
 # --- App pre-computations
@@ -52,6 +51,7 @@ SAMPLE_DATA = False
 # Define paths for the sample/not sample data
 if SAMPLE_DATA:
     path_data = "data_sample/whole_dataset/"
+    path_program_data = "data_sample/program_data/"
     path_annotations = "data_sample/annotations/"
     path_db = "data_sample/app_data/data.db"
     cache_dir = "data_sample/cache/"
@@ -61,6 +61,7 @@ else:
     # path_db = "data/app_data/data.db"
     cache_dir = "data/cache/"
     path_data = "./new_data/"
+    path_program_data = "./program_data/"
     path_annotations = "./data/annotations/"
     path_db = "./data/app_data/data.db"
 
@@ -88,12 +89,17 @@ storage = Storage(path_db)
 logging.info("Loading MALDI data..." + logmem())
 data = MaldiData(path_data, path_annotations)
 
+# Load program data
+logging.info("Loading program data..." + logmem())
+program_data = LipiMapData(path_program_data, path_annotations)
+
 # Load Atlas and Figures objects
 logging.info("Loading Atlas..." + logmem())
 atlas = Atlas(data, storage, resolution=25)
 
 logging.info("Loading Figures..." + logmem())
 figures = Figures(data, storage, atlas)
+program_figures = Figures(program_data, storage, atlas)
 
 logging.info("Memory use after three main object have been instantiated" + logmem())
 

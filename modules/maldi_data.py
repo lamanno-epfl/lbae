@@ -10,6 +10,8 @@ from typing import Dict, List, Optional, Tuple
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
+ABA_DIM = (528, 320, 456)
+
 @dataclass
 class LipidImage:
     """Class to store lipid image data and metadata.
@@ -53,6 +55,8 @@ class MaldiData:
         
         # Initialize the metadata file if it doesn't exist
         self._init_metadata()
+
+        self.image_shape = (ABA_DIM[1], ABA_DIM[2])
 
     def get_annotations(self) -> pd.DataFrame:
         return self._df_annotations
@@ -175,10 +179,10 @@ class MaldiData:
             scatter_points = lipid_data.image  # This is a numpy array with shape (N, 3)
 
             # Create a DataFrame from the scatter points
-            scatter = pd.DataFrame(scatter_points, columns=["x", "y", "value"])
+            scatter = pd.DataFrame(scatter_points, columns=["y", "x", "value"])
 
             # Create an empty array to hold the image
-            arr = np.full((456, 320), np.nan)  # Adjust dimensions if needed
+            arr = np.full(self.image_shape, np.nan)  # Adjust dimensions if needed
 
             # Convert coordinates to integers for indexing
             x_indices = scatter["x"].astype(int).values

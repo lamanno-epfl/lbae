@@ -27,6 +27,7 @@ from pages import (
     region_analysis,
     threeD_exploration,
     lipizones_exploration,
+    lp_selection,
 )
 from in_app_documentation.documentation import return_documentation
 from config import basic_config
@@ -59,14 +60,20 @@ def return_main_content():
             dcc.Store(id="session-id", data=session_id),
             # Record the slider index
             dcc.Store(id="main-slider", data=1),
-            # Record the state of the range sliders for low and high resolution spectra in page 2
-            dcc.Store(id="boundaries-low-resolution-mz-plot"),
-            dcc.Store(id="boundaries-high-resolution-mz-plot"),
+            # # Record the state of the range sliders for low and high resolution spectra in page 2
+            # dcc.Store(id="boundaries-low-resolution-mz-plot"),
+            # dcc.Store(id="boundaries-high-resolution-mz-plot"),
             # Record the lipids selected in page 2
             dcc.Store(id="page-2-selected-lipid-1", data=-1),
             dcc.Store(id="page-2-selected-lipid-2", data=-1),
             dcc.Store(id="page-2-selected-lipid-3", data=-1),
             dcc.Store(id="page-2-last-selected-lipids", data=[]),
+            # Record the lipid programs selected in page 5
+            dcc.Store(id="page-5-selected-lp-1", data=-1),
+            dcc.Store(id="page-5-selected-lp-2", data=-1),
+            dcc.Store(id="page-5-selected-lp-3", data=-1),
+            dcc.Store(id="page-5-last-selected-lps", data=[]),
+            
             # Record the lipids selected in page 4
             dcc.Store(id="page-4-selected-lipid-1", data=empty_lipid_list),
             dcc.Store(id="page-4-selected-lipid-2", data=empty_lipid_list),
@@ -97,7 +104,7 @@ def return_main_content():
                         id="main-paper-slider",
                         style={
                             "position": "fixed",
-                            "bottom": "1rem",
+                            "bottom": "2.5rem",
                             "height": "3rem",
                             "left": "7rem",
                             "right": "1rem",
@@ -106,23 +113,19 @@ def return_main_content():
                         children=[
                             dmc.Text(
                                 id="main-text-slider",
-                                children="Rostro-caudal coordinate (mm): ",
+                                children="Rostro-caudal axis (mm): ",
                                 class_name="pr-4",
                                 size="sm",
                             ),
+                            # Reference and Second Atlas sliders
                             dmc.Slider(
                                 id="main-slider-1",
                                 min=data.get_slice_list(indices="ReferenceAtlas")[0],
                                 max=data.get_slice_list(indices="ReferenceAtlas")[-1],
                                 step=1,
                                 marks=[
-                                    {
-                                        "value": slice_index,
-                                        # # Use x coordinate for label
-                                        # "label": "{:.2f}".format(
-                                        #     # TYPE: int
-                                        #     atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
-                                        # ),
+                                    {"value": slice_index,
+                                     "label": f"{data.get_slice_list(indices='ReferenceAtlas')[3-1]}"# f"{data.get_coordinate(indices='ReferenceAtlas')[slice_index-1]:.2f}"
                                     }
                                     for slice_index in data.get_slice_list(
                                         indices="ReferenceAtlas"
@@ -156,14 +159,165 @@ def return_main_content():
                                 color="cyan",
                                 class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
                             ),
+                            # Male brain sliders
+                            dmc.Slider(
+                                id="main-slider-male1",
+                                min=data.get_slice_list(indices="Male1")[0],
+                                max=data.get_slice_list(indices="Male1")[-1],
+                                step=1,
+                                marks=[
+                                    {"value": slice_index}
+                                    for slice_index in data.get_slice_list(indices="Male1")
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="Male1")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
+                            dmc.Slider(
+                                id="main-slider-male2",
+                                min=data.get_slice_list(indices="Male2")[0],
+                                max=data.get_slice_list(indices="Male2")[-1],
+                                step=1,
+                                marks=[
+                                    {"value": slice_index}
+                                    for slice_index in data.get_slice_list(indices="Male2")
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="Male2")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
+                            dmc.Slider(
+                                id="main-slider-male3",
+                                min=data.get_slice_list(indices="Male3")[0],
+                                max=data.get_slice_list(indices="Male3")[-1],
+                                step=1,
+                                marks=[
+                                    {"value": slice_index}
+                                    for slice_index in data.get_slice_list(indices="Male3")
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="Male3")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
+                            # Female brain sliders
+                            dmc.Slider(
+                                id="main-slider-female1",
+                                min=data.get_slice_list(indices="Female1")[0],
+                                max=data.get_slice_list(indices="Female1")[-1],
+                                step=1,
+                                marks=[
+                                    {"value": slice_index}
+                                    for slice_index in data.get_slice_list(indices="Female1")
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="Female1")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
+                            dmc.Slider(
+                                id="main-slider-female2",
+                                min=data.get_slice_list(indices="Female2")[0],
+                                max=data.get_slice_list(indices="Female2")[-1],
+                                step=1,
+                                marks=[
+                                    {"value": slice_index}
+                                    for slice_index in data.get_slice_list(indices="Female2")
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="Female2")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
+                            dmc.Slider(
+                                id="main-slider-female3",
+                                min=data.get_slice_list(indices="Female3")[0],
+                                max=data.get_slice_list(indices="Female3")[-1],
+                                step=1,
+                                marks=[
+                                    {"value": slice_index}
+                                    for slice_index in data.get_slice_list(indices="Female3")
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="Female3")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
+                            # Pregnant brain sliders
+                            dmc.Slider(
+                                id="main-slider-pregnant1",
+                                min=data.get_slice_list(indices="Pregnant1")[0],
+                                max=data.get_slice_list(indices="Pregnant1")[-1],
+                                step=1,
+                                marks=[
+                                    {"value": slice_index}
+                                    for slice_index in data.get_slice_list(indices="Pregnant1")
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="Pregnant1")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
+                            dmc.Slider(
+                                id="main-slider-pregnant2",
+                                min=data.get_slice_list(indices="Pregnant2")[0],
+                                max=data.get_slice_list(indices="Pregnant2")[-1],
+                                step=1,
+                                marks=[
+                                    {"value": slice_index}
+                                    for slice_index in data.get_slice_list(indices="Pregnant2")
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="Pregnant2")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
+                            dmc.Slider(
+                                id="main-slider-pregnant4",
+                                min=data.get_slice_list(indices="Pregnant4")[0],
+                                max=data.get_slice_list(indices="Pregnant4")[-1],
+                                step=1,
+                                marks=[
+                                    {"value": slice_index}
+                                    for slice_index in data.get_slice_list(indices="Pregnant4")
+                                ],
+                                size="xs",
+                                value=data.get_slice_list(indices="Pregnant4")[0],
+                                color="cyan",
+                                class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
+                            ),
                             dmc.Chips(
                                 id="main-brain",
                                 data=[
                                     {"value": "ReferenceAtlas", "label": "Brain 1"},
                                     {"value": "SecondAtlas", "label": "Brain 2"},
+                                    {"value": "Male1", "label": "Male 1"},
+                                    {"value": "Male2", "label": "Male 2"},
+                                    {"value": "Male3", "label": "Male 3"},
+                                    {"value": "Female1", "label": "Female 1"},
+                                    {"value": "Female2", "label": "Female 2"},
+                                    {"value": "Female3", "label": "Female 3"},
+                                    {"value": "Pregnant1", "label": "Pregnant 1"},
+                                    {"value": "Pregnant2", "label": "Pregnant 2"},
+                                    {"value": "Pregnant4", "label": "Pregnant 3"},
                                 ],
                                 value="ReferenceAtlas",
-                                class_name="pl-2 pt-1",
+                                direction="column",
+                                spacing="sm",
+                                align="right",
+                                style={
+                                    "position": "fixed",
+                                    "right": "0.5rem",
+                                    "top": "50%",
+                                    "transform": "translateY(-50%)",
+                                    "zIndex": 1000,
+                                    "padding": "1rem",
+                                    "borderRadius": "8px",
+                                    "display": "flex",
+                                    "alignItems": "flex-end",
+                                },
                                 color="cyan",
                             ),
                         ],
@@ -212,6 +366,7 @@ def return_validation_layout(main_content, initial_slice=1):
             main_content,
             home.layout,
             lipid_selection.return_layout(basic_config, initial_slice),
+            lp_selection.return_layout(basic_config, initial_slice),
             # region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
             lipizones_exploration.return_layout(basic_config, initial_slice),
@@ -242,6 +397,9 @@ def render_page_content(pathname, slice_index, brain):
 
     elif pathname == "/lipid-selection":
         page = lipid_selection.return_layout(basic_config, slice_index)
+
+    elif pathname == "/lp-selection":
+        page = lp_selection.return_layout(basic_config, slice_index)
 
     # elif pathname == "/region-analysis":
     #     page = region_analysis.return_layout(basic_config, slice_index)
@@ -291,6 +449,7 @@ def hide_slider(pathname):
     # Pages in which the slider is displayed
     l_path_with_slider = [
         "/lipid-selection",
+        "/lp-selection",
         "/region-analysis",
         "/3D-exploration",
     ]
@@ -327,39 +486,73 @@ def hide_slider_but_leave_brain(pathname):
 
 
 @app.callback(
-    Output("main-slider-1", "class_name"),
-    Output("main-slider-2", "class_name"),
-    Output("main-slider-1", "value"),
-    Output("main-slider-2", "value"),
+    [Output(f"main-slider-{slider_id}", "class_name") for slider_id in [
+        "1", "2", "male1", "male2", "male3", "female1", "female2", "female3", 
+        "pregnant1", "pregnant2", "pregnant4"
+    ]],
+    [Output(f"main-slider-{slider_id}", "value") for slider_id in [
+        "1", "2", "male1", "male2", "male3", "female1", "female2", "female3",
+        "pregnant1", "pregnant2", "pregnant4"
+    ]],
     Input("main-brain", "value"),
-    State("main-slider-1", "value"),
-    State("main-slider-2", "value"),
+    [State(f"main-slider-{slider_id}", "value") for slider_id in [
+        "1", "2", "male1", "male2", "male3", "female1", "female2", "female3",
+        "pregnant1", "pregnant2", "pregnant4"
+    ]],
     prevent_initial_call=False,
 )
-def hide_useless_slider(brain, value_1, value_2):
-    """This callback is used to update the slider indices with the selected brain."""
-    if brain == "ReferenceAtlas":
-        value_1 = value_2 - data.get_slice_list(indices="ReferenceAtlas")[-1]
-        return "mt-2 mr-5 ml-2 mb-1 w-50", "mt-2 mr-5 ml-2 mb-1 w-50 d-none", value_1, value_2
-    elif brain == "SecondAtlas":
-        value_2 = value_1 + data.get_slice_list(indices="ReferenceAtlas")[-1]
-        return "mt-2 mr-5 ml-2 mb-1 w-50 d-none", "mt-2 mr-5 ml-2 mb-1 w-50", value_1, value_2
-
+def update_slider_visibility(brain, *values):
+    """This callback is used to update the slider visibility based on the selected brain."""
+    # Base class for visible slider
+    visible_class = "mt-2 mr-5 ml-2 mb-1 w-50"
+    # Base class for hidden slider
+    hidden_class = "mt-2 mr-5 ml-2 mb-1 w-50 d-none"
+    
+    # Initialize all sliders as hidden
+    classes = [hidden_class] * 11
+    # Keep all values as is
+    new_values = list(values)
+    
+    # Map brain names to slider indices
+    brain_to_index = {
+        "ReferenceAtlas": 0, "SecondAtlas": 1,
+        "Male1": 2, "Male2": 3, "Male3": 4,
+        "Female1": 5, "Female2": 6, "Female3": 7,
+        "Pregnant1": 8, "Pregnant2": 9, "Pregnant4": 10
+    }
+    
+    # Show only the selected brain's slider 
+    if brain in brain_to_index:
+        classes[brain_to_index[brain]] = visible_class
+    
+    return classes + new_values
 
 app.clientside_callback(
     """
-    function(value_1, value_2, brain){
-        if(brain == 'ReferenceAtlas'){
-            return value_1;
-        }
-        else if(brain == 'SecondAtlas'){
-            return value_2;
-            }
+    function(value_1, value_2, value_male1, value_male2, value_male3, 
+             value_female1, value_female2, value_female3,
+             value_pregnant1, value_pregnant2, value_pregnant4, brain){
+        const values = {
+            'ReferenceAtlas': value_1,
+            'SecondAtlas': value_2,
+            'Male1': value_male1,
+            'Male2': value_male2,
+            'Male3': value_male3,
+            'Female1': value_female1,
+            'Female2': value_female2,
+            'Female3': value_female3,
+            'Pregnant1': value_pregnant1,
+            'Pregnant2': value_pregnant2,
+            'Pregnant4': value_pregnant4
+        };
+        return values[brain] || value_1;
     }
     """,
     Output("main-slider", "data"),
-    Input("main-slider-1", "value"),
-    Input("main-slider-2", "value"),
+    [Input(f"main-slider-{slider_id}", "value") for slider_id in [
+        "1", "2", "male1", "male2", "male3", "female1", "female2", "female3",
+        "pregnant1", "pregnant2", "pregnant4"
+    ]],
     State("main-brain", "value"),
 )
 """This clientside callback is used to update the slider indices with the selected brain."""

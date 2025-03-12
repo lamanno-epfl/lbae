@@ -693,7 +693,7 @@ class Figures:
         #     self._data.get_array_corrective_factors(slice_index).astype(np.float32),
         #     apply_transform=apply_transform,
         # )
-        
+
         # print all the attributes and methods of the data object
         image = self._data.extract_lipid_image(slice_index, lipid_name)
         print("\nimage.min():", np.nanmin(image))
@@ -835,7 +835,7 @@ class Figures:
         #         # Store max percentile across slices
         #         dic_max_percentile[(lipid_string, brain_1)] = max_perc
 
-        return None # dic_max_percentile
+        return None  # dic_max_percentile
 
     def build_lipid_heatmap_from_image(
         self,
@@ -1164,7 +1164,6 @@ class Figures:
         # Loop over channels
         # TYPE: possible inconsistency, for us lipid_names would be a list of strings, not a list of lists
         for lipid_name in ll_lipid_names:
-            
             # image = np.zeros(
             #     self._atlas.image_shape
             #     # if projected_image
@@ -1177,22 +1176,26 @@ class Figures:
             #             (lb_mz, hb_mz) = boundaries
 
             # Cmpute expression image per lipid
-            image_temp = self.compute_image_per_lipid(
-                slice_index,
-                # lb_mz,
-                # hb_mz,
-                RGB_format=True,
-                # normalize=normalize_independently,
-                # projected_image=projected_image,
-                # log=log,
-                # apply_transform=apply_transform,
-                lipid_name=lipid_name,
-                cache_flask=cache_flask,
-            ) if lipid_name is not None else np.zeros(self._atlas.image_shape)
+            image_temp = (
+                self.compute_image_per_lipid(
+                    slice_index,
+                    # lb_mz,
+                    # hb_mz,
+                    RGB_format=True,
+                    # normalize=normalize_independently,
+                    # projected_image=projected_image,
+                    # log=log,
+                    # apply_transform=apply_transform,
+                    lipid_name=lipid_name,
+                    cache_flask=cache_flask,
+                )
+                if lipid_name is not None
+                else np.zeros(self._atlas.image_shape)
+            )
             # print("image_temp", np.isnan(image_temp).sum(), image_temp.shape[0] * image_temp.shape[1])
             # if image_temp is not None:
             #     image += image_temp
-            
+
             l_images.append(image_temp)  #####
 
         # Reoder axis to match plotly go.image requirementss
@@ -1645,7 +1648,7 @@ class Figures:
     def compute_3D_root_volume(self, decrease_dimensionality_factor=7, differentiate_borders=False):
         """This function is used to generate a go.Volume (changed from Isosurface) of the Allen Brain root structure,
         which will be used to enclose the display of lipid expression of other structures in the brain.
-        
+
         Args:
             decrease_dimensionality_factor (int, optional): Decrease the dimensionality of the
                 brain to display, to get a lighter output. Defaults to 7.
@@ -1654,14 +1657,14 @@ class Figures:
         """
         # Get array of annotations, which associate coordinate to id
         array_annotation_root = np.array(self._atlas.bg_atlas.annotation, dtype=np.int32)
-        
+
         # Subsample array of annotation
         array_annotation_root = array_annotation_root[
             ::decrease_dimensionality_factor,
             ::decrease_dimensionality_factor,
             ::decrease_dimensionality_factor,
         ]
-        
+
         # Get the volume array
         array_atlas_borders_root = fill_array_borders(
             array_annotation_root,
@@ -1670,11 +1673,11 @@ class Figures:
             keep_structure_id=None,
         )
         # print(array_atlas_borders_root.shape)
-        
+
         # IMPORTANT CHANGE: Use np.indices instead of np.mgrid to match the lipid visualization
         # Create coordinate grid based on array shape
         z_root, y_root, x_root = np.indices(array_atlas_borders_root.shape)
-        
+
         # Compute the plot, now using go.Volume instead of go.Isosurface
         brain_root_data = go.Volume(
             x=x_root.flatten(),
@@ -1686,7 +1689,7 @@ class Figures:
             opacity=0.1,
             surface_count=2,
             colorscale="Greys",
-            caps=dict(x_show=False, y_show=False, z_show=False)
+            caps=dict(x_show=False, y_show=False, z_show=False),
         )
         return brain_root_data
 
@@ -1720,6 +1723,128 @@ class Figures:
         # )
 
         return array_annotation
+
+    def compute_3D_volume_figure(
+        self,
+        lipid_name,
+        annotation_path=None,
+        set_id_regions=None,
+        downsample_factor=1,
+        opacity=0.1,
+        surface_count=40,
+        colorscale="Inferno",
+    ):
+        """
+        Render a 3D volume visualization of lipid data with optional region filtering and grayscale root data.
+
+        Parameters:
+        -----------
+        lipid_name : str
+            Name of the lipid file to load
+        annotation_path : str, optional
+            Path to the annotation file with region labels
+        set_id_regions : list, optional
+            List of region IDs to include in the visualization
+        downsample_factor : int, default=1
+            Factor by which to downsample the data (higher = less detailed but faster)
+        opacity : float, default=0.1
+            Base opacity for the volume rendering
+        surface_count : int, default=40
+            Number of isosurfaces to display
+        colorscale : str, default='Inferno'
+            Colorscale for the visualization
+
+        Returns:
+        --------
+        fig : plotly.graph_objects.Figure
+            The 3D volume figure
+        """
+        # Load lipid data
+        lipid_path = f"/data/luca/lipidatlas/ManuscriptAnalysisRound3/3d_interpolated_native/{lipid_name}interpolation_log.npy"
+        np3d = np.load(lipid_path)
+
+        print(downsample_factor)
+
+        # CRITICAL: Use the same downsampling factor for both datasets
+        # Get root data with the same downsampling factor
+        root_data = self.compute_3D_root_volume(
+            decrease_dimensionality_factor=downsample_factor * 4
+        )
+
+        # Get annotations with the same downsampling factor
+        annotations = self.get_array_of_annotations(
+            decrease_dimensionality_factor=downsample_factor * 4
+        )
+
+        # Downsample lipid data for better performance
+        sub_np3d = np3d[::downsample_factor, ::downsample_factor, ::downsample_factor]
+
+        # Apply region filtering if regions are provided
+        if set_id_regions is not None:
+            # Create mask for selected regions
+            mask = np.zeros_like(annotations, dtype=bool)
+            for region_id in set_id_regions:
+                mask = np.logical_or(mask, annotations == region_id)
+
+            # Apply mask to lipid data
+            sub_np3d_clean = sub_np3d.copy()
+            sub_np3d_clean[~mask] = np.nan
+        else:
+            # If no filtering, use the downsampled data as is
+            sub_np3d_clean = sub_np3d
+
+        print(sub_np3d_clean.shape)
+
+        # Create coordinate grid for lipid data
+        z, y, x = np.indices(sub_np3d_clean.shape)
+
+        # Set up volume plot with lipid data
+        lipid_volume = go.Volume(
+            x=x.flatten(),
+            y=y.flatten(),
+            z=z.flatten(),
+            value=sub_np3d_clean.flatten(),
+            isomin=np.nanmin(sub_np3d_clean) if not np.isnan(sub_np3d_clean).all() else 0,
+            isomax=np.nanmax(sub_np3d_clean) if not np.isnan(sub_np3d_clean).all() else 1,
+            opacity=opacity,
+            surface_count=surface_count,
+            colorscale=colorscale,
+            caps=dict(x_show=False, y_show=False, z_show=False),
+        )
+
+        # Create figure with both lipid and root data, root data first for proper layering
+        fig = go.Figure(data=[root_data, lipid_volume])
+
+        # Improve layout
+        fig.update_layout(
+            margin=dict(t=0, r=0, b=0, l=0),
+            scene=dict(
+                xaxis=dict(
+                    showticklabels=False,
+                    showgrid=False,
+                    zeroline=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                ),
+                yaxis=dict(
+                    showticklabels=False,
+                    showgrid=False,
+                    zeroline=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                ),
+                zaxis=dict(
+                    showticklabels=False,
+                    showgrid=False,
+                    zeroline=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                ),
+                aspectmode="data",
+            ),
+            template="plotly_dark",
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+        )
+
+        return fig
 
     '''
     def compute_l_array_2D(
@@ -2941,25 +3066,27 @@ class Figures:
         cache_flask=None,
     ):
         """This function creates a grid of heatmaps showing the lipid expression across all slices.
-        
+
         Args:
             lipid_name (str): Name of the lipid to display
             draw (bool, optional): If True, enables drawing on the figure. Defaults to False.
             return_base64_string (bool, optional): If True, returns base64 string. Defaults to False.
             cache_flask (flask_caching.Cache, optional): Flask cache. Defaults to None.
-    
+
         Returns:
             go.Figure: A Plotly figure containing a grid of heatmaps for all slices
         """
         logging.info("Starting grid figure computation")
-    
+
         # Get total number of slices from MaldiData
         n_slices = self._data.get_slice_number()
-        
+
         # Calculate grid dimensions, convert to Python int to avoid numpy integer issues
         n_cols = 12
-        n_rows = int((n_slices + n_cols - 1) // n_cols)  # Ceiling division with explicit int conversion
-        
+        n_rows = int(
+            (n_slices + n_cols - 1) // n_cols
+        )  # Ceiling division with explicit int conversion
+
         # Create subplots
         fig = make_subplots(
             rows=n_rows,
@@ -2967,14 +3094,14 @@ class Figures:
             horizontal_spacing=0.01,
             vertical_spacing=0.01,
         )
-        
+
         # Add heatmaps for each slice
         valid_count = 0
         max_height = 0
         max_width = 0
-        
+
         # First pass to determine maximum dimensions for aspect ratio consistency
-        for slice_index in range(1, n_slices+1):
+        for slice_index in range(1, n_slices + 1):
             try:
                 image = self._data.extract_lipid_image(float(slice_index), lipid_name)
                 if image is not None and image.size > 0:
@@ -2982,29 +3109,29 @@ class Figures:
                     max_width = max(max_width, image.shape[1])
             except:
                 continue
-        
+
         # Calculate cell size to maintain aspect ratio
         aspect_ratio = max_height / max_width if max_width > 0 else 1
         cell_width = 100
         cell_height = int(cell_width * aspect_ratio)
-        
+
         # Second pass to add the traces
-        for slice_index in range(1, n_slices+1):
+        for slice_index in range(1, n_slices + 1):
             try:
                 # Calculate row and column position (1-based indexing for subplot)
                 row = (valid_count // n_cols) + 1
                 col = (valid_count % n_cols) + 1
-                
+
                 # Get lipid image directly from MaldiData
                 image = self._data.extract_lipid_image(float(slice_index), lipid_name)
-                
+
                 # Skip if image is None or empty
                 if image is None or image.size == 0:
                     continue
-                    
+
                 # Flip the image vertically
                 image = np.flip(image.T, np.flipud(image), axis=0)
-                
+
                 # Add heatmap to subplot
                 fig.add_trace(
                     go.Heatmap(
@@ -3016,7 +3143,7 @@ class Figures:
                     row=row,
                     col=col,
                 )
-                
+
                 # Add a simple text annotation for slice number
                 fig.add_annotation(
                     text=f"{slice_index}",
@@ -3027,13 +3154,13 @@ class Figures:
                     showarrow=False,
                     font=dict(color="white", size=10),
                 )
-                
+
                 valid_count += 1
-                
+
             except Exception as e:
                 logging.warning(f"Error processing slice {slice_index}: {str(e)}")
                 continue
-    
+
         # Update layout
         fig.update_layout(
             height=cell_height * n_rows + 100,
@@ -3045,24 +3172,24 @@ class Figures:
             plot_bgcolor="rgba(0,0,0,0)",  # Darker background
             clickmode="event+select",  # Enable click events
         )
-    
+
         # Remove all axes, grids and ticks
         fig.update_xaxes(
             visible=False,
             showgrid=False,
             zeroline=False,
             constrain="domain",  # Maintain aspect ratio
-            scaleanchor="y",     # Keep x and y scales linked
+            scaleanchor="y",  # Keep x and y scales linked
         )
-        
+
         fig.update_yaxes(
             visible=False,
             showgrid=False,
             zeroline=False,
             constrain="domain",  # Maintain aspect ratio
-            scaleanchor="x",     # Keep x and y scales linked
+            scaleanchor="x",  # Keep x and y scales linked
         )
-        
+
         # Add a callback for handling double-click events
         fig.update_layout(
             updatemenus=[
@@ -3083,7 +3210,7 @@ class Figures:
                 )
             ]
         )
-    
+
         # Add JavaScript for double-click zooming functionality
         fig.update_layout(
             annotations=[
@@ -3100,13 +3227,390 @@ class Figures:
                 )
             ]
         )
-        
+
         # Add custom JavaScript for double-click zooming
         fig.update_layout(
             newshape=dict(line_color="yellow"),  # Just to add a hook for the JavaScript
         )
-        
+
         # Add setup for callback via JavaScript with plotly_doubleclick event
         fig._config = {"responsive": True}
-        
+
+        return fig
+
+    def export_grid_to_plotly(
+        self,
+        grid_image,
+        output_file="brain_sections.html",
+        width=None,
+        height=None,
+    ):
+        """
+        Export a grid image to an interactive Plotly HTML file.
+
+        Parameters:
+        -----------
+        grid_image : numpy.ndarray
+            RGBA image array of the section grid with shape (dim1, dim2, 4) where 4 = RGB + transparency
+        output_file : str
+            Output HTML file path
+        width : int, optional
+            Custom width for the plot (defaults to image width)
+        height : int, optional
+            Custom height for the plot (defaults to image height)
+
+        Returns:
+        --------
+        fig : plotly.graph_objects.Figure
+            The generated Plotly figure
+        """
+        # Get dimensions from the image if not specified
+        if width is None:
+            width = grid_image.shape[1]
+        if height is None:
+            height = grid_image.shape[0]
+
+        # Check if we need to process the image for Plotly
+        if grid_image.dtype != np.uint8:
+            # Convert floats (0-1) to uint8 (0-255)
+            grid_image_uint8 = (grid_image * 255).astype(np.uint8)
+        else:
+            grid_image_uint8 = grid_image
+
+        # Ensure we have the right shape for plotly
+        if grid_image_uint8.shape[2] == 4:  # RGBA
+            # Plotly doesn't handle alpha channel properly in imshow
+            # Create an RGB version of the image with white background
+            rgb_image = (
+                np.ones((grid_image_uint8.shape[0], grid_image_uint8.shape[1], 3), dtype=np.uint8)
+                * 255
+            )
+
+            # Blend alpha channel
+            alpha = grid_image_uint8[:, :, 3].astype(float) / 255
+            for c in range(3):  # RGB channels
+                rgb_image[:, :, c] = (
+                    grid_image_uint8[:, :, c] * alpha + rgb_image[:, :, c] * (1 - alpha)
+                ).astype(np.uint8)
+        else:
+            # If it's already RGB, just use it
+            rgb_image = grid_image_uint8
+
+        # Create figure using Plotly Express
+        fig = px.imshow(rgb_image, binary_string=True, binary_backend="auto")
+
+        # Update layout with improved settings and dark theme
+        fig.update_layout(
+            width=width,
+            height=height,
+            margin=dict(l=0, r=0, b=0, t=30),
+            dragmode="pan",  # Set default drag mode to pan instead of zoom
+            paper_bgcolor="black",  # Set paper background to black
+            plot_bgcolor="black",  # Set plot background to black
+        )
+
+        # Update axes to remove tick labels and grid
+        fig.update_xaxes(
+            showticklabels=False,
+            showgrid=False,  # Remove grid lines
+            zeroline=False,  # Remove zero line
+            showline=False,  # Remove axis line
+            constrain="domain",  # Constrains axes to the domain to prevent artificial borders
+        )
+
+        fig.update_yaxes(
+            showticklabels=False,
+            showgrid=False,  # Remove grid lines
+            zeroline=False,  # Remove zero line
+            showline=False,  # Remove axis line
+            scaleanchor="x",  # Forces y-axis to scale with x-axis to maintain aspect ratio
+            constrain="domain",  # Constrains axes to the domain to prevent artificial borders
+        )
+
+        # Configure for interactive viewing with minimal UI
+        config = {
+            "scrollZoom": True,  # Enable scroll to zoom
+            "displayModeBar": False,  # Hide the mode bar completely
+            "doubleClick": "reset",  # Double click to reset the view
+        }
+
+        # Save to HTML file
+        fig.write_html(output_file, config=config)
+        logging.info(f"Interactive visualization saved to {output_file}")
+
+        return fig  # Return the figure in case you want to show it in a notebook
+
+    def compute_heatmap_lipid_genes(
+        self,
+        lipid=None,
+        l_genes=None,
+        initial_frame=5,
+        brain_1=False,
+        set_progress=None,
+    ):
+        """This functions computes a heatmap representing, on the left side, the expression of a
+        given lipid in the (low-resolution, interpolated) MALDI data, and the right side, the
+        expressions of the selected genes (in l_genes) in the scRNAseq experiments from the
+        molecular atlas data.
+
+        Args:
+            lipid (str): The name of the lipid to be displayed. If None, the most expressed lipid
+                will be displayed. Defaults to None.
+            l_genes (list): The list of gene names to be displayed. If None, the three most
+                expressed genes will be displayed. Defaults to None.
+            initial_frame   (int, optional): The frame on which the slider is initialized.
+            brain_1 (bool, optional): If True, the heatmap will be computed with the data coming
+                from the first brain. Else, from the 2nd brain. Defaults to False.
+            set_progress: Used as part of the Plotly long callbacks, to indicate the progress of the
+                computation in the corresponding progress bar.
+
+        Returns:
+            (Plotly.Figure): A Plotly Figure containing a go.Heatmap object representing the
+                expression of the selected lipid and genes.
+        """
+
+        logging.info("Starting computing heatmap for scRNAseq experiments" + logmem())
+
+        if set_progress is not None:
+            set_progress((5, "Loading data"))
+
+        if brain_1:
+            x = self._scRNAseq.l_name_lipids_brain_1
+            y = self._scRNAseq.array_coef_brain_1
+            name_genes = self._scRNAseq.l_genes_brain_1
+            name_lipids = self._scRNAseq.l_name_lipids_brain_1
+            array_lipids = self._scRNAseq.array_exp_lipids_brain_1
+            array_genes = self._scRNAseq.array_exp_genes_brain_1
+        else:
+            x = self._scRNAseq.l_name_lipids_brain_2
+            y = self._scRNAseq.array_coef_brain_2
+            name_genes = self._scRNAseq.l_genes_brain_2
+            name_lipids = self._scRNAseq.l_name_lipids_brain_2
+            array_lipids = self._scRNAseq.array_exp_lipids_brain_2
+            array_genes = self._scRNAseq.array_exp_genes_brain_2
+
+        # Get the most expressed lipid and genes if not provided
+        if lipid is None and l_genes is None:
+            expression = np.mean(array_lipids, axis=0)
+            index_sorted = np.argsort(expression)[::-1]
+            expression = expression[index_sorted]
+            lipids = np.array(x)[index_sorted]
+            y_sorted = y[index_sorted, :]
+            index_sorted = np.argsort(y_sorted[0, :])[::-1]
+            y_sorted = y_sorted[:, index_sorted]
+            genes = np.array(name_genes)[index_sorted]
+            lipid = lipids[0]
+            l_genes = genes[:3]
+
+        # Get coordinates
+        x = self._scRNAseq.xmol
+        y = -self._scRNAseq.ymol
+        z = self._scRNAseq.zmol
+
+        # Get idx lipid and genes
+        if lipid is not None:
+            idx_lipid = list(name_lipids).index(lipid)
+        else:
+            idx_lipid = None
+
+        l_idx_genes_with_None = [
+            list(name_genes).index(gene) if gene is not None else None for gene in l_genes
+        ]
+        l_idx_genes = [idx_gene for idx_gene in l_idx_genes_with_None if idx_gene is not None]
+
+        # Build grids on which the data will be interpolated
+        x_domain = np.arange(np.min(x), np.max(x), 0.5)
+        y_domain = np.arange(np.min(y), np.max(y), 0.1)
+        z_domain = np.arange(np.min(z), np.max(z), 0.1)
+        x_grid, y_grid, z_grid = np.meshgrid(x_domain, y_domain, z_domain, indexing="ij")
+
+        if set_progress is not None:
+            set_progress((15, "Preparing interpolation"))
+
+        # Build data from interpolation since sampling is irregular
+        if idx_lipid is not None:
+            grid_lipid = griddata(
+                np.vstack((x, y, z)).T,
+                array_lipids[:, idx_lipid],
+                (x_grid, y_grid, z_grid),
+                method="linear",
+            )
+        else:
+            grid_lipid = None
+
+        if len(l_idx_genes) == 1:
+            grid_genes = griddata(
+                np.vstack((x, y, z)).T,
+                array_genes[:, l_idx_genes[0]],
+                (x_grid, y_grid, z_grid),
+                method="linear",
+            )
+        elif len(l_idx_genes) > 1:
+            grid_genes = np.moveaxis(
+                np.stack(
+                    [
+                        griddata(
+                            np.vstack((x, y, z)).T,
+                            array_genes[:, idx_genes],
+                            (x_grid, y_grid, z_grid),
+                            method="linear",
+                        )
+                        if idx_genes is not None
+                        else np.zeros_like(x_grid)
+                        for idx_genes in l_idx_genes_with_None
+                    ]
+                ),
+                0,
+                -1,
+            )
+        else:
+            grid_genes = None
+
+        if set_progress is not None:
+            set_progress((75, "Finished interpolation... Building figure"))
+        fig = make_subplots(1, 2)
+
+        # Build Figure, with several frames as it will be slidable
+        if grid_lipid is not None:
+            for i in range(0, grid_lipid.shape[0], 1):
+                fig.add_heatmap(
+                    z=grid_lipid[i, :, :],
+                    row=1,
+                    col=1,
+                    colorscale="Viridis",
+                    visible=True if i == initial_frame else False,
+                    showscale=False,
+                )
+        if grid_genes is not None:
+            if len(grid_genes.shape) == 3:
+                for i in range(0, grid_genes.shape[0], 1):
+                    fig.add_heatmap(
+                        z=grid_genes[i, :, :],
+                        row=1,
+                        col=2,
+                        colorscale="Viridis",
+                        visible=True if i == initial_frame else False,
+                        showscale=False,
+                    )
+            elif len(grid_genes.shape) == 4:
+                for i in range(0, grid_genes.shape[0], 1):
+                    fig.add_image(
+                        z=grid_genes[i, :, :, :],
+                        row=1,
+                        col=2,
+                        visible=True if i == initial_frame else False,
+                    )
+        if grid_genes is not None or grid_lipid is not None:
+            steps = []
+            for i in range(grid_lipid.shape[0]):
+                step = dict(
+                    method="restyle",
+                    args=["visible", [False] * len(fig.data)],
+                    label=str(i),
+                )
+                if grid_lipid is not None and grid_genes is not None:
+                    step["args"][1][i] = True
+                    step["args"][1][i + grid_lipid.shape[0]] = True
+                elif grid_lipid is not None or grid_genes is not None:
+                    step["args"][1][i] = True
+                steps.append(step)
+
+            sliders = [
+                dict(
+                    active=initial_frame,
+                    steps=steps,
+                    pad={"b": 5, "t": 10},
+                    len=0.9,
+                    x=0.05,
+                    y=0.0,
+                    currentvalue={
+                        "visible": False,
+                    },
+                )
+            ]
+
+            # Layout
+            fig.update_layout(
+                title_text="Comparison between lipid and gene expression",
+                title_x=0.5,
+                title_y=0.98,
+                margin=dict(t=20, r=20, b=20, l=20),
+                template="plotly_dark",
+                sliders=sliders,
+            )
+
+            # No display of tick labels as they're wrong anyway
+            fig.update_layout(
+                scene=dict(
+                    xaxis=dict(showticklabels=False),
+                    yaxis=dict(showticklabels=False),
+                ),
+                paper_bgcolor="rgba(0,0,0,0.)",
+                plot_bgcolor="rgba(0,0,0,0.)",
+                yaxis_scaleanchor="x",
+            )
+
+            # Reverse y axis if Image has been used
+            if grid_genes is not None:
+                if len(grid_genes.shape) == 4:
+                    fig.update_yaxes(autorange=True, row=1, col=2)
+
+            # Remove tick labels
+            fig.update_xaxes(showticklabels=False)  # Hide x axis ticks
+            fig.update_yaxes(showticklabels=False)  # Hide y axis ticks
+
+            if set_progress is not None:
+                set_progress((90, "Returning figure"))
+            return fig
+
+    def compute_lipizones_figure(self):
+        """This function computes and returns a figure representing the lipizones visualization.
+        The function loads a pre-computed grid image, converts its RGB values, and creates a Plotly
+        figure with specific layout settings.
+
+        Returns:
+            (go.Figure): A Plotly figure representing the lipizones visualization.
+        """
+        # Load the pre-computed grid image
+        grid_image = np.load("./new_data/grid_image_lipizones.npy")
+        rgb_image = grid_image[:, :, :3]
+
+        # Convert RGB values from 1,1,1 (white) to 0,0,0 (black)
+        converted_array = rgb_image.copy()
+        white_pixels = np.all(converted_array == 1, axis=2)
+        for i in range(3):
+            converted_array[white_pixels, i] = 0
+
+        rgb_image = converted_array
+
+        # Create figure using Plotly Express with a black background
+        fig = px.imshow(rgb_image, binary_string=True, binary_backend="auto")
+
+        # Update layout with improved settings and dark theme
+        fig.update_layout(
+            width=3648,
+            height=1280,
+            margin=dict(l=0, r=0, b=0, t=30),
+            dragmode="pan",  # Set default drag mode to pan instead of zoom
+            paper_bgcolor="black",  # Set paper background to black
+            plot_bgcolor="black",  # Set plot background to black
+        )
+
+        # Update axes to remove tick labels and grid
+        fig.update_xaxes(
+            showticklabels=False,
+            showgrid=False,  # Remove grid lines
+            zeroline=False,  # Remove zero line
+            showline=False,  # Remove axis line
+            constrain="domain",  # Constrains axes to the domain to prevent artificial borders
+        )
+        fig.update_yaxes(
+            showticklabels=False,
+            showgrid=False,  # Remove grid lines
+            zeroline=False,  # Remove zero line
+            showline=False,  # Remove axis line
+            scaleanchor="x",  # Forces y-axis to scale with x-axis to maintain aspect ratio
+            constrain="domain",  # Constrains axes to the domain to prevent artificial borders
+        )
+
         return fig

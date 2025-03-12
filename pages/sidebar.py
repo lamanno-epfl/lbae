@@ -70,6 +70,26 @@ layout = html.Div(
                             target="sidebar-page-2",
                             placement="right",
                         ),
+                        # Link to page 5 (lp-selection)
+                        dbc.NavLink(
+                            href="/lp-selection",
+                            active="exact",
+                            children=[
+                                html.I(
+                                    id="sidebar-page-5",
+                                    className="icon-lipid fs-5",
+                                    style={"margin-left": "0.7em"},
+                                )
+                            ],
+                            className="my-4",
+                        ),
+                        dbc.Tooltip(
+                            children=(
+                                "Analyse brain composition by program selection"
+                            ),
+                            target="sidebar-page-5",
+                            placement="right",
+                        ),
                         # Link to page 3
                         dbc.NavLink(
                             href="/region-analysis",

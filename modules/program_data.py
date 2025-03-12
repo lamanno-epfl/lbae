@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
+ABA_DIM = (528, 320, 456)
 
 @dataclass
 class programImage:
@@ -30,7 +31,7 @@ class programImage:
     is_scatter: bool = False
 
 
-class lipiMapData:
+class LipiMapData:
     """Class to handle the storage of the program data format with direct program images.
 
     This class provides methods to:
@@ -39,7 +40,7 @@ class lipiMapData:
     3. Access metadata about the stored data
     """
 
-    def __init__(self, path_db: str = "../program_data/"):
+    def __init__(self, path_db: str = "../program_data/", path_annotations: str = "../data/annotations/"):
         """Initialize the storage system.
 
         Args:
@@ -48,9 +49,15 @@ class lipiMapData:
         self.path_db = path_db
         if not os.path.exists(self.path_db):
             os.makedirs(self.path_db)
+        self._df_annotations = pd.read_csv(os.path.join(path_annotations, "lp_annotation.csv"))
 
         # Initialize the metadata file if it doesn't exist
         self._init_metadata()
+
+        self.image_shape = (ABA_DIM[1], ABA_DIM[2])
+
+    def get_annotations(self) -> pd.DataFrame:
+        return self._df_annotations
 
     def get_brain_id_from_sliceindex(self, slice_index):
         lookup_brainid = pd.read_csv(os.path.join(self.path_db, "lookup_brainid.csv"), index_col=0)
@@ -66,16 +73,16 @@ class lipiMapData:
             return np.nan
 
     def _init_metadata(self):
-        """Initialize or load the metadata about stored brains and programs."""
+        """Initialize or load the metadata about stored brains and lipids."""
         with shelve.open(os.path.join(self.path_db, "metadata")) as db:
             if "brain_info" not in db:
-                db["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[program_names]]]
+                db["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[lipid_names]]]
 
     def add_program_image(self, program_data: programImage, force_update: bool = False):
-        """Add a program image to the database.
+        """Add a lipid program image to the database.
 
         Args:
-            program_data: programImage object containing the image and metadata
+            program_data: LipidImage object containing the image and metadata
             force_update: If True, overwrite existing data
         """
         # Update metadata
@@ -95,10 +102,10 @@ class lipiMapData:
 
         # Store the actual image data
         key = f"{program_data.brain_id}/slice_{program_data.slice_index}/{program_data.name}"
-        with shelve.open(os.path.join(self.path_db, "program_images")) as db:
+        with shelve.open(os.path.join(self.path_db, "lipid_images")) as db:
             if key in db and not force_update:
                 logging.warning(
-                    f"program image {key} already exists. Use force_update=True to overwrite."
+                    f"Lipid image {key} already exists. Use force_update=True to overwrite."
                 )
                 return
             db[key] = program_data
@@ -132,15 +139,16 @@ class lipiMapData:
                 return []
             return list(brain_info[brain_id].keys())
 
-    def get_available_programs(self, brain_id: str, slice_index: int) -> List[str]:
+    def get_available_programs(self, slice_index: int) -> List[str]:
         """Get list of available programs for a given brain and slice."""
+        brain_id = self.get_brain_id_from_sliceindex(slice_index)
         with shelve.open(os.path.join(self.path_db, "metadata")) as db:
             brain_info = db["brain_info"]
             if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
                 return []
             return brain_info[brain_id][slice_index]
 
-    def extract_program_image(self, slice_index, program_name, fill_holes=True):
+    def extract_lipid_image(self, slice_index, program_name, fill_holes=True):
         """Extract a program image from scatter data with optional hole filling.
         
         Args:
@@ -168,10 +176,10 @@ class lipiMapData:
             scatter_points = program_data.image  # This is a numpy array with shape (N, 3)
             
             # Create a DataFrame from the scatter points
-            scatter = pd.DataFrame(scatter_points, columns=["x", "y", "value"])
+            scatter = pd.DataFrame(scatter_points, columns=["y", "x", "value"])
             
             # Create an empty array to hold the image
-            arr = np.full((456, 320), np.nan)  # Adjust dimensions if needed
+            arr = np.full(self.image_shape, np.nan)  # Adjust dimensions if needed
             
             # Convert coordinates to integers for indexing
             x_indices = scatter["x"].astype(int).values
@@ -303,17 +311,38 @@ class lipiMapData:
         Returns:
             (list): The list of requested slice indices.
         """
-        # if indices == "all":
-        #     return self._l_slices
-        # elif indices == "brain_1":
-        #     return self._l_slices_brain_1
-        # elif indices == "brain_2":
-        #     return self._l_slices_brain_2
-        # else:
-        #     raise ValueError("Invalid string for indices")
-        return self.get_available_slices(indices)
+        if indices == "all":
+            slices = []
+            brains = self.get_available_brains()
+            for brain in brains:
+                slices.extend(self.get_available_slices(brain))
+            return slices
+        elif indices == "ReferenceAtlas":
+            return self.get_available_slices(brain_id="ReferenceAtlas")
+        elif indices == "SecondAtlas":
+            return self.get_available_slices(brain_id="SecondAtlas")
+        elif indices == "Female1":
+            return self.get_available_slices(brain_id="Female1")
+        elif indices == "Female2":
+            return self.get_available_slices(brain_id="Female2")
+        elif indices == "Female3":
+            return self.get_available_slices(brain_id="Female3")
+        elif indices == "Male1":
+            return self.get_available_slices(brain_id="Male1")
+        elif indices == "Male2":
+            return self.get_available_slices(brain_id="Male2")
+        elif indices == "Male3":
+            return self.get_available_slices(brain_id="Male3")
+        elif indices == "Pregnant1":
+            return self.get_available_slices(brain_id="Pregnant1")
+        elif indices == "Pregnant2":
+            return self.get_available_slices(brain_id="Pregnant2")
+        elif indices == "Pregnant4":
+            return self.get_available_slices(brain_id="Pregnant4")
+        else:
+            raise ValueError("Invalid string for indices")
 
-    def return_program_options(self):
+    def return_lipid_options(self):
         """Computes and returns the list of program names, structures and cation.
 
         Returns:
@@ -322,11 +351,11 @@ class lipiMapData:
 
         return [
             {
-                "label": ln.split(" ")[0] + " " + ln.split(" ")[1],
-                "value": ln.split(" ")[0] + " " + ln.split(" ")[1],
-                "group": ln.split(" ")[0],
+                "label": lp.replace("_", " "),
+                "value": lp.replace("_", " "),
+                "group": "NMF Embeddings" if lp.startswith("globalembedding") else "Lipid Programs"
             }
-            for ln in self.get_available_programs("ReferenceAtlas", 1)
+            for lp in self.get_available_programs(1)
         ]
 
     """

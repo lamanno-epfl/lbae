@@ -10,3 +10,14 @@ nohup.out
 *.ipynb
 new_data_BU/
 prove.ipynb
+assets/lba01mp4.mp4
+grayscale_image_2.html
+grid_image_lipizones.npy
+grid_imagetest.npy
+hybrid_visualization_LIPI.html
+hybrid_visualization_LIPI_fast.html
+lipizones_touse.html
+my_image_masks.pkl
+pages/lipizones_exploration.py
+sm341all_method1.html
+test.html

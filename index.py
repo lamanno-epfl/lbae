@@ -20,7 +20,14 @@ import dash_mantine_components as dmc
 
 # LBAE modules
 from app import app, data, atlas
-from pages import sidebar, home, lipid_selection, region_analysis, threeD_exploration, numpy_3d
+from pages import (
+    sidebar,
+    home,
+    lipid_selection,
+    region_analysis,
+    threeD_exploration,
+    lipizones_exploration,
+)
 from in_app_documentation.documentation import return_documentation
 from config import basic_config
 from modules.tools.misc import logmem
@@ -117,7 +124,9 @@ def return_main_content():
                                         #     atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
                                         # ),
                                     }
-                                    for slice_index in data.get_slice_list(indices="ReferenceAtlas")# [::3]
+                                    for slice_index in data.get_slice_list(
+                                        indices="ReferenceAtlas"
+                                    )  # [::3]
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="ReferenceAtlas")[0],
@@ -134,11 +143,13 @@ def return_main_content():
                                         "value": slice_index,
                                         # Use x coordinate for label
                                         # "label": "{:.2f}".format(
-                                        #     # TYPE: int 
+                                        #     # TYPE: int
                                         #     atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
                                         # ),
                                     }
-                                    for slice_index in data.get_slice_list(indices="SecondAtlas")# [::3]
+                                    for slice_index in data.get_slice_list(
+                                        indices="SecondAtlas"
+                                    )  # [::3]
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="SecondAtlas")[0],
@@ -159,7 +170,7 @@ def return_main_content():
                     ),
                     # Documentation in a bottom drawer
                     dmc.Drawer(
-                        children=return_documentation(app),
+                        children=dmc.Text("To update", size="xl", align="center"),
                         id="documentation-offcanvas",
                         # title="LBAE documentation",
                         opened=False,
@@ -202,7 +213,8 @@ def return_validation_layout(main_content, initial_slice=1):
             home.layout,
             lipid_selection.return_layout(basic_config, initial_slice),
             # region_analysis.return_layout(basic_config, initial_slice),
-            # threeD_exploration.return_layout(basic_config, initial_slice),
+            threeD_exploration.return_layout(basic_config, initial_slice),
+            lipizones_exploration.return_layout(basic_config, initial_slice),
         ]
     )
 
@@ -234,11 +246,11 @@ def render_page_content(pathname, slice_index, brain):
     # elif pathname == "/region-analysis":
     #     page = region_analysis.return_layout(basic_config, slice_index)
 
-    # elif pathname == "/3D-exploration":
-    #     page = threeD_exploration.return_layout(basic_config, slice_index)
+    elif pathname == "/3D-exploration":
+        page = threeD_exploration.return_layout(basic_config, slice_index)
 
-    # elif pathname == "/numpy-3d":
-    #     page = numpy_3d.return_layout(basic_config, slice_index)
+    elif pathname == "/lipizones-exploration":
+        page = lipizones_exploration.return_layout(basic_config, slice_index)
 
     else:
         # If the user tries to reach a different page, return a 404 message

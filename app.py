@@ -12,6 +12,7 @@ variables shared across all user sessions are also instantiated: data, atlas and
 # Standard modules
 import dash
 import dash_bootstrap_components as dbc
+from dash.dependencies import Input, Output
 from dash.long_callback import DiskcacheLongCallbackManager
 import flask
 from flask_caching import Cache
@@ -159,3 +160,28 @@ cache_flask.init_app(app.server, config=CACHE_CONFIG)
 # Initiate the cache as unlocked
 cache_flask.set("locked-cleaning", False)
 cache_flask.set("locked-reading", False)
+
+# Add basic configuration and slice index
+# basic_config = {
+#     "brain": "brain_1",
+#     "slice_index": 0,
+# }
+# slice_index = 0
+
+#################################################################################################### ????
+
+
+@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
+def display_page(pathname):
+    if pathname == "/":
+        return home.return_layout(basic_config, slice_index)
+    elif pathname == "/lipid-selection":
+        return lipid_selection.return_layout(basic_config, slice_index)
+    elif pathname == "/region-analysis":
+        return region_analysis.return_layout(basic_config, slice_index)
+    elif pathname == "/3D-exploration":
+        return threeD_exploration.return_layout(basic_config, slice_index)
+    elif pathname == "/lipizones-exploration":
+        return lipizones_exploration.return_layout(basic_config, slice_index)
+    else:
+        return home.return_layout(basic_config, slice_index)

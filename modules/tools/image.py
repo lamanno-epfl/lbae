@@ -4,9 +4,9 @@
 """ This file contains functions used to convert arrays to Pillow images, possibly as b64 
 strings."""
 
-# ==================================================================================================
+# ------------------------------------------------------------------------------------------------==
 # --- Imports
-# ==================================================================================================
+# ------------------------------------------------------------------------------------------------==
 
 # Standard modules
 import logging
@@ -17,33 +17,29 @@ from PIL import Image
 
 # LBAE imports
 from config import black_viridis
+from matplotlib import cm
 
-# ==================================================================================================
+# ------------------------------------------------------------------------------------------------==
 # --- Functions
-# ==================================================================================================
+# ------------------------------------------------------------------------------------------------==
 
 
-def black_to_transparency(img):
-    """This function takes a PIL image and convert the zero-valued pixels to transparent ones in the
-    most efficient way possible.
+def black_to_transparency(img, original_array):
 
-    Args:
-        img (PIL.Image): The image for which the pixels must be made transparent.
-
-    Returns:
-        (PIL.Image): The image with transparent pixels.
-    """
-    # Need to copy as PIL arrays are read-only
-    x = np.asarray(img.convert("RGBA")).copy()
-    x[:, :, 3] = (255 * (x[:, :, :3] != 0).any(axis=2)).astype(np.uint8)
+    x = np.asarray(img.convert("RGB")).copy()
+    print("original_array.shape:", original_array.shape)
+    nan_mask = np.isnan(original_array) if len(original_array.shape) == 2 else np.isnan(original_array[:,:,0])
+    nan_mask = nan_mask.astype(np.uint8)*255
+    # concatenate the mask to the image
+    x = np.dstack((x, ~nan_mask))
+    
     return Image.fromarray(x)
-
 
 def convert_image_to_base64(
     image_array,
     optimize=True,
     quality=85,
-    colormap=black_viridis,
+    colormap=cm.viridis, # black_viridis
     type=None,
     format="png",
     overlay=None,
@@ -80,20 +76,20 @@ def convert_image_to_base64(
         (str): The base 64 image encoded in a string.
     """
     logging.info("Entering string conversion function")
-
+    print("image_array.shape:", image_array.shape)
+    
     # Convert 1D array into a PIL image
     if type is None:
-        # Map image to a colormap and convert to uint8
         image_array = np.array(image_array, dtype=np.float64)
         img = np.uint8(colormap(image_array) * 255)
-
         # Turn array into PIL image object
         pil_img = Image.fromarray(img)
-
+        
     # Convert 3D or 4D array into a PIL image
     elif type == "RGB" or type == "RGBA":
-        pil_img = Image.fromarray(image_array, type)
-
+        uint8_image_array = np.asarray(image_array, dtype=np.uint8).copy()
+        pil_img = Image.fromarray(uint8_image_array, mode=type) # image_array_post
+        
     logging.info("Image has been converted from array to PIL image")
 
     # Overlay is transparent, therefore initial image must be converted to RGBA
@@ -113,10 +109,10 @@ def convert_image_to_base64(
         )
         pil_img = pil_img.resize((x2, y2), Image.ANTIALIAS)
         logging.info("Resolution has been decreased")
-
+    
     if transparent_zeros:
         # Takes ~5 ms but makes output much nicer
-        pil_img = black_to_transparency(pil_img)
+        pil_img = black_to_transparency(pil_img, image_array)
         logging.info("Empty pixels are now transparent")
 
     # Convert to base64

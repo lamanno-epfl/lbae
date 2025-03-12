@@ -99,6 +99,7 @@ def return_layout(basic_config, slice_index):
                                             #     force_update=False,
                                             #     compute_function=data.return_lipid_options,
                                             # ),
+                                            value=['SM 34:1;O2'],
                                             searchable=True,
                                             nothingFound="No lipid found",
                                             radius="md",
@@ -259,37 +260,39 @@ def return_layout(basic_config, slice_index):
                         # ),
                         dmc.Group(
                             position="right",
-                            direction="column",
+                            direction="row",
                             style={
-                                "right": "1%",
-                                "bottom": "4rem",
+                                "right": "1rem",
+                                "bottom": "0.5rem",
+                                "position": "fixed",
+                                "z-index": 1000,
                             },
                             class_name="position-absolute",
                             spacing=0,
                             children=[
-                                dmc.Button(
-                                    children="Show zoomed-in spectrum",
-                                    id="page-2-show-high-res-spectrum-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                ),
-                                dmc.Button(
-                                    children="Show entire spectrum",
-                                    id="page-2-show-low-res-spectrum-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                    class_name="mt-1",
-                                ),
+                                # dmc.Button(
+                                #     children="Show zoomed-in spectrum",
+                                #     id="page-2-show-high-res-spectrum-button",
+                                #     variant="filled",
+                                #     disabled=False,
+                                #     color="cyan",
+                                #     radius="md",
+                                #     size="xs",
+                                #     compact=False,
+                                #     loading=False,
+                                # ),
+                                # dmc.Button(
+                                #     children="Show entire spectrum",
+                                #     id="page-2-show-low-res-spectrum-button",
+                                #     variant="filled",
+                                #     disabled=False,
+                                #     color="cyan",
+                                #     radius="md",
+                                #     size="xs",
+                                #     compact=False,
+                                #     loading=False,
+                                #     class_name="mt-1",
+                                # ),
                                 dmc.Button(
                                     children="Download data",
                                     id="page-2-download-data-button",
@@ -301,6 +304,7 @@ def return_layout(basic_config, slice_index):
                                     compact=False,
                                     loading=False,
                                     class_name="mt-1",
+                                    style={"margin-right": "0.5rem"},
                                 ),
                                 dmc.Button(
                                     children="Download image",
@@ -444,7 +448,6 @@ def return_layout(basic_config, slice_index):
 # --- Callbacks
 # ==================================================================================================
 
-
 @app.callback(
     Output("page-2-graph-heatmap-mz-selection", "figure"),
     Output("page-2-badge-input", "children"),
@@ -479,13 +482,14 @@ def page_2_plot_graph_heatmap_mz_selection(
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
     print(f"\n========== page_2_plot_graph_heatmap_mz_selection ==========")
-    # print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
-    # print(f"slice_index: {slice_index}")
+    print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
+    print(f"slice_index: {slice_index}")
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    # print(f"id_input: {id_input}")    
+    print(f"id_input: {id_input}")    
+    print("graph_input:", graph_input)
 
     # # Case a two mz bounds values have been inputed
     # if id_input == "page-2-button-bounds" or (
@@ -516,6 +520,7 @@ def page_2_plot_graph_heatmap_mz_selection(
             )
         )
     ):
+        print("--- option 1 ---")
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
             # Build the list of mz boundaries for each peak
             # ll_lipid_bounds = [
@@ -578,15 +583,17 @@ def page_2_plot_graph_heatmap_mz_selection(
                 #     and graph_input == "Current input: " + "Lipid selection colormap"
                 # )
             ):
+                print("--- option 1.1 ---")
                 # you also need to check that only one lipid is selected
                 if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
                     nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
                     image = figures.compute_image_per_lipid(
                         slice_index,
-                        RGB_format=True,
+                        RGB_format=False,
                         lipid_name=nonull_ll_lipid_names,
                         cache_flask=cache_flask,
                     )
+                    print("--- option 1.1.1 ---")
                     return (
                         figures.build_lipid_heatmap_from_image(
                             image, 
@@ -601,6 +608,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                     "Current input: " + "Lipid selection colormap",
                 )
                 else:
+                    print("--- option 1.1.2 ---")
                     logging.info("Trying to plot a heatmap for more than one lipid, not possible. Return the rgb plot instead")
                     return (
                         figures.compute_rgb_image_per_lipid_selection(
@@ -623,6 +631,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                     and graph_input == "Current input: " + "Lipid selection RGB"
                 )
             ):
+                print("--- option 1.2 ---")
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
@@ -636,6 +645,7 @@ def page_2_plot_graph_heatmap_mz_selection(
 
             # Plot RBG By default
             else:
+                print("--- option 1.3 ---")
                 logging.info("Right before calling the graphing function")
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
@@ -647,8 +657,20 @@ def page_2_plot_graph_heatmap_mz_selection(
                     ),
                     "Current input: " + "Lipid selection RGB",
                 )
-
+        elif (
+            id_input == "main-slider" and graph_input == "Current input: "
+        ):
+            print("--- option 2 ---")
+            print(f"No lipid has been selected, the current lipid is SM 34:1;O2 and the slice is {slice_index}")
+            return (
+                figures.compute_heatmap_per_lipid(slice_index, 
+                                                "SM 34:1;O2",
+                                                # lb, hb, 
+                                                cache_flask=cache_flask),
+                "Current input: " + "SM 34:1;O2",
+            )
         else:
+            print("--- option 3 ---")
             # No lipid has been selected, return image from boundaries
             # if lb is not None and hb is not None:
             return (
@@ -656,7 +678,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                                                 "SM 34:1;O2",
                                                 # lb, hb, 
                                                 cache_flask=cache_flask),
-                "Current input: ",# + "m/z boundaries",
+                "Current input: " + "SM 34:1;O2", # + "m/z boundaries"
             )
             # else:
             #     return (
@@ -1009,7 +1031,7 @@ def page_2_add_toast_selection(
 ):
     """This callback adds the selected lipid to the selection."""
     logging.info("Entering function to update lipid data")
-    # print("\n================ page_2_add_toast_selection ================")
+    print("\n================ page_2_add_toast_selection ================")
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
@@ -1018,7 +1040,40 @@ def page_2_add_toast_selection(
     # if page-2-dropdown-lipids is called while there's no lipid name defined, it means the page
     # just got loaded
     if len(id_input) == 0 or (id_input == "page-2-dropdown-lipids" and l_lipid_names is None):
-        return "", "", "", -1, -1, -1, "d-none", "d-none", "d-none"  # , None
+        # Initialize with SM 34:1;O2 as the default lipid
+        default_lipid = "SM 34:1;O2"
+        # Find lipid location for the default lipid
+        name, structure = default_lipid.split(" ")
+        l_lipid_loc = (
+            data.get_annotations()
+            .index[
+                (data.get_annotations()["name"] == name)
+                & (data.get_annotations()["structure"] == structure)
+                & (data.get_annotations()["slice"] == slice_index)
+            ]
+            .tolist()
+        )
+        
+        # If no match for current slice, try to find it in any slice
+        if len(l_lipid_loc) == 0:
+            l_lipid_loc = (
+                data.get_annotations()
+                .index[
+                    (data.get_annotations()["name"] == name)
+                    & (data.get_annotations()["structure"] == structure)
+                ]
+                .tolist()
+            )[:1]
+        
+        # Set default lipid if found
+        if len(l_lipid_loc) > 0:
+            lipid_1_index = l_lipid_loc[0]
+            header_1 = default_lipid
+            class_name_badge_1 = "position-absolute"
+            return header_1, "", "", lipid_1_index, -1, -1, class_name_badge_1, "d-none", "d-none"
+        else:
+            # Fallback if lipid not found
+            return "", "", "", -1, -1, -1, "d-none", "d-none", "d-none", # None
 
     # If one or several lipids have been deleted
     if l_lipid_names is not None:
@@ -1126,6 +1181,7 @@ def page_2_add_toast_selection(
                 class_name_badge_1,
                 class_name_badge_2,
                 class_name_badge_3,
+                # None,
             )
 
         # If lipids have been added from dropdown menu

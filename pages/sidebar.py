@@ -107,22 +107,22 @@ layout = html.Div(
                             target="sidebar-page-4",
                             placement="right",
                         ),
-                        # Link to numpy-3d
+                        # Link to lipizones exploration
                         dbc.NavLink(
-                            href="/numpy-3d",
+                            href="/lipizones-exploration",
                             active="exact",
                             children=[
                                 html.I(
-                                    id="sidebar-page-6",
-                                    className="icon-3d fs-5",
+                                    id="sidebar-page-5",
+                                    className="icon-chart-bar fs-5",
                                     style={"margin-left": "0.7em"},
                                 )
                             ],
                             className="my-4",
                         ),
                         dbc.Tooltip(
-                            children="3D Numpy Viewer",
-                            target="sidebar-page-6",
+                            children="Explore lipizones visualization",
+                            target="sidebar-page-5",
                             placement="right",
                         ),
                         # Link to documentation
@@ -166,3 +166,6 @@ layout = html.Div(
         ),
     ],
 )
+
+# Lipid Brain Atlas Explorer documentation
+# To be updated with the paper content. Website designed by Colas Droin, updated by Francesca Venturi and Luca Fusar Bassini

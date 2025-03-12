@@ -41,11 +41,13 @@ layout = (
                     align="stretch",
                     class_name="mt-4",
                     children=[
-                        dmc.Alert(
-                            "A connection of at least 10Mbps is recommended to comfortably use the"
-                            " application.",
-                            title="Information",
-                            color="cyan",
+                        dmc.Text(
+                            "Welcome to the Lipid Brain Atlas Explorer",
+                            style={
+                                "fontSize": 40,
+                                "color": "#dee2e6",
+                            },
+                            align="center",
                         ),
                         dmc.Alert(
                             "This app is not recommended for use on a mobile device.",
@@ -74,52 +76,39 @@ layout = (
                         align="center",
                         position="center",
                         children=[
-                            dmc.Text(
-                                "Welcome to the Lipid Brain Atlas Explorer",
-                                style={
-                                    "fontSize": 40,
-                                    "color": "#dee2e6",
-                                    "margin-bottom": "-15rem",
-                                },
-                                align="center",
-                            ),
                             html.Div(
                                 children=[
                                     dbc.Spinner(
                                         color="info",
                                         spinner_style={
-                                            # "margin-top": "40%",
                                             "width": "3rem",
                                             "height": "3rem",
                                             "position": "absolute",
                                         },
                                         children=[
-                                            html.Div(
-                                                children=[
-                                                    html.Div(id="rotating-brain"),
-                                                    visdcc.Run_js(id="javascript"),
-                                                ],
-                                                style={"height": "500px"},
+                                            html.Video(
+                                                id="brain-video",
+                                                src="/assets/lba01mp4.mp4",
+                                                autoPlay=True,
+                                                loop=True,
+                                                muted=True,
+                                                controls=False,
+                                                style={
+                                                    "width": "100%",
+                                                    "height": "500px",
+                                                    "objectFit": "contain",
+                                                },
                                             ),
-                                            # html.Div(
-                                            #     id="skeleton-rotating-brain",
-                                            #     # children=dmc.Image(
-                                            #     #     src="/assets/ressources/brain.png",
-                                            #     #     height=500,
-                                            #     # ),
-                                            #     style={"height": "500px"},
-                                            # ),
                                         ],
                                     ),
                                 ],
                                 style={
                                     "height": "500px",
-                                },  # "min-width": "100px"},
+                                },
                             ),
                             # Below logo text
                             dmc.Text(
-                                "Please start exploring our data by using the navigation bar on the"
-                                " left",
+                                "Explore the Lipid Brain Atlas using the bar on the left!",
                                 size="xl",
                                 align="center",
                                 color="dimmed",
@@ -128,13 +117,6 @@ layout = (
                                     "margin-top": "-3rem",
                                 },
                             ),
-                            # dmc.Text(
-                            #     "The mouse lipid brain atlas publication can be found here: TODO,"
-                            #     " and the github repository of the app can be found here: TODO.",
-                            #     size="xl",
-                            #     align="center",
-                            #     color="dimmed",
-                            # ),
                             dmc.Center(
                                 dmc.Button(
                                     "Read documentation",
@@ -145,7 +127,7 @@ layout = (
                             ),
                             # Documentation in a bottom drawer
                             dmc.Drawer(
-                                children=return_documentation(app),
+                                children=dmc.Text("To update", size="xl", align="center"),
                                 id="documentation-offcanvas-home",
                                 opened=False,
                                 padding="md",
@@ -169,11 +151,11 @@ layout = (
 
 @app.callback(
     Output("documentation-offcanvas-home", "opened"),
-    [Input("page-0-collapse-doc-button", "n_clicks")],
-    [State("documentation-offcanvas-home", "opened")],
+    Input("page-0-collapse-doc-button", "n_clicks"),
+    State("documentation-offcanvas-home", "opened"),
 )
-def toggle_collapse(n, is_open):
-    """This callback will trigger the drawer displaying the app documentation."""
+def toggle_documentation(n, is_open):
+    """This callback triggers the documentation drawer when clicking the documentation button."""
     if n:
         return not is_open
     return is_open

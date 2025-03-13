@@ -675,9 +675,9 @@ class Figures:
         """
         logging.info("Entering compute_image_per_lipid")
         print("===================== entering compute_image_per_lipid ===========================")
-        print("RGB_format:", RGB_format)
-        print("lipid_name:", lipid_name)
-        print("slice_index:", slice_index)
+        # print("RGB_format:", RGB_format)
+        # print("lipid_name:", lipid_name)
+        # print("slice_index:", slice_index)
 
         # Get image from raw mass spec data
         # image = compute_thread_safe_function(
@@ -700,7 +700,7 @@ class Figures:
 
         # print all the attributes and methods of the data object
         # print the class of the data object
-        print(f"self._data: {type(self._data)}")
+        # print(f"self._data: {type(self._data)}")
         
         image = self._data.extract_lipid_image(slice_index, lipid_name)
         # print("\nimage.min():", np.nanmin(image))
@@ -873,7 +873,7 @@ class Figures:
         """
 
         logging.info("Converting image to string")
-        print("image.shape:", image.shape)
+        # print("image.shape:", image.shape)
 
         # Set optimize to False to gain computation time
         base64_string = convert_image_to_base64(
@@ -1194,20 +1194,20 @@ class Figures:
                 lipid_name=lipid_name,
                 cache_flask=cache_flask,
             ) if lipid_name is not None else np.full(self._data.image_shape, np.nan) #np.zeros(self._atlas.image_shape)
-            print("--------- image_temp ---------", np.isnan(image_temp).sum(), image_temp.shape[0] * image_temp.shape[1])
+            # print("--------- image_temp ---------", np.isnan(image_temp).sum(), image_temp.shape[0] * image_temp.shape[1])
             # if image_temp is not None:
             #     image += image_temp
 
             l_images.append(image_temp)  #####
 
         # Reoder axis to match plotly go.image requirementss
-        print("np.array(l_images).shape", np.array(l_images).shape)
-        print("np.array(l_images)[0].shape", np.array(l_images)[0].shape)
-        print("np.array(l_images)[1].shape", np.array(l_images)[1].shape)
-        print("np.array(l_images)[2].shape", np.array(l_images)[2].shape)
+        # print("np.array(l_images).shape", np.array(l_images).shape)
+        # print("np.array(l_images)[0].shape", np.array(l_images)[0].shape)
+        # print("np.array(l_images)[1].shape", np.array(l_images)[1].shape)
+        # print("np.array(l_images)[2].shape", np.array(l_images)[2].shape)
         array_image = np.moveaxis(np.array(l_images), 0, 2)
         # count the nan values in the array_image
-        print("nan values in array_image", np.isnan(array_image).sum())
+        # print("nan values in array_image", np.isnan(array_image).sum())
         # array_image = np.array(l_images)
 
         # TODO: there is a problem with the shape of the array_image because the shapes if less than 3 lipids are selected are not the same
@@ -1284,10 +1284,10 @@ class Figures:
             ll_lipid_names=ll_lipid_names,
             cache_flask=cache_flask,
         )
-        print("\narray_image.shape", array_image.shape, np.isnan(array_image).sum())
-        print("array_image first channel", array_image[:,:,0].max(), array_image[:,:,0].min(), np.isnan(array_image[:,:,0]).sum())
-        print("array_image second channel", array_image[:,:,1].max(), array_image[:,:,1].min(), np.isnan(array_image[:,:,1]).sum())
-        print("array_image third channel", array_image[:,:,2].max(), array_image[:,:,2].min(), np.isnan(array_image[:,:,2]).sum())
+        # print("\narray_image.shape", array_image.shape, np.isnan(array_image).sum())
+        # print("array_image first channel", array_image[:,:,0].max(), array_image[:,:,0].min(), np.isnan(array_image[:,:,0]).sum())
+        # print("array_image second channel", array_image[:,:,1].max(), array_image[:,:,1].min(), np.isnan(array_image[:,:,1]).sum())
+        # print("array_image third channel", array_image[:,:,2].max(), array_image[:,:,2].min(), np.isnan(array_image[:,:,2]).sum())
 
         logging.info("Returning fig for slice " + str(slice_index) + logmem())
 
@@ -1773,7 +1773,7 @@ class Figures:
         lipid_path = f"/data/luca/lipidatlas/ManuscriptAnalysisRound3/3d_interpolated_native/{lipid_name}interpolation_log.npy"
         np3d = np.load(lipid_path)
 
-        print(downsample_factor)
+        # print(downsample_factor)
 
         # CRITICAL: Use the same downsampling factor for both datasets
         # Get root data with the same downsampling factor
@@ -1803,7 +1803,7 @@ class Figures:
             # If no filtering, use the downsampled data as is
             sub_np3d_clean = sub_np3d
 
-        print(sub_np3d_clean.shape)
+        # print(sub_np3d_clean.shape)
 
         # Create coordinate grid for lipid data
         z, y, x = np.indices(sub_np3d_clean.shape)

@@ -4,8 +4,6 @@
 """ This file contains the page used to select and visualize lipid programs according to pre-existing 
 annotations, or directly using m/z ranges."""
 
-print("|||||||||||||||||||||||||||||||| Loading lp_selection.py ||||||||||||||||||||||||||||||||")
-
 # ==================================================================================================
 # --- Imports
 # ==================================================================================================

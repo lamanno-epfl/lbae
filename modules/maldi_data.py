@@ -344,28 +344,11 @@ class MaldiData:
             slices = sorted(slices, key=lambda x: coordinates_csv.loc[coordinates_csv["SectionID"] == x, "xccf"].values[0])
             
             return slices
-        elif indices == "ReferenceAtlas":
-            return self.get_available_slices(brain_id="ReferenceAtlas")
-        elif indices == "SecondAtlas":
-            return self.get_available_slices(brain_id="SecondAtlas")
-        elif indices == "Female1":
-            return self.get_available_slices(brain_id="Female1")
-        elif indices == "Female2":
-            return self.get_available_slices(brain_id="Female2")
-        elif indices == "Female3":
-            return self.get_available_slices(brain_id="Female3")
-        elif indices == "Male1":
-            return self.get_available_slices(brain_id="Male1")
-        elif indices == "Male2":
-            return self.get_available_slices(brain_id="Male2")
-        elif indices == "Male3":
-            return self.get_available_slices(brain_id="Male3")
-        elif indices == "Pregnant1":
-            return self.get_available_slices(brain_id="Pregnant1")
-        elif indices == "Pregnant2":
-            return self.get_available_slices(brain_id="Pregnant2")
-        elif indices == "Pregnant4":
-            return self.get_available_slices(brain_id="Pregnant4")
+        elif indices in ["ReferenceAtlas", "SecondAtlas", "Female1", "Female2", "Female3", 
+                        "Male1", "Male2", "Male3", "Pregnant1", "Pregnant2", "Pregnant4"]:
+            slices = self.get_available_slices(brain_id=indices)
+            # Sort by xccf coordinate
+            return sorted(slices, key=lambda x: coordinates_csv.loc[coordinates_csv["SectionID"] == x, "xccf"].values[0])
         else:
             raise ValueError("Invalid string for indices")
 

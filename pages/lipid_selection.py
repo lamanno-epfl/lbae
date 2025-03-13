@@ -482,14 +482,14 @@ def page_2_plot_graph_heatmap_mz_selection(
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
     print(f"\n========== page_2_plot_graph_heatmap_mz_selection ==========")
-    print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
-    print(f"slice_index: {slice_index}")
+    # print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
+    # print(f"slice_index: {slice_index}")
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    print(f"id_input: {id_input}")    
-    print("graph_input:", graph_input)
+    # print(f"id_input: {id_input}")    
+    # print("graph_input:", graph_input)
 
     # # Case a two mz bounds values have been inputed
     # if id_input == "page-2-button-bounds" or (
@@ -643,7 +643,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                     "Current input: " + "Lipid selection RGB",
                 )
 
-            # Plot RBG By default
+            # Plot RBG By defaultx
             else:
                 print("--- option 1.3 ---")
                 logging.info("Right before calling the graphing function")
@@ -673,6 +673,7 @@ def page_2_plot_graph_heatmap_mz_selection(
             print("--- option 3 ---")
             # No lipid has been selected, return image from boundaries
             # if lb is not None and hb is not None:
+            print(slice_index)
             return (
                 figures.compute_heatmap_per_lipid(slice_index, 
                                                 "SM 34:1;O2",

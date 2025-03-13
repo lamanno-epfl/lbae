@@ -54,7 +54,7 @@ def return_layout(basic_config, slice_index):
                                 "height": "3rem",
                             },
                             children=dcc.Graph(
-                                id="page-5-graph-heatmap-mz-selection",
+                                id="page-2bis-graph-heatmap-mz-selection",
                                 config=basic_config
                                 | {
                                     "toImageButtonOptions": {
@@ -93,7 +93,7 @@ def return_layout(basic_config, slice_index):
                                     align="flex-start",
                                     children=[
                                         dmc.MultiSelect(
-                                            id="page-5-dropdown-lps",
+                                            id="page-2bis-dropdown-lps",
                                             data=program_data.return_lipid_options(),
                                             # storage.return_shelved_object(
                                             #     "annotations",
@@ -118,7 +118,7 @@ def return_layout(basic_config, slice_index):
                                         ),
                                         dmc.Button(
                                             children="Display as RGB",
-                                            id="page-5-rgb-button",
+                                            id="page-2bis-rgb-button",
                                             variant="filled",
                                             color="cyan",
                                             radius="md",
@@ -129,7 +129,7 @@ def return_layout(basic_config, slice_index):
                                         ),
                                         dmc.Button(
                                             children="Display as colormap",
-                                            id="page-5-colormap-button",
+                                            id="page-2bis-colormap-button",
                                             variant="filled",
                                             color="cyan",
                                             radius="md",
@@ -139,7 +139,7 @@ def return_layout(basic_config, slice_index):
                                             loading=False,
                                         ),
                                         # dmc.Switch(
-                                        #     id="page-5-toggle-apply-transform",
+                                        #     id="page-2bis-toggle-apply-transform",
                                         #     label="Apply MAIA transform (if applicable)",
                                         #     checked=True,
                                         #     color="cyan",
@@ -151,13 +151,13 @@ def return_layout(basic_config, slice_index):
                             ],
                         ),
                         dmc.Text(
-                            id="page-5-badge-input",
+                            id="page-2bis-badge-input",
                             children="Current input: ",  #  + "m/z boundaries",
                             class_name="position-absolute",
                             style={"right": "1%", "top": "1em"},
                         ),
                         dmc.Badge(
-                            id="page-5-badge-lp-1",
+                            id="page-2bis-badge-lp-1",
                             children="name-lp-1",
                             color="red",
                             variant="filled",
@@ -165,7 +165,7 @@ def return_layout(basic_config, slice_index):
                             style={"right": "1%", "top": "4em"},
                         ),
                         dmc.Badge(
-                            id="page-5-badge-lp-2",
+                            id="page-2bis-badge-lp-2",
                             children="name-lp-2",
                             color="teal",
                             variant="filled",
@@ -173,7 +173,7 @@ def return_layout(basic_config, slice_index):
                             style={"right": "1%", "top": "6em"},
                         ),
                         dmc.Badge(
-                            id="page-5-badge-lp-3",
+                            id="page-2bis-badge-lp-3",
                             children="name-lp-3",
                             color="blue",
                             variant="filled",
@@ -199,7 +199,7 @@ def return_layout(basic_config, slice_index):
                         #                     + "and 1600.",
                         #                     children=[
                         #                         dmc.NumberInput(
-                        #                             id="page-5-lower-bound",
+                        #                             id="page-2bis-lower-bound",
                         #                             min=380,
                         #                             max=1600,
                         #                             precision=3,
@@ -228,7 +228,7 @@ def return_layout(basic_config, slice_index):
                         #                     + " 400 and 1600.",
                         #                     children=[
                         #                         dmc.NumberInput(
-                        #                             id="page-5-upper-bound",
+                        #                             id="page-2bis-upper-bound",
                         #                             min=380,
                         #                             max=1600,
                         #                             precision=3,
@@ -244,7 +244,7 @@ def return_layout(basic_config, slice_index):
                         #         ),
                         #         dmc.Button(
                         #             children="Display as colormap",
-                        #             id="page-5-button-bounds",
+                        #             id="page-2bis-button-bounds",
                         #             variant="filled",
                         #             color="cyan",
                         #             radius="md",
@@ -274,7 +274,7 @@ def return_layout(basic_config, slice_index):
                             children=[
                                 # dmc.Button(
                                 #     children="Show zoomed-in spectrum",
-                                #     id="page-5-show-high-res-spectrum-button",
+                                #     id="page-2bis-show-high-res-spectrum-button",
                                 #     variant="filled",
                                 #     disabled=False,
                                 #     color="cyan",
@@ -285,7 +285,7 @@ def return_layout(basic_config, slice_index):
                                 # ),
                                 # dmc.Button(
                                 #     children="Show entire spectrum",
-                                #     id="page-5-show-low-res-spectrum-button",
+                                #     id="page-2bis-show-low-res-spectrum-button",
                                 #     variant="filled",
                                 #     disabled=False,
                                 #     color="cyan",
@@ -297,7 +297,7 @@ def return_layout(basic_config, slice_index):
                                 # ),
                                 dmc.Button(
                                     children="Download data",
-                                    id="page-5-download-data-button",
+                                    id="page-2bis-download-data-button",
                                     variant="filled",
                                     disabled=False,
                                     color="cyan",
@@ -310,7 +310,7 @@ def return_layout(basic_config, slice_index):
                                 ),
                                 dmc.Button(
                                     children="Download image",
-                                    id="page-5-download-image-button",
+                                    id="page-2bis-download-image-button",
                                     variant="filled",
                                     disabled=False,
                                     color="cyan",
@@ -322,7 +322,7 @@ def return_layout(basic_config, slice_index):
                                 ),
                             ],
                         ),
-                        dcc.Download(id="page-5-download-data"),
+                        dcc.Download(id="page-2bis-download-data"),
                     ],
                 ),
             ],
@@ -330,7 +330,7 @@ def return_layout(basic_config, slice_index):
         # html.Div(
         #     children=[
         #         dbc.Offcanvas(
-        #             id="page-5-drawer-low-res-spectra",
+        #             id="page-2bis-drawer-low-res-spectra",
         #             backdrop=True,
         #             placement="end",
         #             style={"width": "30%"},
@@ -346,7 +346,7 @@ def return_layout(basic_config, slice_index):
         #                                     children=[
         #                                         dmc.Button(
         #                                             children="Hide spectrum",
-        #                                             id="page-5-close-low-res-spectrum-button",
+        #                                             id="page-2bis-close-low-res-spectrum-button",
         #                                             variant="filled",
         #                                             disabled=False,
         #                                             color="red",
@@ -356,7 +356,7 @@ def return_layout(basic_config, slice_index):
         #                                             loading=False,
         #                                         ),
         #                                         dcc.Graph(
-        #                                             id="page-5-graph-low-resolution-spectrum",
+        #                                             id="page-2bis-graph-low-resolution-spectrum",
         #                                             figure=figures.compute_spectrum_low_res(
         #                                                 slice_index
         #                                             ),
@@ -383,7 +383,7 @@ def return_layout(basic_config, slice_index):
         #             ],
         #         ),
         #         dbc.Offcanvas(
-        #             id="page-5-drawer-high-res-spectra",
+        #             id="page-2bis-drawer-high-res-spectra",
         #             backdrop=True,
         #             placement="end",
         #             style={"width": "30%"},
@@ -399,7 +399,7 @@ def return_layout(basic_config, slice_index):
         #                                     className="",
         #                                     children=[
         #                                         html.Div(
-        #                                             id="page-5-alert",
+        #                                             id="page-2bis-alert",
         #                                             className="text-center mt-2",
         #                                             children=html.Strong(
         #                                                 children="Please select a lipid or zoom "
@@ -412,7 +412,7 @@ def return_layout(basic_config, slice_index):
         #                                 ),
         #                                 dmc.Button(
         #                                     children="Hide spectrum",
-        #                                     id="page-5-close-high-res-spectrum-button",
+        #                                     id="page-2bis-close-high-res-spectrum-button",
         #                                     variant="filled",
         #                                     disabled=False,
         #                                     color="red",
@@ -422,7 +422,7 @@ def return_layout(basic_config, slice_index):
         #                                     loading=False,
         #                                 ),
         #                                 dcc.Graph(
-        #                                     id="page-5-graph-high-resolution-spectrum",
+        #                                     id="page-2bis-graph-high-resolution-spectrum",
         #                                     style={"display": "none"},
         #                                     config=basic_config
         #                                     | {
@@ -451,23 +451,23 @@ def return_layout(basic_config, slice_index):
 # ==================================================================================================
 
 @app.callback(
-    Output("page-5-graph-heatmap-mz-selection", "figure"),
-    Output("page-5-badge-input", "children"),
+    Output("page-2bis-graph-heatmap-mz-selection", "figure"),
+    Output("page-2bis-badge-input", "children"),
     Input("main-slider", "data"),
     # Input("boundaries-high-resolution-mz-plot", "data"),
     # Input("boundaries-low-resolution-mz-plot", "data"),
-    Input("page-5-selected-lp-1", "data"),
-    Input("page-5-selected-lp-2", "data"),
-    Input("page-5-selected-lp-3", "data"),
-    Input("page-5-rgb-button", "n_clicks"),
-    Input("page-5-colormap-button", "n_clicks"),
-    # Input("page-5-button-bounds", "n_clicks"),
-    # State("page-5-lower-bound", "value"),
-    # State("page-5-upper-bound", "value"),
-    State("page-5-badge-input", "children"),
-    # Input("page-5-toggle-apply-transform", "checked"),
+    Input("page-2bis-selected-lp-1", "data"),
+    Input("page-2bis-selected-lp-2", "data"),
+    Input("page-2bis-selected-lp-3", "data"),
+    Input("page-2bis-rgb-button", "n_clicks"),
+    Input("page-2bis-colormap-button", "n_clicks"),
+    # Input("page-2bis-button-bounds", "n_clicks"),
+    # State("page-2bis-lower-bound", "value"),
+    # State("page-2bis-upper-bound", "value"),
+    State("page-2bis-badge-input", "children"),
+    # Input("page-2bis-toggle-apply-transform", "checked"),
 )
-def page_5_plot_graph_heatmap_mz_selection(
+def page_2bis_plot_graph_heatmap_mz_selection(
     slice_index,
     # bound_high_res,
     # bound_low_res,
@@ -483,7 +483,7 @@ def page_5_plot_graph_heatmap_mz_selection(
     # apply_transform,
 ):
     """This callback plots the heatmap of the selected LP(s)."""
-    print(f"\n========== page_5_plot_graph_heatmap_mz_selection ==========")
+    print(f"\n========== page_2bis_plot_graph_heatmap_mz_selection ==========")
     print('indices:', lp_1_index, lp_2_index, lp_3_index)
     print(f"slice_index: {slice_index}")
     logging.info("Entering function to plot heatmap or RGB depending on LP selection")
@@ -494,7 +494,7 @@ def page_5_plot_graph_heatmap_mz_selection(
     print("graph_input:", graph_input)
 
     # # Case a two mz bounds values have been inputed
-    # if id_input == "page-5-button-bounds" or (
+    # if id_input == "page-2bis-button-bounds" or (
     #     id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
     # ):
     #     if lb is not None and hb is not None:
@@ -509,13 +509,13 @@ def page_5_plot_graph_heatmap_mz_selection(
 
     # If a lp selection has been done
     if (
-        id_input == "page-5-selected-lp-1"
-        or id_input == "page-5-selected-lp-2"
-        or id_input == "page-5-selected-lp-3"
-        or id_input == "page-5-rgb-button"
-        or id_input == "page-5-colormap-button"
+        id_input == "page-2bis-selected-lp-1"
+        or id_input == "page-2bis-selected-lp-2"
+        or id_input == "page-2bis-selected-lp-3"
+        or id_input == "page-2bis-rgb-button"
+        or id_input == "page-2bis-colormap-button"
         or (
-            (id_input == "main-slider") # or id_input == "page-5-toggle-apply-transform")
+            (id_input == "main-slider") # or id_input == "page-2bis-toggle-apply-transform")
             and (
                 graph_input == "Current input: " + "LP selection colormap"
                 or graph_input == "Current input: " + "LP selection RGB"
@@ -540,7 +540,7 @@ def page_5_plot_graph_heatmap_mz_selection(
             # TODO: TUTTO DA CAMBIARE --> DEVI TORNARE A LIPID SELECTION DI COLAS
             ll_lp_names = [
                 
-                        program_data.get_annotations().iloc[index]["name"] 
+                        program_data.get_annotations().iloc[index]["name"]
                         # for i in range(len(program_data.get_annotations().iloc[index]["name"]))
                     # data.get_annotations().iloc[index]["name"]
                     # + " "
@@ -573,13 +573,13 @@ def page_5_plot_graph_heatmap_mz_selection(
             
             # Check if the current plot must be a heatmap
             if (
-                id_input == "page-5-colormap-button"
+                id_input == "page-2bis-colormap-button"
                 or (
                     id_input == "main-slider"
                     and graph_input == "Current input: " + "LP selection colormap"
                 )
                 # or (
-                #     id_input == "page-5-toggle-apply-transform"
+                #     id_input == "page-2bis-toggle-apply-transform"
                 #     and graph_input == "Current input: " + "LP selection colormap"
                 # )
             ):
@@ -621,13 +621,13 @@ def page_5_plot_graph_heatmap_mz_selection(
 
             # Or if the current plot must be an RGB image
             elif (
-                id_input == "page-5-rgb-button"
+                id_input == "page-2bis-rgb-button"
                 or (
                     id_input == "main-slider"
                     and graph_input == "Current input: " + "LP selection RGB"
                 )
                 or (
-                    id_input == "page-5-toggle-apply-transform"
+                    id_input == "page-2bis-toggle-apply-transform"
                     and graph_input == "Current input: " + "LP selection RGB"
                 )
             ):
@@ -725,20 +725,20 @@ def page_5_plot_graph_heatmap_mz_selection(
 
 
 # @app.callback(
-#     Output("page-5-graph-low-resolution-spectrum", "figure"),
+#     Output("page-2bis-graph-low-resolution-spectrum", "figure"),
 #     Input("main-slider", "data"),
-#     State("page-5-selected-lp-1", "data"),
-#     State("page-5-selected-lp-2", "data"),
-#     State("page-5-selected-lp-3", "data"),
-#     Input("page-5-rgb-button", "n_clicks"),
-#     Input("page-5-colormap-button", "n_clicks"),
-#     Input("page-5-button-bounds", "n_clicks"),
-#     State("page-5-lower-bound", "value"),
-#     State("page-5-upper-bound", "value"),
-#     State("page-5-badge-input", "children"),
-#     State("page-5-graph-low-resolution-spectrum", "relayoutData"),
+#     State("page-2bis-selected-lp-1", "data"),
+#     State("page-2bis-selected-lp-2", "data"),
+#     State("page-2bis-selected-lp-3", "data"),
+#     Input("page-2bis-rgb-button", "n_clicks"),
+#     Input("page-2bis-colormap-button", "n_clicks"),
+#     Input("page-2bis-button-bounds", "n_clicks"),
+#     State("page-2bis-lower-bound", "value"),
+#     State("page-2bis-upper-bound", "value"),
+#     State("page-2bis-badge-input", "children"),
+#     State("page-2bis-graph-low-resolution-spectrum", "relayoutData"),
 # )
-# def page_5_plot_graph_low_res_spectrum(
+# def page_2bis_plot_graph_low_res_spectrum(
 #     slice_index,
 #     lp_1_index,
 #     lp_2_index,
@@ -759,11 +759,11 @@ def page_5_plot_graph_heatmap_mz_selection(
 
 #     # If a lp selection has been done
 #     if (
-#         id_input == "page-5-selected-lp-1"
-#         or id_input == "page-5-selected-lp-2"
-#         or id_input == "page-5-selected-lp-3"
-#         or id_input == "page-5-rgb-button"
-#         or id_input == "page-5-colormap-button"
+#         id_input == "page-2bis-selected-lp-1"
+#         or id_input == "page-2bis-selected-lp-2"
+#         or id_input == "page-2bis-selected-lp-3"
+#         or id_input == "page-2bis-rgb-button"
+#         or id_input == "page-2bis-colormap-button"
 #         or (
 #             id_input == "main-slider"
 #             and (
@@ -790,7 +790,7 @@ def page_5_plot_graph_heatmap_mz_selection(
 #             return dash.no_update
 
 #     # Or if the plot has been updated from range or slider
-#     elif id_input == "page-5-button-bounds" or (
+#     elif id_input == "page-2bis-button-bounds" or (
 #         id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
 #     ):
 #         lb, hb = float(lb), float(hb)
@@ -810,10 +810,10 @@ def page_5_plot_graph_heatmap_mz_selection(
 
 # @app.callback(
 #     Output("boundaries-low-resolution-mz-plot", "data"),
-#     Input("page-5-graph-low-resolution-spectrum", "relayoutData"),
+#     Input("page-2bis-graph-low-resolution-spectrum", "relayoutData"),
 #     State("main-slider", "data"),
 # )
-# def page_5_store_boundaries_mz_from_graph_low_res_spectrum(relayoutData, slice_index):
+# def page_2bis_store_boundaries_mz_from_graph_low_res_spectrum(relayoutData, slice_index):
 #     """This callback stores in a dcc store the m/z boundaries of the low resolution spectrum when
 #     they are updated."""
 
@@ -840,21 +840,21 @@ def page_5_plot_graph_heatmap_mz_selection(
 
 
 # @app.callback(
-#     Output("page-5-graph-high-resolution-spectrum", "figure"),
+#     Output("page-2bis-graph-high-resolution-spectrum", "figure"),
 #     Input("main-slider", "data"),
 #     Input("boundaries-low-resolution-mz-plot", "data"),
-#     Input("page-5-selected-lp-1", "data"),
-#     Input("page-5-selected-lp-2", "data"),
-#     Input("page-5-selected-lp-3", "data"),
-#     Input("page-5-rgb-button", "n_clicks"),
-#     Input("page-5-colormap-button", "n_clicks"),
-#     Input("page-5-button-bounds", "n_clicks"),
-#     State("page-5-lower-bound", "value"),
-#     State("page-5-upper-bound", "value"),
-#     State("page-5-badge-input", "children"),
-#     Input("page-5-toggle-apply-transform", "checked"),
+#     Input("page-2bis-selected-lp-1", "data"),
+#     Input("page-2bis-selected-lp-2", "data"),
+#     Input("page-2bis-selected-lp-3", "data"),
+#     Input("page-2bis-rgb-button", "n_clicks"),
+#     Input("page-2bis-colormap-button", "n_clicks"),
+#     Input("page-2bis-button-bounds", "n_clicks"),
+#     State("page-2bis-lower-bound", "value"),
+#     State("page-2bis-upper-bound", "value"),
+#     State("page-2bis-badge-input", "children"),
+#     Input("page-2bis-toggle-apply-transform", "checked"),
 # )
-# def page_5_plot_graph_high_res_spectrum(
+# def page_2bis_plot_graph_high_res_spectrum(
 #     slice_index,
 #     bound_high_res,
 #     lp_1_index,
@@ -876,12 +876,12 @@ def page_5_plot_graph_heatmap_mz_selection(
 
 #     # If a lp selection has been done
 #     if (
-#         id_input == "page-5-selected-lp-1"
-#         or id_input == "page-5-selected-lp-2"
-#         or id_input == "page-5-selected-lp-3"
-#         or id_input == "page-5-rgb-button"
-#         or id_input == "page-5-colormap-button"
-#         or id_input == "page-5-last-selected-lps"
+#         id_input == "page-2bis-selected-lp-1"
+#         or id_input == "page-2bis-selected-lp-2"
+#         or id_input == "page-2bis-selected-lp-3"
+#         or id_input == "page-2bis-rgb-button"
+#         or id_input == "page-2bis-colormap-button"
+#         or id_input == "page-2bis-last-selected-lps"
 #         or (
 #             id_input == "main-slider"
 #             and (
@@ -920,7 +920,7 @@ def page_5_plot_graph_heatmap_mz_selection(
 #             )
 
 #     # If the user has selected a new m/z range
-#     elif id_input == "page-5-button-bounds" or (
+#     elif id_input == "page-2bis-button-bounds" or (
 #         id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
 #     ):
 #         lb, hb = float(lb), float(hb)
@@ -937,7 +937,7 @@ def page_5_plot_graph_heatmap_mz_selection(
 
 #     # If the figure is created at app launch or after load button is cliked, or with an empty lipid
 #     # selection, don't plot anything
-#     elif "page-5-selected-lp" in id_input:
+#     elif "page-2bis-selected-lp" in id_input:
 #         return dash.no_update
 
 #     # Otherwise, if new boundaries have been selected on the low-resolution spectrum
@@ -963,10 +963,10 @@ def page_5_plot_graph_heatmap_mz_selection(
 
 # @app.callback(
 #     Output("boundaries-high-resolution-mz-plot", "data"),
-#     Input("page-5-graph-high-resolution-spectrum", "relayoutData"),
+#     Input("page-2bis-graph-high-resolution-spectrum", "relayoutData"),
 #     Input("boundaries-low-resolution-mz-plot", "data"),
 # )
-# def page_5_store_boundaries_mz_from_graph_high_res_spectrum(relayoutData, bound_low_res):
+# def page_2bis_store_boundaries_mz_from_graph_high_res_spectrum(relayoutData, bound_low_res):
 #     """This callback records the m/z boundaries of the high resolution spectrum in a dcc store."""
 
 #     # Primarily update high-res boundaries with high-res range slider
@@ -995,28 +995,28 @@ def page_5_plot_graph_heatmap_mz_selection(
 
 
 @app.callback(
-    Output("page-5-badge-lp-1", "children"),
-    Output("page-5-badge-lp-2", "children"),
-    Output("page-5-badge-lp-3", "children"),
-    Output("page-5-selected-lp-1", "data"),
-    Output("page-5-selected-lp-2", "data"),
-    Output("page-5-selected-lp-3", "data"),
-    Output("page-5-badge-lp-1", "class_name"),
-    Output("page-5-badge-lp-2", "class_name"),
-    Output("page-5-badge-lp-3", "class_name"),
-    Input("page-5-dropdown-lps", "value"),
-    Input("page-5-badge-lp-1", "class_name"),
-    Input("page-5-badge-lp-2", "class_name"),
-    Input("page-5-badge-lp-3", "class_name"),
+    Output("page-2bis-badge-lp-1", "children"),
+    Output("page-2bis-badge-lp-2", "children"),
+    Output("page-2bis-badge-lp-3", "children"),
+    Output("page-2bis-selected-lp-1", "data"),
+    Output("page-2bis-selected-lp-2", "data"),
+    Output("page-2bis-selected-lp-3", "data"),
+    Output("page-2bis-badge-lp-1", "class_name"),
+    Output("page-2bis-badge-lp-2", "class_name"),
+    Output("page-2bis-badge-lp-3", "class_name"),
+    Input("page-2bis-dropdown-lps", "value"),
+    Input("page-2bis-badge-lp-1", "class_name"),
+    Input("page-2bis-badge-lp-2", "class_name"),
+    Input("page-2bis-badge-lp-3", "class_name"),
     Input("main-slider", "data"),
-    State("page-5-selected-lp-1", "data"),
-    State("page-5-selected-lp-2", "data"),
-    State("page-5-selected-lp-3", "data"),
-    State("page-5-badge-lp-1", "children"),
-    State("page-5-badge-lp-2", "children"),
-    State("page-5-badge-lp-3", "children"),
+    State("page-2bis-selected-lp-1", "data"),
+    State("page-2bis-selected-lp-2", "data"),
+    State("page-2bis-selected-lp-3", "data"),
+    State("page-2bis-badge-lp-1", "children"),
+    State("page-2bis-badge-lp-2", "children"),
+    State("page-2bis-badge-lp-3", "children"),
 )
-def page_5_add_toast_selection(
+def page_2bis_add_toast_selection(
     l_lp_names,
     class_name_badge_1,
     class_name_badge_2,
@@ -1031,16 +1031,16 @@ def page_5_add_toast_selection(
 ):
     """This callback adds the selected LP to the selection."""
     logging.info("Entering function to update LP data")
-    print("\n================ page_5_add_toast_selection ================")
+    print("\n================ page_2bis_add_toast_selection ================")
     
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
     print(f"id_input: {id_input}")
     print(f"value_input: {value_input}")
-    # if page-5-dropdown-lps is called while there's no lipid name defined, it means the page
+    # if page-2bis-dropdown-lps is called while there's no lipid name defined, it means the page
     # just got loaded
-    if len(id_input) == 0 or (id_input == "page-5-dropdown-lps" and l_lp_names is None):
+    if len(id_input) == 0 or (id_input == "page-2bis-dropdown-lps" and l_lp_names is None):
         # Initialize with PC as the default lipid
         default_lp = "PC"
         # Find lipid location for the default lipid
@@ -1118,7 +1118,7 @@ def page_5_add_toast_selection(
 
     # Otherwise, update selection or add lipid
     if (
-        id_input == "page-5-dropdown-lps" and l_lp_names is not None
+        id_input == "page-2bis-dropdown-lps" and l_lp_names is not None
     ) or id_input == "main-slider":
 
         # If a new slice has been selected
@@ -1187,7 +1187,7 @@ def page_5_add_toast_selection(
             )
 
         # If lipids have been added from dropdown menu
-        elif id_input == "page-5-dropdown-lps":
+        elif id_input == "page-2bis-dropdown-lps":
             # print(f"header_1: {header_1}")
             # print(f"header_2: {header_2}")
             # print(f"header_3: {header_3}")
@@ -1202,6 +1202,8 @@ def page_5_add_toast_selection(
             # else:   
             #     name = "_".join(l_lp_names[-1].split(" ")[::2])
             #     structure = "_".join(l_lp_names[-1].split(" ")[1::2])
+            print(f"l_lp_names: {l_lp_names}")
+            print(f"l_lp_names[-1]: {l_lp_names[-1]}")
             name = l_lp_names[-1]
             print(f"name: {name}")
             # print(f"structure: {structure}")
@@ -1307,10 +1309,10 @@ def page_5_add_toast_selection(
 
 
 # @app.callback(
-#     Output("page-5-graph-high-resolution-spectrum", "style"),
-#     Input("page-5-graph-high-resolution-spectrum", "figure"),
+#     Output("page-2bis-graph-high-resolution-spectrum", "style"),
+#     Input("page-2bis-graph-high-resolution-spectrum", "figure"),
 # )
-# def page_5_display_high_res_mz_plot(figure):
+# def page_2bis_display_high_res_mz_plot(figure):
 #     """This callback is used to turn visible the high-resolution m/z plot."""
 #     if figure is not None:
 #         if figure["data"][0]["x"] != [[]]:
@@ -1320,10 +1322,10 @@ def page_5_add_toast_selection(
 
 
 # @app.callback(
-#     Output("page-5-alert", "style"),
-#     Input("page-5-graph-high-resolution-spectrum", "figure"),
+#     Output("page-2bis-alert", "style"),
+#     Input("page-2bis-graph-high-resolution-spectrum", "figure"),
 # )
-# def page_5_display_alert(figure):
+# def page_2bis_display_alert(figure):
 #     """This callback is used to turn visible the alert regarding the high-res m/z plot."""
 #     if figure is not None:
 #         if figure["data"][0]["x"] != [[]]:
@@ -1332,20 +1334,20 @@ def page_5_add_toast_selection(
 
 # # TODO: This callback must be completely rewritten to be able to download the data
 # @app.callback(
-#     Output("page-5-download-data", "data"),
-#     Input("page-5-download-data-button", "n_clicks"),
-#     State("page-5-selected-lp-1", "data"),
-#     State("page-5-selected-lp-2", "data"),
-#     State("page-5-selected-lp-3", "data"),
+#     Output("page-2bis-download-data", "data"),
+#     Input("page-2bis-download-data-button", "n_clicks"),
+#     State("page-2bis-selected-lp-1", "data"),
+#     State("page-2bis-selected-lp-2", "data"),
+#     State("page-2bis-selected-lp-3", "data"),
 #     State("main-slider", "data"),
-#     # State("page-5-toggle-apply-transform", "checked"),
-#     State("page-5-badge-input", "children"),
+#     # State("page-2bis-toggle-apply-transform", "checked"),
+#     State("page-2bis-badge-input", "children"),
 #     # State("boundaries-low-resolution-mz-plot", "data"),
-#     # State("page-5-lower-bound", "value"),
-#     # State("page-5-upper-bound", "value"),
+#     # State("page-2bis-lower-bound", "value"),
+#     # State("page-2bis-upper-bound", "value"),
 #     prevent_initial_call=True,
 # )
-# def page_5_download(
+# def page_2bis_download(
 #     n_clicks,
 #     lp_1_index,
 #     lp_2_index,
@@ -1461,7 +1463,7 @@ clientside_callback(
     """
     function(n_clicks){
         if(n_clicks > 0){
-            domtoimage.toBlob(document.getElementById('page-5-graph-heatmap-mz-selection'))
+            domtoimage.toBlob(document.getElementById('page-2bis-graph-heatmap-mz-selection'))
                 .then(function (blob) {
                     window.saveAs(blob, 'lipid_selection_plot.png');
                 }
@@ -1469,20 +1471,20 @@ clientside_callback(
         }
     }
     """,
-    Output("page-5-download-image-button", "n_clicks"),
-    Input("page-5-download-image-button", "n_clicks"),
+    Output("page-2bis-download-image-button", "n_clicks"),
+    Input("page-2bis-download-image-button", "n_clicks"),
 )
 """This clientside callback is used to download the current heatmap."""
 
 
 @app.callback(
-    Output("page-5-rgb-button", "disabled"),
-    Output("page-5-colormap-button", "disabled"),
-    Input("page-5-selected-lp-1", "data"),
-    Input("page-5-selected-lp-2", "data"),
-    Input("page-5-selected-lp-3", "data"),
+    Output("page-2bis-rgb-button", "disabled"),
+    Output("page-2bis-colormap-button", "disabled"),
+    Input("page-2bis-selected-lp-1", "data"),
+    Input("page-2bis-selected-lp-2", "data"),
+    Input("page-2bis-selected-lp-3", "data"),
 )
-def page_5_active_download(lp_1_index, lp_2_index, lp_3_index):
+def page_2bis_active_download(lp_1_index, lp_2_index, lp_3_index):
     # print("lp_1_index", lp_1_index)
     # print("lp_2_index", lp_2_index)
     # print("lp_3_index", lp_3_index)
@@ -1506,11 +1508,11 @@ def page_5_active_download(lp_1_index, lp_2_index, lp_3_index):
 
 
 # @app.callback(
-#     Output("page-5-button-bounds", "disabled"),
-#     Input("page-5-lower-bound", "value"),
-#     Input("page-5-upper-bound", "value"),
+#     Output("page-2bis-button-bounds", "disabled"),
+#     Input("page-2bis-lower-bound", "value"),
+#     Input("page-2bis-upper-bound", "value"),
 # )
-# def page_5_button_window(lb, hb):
+# def page_2bis_button_window(lb, hb):
 #     """This callaback is used to toggle on/off the display heatmap from bounds button."""
 
 #     # Check that the user has inputted something
@@ -1522,10 +1524,10 @@ def page_5_active_download(lp_1_index, lp_2_index, lp_3_index):
 
 
 # @app.callback(
-#     Output("page-5-drawer-low-res-spectra", "is_open"),
-#     Input("page-5-show-low-res-spectrum-button", "n_clicks"),
-#     Input("page-5-close-low-res-spectrum-button", "n_clicks"),
-#     [State("page-5-drawer-low-res-spectra", "is_open")],
+#     Output("page-2bis-drawer-low-res-spectra", "is_open"),
+#     Input("page-2bis-show-low-res-spectrum-button", "n_clicks"),
+#     Input("page-2bis-close-low-res-spectrum-button", "n_clicks"),
+#     [State("page-2bis-drawer-low-res-spectra", "is_open")],
 # )
 # def toggle_offcanvas(n1, n2, is_open):
 #     """This callback is used to toggle the low-res spectra drawer."""
@@ -1535,10 +1537,10 @@ def page_5_active_download(lp_1_index, lp_2_index, lp_3_index):
 
 
 # @app.callback(
-#     Output("page-5-drawer-high-res-spectra", "is_open"),
-#     Input("page-5-show-high-res-spectrum-button", "n_clicks"),
-#     Input("page-5-close-high-res-spectrum-button", "n_clicks"),
-#     [State("page-5-drawer-high-res-spectra", "is_open")],
+#     Output("page-2bis-drawer-high-res-spectra", "is_open"),
+#     Input("page-2bis-show-high-res-spectrum-button", "n_clicks"),
+#     Input("page-2bis-close-high-res-spectrum-button", "n_clicks"),
+#     [State("page-2bis-drawer-high-res-spectra", "is_open")],
 # )
 # def toggle_offcanvas_high_res(n1, n2, is_open):
 #     """This callback is used to toggle the high-res spectra drawer."""

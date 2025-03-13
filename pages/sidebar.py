@@ -76,7 +76,7 @@ layout = html.Div(
                             active="exact",
                             children=[
                                 html.I(
-                                    id="sidebar-page-5",
+                                    id="sidebar-page-2bis",
                                     className="icon-lipid fs-5",
                                     style={"margin-left": "0.7em"},
                                 )
@@ -87,7 +87,7 @@ layout = html.Div(
                             children=(
                                 "Analyse brain composition by program selection"
                             ),
-                            target="sidebar-page-5",
+                            target="sidebar-page-2bis",
                             placement="right",
                         ),
                         # Link to page 3

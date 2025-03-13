@@ -183,6 +183,8 @@ def display_page(pathname):
         return home.return_layout(basic_config, slice_index)
     elif pathname == "/lipid-selection":
         return lipid_selection.return_layout(basic_config, slice_index)
+    elif pathname == "/lp-selection":
+        return lp_selection.return_layout(basic_config, slice_index)
     elif pathname == "/region-analysis":
         return region_analysis.return_layout(basic_config, slice_index)
     elif pathname == "/3D-exploration":

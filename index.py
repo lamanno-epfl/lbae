@@ -69,11 +69,10 @@ def return_main_content():
             dcc.Store(id="page-2-selected-lipid-3", data=-1),
             dcc.Store(id="page-2-last-selected-lipids", data=[]),
             # Record the lipid programs selected in page 5
-            dcc.Store(id="page-5-selected-lp-1", data=-1),
-            dcc.Store(id="page-5-selected-lp-2", data=-1),
-            dcc.Store(id="page-5-selected-lp-3", data=-1),
-            dcc.Store(id="page-5-last-selected-lps", data=[]),
-            
+            dcc.Store(id="page-2bis-selected-lp-1", data=-1),
+            dcc.Store(id="page-2bis-selected-lp-2", data=-1),
+            dcc.Store(id="page-2bis-selected-lp-3", data=-1),
+            dcc.Store(id="page-2bis-last-selected-lps", data=[]),
             # Record the lipids selected in page 4
             dcc.Store(id="page-4-selected-lipid-1", data=empty_lipid_list),
             dcc.Store(id="page-4-selected-lipid-2", data=empty_lipid_list),
@@ -125,11 +124,11 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_slice_list(indices='ReferenceAtlas')[3-1]}"# f"{data.get_coordinate(indices='ReferenceAtlas')[slice_index-1]:.2f}"
+                                     "label": f"{data.get_coordinates(indices='ReferenceAtlas').loc[data.get_coordinates(indices='ReferenceAtlas')['SectionID']==slice_index, 'xccf'].values[0]:.2f}" if i%3 == 0 else ""
                                     }
-                                    for slice_index in data.get_slice_list(
+                                    for i, slice_index in enumerate(data.get_slice_list(
                                         indices="ReferenceAtlas"
-                                    )  # [::3]
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="ReferenceAtlas")[0],
@@ -142,17 +141,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="SecondAtlas")[-1],
                                 step=1,
                                 marks=[
-                                    {
-                                        "value": slice_index,
-                                        # Use x coordinate for label
-                                        # "label": "{:.2f}".format(
-                                        #     # TYPE: int
-                                        #     atlas.l_original_coor[int(slice_index) - 1][0, 0][0]
-                                        # ),
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='SecondAtlas').loc[data.get_coordinates(indices='SecondAtlas')['SectionID']==slice_index, 'xccf'].values[0]:.2f}" if i%3 == 0 else ""
                                     }
-                                    for slice_index in data.get_slice_list(
+                                    for i, slice_index in enumerate(data.get_slice_list(
                                         indices="SecondAtlas"
-                                    )  # [::3]
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="SecondAtlas")[0],
@@ -166,8 +160,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="Male1")[-1],
                                 step=1,
                                 marks=[
-                                    {"value": slice_index}
-                                    for slice_index in data.get_slice_list(indices="Male1")
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='Male1').loc[data.get_coordinates(indices='Male1')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                    }
+                                    for i, slice_index in enumerate(data.get_slice_list(
+                                        indices="Male1"
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="Male1")[0],
@@ -180,8 +178,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="Male2")[-1],
                                 step=1,
                                 marks=[
-                                    {"value": slice_index}
-                                    for slice_index in data.get_slice_list(indices="Male2")
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='Male2').loc[data.get_coordinates(indices='Male2')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                    }
+                                    for i, slice_index in enumerate(data.get_slice_list(
+                                        indices="Male2"
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="Male2")[0],
@@ -194,8 +196,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="Male3")[-1],
                                 step=1,
                                 marks=[
-                                    {"value": slice_index}
-                                    for slice_index in data.get_slice_list(indices="Male3")
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='Male3').loc[data.get_coordinates(indices='Male3')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                    }
+                                    for i, slice_index in enumerate(data.get_slice_list(
+                                        indices="Male3"
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="Male3")[0],
@@ -209,8 +215,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="Female1")[-1],
                                 step=1,
                                 marks=[
-                                    {"value": slice_index}
-                                    for slice_index in data.get_slice_list(indices="Female1")
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='Female1').loc[data.get_coordinates(indices='Female1')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                    }
+                                    for i, slice_index in enumerate(data.get_slice_list(
+                                        indices="Female1"
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="Female1")[0],
@@ -223,8 +233,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="Female2")[-1],
                                 step=1,
                                 marks=[
-                                    {"value": slice_index}
-                                    for slice_index in data.get_slice_list(indices="Female2")
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='Female2').loc[data.get_coordinates(indices='Female2')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                    }
+                                    for i, slice_index in enumerate(data.get_slice_list(
+                                        indices="Female2"
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="Female2")[0],
@@ -237,8 +251,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="Female3")[-1],
                                 step=1,
                                 marks=[
-                                    {"value": slice_index}
-                                    for slice_index in data.get_slice_list(indices="Female3")
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='Female3').loc[data.get_coordinates(indices='Female3')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                    }
+                                    for i, slice_index in enumerate(data.get_slice_list(
+                                        indices="Female3"
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="Female3")[0],
@@ -252,8 +270,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="Pregnant1")[-1],
                                 step=1,
                                 marks=[
-                                    {"value": slice_index}
-                                    for slice_index in data.get_slice_list(indices="Pregnant1")
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='Pregnant1').loc[data.get_coordinates(indices='Pregnant1')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                    }
+                                    for i, slice_index in enumerate(data.get_slice_list(
+                                        indices="Pregnant1"
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="Pregnant1")[0],
@@ -266,8 +288,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="Pregnant2")[-1],
                                 step=1,
                                 marks=[
-                                    {"value": slice_index}
-                                    for slice_index in data.get_slice_list(indices="Pregnant2")
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='Pregnant2').loc[data.get_coordinates(indices='Pregnant2')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                    }
+                                    for i, slice_index in enumerate(data.get_slice_list(
+                                        indices="Pregnant2"
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="Pregnant2")[0],
@@ -280,8 +306,12 @@ def return_main_content():
                                 max=data.get_slice_list(indices="Pregnant4")[-1],
                                 step=1,
                                 marks=[
-                                    {"value": slice_index}
-                                    for slice_index in data.get_slice_list(indices="Pregnant4")
+                                    {"value": slice_index,
+                                     "label": f"{data.get_coordinates(indices='Pregnant4').loc[data.get_coordinates(indices='Pregnant4')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                    }
+                                    for i, slice_index in enumerate(data.get_slice_list(
+                                        indices="Pregnant4"
+                                    ))
                                 ],
                                 size="xs",
                                 value=data.get_slice_list(indices="Pregnant4")[0],

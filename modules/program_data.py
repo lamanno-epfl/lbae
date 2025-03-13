@@ -351,8 +351,8 @@ class LipiMapData:
 
         return [
             {
-                "label": lp.replace("_", " "),
-                "value": lp.replace("_", " "),
+                "label": lp,
+                "value": lp,
                 "group": "NMF Embeddings" if lp.startswith("globalembedding") else "Lipid Programs"
             }
             for lp in self.get_available_programs(1)

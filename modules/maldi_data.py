@@ -61,6 +61,11 @@ class MaldiData:
     def get_annotations(self) -> pd.DataFrame:
         return self._df_annotations
 
+    def get_coordinates(self, indices="ReferenceAtlas"):
+        coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+        slices = self.get_slice_list(indices=indices)
+        return coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), :]
+
     def get_brain_id_from_sliceindex(self, slice_index):
         lookup_brainid = pd.read_csv(os.path.join(self.path_db, "lookup_brainid.csv"), index_col=0)
 
@@ -139,7 +144,10 @@ class MaldiData:
             brain_info = db["brain_info"]
             if brain_id not in brain_info:
                 return []
-            return list(brain_info[brain_id].keys())
+            slices = list(brain_info[brain_id].keys())
+            coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+            slices = coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), 'SectionID'].values
+            return slices
 
     def get_available_lipids(self, slice_index: int) -> List[str]:
         """Get list of available lipids for a given brain and slice."""
@@ -325,11 +333,16 @@ class MaldiData:
         Returns:
             (list): The list of requested slice indices.
         """
+        # sort slices based on the xccf column in the coordinates_csv
+        coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+
         if indices == "all":
             slices = []
             brains = self.get_available_brains()
             for brain in brains:
                 slices.extend(self.get_available_slices(brain))
+            slices = sorted(slices, key=lambda x: coordinates_csv.loc[coordinates_csv["SectionID"] == x, "xccf"].values[0])
+            
             return slices
         elif indices == "ReferenceAtlas":
             return self.get_available_slices(brain_id="ReferenceAtlas")

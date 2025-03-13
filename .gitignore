@@ -1,6 +1,7 @@
 .DS_Store
 data
 new_data
+new_new_data
 new_data_TMP
 program_data
 notebooks/data_processing/data/
@@ -20,3 +21,5 @@ lipizones_touse.html
 my_image_masks.pkl
 sm341all_method1.html
 test.html
+
+assets/

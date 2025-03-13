@@ -1,8 +1,8 @@
 .DS_Store
 data
 new_data
-new_new_data
 new_data_TMP
+new_data20250313
 program_data
 notebooks/data_processing/data/
 **/__pycache__/

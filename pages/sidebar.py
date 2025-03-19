@@ -70,6 +70,26 @@ layout = html.Div(
                             target="sidebar-page-2",
                             placement="right",
                         ),
+                        # Link to page 6
+                        dbc.NavLink(
+                            href="/lipizones-selection",
+                            active="exact",
+                            children=[
+                                html.I(
+                                    id="sidebar-page-6",
+                                    className="icon-lipid fs-5",
+                                    style={"margin-left": "0.7em"},
+                                )
+                            ],
+                            className="my-4",
+                        ),
+                        dbc.Tooltip(
+                            children=(
+                                "Analyse myself"
+                            ),
+                            target="sidebar-page-6",
+                            placement="right",
+                        ),
                         # Link to page 5 (lp-selection)
                         dbc.NavLink(
                             href="/lp-selection",
@@ -145,6 +165,42 @@ layout = html.Div(
                             target="sidebar-page-5",
                             placement="right",
                         ),
+                        # Link to ID Cards
+                        dbc.NavLink(
+                            href="/id-cards",
+                            active="exact",
+                            children=[
+                                html.I(
+                                    id="sidebar-page-id-cards",
+                                    className="icon-chart-bar fs-5",
+                                    style={"margin-left": "0.7em"},
+                                )
+                            ],
+                            className="my-4",
+                        ),
+                        dbc.Tooltip(
+                            children="View lipizone ID cards",
+                            target="sidebar-page-id-cards",
+                            placement="right",
+                        ),
+                        # Link to 3D Lipizones
+                        dbc.NavLink(
+                            href="/3D-lipizones",
+                            active="exact",
+                            children=[
+                                html.I(
+                                    id="sidebar-page-3d-lipizones",
+                                    className="icon-3d fs-5",
+                                    style={"margin-left": "0.7em"},
+                                )
+                            ],
+                            className="my-4",
+                        ),
+                        dbc.Tooltip(
+                            children="View lipizones in 3D space",
+                            target="sidebar-page-3d-lipizones",
+                            placement="right",
+                        ),
                         # Link to documentation
                         html.Div(
                             className="sidebar-bottom",
@@ -172,7 +228,7 @@ layout = html.Div(
                                     style={"color": "#dee2e6", "margin-left": "0.5rem"},
                                 ),
                                 dbc.Tooltip(
-                                    children="Copyright EPFL 2022",
+                                    children="Copyright EPFL 2025",
                                     target="sidebar-copyright",
                                     placement="right",
                                 ),

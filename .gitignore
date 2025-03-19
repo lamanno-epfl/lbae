@@ -23,3 +23,16 @@ sm341all_method1.html
 test.html
 
 assets/
+celltype_data/
+gene_data/
+grayscale_image.npy
+grid_data/
+new_data_mm/
+peak_data/
+sample_data/
+section_data/
+streams_data/
+lipizonename2color.csv
+lipizones_annotation.csv
+peak_annotation.csv
+

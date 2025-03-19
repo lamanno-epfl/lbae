@@ -24,10 +24,13 @@ from pages import (
     sidebar,
     home,
     lipid_selection,
+    lipizones_selection,
     region_analysis,
     threeD_exploration,
     lipizones_exploration,
     lp_selection,
+    id_cards,
+    threeD_lipizones,
 )
 from in_app_documentation.documentation import return_documentation
 from config import basic_config
@@ -73,6 +76,11 @@ def return_main_content():
             dcc.Store(id="page-2bis-selected-lp-2", data=-1),
             dcc.Store(id="page-2bis-selected-lp-3", data=-1),
             dcc.Store(id="page-2bis-last-selected-lps", data=[]),
+            # Record the lipizones selected in page 6
+            dcc.Store(id="page-6-selected-lipizone-1", data=-1),
+            dcc.Store(id="page-6-selected-lipizone-2", data=-1),
+            dcc.Store(id="page-6-selected-lipizone-3", data=-1),
+            dcc.Store(id="page-6-last-selected-lipizones", data=[]),
             # Record the lipids selected in page 4
             dcc.Store(id="page-4-selected-lipid-1", data=empty_lipid_list),
             dcc.Store(id="page-4-selected-lipid-2", data=empty_lipid_list),
@@ -397,9 +405,11 @@ def return_validation_layout(main_content, initial_slice=1):
             home.layout,
             lipid_selection.return_layout(basic_config, initial_slice),
             lp_selection.return_layout(basic_config, initial_slice),
+            lipizones_selection.return_layout(basic_config, initial_slice),
             # region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
             lipizones_exploration.return_layout(basic_config, initial_slice),
+            threeD_lipizones.return_layout(basic_config, initial_slice),
         ]
     )
 
@@ -430,6 +440,12 @@ def render_page_content(pathname, slice_index, brain):
 
     elif pathname == "/lp-selection":
         page = lp_selection.return_layout(basic_config, slice_index)
+    
+    elif pathname == "/lipizones-selection":
+        page = lipizones_selection.return_layout(basic_config, slice_index)
+
+    elif pathname == "/id-cards":
+        page = id_cards.return_layout(basic_config, slice_index)
 
     # elif pathname == "/region-analysis":
     #     page = region_analysis.return_layout(basic_config, slice_index)
@@ -439,6 +455,9 @@ def render_page_content(pathname, slice_index, brain):
 
     elif pathname == "/lipizones-exploration":
         page = lipizones_exploration.return_layout(basic_config, slice_index)
+
+    elif pathname == "/3D-lipizones":
+        page = threeD_lipizones.return_layout(basic_config, slice_index)
 
     else:
         # If the user tries to reach a different page, return a 404 message
@@ -480,8 +499,10 @@ def hide_slider(pathname):
     l_path_with_slider = [
         "/lipid-selection",
         "/lp-selection",
+        "/lipizones-selection",
         "/region-analysis",
         "/3D-exploration",
+        "/3D-lipizones",
     ]
 
     # Set the content according to the current pathname
@@ -505,6 +526,7 @@ def hide_slider_but_leave_brain(pathname):
     # Pages in which the slider is displayed
     l_path_without_slider_but_with_brain = [
         "/3D-exploration",
+        "/3D-lipizones",
     ]
 
     # Set the content according to the current pathname

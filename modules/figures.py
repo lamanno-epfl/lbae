@@ -916,11 +916,19 @@ class Figures:
         # Set how the image should be annotated
         if draw:
             fig.update_layout(dragmode="drawclosedpath")
+        else:
+            # Set default dragmode to pan for better touchpad navigation
+            fig.update_layout(dragmode="pan")
 
         # Set background color to zero
         fig.layout.template = "plotly_dark"
         fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
         fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
+        
+        # Enable scroll zoom directly on the figure object
+        # This is the most minimal change possible
+        fig._config = {'scrollZoom': True}
+        
         logging.info("Returning figure")
 
         return fig
@@ -1201,13 +1209,13 @@ class Figures:
             l_images.append(image_temp)  #####
 
         # Reoder axis to match plotly go.image requirementss
-        print("np.array(l_images).shape", np.array(l_images).shape)
-        print("np.array(l_images)[0].shape", np.array(l_images)[0].shape)
-        print("np.array(l_images)[1].shape", np.array(l_images)[1].shape)
-        print("np.array(l_images)[2].shape", np.array(l_images)[2].shape)
+        # print("np.array(l_images).shape", np.array(l_images).shape)
+        # print("np.array(l_images)[0].shape", np.array(l_images)[0].shape)
+        # print("np.array(l_images)[1].shape", np.array(l_images)[1].shape)
+        # print("np.array(l_images)[2].shape", np.array(l_images)[2].shape)
         array_image = np.moveaxis(np.array(l_images), 0, 2)
         # count the nan values in the array_image
-        print("nan values in array_image", np.isnan(array_image).sum())
+        # print("nan values in array_image", np.isnan(array_image).sum())
         # array_image = np.array(l_images)
 
         # TODO: there is a problem with the shape of the array_image because the shapes if less than 3 lipids are selected are not the same
@@ -1284,10 +1292,10 @@ class Figures:
             ll_lipid_names=ll_lipid_names,
             cache_flask=cache_flask,
         )
-        print("\narray_image.shape", array_image.shape, np.isnan(array_image).sum())
-        print("array_image first channel", array_image[:,:,0].max(), array_image[:,:,0].min(), np.isnan(array_image[:,:,0]).sum())
-        print("array_image second channel", array_image[:,:,1].max(), array_image[:,:,1].min(), np.isnan(array_image[:,:,1]).sum())
-        print("array_image third channel", array_image[:,:,2].max(), array_image[:,:,2].min(), np.isnan(array_image[:,:,2]).sum())
+        # print("\narray_image.shape", array_image.shape, np.isnan(array_image).sum())
+        # print("array_image first channel", array_image[:,:,0].max(), array_image[:,:,0].min(), np.isnan(array_image[:,:,0]).sum())
+        # print("array_image second channel", array_image[:,:,1].max(), array_image[:,:,1].min(), np.isnan(array_image[:,:,1]).sum())
+        # print("array_image third channel", array_image[:,:,2].max(), array_image[:,:,2].min(), np.isnan(array_image[:,:,2]).sum())
 
         logging.info("Returning fig for slice " + str(slice_index) + logmem())
 
@@ -1545,30 +1553,58 @@ class Figures:
     # ==============================================================================================
 
     def compute_treemaps_figure(self, maxdepth=5):
-        """This function is used to generate a Plotly Figure containing a treemap of the Allen Brain
-        Atlas hierarchy.
+        """Generate a Plotly treemap of the Allen Brain Atlas hierarchy using colors
+        extracted from the Allen Brain Atlas API.
 
         Args:
             maxdepth (int, optional): The depth of the treemap to generate. Defaults to 5.
 
         Returns:
-            (Plotly.Figure): A Plotly Figure containing a treemap of the Allen Brain Atlas
-                hierarchy.
+            Plotly.Figure: A Plotly Figure containing the customized treemap.
         """
+        import requests
+        import plotly.express as px
 
-        # Build treemaps from list of children and parents
+        # --- 1. Fetch the structure tree from the Allen Brain Atlas API ---
+        url = "http://api.brain-map.org/api/v2/structure_graph_download/1.json"
+        response = requests.get(url)
+        data = response.json()
+
+        # --- 2. Extract a mapping from region name to its color hex code ---
+        def extract_name_to_color(node):
+            """
+            Recursively extract a mapping from the structure's name to its color_hex_triplet.
+            """
+            mapping = {}
+            if 'name' in node and 'color_hex_triplet' in node:
+                mapping[node['name']] = node['color_hex_triplet']
+            if 'children' in node:
+                for child in node['children']:
+                    mapping.update(extract_name_to_color(child))
+            return mapping
+
+        name_to_color = {}
+        if 'msg' in data:
+            for item in data['msg']:
+                name_to_color.update(extract_name_to_color(item))
+
+        # --- 3. Build the treemap figure using your atlas nodes and parents ---
         fig = px.treemap(
-            names=self._atlas.l_nodes, parents=self._atlas.l_parents, maxdepth=maxdepth
+            names=self._atlas.l_nodes,
+            parents=self._atlas.l_parents,
+            maxdepth=maxdepth
         )
 
-        # Improve layout
+        # --- 4. Create a list of colors for each node using the extracted mapping ---
+        # If a node name is not found in the mapping, use a default color "#1d3d5c"
+        colors = ['#' + name_to_color.get(name, "1d3d5c") for name in self._atlas.l_nodes]
+        fig.data[0].marker.colors = colors
+
+        # --- 5. Update layout for aesthetics ---
         fig.update_layout(
             uniformtext=dict(minsize=15),
             margin=dict(t=30, r=0, b=10, l=0),
         )
-        fig.update_traces(root_color="#1d3d5c")
-
-        # Set background color to zero
         fig.layout.template = "plotly_dark"
         fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
         fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
@@ -1741,11 +1777,12 @@ class Figures:
         set_id_regions=None,
         downsample_factor=1,
         opacity=0.1,
-        surface_count=40,
+        surface_count=15,  # Reduced from 40 to 15
         colorscale="Inferno",
     ):
         """
         Render a 3D volume visualization of lipid data with optional region filtering and grayscale root data.
+        Uses optimized rendering settings for better performance.
 
         Parameters:
         -----------
@@ -1759,7 +1796,7 @@ class Figures:
             Factor by which to downsample the data (higher = less detailed but faster)
         opacity : float, default=0.1
             Base opacity for the volume rendering
-        surface_count : int, default=40
+        surface_count : int, default=15
             Number of isosurfaces to display
         colorscale : str, default='Inferno'
             Colorscale for the visualization
@@ -1808,6 +1845,15 @@ class Figures:
         # Create coordinate grid for lipid data
         z, y, x = np.indices(sub_np3d_clean.shape)
 
+        # Define custom opacity scale for better visualization (from old implementation)
+        # This makes background transparent while highlighting important features
+        opacityscale = [
+            [0.0, 0.0],      # Fully transparent for background/low values
+            [0.3, 0.05],     # Very transparent for low values
+            [0.7, 0.2],      # More visible for higher values
+            [1.0, 0.5]       # Most visible for highest values
+        ]
+
         # Set up volume plot with lipid data
         lipid_volume = go.Volume(
             x=x.flatten(),
@@ -1816,8 +1862,9 @@ class Figures:
             value=sub_np3d_clean.flatten(),
             isomin=np.nanmin(sub_np3d_clean) if not np.isnan(sub_np3d_clean).all() else 0,
             isomax=np.nanmax(sub_np3d_clean) if not np.isnan(sub_np3d_clean).all() else 1,
-            opacity=opacity,
-            surface_count=surface_count,
+            # Replace flat opacity with custom opacity scale
+            opacityscale=opacityscale,
+            surface_count=surface_count,  # Reduced from 40 to 15
             colorscale=colorscale,
             caps=dict(x_show=False, y_show=False, z_show=False),
         )
@@ -3273,6 +3320,8 @@ class Figures:
         --------
         fig : plotly.graph_objects.Figure
             The generated Plotly figure
+        config : dict
+            Configuration for the Plotly figure
         """
         # Get dimensions from the image if not specified
         if width is None:
@@ -3315,8 +3364,8 @@ class Figures:
             height=height,
             margin=dict(l=0, r=0, b=0, t=30),
             dragmode="pan",  # Set default drag mode to pan instead of zoom
-            paper_bgcolor="black",  # Set paper background to black
-            plot_bgcolor="black",  # Set plot background to black
+            paper_bgcolor="black",  # Set paper background to black ######### if not it does not even display the fkn all sections at all how come lol
+            plot_bgcolor="black",  hovermode=False, # Set plot background to black
         )
 
         # Update axes to remove tick labels and grid
@@ -3325,7 +3374,7 @@ class Figures:
             showgrid=False,  # Remove grid lines
             zeroline=False,  # Remove zero line
             showline=False,  # Remove axis line
-            constrain="domain",  # Constrains axes to the domain to prevent artificial borders
+            constrain="domain",  fixedrange=False,# Constrains axes to the domain to prevent artificial borders
         )
 
         fig.update_yaxes(
@@ -3334,21 +3383,19 @@ class Figures:
             zeroline=False,  # Remove zero line
             showline=False,  # Remove axis line
             scaleanchor="x",  # Forces y-axis to scale with x-axis to maintain aspect ratio
-            constrain="domain",  # Constrains axes to the domain to prevent artificial borders
+            constrain="domain",  fixedrange=False,# Constrains axes to the domain to prevent artificial borders
         )
 
         # Configure for interactive viewing with minimal UI
         config = {
+            "responsive": True,
             "scrollZoom": True,  # Enable scroll to zoom
             "displayModeBar": False,  # Hide the mode bar completely
             "doubleClick": "reset",  # Double click to reset the view
         }
 
-        # Save to HTML file
-        fig.write_html(output_file, config=config)
-        logging.info(f"Interactive visualization saved to {output_file}")
-
-        return fig  # Return the figure in case you want to show it in a notebook
+        # Return both the figure and the config
+        return fig, config
 
     def compute_heatmap_lipid_genes(
         self,

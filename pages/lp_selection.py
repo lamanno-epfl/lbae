@@ -86,6 +86,7 @@ def return_layout(basic_config, slice_index):
                             },
                             class_name="position-absolute",
                             children=[
+                                dmc.Text("Choose up to 3 lipid programs", size="lg"),
                                 dmc.Group(
                                     spacing="xs",
                                     align="flex-start",

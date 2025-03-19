@@ -61,7 +61,7 @@ def return_layout(basic_config, slice_index):
                                         "format": "png",
                                         "filename": "brain_lipid_selection", ################################
                                         "scale": 2,
-                                    }
+                                    },"scrollZoom": True
                                 }
                                 | {"staticPlot": False},
                                 style={

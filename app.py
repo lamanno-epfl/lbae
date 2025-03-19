@@ -26,7 +26,7 @@ from modules.scRNAseq import ScRNAseq
 from modules.tools.misc import logmem
 logging.info("Memory use before any LBAE import" + logmem())
 
-from modules.maldi_data import MaldiData
+from modules.maldi_data import MaldiData, GridImageShelve
 logging.info("Memory use after MaldiData import" + logmem())
 
 from modules.program_data import LipiMapData
@@ -48,6 +48,9 @@ logging.info("Memory use before any global variable declaration" + logmem())
 # Define if the app will use only a sample of the dataset, and uses a lower resolution for the atlas
 SAMPLE_DATA = False
 
+# Path to the ID cards
+ID_CARDS_PATH = "/data/luca/lipidatlas/ManuscriptAnalysisRound3/ID_cards"
+
 # Define paths for the sample/not sample data
 if SAMPLE_DATA:
     path_data = "data_sample/whole_dataset/"
@@ -61,6 +64,7 @@ else:
     # path_db = "data/app_data/data.db"
     cache_dir = "data/cache/"
     path_data = "./new_data/"
+    path_grid_data = "./grid_data/"
     path_program_data = "./program_data/"
     path_annotations = "./data/annotations/"
     path_db = "./data/app_data/data.db"
@@ -88,6 +92,10 @@ storage = Storage(path_db)
 # Load data
 logging.info("Loading MALDI data..." + logmem())
 data = MaldiData(path_data, path_annotations)
+
+# Load grid data
+logging.info("Loading grid data..." + logmem())
+grid_data = GridImageShelve(path_grid_data, path_annotations)
 
 # Load program data
 logging.info("Loading program data..." + logmem())
@@ -128,7 +136,7 @@ long_callback_manager = DiskcacheLongCallbackManager(
 
 # Instantiate app
 app = dash.Dash(
-    title="Lipids Brain Atlas Explorer",
+    title="Lipid Brain Atlas Explorer",
     external_stylesheets=[dbc.themes.DARKLY],
     external_scripts=[
         {"src": "https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"}
@@ -176,6 +184,12 @@ cache_flask.set("locked-reading", False)
 
 #################################################################################################### ????
 
+# Add the route to serve PDF files
+@app.server.route('/id-cards-pdf/<lipizone_name>')
+def serve_pdf(lipizone_name):
+    """Serve PDF files from the ID cards directory."""
+    pdf_filename = f"lipizone_ID_card_{lipizone_name}.pdf"
+    return flask.send_from_directory(ID_CARDS_PATH, pdf_filename)
 
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 def display_page(pathname):
@@ -183,6 +197,8 @@ def display_page(pathname):
         return home.return_layout(basic_config, slice_index)
     elif pathname == "/lipid-selection":
         return lipid_selection.return_layout(basic_config, slice_index)
+    elif pathname == "/lipizones-selection":
+        return lipizones_selection.return_layout(basic_config, slice_index)
     elif pathname == "/lp-selection":
         return lp_selection.return_layout(basic_config, slice_index)
     elif pathname == "/region-analysis":
@@ -191,5 +207,9 @@ def display_page(pathname):
         return threeD_exploration.return_layout(basic_config, slice_index)
     elif pathname == "/lipizones-exploration":
         return lipizones_exploration.return_layout(basic_config, slice_index)
+    elif pathname == "/id-cards":
+        return id_cards.return_layout(basic_config, slice_index)
+    elif pathname == "/3D-lipizones":
+        return threeD_lipizones.return_layout(basic_config, slice_index)
     else:
         return home.return_layout(basic_config, slice_index)

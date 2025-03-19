@@ -19,6 +19,7 @@ import io
 import skimage
 from imageio import imread
 import shutil
+import pickle
 
 # LBAE imports
 from modules.tools.atlas import (
@@ -130,7 +131,7 @@ class Atlas:
             self.resolution = resolution
         else:
             logging.warning("The resolution you chose is not available, using the default of 25um")
-            self.resolution = 25
+            self.resolution = 25 # !!!!! giusta
 
         # Attribute to easily access the data and the shelve db
         self.data = maldi_data
@@ -173,6 +174,7 @@ class Atlas:
         # Atlas class. But they shouldn't be memory-mapped as they are called when hovering and
         # require very fast response from the server
         self.labels = Labels(self.bg_atlas, force_init=True)
+        print("self.labels:\n", self.labels)
 
         # Compute a dictionnary that associates to each structure (acronym) the set of ids (int) of
         # all of its children. Used only in page_4_plot_graph_volume, but it's very light (~3mb) so
@@ -183,7 +185,7 @@ class Atlas:
             force_update=False,
             compute_function=self.compute_dic_acronym_children_id,
         )
-
+        # print("self.dic_acronym_children_id:\n", self.dic_acronym_children_id)
         # Load array of coordinates for warped data (can't be loaded on the fly from shelve as used
         # with hovering). Weights ~225mb
         # if maldi_data._sample_data:
@@ -191,13 +193,21 @@ class Atlas:
         #         self.array_coordinates_warped_data = handle["array_coordinates_warped_data"]
 
         # else:
-        self.array_coordinates_warped_data = skimage.io.imread(
-            "data/tiff_files/coordinates_warped_data.tif"
-        )
+        # TODO CHANGEEEEEE
+        # self.array_coordinates_warped_data = skimage.io.imread(
+        #     "data/tiff_files/coordinates_warped_data.tif"
+        # )
+        # print("self.array_coordinates_warped_data:\n", self.array_coordinates_warped_data.shape)
+        # print(self.array_coordinates_warped_data[0])
+        # deve avere dimensione num_slices x ABA_DIM[2] x ABA_DIM[1] x 3
+        self.array_coordinates = np.load("/data/francesca/lbae/data/atlas/coords_array.npy")
+        print("self.array_coordinates:\n", self.array_coordinates.shape)
 
         # Record shape of the warped data
         # self.image_shape = list(self.array_coordinates_warped_data.shape[1:-1])
-        self.image_shape = [ABA_DIM[2], ABA_DIM[1]]
+        self.image_shape = [ABA_DIM[1], ABA_DIM[2]]
+        print("self.image_shape:", self.image_shape)
+        # moltiplica rostro-caudale per 40 e castare a integer
 
         # Record dict that associate brain region (complete string) to specific id (short label),
         # along with graph of structures (l_nodes and l_parents). Although the treemap graph is
@@ -220,45 +230,50 @@ class Atlas:
         # warping transformation of the data. Therefore it shouldn't be used a as a property.
         # Weights ~150mb
         # * The type is np.int16, and can't be reduced anymore as values are sometimes above 400
-        self.array_projection_correspondence_corrected = self.storage.return_shelved_object(
-            "atlas/atlas_objects",
-            "arrays_projection_corrected",
-            force_update=False,
-            compute_function=self.compute_array_projection,
-            nearest_neighbour_correction=True,
-            atlas_correction=True,
-        )[1]
+        # self.array_projection_correspondence_corrected = self.storage.return_shelved_object(
+        #     "atlas/atlas_objects",
+        #     "arrays_projection_corrected",
+        #     force_update=False,
+        #     compute_function=self.compute_array_projection,
+        #     nearest_neighbour_correction=True,
+        #     atlas_correction=True,
+        # )[1]
+        # print("self.array_projection_correspondence_corrected:\n", self.array_projection_correspondence_corrected.shape)
 
         # Load arrays of original images coordinates. It is used everytime a 3D object is computed.
         # Weights ~50mb
-        self.l_original_coor = self.storage.return_shelved_object(
-            "atlas/atlas_objects",
-            "arrays_projection_corrected",
-            force_update=False,
-            compute_function=self.compute_array_projection,
-            nearest_neighbour_correction=True,
-            atlas_correction=True,
-        )[2]
+        # TODO: i think I only need the original coordinated, or at least we do not need to distinguish original and projected
+        # self.l_original_coor = self.storage.return_shelved_object(
+        #     "atlas/atlas_objects",
+        #     "arrays_projection_corrected",
+        #     force_update=False,
+        #     compute_function=self.compute_array_projection,
+        #     nearest_neighbour_correction=True,
+        #     atlas_correction=True,
+        # )[2]
+        # print("self.l_original_coor:\n", len(self.l_original_coor))
 
         # TODO: recompute the masks for 3D region identification
         # Dictionnary of existing masks per slice, which associates slice index (key) to a set of
         # masks acronyms
-        if self.storage.check_shelved_object("atlas/atlas_objects", "dic_existing_masks"):
-            self.dic_existing_masks = self.storage.load_shelved_object(
-                "atlas/atlas_objects", "dic_existing_masks"
-            )
-        else:
-            logging.info(
-                "The dictionnary of available mask per slice has not been computed yet. "
-                + "Doing it now, this may take several hours."
-            )
-            # Since this function is called at startup, no data locking is needed
-            self.save_all_projected_masks_and_spectra(cache_flask=None, sample=sample)
-
+        # if self.storage.check_shelved_object("atlas/atlas_objects", "dic_existing_masks"):
+        #     self.dic_existing_masks = self.storage.load_shelved_object(
+        #         "atlas/atlas_objects", "dic_existing_masks"
+        #     )
+        # else:
+        #     logging.info(
+        #         "The dictionnary of available mask per slice has not been computed yet. "
+        #         + "Doing it now, this may take several hours."
+        #     )
+        #     # Since this function is called at startup, no data locking is needed
+        #     self.save_all_projected_masks_and_spectra(cache_flask=None, sample=sample)
+        self.dic_existing_masks = pickle.load(open('/data/francesca/lbae/data/atlas/dic_existing_masks.pkl', 'rb'))
+        print("self.dic_existing_masks:\n", self.dic_existing_masks.keys())
         # # These attributes are defined later as properties as they are only used during
         # # precomputations
         # self._array_projection_corrected = None
-        # self._list_projected_atlas_borders_arrays = None
+        # TODO
+        self._list_projected_atlas_borders_arrays = None
 
         logging.info("Atlas object instantiated" + logmem())
 
@@ -291,28 +306,29 @@ class Atlas:
     #         )[0]
     #     return self._array_projection_corrected
 
-    # @property
-    # def list_projected_atlas_borders_arrays(self):
-    #     """Load array of projected atlas borders (i.e. image of atlas annotations). It's a property
-    #     to save memory as it is only used with objects that should also be precomputed.
+    # TODO
+    @property
+    def list_projected_atlas_borders_arrays(self):
+        """Load array of projected atlas borders (i.e. image of atlas annotations). It's a property
+        to save memory as it is only used with objects that should also be precomputed.
 
-    #     Returns:
-    #         (list(np.ndarray)): A list of arrays, one per slice, which contains the atlas
-    #             borders projected on our data.
-    #     """
-    #     if self._list_projected_atlas_borders_arrays is None:
-    #         logging.info(
-    #             "list_projected_atlas_borders_arrays is being loaded. This should only happen"
-    #             " during precomputations."
-    #             + logmem()
-    #         )
-    #         self._list_projected_atlas_borders_arrays = self.storage.return_shelved_object(
-    #             "atlas/atlas_objects",
-    #             "list_projected_atlas_borders_arrays",
-    #             force_update=False,
-    #             compute_function=self.compute_list_projected_atlas_borders_figures,
-    #         )
-    #     return self._list_projected_atlas_borders_arrays
+        Returns:
+            (list(np.ndarray)): A list of arrays, one per slice, which contains the atlas
+                borders projected on our data.
+        """
+        if self._list_projected_atlas_borders_arrays is None:
+            logging.info(
+                "list_projected_atlas_borders_arrays is being loaded. This should only happen"
+                " during precomputations."
+                + logmem()
+            )
+            self._list_projected_atlas_borders_arrays = self.storage.return_shelved_object(
+                "atlas/atlas_objects",
+                "list_projected_atlas_borders_arrays",
+                force_update=False,
+                compute_function=self.compute_list_projected_atlas_borders_figures,
+            )
+        return self._list_projected_atlas_borders_arrays
 
     # ==============================================================================================
     # --- Methods
@@ -401,114 +417,114 @@ class Atlas:
 
         return l_nodes, l_parents, dic_name_acronym, dic_acronym_name
 
-    def compute_array_projection(self, nearest_neighbour_correction=False, atlas_correction=False):
-        """Compute three arrays relating the original coordinates of our data to their projection in
-        the CCFv3.
+    # def compute_array_projection(self, nearest_neighbour_correction=False, atlas_correction=False):
+    #     """Compute three arrays relating the original coordinates of our data to their projection in
+    #     the CCFv3.
 
-        Args:
-            nearest_neighbour_correction (bool, optional): If True, the gaps due to the warping and
-                upscaling of the projection are filled with a heuristic method. Defaults to False.
-            atlas_correction (bool, optional): If True, the pixels that are outside of any annotated
-                region are zeroed out. Defaults to False.
+    #     Args:
+    #         nearest_neighbour_correction (bool, optional): If True, the gaps due to the warping and
+    #             upscaling of the projection are filled with a heuristic method. Defaults to False.
+    #         atlas_correction (bool, optional): If True, the pixels that are outside of any annotated region are zeroed out. Defaults to False.
 
-        Returns:
-            (np.ndarray, np.ndarray, list(np.ndarray)): The first array is a high-resolution version
-                of our initial data, in which each individual pixel has been mapped according to the
-                second array, which acts as a mapping table. The list contains the arrays of
-                original coordinates, for each slice.
-        """
+    #     Returns:
+    #         (np.ndarray, np.ndarray, list(np.ndarray)): The first array is a high-resolution version
+    #             of our initial data, in which each individual pixel has been mapped according to the
+    #             second array, which acts as a mapping table. The list contains the arrays of
+    #             original coordinates, for each slice.
+    #     """
 
-        # Start with empty array
-        array_projection = np.zeros(self.array_coordinates_warped_data.shape[:-1], dtype=np.int16)
-        array_projection_filling = np.zeros(array_projection.shape, dtype=np.int16)
+    #     # Start with empty array
+    #     array_projection = np.zeros(self.array_coordinates_warped_data.shape[:-1], dtype=np.int16)
+    #     array_projection_filling = np.zeros(array_projection.shape, dtype=np.int16)
 
-        # This array makes the correspondence between the original data coordinates and the new ones
-        array_projection_correspondence = np.zeros(array_projection.shape + (2,), dtype=np.int16)
-        array_projection_correspondence.fill(-1)
+    #     # This array makes the correspondence between the original data coordinates and the new ones
+    #     array_projection_correspondence = np.zeros(array_projection.shape + (2,), dtype=np.int16)
+    #     array_projection_correspondence.fill(-1)
 
-        # List of orginal coordinates
-        l_original_coor = []
-        l_transform_parameters = self.storage.return_shelved_object(
-            "atlas/atlas_objects",
-            "l_transform_parameters",
-            force_update=False,
-            compute_function=self.compute_projection_parameters,
-        )
-        for i in range(array_projection.shape[0]):
-            # Get transform parameters
-            a, u, v = l_transform_parameters[i]
+    #     # List of orginal coordinates
+    #     l_original_coor = []
+    #     l_transform_parameters = self.storage.return_shelved_object(
+    #         "atlas/atlas_objects",
+    #         "l_transform_parameters",
+    #         force_update=False,
+    #         compute_function=self.compute_projection_parameters,
+    #     )
+    #     for i in range(array_projection.shape[0]):
+    #         # Get transform parameters
+    #         a, u, v = l_transform_parameters[i]
 
-            # Load corresponding slice and coor
-            if self.data._sample_data:
-                path = "data_sample/tiff_files/coordinates_original_data/"
-            else:
-                path = "data/tiff_files/coordinates_original_data/"
-            filename = (
-                path
-                + [x for x in os.listdir(path) if str(i + 1) == x.split("_")[1].split("-")[0]][0]
-            )
+    #         # Load corresponding slice and coor
+    #         if self.data._sample_data:
+    #             path = "data_sample/tiff_files/coordinates_original_data/"
+    #         else:
+    #             path = "data/tiff_files/coordinates_original_data/"
+    #         filename = (
+    #             path
+    #             + [x for x in os.listdir(path) if str(i + 1) == x.split("_")[1].split("-")[0]][0]
+    #         )
 
-            if self.data._sample_data:
-                original_coor = np.load(filename)
-            else:
-                original_coor = skimage.io.imread(filename)
-            l_original_coor.append(original_coor)
+    #         if self.data._sample_data:
+    #             original_coor = np.load(filename)
+    #         else:
+    #             original_coor = skimage.io.imread(filename)
+    #         l_original_coor.append(original_coor)
 
-            if self.data._sample_data:
-                path = "data_sample/tiff_files/original_data/"
-            else:
-                path = "data/tiff_files/original_data/"
-            filename = (
-                path
-                + [
-                    x
-                    for x in os.listdir(path)
-                    if str(i + 1) == x.split("slice_")[1].split(".tiff")[0]
-                ][0]
-            )
-            original_slice = np.array(skimage.io.imread(filename), dtype=np.uint8)
-            # Keep only last channel
-            if not self.data._sample_data:
-                original_slice = original_slice[:, :, 2]
+    #         if self.data._sample_data:
+    #             path = "data_sample/tiff_files/original_data/"
+    #         else:
+    #             path = "data/tiff_files/original_data/"
+    #         filename = (
+    #             path
+    #             + [
+    #                 x
+    #                 for x in os.listdir(path)
+    #                 if str(i + 1) == x.split("slice_")[1].split(".tiff")[0]
+    #             ][0]
+    #         )
+    #         original_slice = np.array(skimage.io.imread(filename), dtype=np.uint8)
+    #         # Keep only last channel
+    #         if not self.data._sample_data:
+    #             original_slice = original_slice[:, :, 2]
 
-            # Map back the pixel from the atlas coordinates
-            array_projection, array_projection_correspondence = fill_array_projection(
-                i,
-                array_projection,
-                array_projection_filling,
-                array_projection_correspondence,
-                original_coor,
-                self.resolution,
-                a,
-                u,
-                v,
-                original_slice,
-                self.array_coordinates_warped_data[i],
-                self.bg_atlas.annotation,
-                nearest_neighbour_correction=nearest_neighbour_correction,
-                atlas_correction=atlas_correction,
-                sample_data=self.data._sample_data,
-            )
+    #         # Map back the pixel from the atlas coordinates
+    #         array_projection, array_projection_correspondence = fill_array_projection(
+    #             i,
+    #             array_projection,
+    #             array_projection_filling,
+    #             array_projection_correspondence,
+    #             original_coor,
+    #             self.resolution,
+    #             a,
+    #             u,
+    #             v,
+    #             original_slice,
+    #             self.array_coordinates_warped_data[i],
+    #             self.bg_atlas.annotation,
+    #             nearest_neighbour_correction=nearest_neighbour_correction,
+    #             atlas_correction=atlas_correction,
+    #             sample_data=self.data._sample_data,
+    #         )
 
-        return array_projection, array_projection_correspondence, l_original_coor
+    #     return array_projection, array_projection_correspondence, l_original_coor
 
-    def compute_projection_parameters(self):
-        """Compute the parameters used to map the 3D coordinates of the CCFv3 to the the 2D (tiled)
-        slices.
+    # def compute_projection_parameters(self):
+    #     """Compute the parameters used to map the 3D coordinates of the CCFv3 to the the 2D (tiled)
+    #     slices.
 
-        Returns:
-            (list((float,float,float))): A list of tuples, each with three parameters, that allow to
-                map the 3D coordinates of the CCFv3 to the tiled planes representing the slices. One
-                per slice.
-        """
-        l_transform_parameters = []
-        for slice_index in range(self.array_coordinates_warped_data.shape[0]):
-            a_atlas, u_atlas, v_atlas = solve_plane_equation(
-                self.array_coordinates_warped_data[slice_index]
-            )
-            l_transform_parameters.append((a_atlas, u_atlas, v_atlas))
-        return l_transform_parameters
+    #     Returns:
+    #         (list((float,float,float))): A list of tuples, each with three parameters, that allow to
+    #             map the 3D coordinates of the CCFv3 to the tiled planes representing the slices. One
+    #             per slice.
+    #     """
+    #     l_transform_parameters = []
+    #     for slice_index in range(self.array_coordinates_warped_data.shape[0]):
+    #         a_atlas, u_atlas, v_atlas = solve_plane_equation(
+    #             self.array_coordinates_warped_data[slice_index]
+    #         )
+    #         l_transform_parameters.append((a_atlas, u_atlas, v_atlas))
+    #     return l_transform_parameters
 
+    # TODO
     def compute_list_projected_atlas_borders_figures(self):
         """Compute an array of projected atlas borders (i.e. image of atlas annotations).
 
@@ -561,32 +577,32 @@ class Atlas:
 
         return l_array_images
 
-    # * This is quite long to execute (~10mn)
-    def prepare_and_compute_array_images_atlas(self, zero_out_of_annotation=False):
-        """This function is mainly a wrapper for compute_array_images_atlas. It is needed as the
-        computation of an array of simplified structures ids can't be compiled with numba.
+    # # * This is quite long to execute (~10mn)
+    # def prepare_and_compute_array_images_atlas(self, zero_out_of_annotation=False):
+    #     """This function is mainly a wrapper for compute_array_images_atlas. It is needed as the
+    #     computation of an array of simplified structures ids can't be compiled with numba.
 
-        Args:
-            zero_out_of_annotation (bool, optional): If True, the pixels outside of the atlas
-                annotations are zero-ed out. Defaults to False.
+    #     Args:
+    #         zero_out_of_annotation (bool, optional): If True, the pixels outside of the atlas
+    #             annotations are zero-ed out. Defaults to False.
 
-        Returns:
-            (np.ndarray, np.ndarray): The first array is basically a list of atlas images
-                corresponding to the slices acquired during the MALDI acquisition. The second array
-                is the corresponding set of annotations.
-        """
+    #     Returns:
+    #         (np.ndarray, np.ndarray): The first array is basically a list of atlas images
+    #             corresponding to the slices acquired during the MALDI acquisition. The second array
+    #             is the corresponding set of annotations.
+    #     """
 
-        # Compute an array of simplified structures ids
-        simplified_atlas_annotation = compute_simplified_atlas_annotation(self.bg_atlas.annotation)
+    #     # Compute an array of simplified structures ids
+    #     simplified_atlas_annotation = compute_simplified_atlas_annotation(self.bg_atlas.annotation)
 
-        # Compute the actual array of atlas images
-        return compute_array_images_atlas(
-            self.array_coordinates_warped_data,
-            simplified_atlas_annotation,
-            self.bg_atlas.reference,
-            self.resolution,
-            zero_out_of_annotation=zero_out_of_annotation,
-        )
+    #     # Compute the actual array of atlas images
+    #     return compute_array_images_atlas(
+    #         self.array_coordinates_warped_data,
+    #         simplified_atlas_annotation,
+    #         self.bg_atlas.reference,
+    #         self.resolution,
+    #         zero_out_of_annotation=zero_out_of_annotation,
+    #     )
 
     def get_atlas_mask(self, structure):
         """Compute a mask for the structure given as argument. The brain regions corresponding to
@@ -623,89 +639,89 @@ class Atlas:
         logging.info('Mask computed for structure "{}"'.format(structure))
         return mask_stack
 
-    def compute_spectrum_data(
-        self,
-        slice_index,
-        projected_mask=None,
-        mask_name=None,
-        slice_coor_rescaled=None,
-        MAIA_correction=False,
-        cache_flask=None,
-    ):
-        """This function computes the averaged spectral data for a given slice and a given mask, the
-        latter being provided either as a mask name, either as an array (at least one of the two
-        must not be None). If the mask is provided as an array, the corresponding array of slice
-        coordinates (slice_coor_rescaled) must be provided.
+    # def compute_spectrum_data(
+    #     self,
+    #     slice_index,
+    #     projected_mask=None,
+    #     mask_name=None,
+    #     slice_coor_rescaled=None,
+    #     MAIA_correction=False,
+    #     cache_flask=None,
+    # ):
+    #     """This function computes the averaged spectral data for a given slice and a given mask, the
+    #     latter being provided either as a mask name, either as an array (at least one of the two
+    #     must not be None). If the mask is provided as an array, the corresponding array of slice
+    #     coordinates (slice_coor_rescaled) must be provided.
 
-        Args:
-            slice_index (int): Index of the requested slice.
-            projected_mask (np.ndarray, optional):  A two-dimensional array representing the
-                projected mask on the requested slice. Defaults to None.
-            mask_name (str, optional): Acronym of the requestes mask. Defaults to None.
-            slice_coor_rescaled (np.ndarray, optional): The array of coordinates in the CCFv3 for
-                the current slice. Defaults to None.
-            MAIA_correction (bool, optional): If True, the MAIA corrected version of the MALDI data
-                is used for computation (if it exists). Defaults to False.
-            cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
-                None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
-                None.
+    #     Args:
+    #         slice_index (int): Index of the requested slice.
+    #         projected_mask (np.ndarray, optional):  A two-dimensional array representing the
+    #             projected mask on the requested slice. Defaults to None.
+    #         mask_name (str, optional): Acronym of the requestes mask. Defaults to None.
+    #         slice_coor_rescaled (np.ndarray, optional): The array of coordinates in the CCFv3 for
+    #             the current slice. Defaults to None.
+    #         MAIA_correction (bool, optional): If True, the MAIA corrected version of the MALDI data
+    #             is used for computation (if it exists). Defaults to False.
+    #         cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
+    #             None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
+    #             None.
 
-        Returns:
-            (np.ndarray): A 2D numpy array containing the averaged spectral data of the pixels in the
-                requested mask of the requested slice. First row contains m/z values, second row
-                contains the averaged intensities.
-        """
+    #     Returns:
+    #         (np.ndarray): A 2D numpy array containing the averaged spectral data of the pixels in the
+    #             requested mask of the requested slice. First row contains m/z values, second row
+    #             contains the averaged intensities.
+    #     """
 
-        # Control that a mask can be provided one way or the other
-        if projected_mask is None and mask_name is None:
-            print("Either a mask or a mask name must be provided")
-            return None
+    #     # Control that a mask can be provided one way or the other
+    #     if projected_mask is None and mask_name is None:
+    #         print("Either a mask or a mask name must be provided")
+    #         return None
 
-        # If a mask name has been provided, get the corresponding mask array
-        elif mask_name is not None:
-            if slice_coor_rescaled is None:
-                slice_coor_rescaled = np.asarray(
-                    (
-                        self.array_coordinates_warped_data[slice_index, :, :]
-                        * 1000
-                        / self.resolution
-                    ).round(0),
-                    dtype=np.int16,
-                )
-            stack_mask = self.get_atlas_mask(self.dic_name_acronym[mask_name])
-            projected_mask = project_atlas_mask(
-                stack_mask, slice_coor_rescaled, self.bg_atlas.reference.shape
-            )
+    #     # If a mask name has been provided, get the corresponding mask array
+    #     elif mask_name is not None:
+    #         if slice_coor_rescaled is None:
+    #             slice_coor_rescaled = np.asarray(
+    #                 (
+    #                     self.array_coordinates_warped_data[slice_index, :, :]
+    #                     * 1000
+    #                     / self.resolution
+    #                 ).round(0),
+    #                 dtype=np.int16,
+    #             )
+    #         stack_mask = self.get_atlas_mask(self.dic_name_acronym[mask_name])
+    #         projected_mask = project_atlas_mask(
+    #             stack_mask, slice_coor_rescaled, self.bg_atlas.reference.shape
+    #         )
 
-        # Get the list of rows containing the pixels to average
-        original_shape = self.data.get_image_shape(slice_index + 1)
-        mask_remapped = np.zeros(original_shape, dtype=np.uint8)
-        list_index_bound_rows, list_index_bound_column_per_row = get_array_rows_from_atlas_mask(
-            projected_mask,
-            mask_remapped,
-            self.array_projection_correspondence_corrected[slice_index],
-        )
-        if np.sum(list_index_bound_rows) == 0:
-            print("No selection could be found for current mask")
-            grah_scattergl_data = None
-        else:
-            # Do the average
-            grah_scattergl_data = compute_thread_safe_function(
-                compute_spectrum_per_row_selection,
-                cache_flask,
-                self.data,
-                slice_index + 1,
-                list_index_bound_rows,
-                list_index_bound_column_per_row,
-                self.data.get_array_spectra(slice_index + 1),
-                self.data.get_array_lookup_pixels(slice_index + 1),
-                original_shape,
-                self.data.get_array_peaks_transformed_lipids(slice_index + 1),
-                self.data.get_array_corrective_factors(slice_index + 1).astype(np.float32),
-                zeros_extend=False,
-                apply_correction=MAIA_correction,
-            )
-        return grah_scattergl_data
+    #     # Get the list of rows containing the pixels to average
+    #     original_shape = self.data.get_image_shape(slice_index + 1)
+    #     mask_remapped = np.zeros(original_shape, dtype=np.uint8)
+    #     list_index_bound_rows, list_index_bound_column_per_row = get_array_rows_from_atlas_mask(
+    #         projected_mask,
+    #         mask_remapped,
+    #         self.array_projection_correspondence_corrected[slice_index],
+    #     )
+    #     if np.sum(list_index_bound_rows) == 0:
+    #         print("No selection could be found for current mask")
+    #         grah_scattergl_data = None
+    #     else:
+    #         # Do the average
+    #         grah_scattergl_data = compute_thread_safe_function(
+    #             compute_spectrum_per_row_selection,
+    #             cache_flask,
+    #             self.data,
+    #             slice_index + 1,
+    #             list_index_bound_rows,
+    #             list_index_bound_column_per_row,
+    #             self.data.get_array_spectra(slice_index + 1),
+    #             self.data.get_array_lookup_pixels(slice_index + 1),
+    #             original_shape,
+    #             self.data.get_array_peaks_transformed_lipids(slice_index + 1),
+    #             self.data.get_array_corrective_factors(slice_index + 1).astype(np.float32),
+    #             zeros_extend=False,
+    #             apply_correction=MAIA_correction,
+    #         )
+    #     return grah_scattergl_data
 
     def save_all_projected_masks_and_spectra(
         self, force_update=False, cache_flask=None, sample=False

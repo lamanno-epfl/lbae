@@ -17,9 +17,18 @@ import json
 import pandas as pd
 from dash.dependencies import Input, Output, State, ALL
 import dash_mantine_components as dmc
+import numpy as np
+# threadpoolctl import threadpool_limits, threadpool_info
+#threadpool_limits(limits=8)
+import os
+os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
 from app import app, figures, data, storage, cache_flask
+from modules.maldi_data import GridImageShelve
+
+# Initialize GridImageShelve
+grid_data = GridImageShelve(shelf_filename="grid_shelve", shelf_dir="./grid_data/")
 
 # ==================================================================================================
 # --- Layout
@@ -59,7 +68,7 @@ def return_layout(basic_config, slice_index):
                                         "format": "png",
                                         "filename": "brain_lipid_selection",
                                         "scale": 2,
-                                    }
+                                    },"scrollZoom": True
                                 }
                                 | {"staticPlot": False},
                                 style={
@@ -128,6 +137,17 @@ def return_layout(basic_config, slice_index):
                                         dmc.Button(
                                             children="Display as colormap",
                                             id="page-2-colormap-button",
+                                            variant="filled",
+                                            color="cyan",
+                                            radius="md",
+                                            size="xs",
+                                            disabled=True,
+                                            compact=False,
+                                            loading=False,
+                                        ),
+                                        dmc.Button(
+                                            children="Display all sections",
+                                            id="page-2-all-sections-button",
                                             variant="filled",
                                             color="cyan",
                                             radius="md",
@@ -459,6 +479,8 @@ def return_layout(basic_config, slice_index):
     Input("page-2-selected-lipid-3", "data"),
     Input("page-2-rgb-button", "n_clicks"),
     Input("page-2-colormap-button", "n_clicks"),
+    Input("page-2-all-sections-button", "n_clicks"),
+    Input("main-brain", "value"),
     # Input("page-2-button-bounds", "n_clicks"),
     # State("page-2-lower-bound", "value"),
     # State("page-2-upper-bound", "value"),
@@ -474,6 +496,8 @@ def page_2_plot_graph_heatmap_mz_selection(
     lipid_3_index,
     n_clicks_button_rgb,
     n_clicks_button_colormap,
+    n_clicks_button_all_sections,
+    brain_id,
     # n_clicks_button_bounds,
     # lb,
     # hb,
@@ -490,6 +514,7 @@ def page_2_plot_graph_heatmap_mz_selection(
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     print(f"id_input: {id_input}")    
     print("graph_input:", graph_input)
+    print("brain_id:", brain_id)
 
     # # Case a two mz bounds values have been inputed
     # if id_input == "page-2-button-bounds" or (
@@ -512,11 +537,14 @@ def page_2_plot_graph_heatmap_mz_selection(
         or id_input == "page-2-selected-lipid-3"
         or id_input == "page-2-rgb-button"
         or id_input == "page-2-colormap-button"
+        or id_input == "page-2-all-sections-button"
+        or id_input == "main-brain"
         or (
             (id_input == "main-slider") # or id_input == "page-2-toggle-apply-transform")
             and (
                 graph_input == "Current input: " + "Lipid selection colormap"
                 or graph_input == "Current input: " + "Lipid selection RGB"
+                or graph_input == "Current input: " + "Lipid selection all sections"
             )
         )
     ):
@@ -541,7 +569,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                         data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
                         + data.get_annotations().iloc[index]["structure"].split('_')[i] 
                         for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
-                        ])
+                    ])
                     # data.get_annotations().iloc[index]["name"]
                     # + " "
                     # + data.get_annotations().iloc[index]["structure"]
@@ -643,6 +671,46 @@ def page_2_plot_graph_heatmap_mz_selection(
                     "Current input: " + "Lipid selection RGB",
                 )
 
+            # Or if the current plot must be all sections
+            elif (
+                id_input == "page-2-all-sections-button"
+                or (
+                    id_input == "main-slider"
+                    and graph_input == "Current input: " + "Lipid selection all sections"
+                )
+            ):
+                print("--- option 1.4 ---")
+                # Check that only one lipid is selected
+                if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
+
+                    print("INSIDE! brain_id:", brain_id)
+
+                    nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
+                    # Use the selected lipid instead of hardcoded one
+                    image = grid_data.retrieve_grid_image(
+                        lipid=nonull_ll_lipid_names,
+                        sample=brain_id
+                    )
+
+                    return(figures.build_lipid_heatmap_from_image(
+                                image, 
+                                return_base64_string=False),
+                            "Current input: " + "Lipid selection all sections")
+                else:
+                    print("--- option 1.4.2 ---")
+                    logging.info("Trying to display all sections for more than one lipid, not possible. Using first selected lipid.")
+                    # Get the first non-None lipid name
+                    first_lipid = next((name for name in ll_lipid_names if name is not None), "SM 34:1;O2")
+                    image = grid_data.retrieve_grid_image(
+                        lipid=first_lipid,
+                        sample=brain_id
+                    )
+                    
+                    return(figures.build_lipid_heatmap_from_image(
+                                image, 
+                                return_base64_string=False),
+                            "Current input: " + "Lipid selection all sections")
+            
             # Plot RBG By default
             else:
                 print("--- option 1.3 ---")
@@ -1015,6 +1083,7 @@ def page_2_plot_graph_heatmap_mz_selection(
     State("page-2-badge-lipid-1", "children"),
     State("page-2-badge-lipid-2", "children"),
     State("page-2-badge-lipid-3", "children"),
+    State("main-brain", "value"),
 )
 def page_2_add_toast_selection(
     l_lipid_names,
@@ -1028,6 +1097,7 @@ def page_2_add_toast_selection(
     header_1,
     header_2,
     header_3,
+    brain_id,
 ):
     """This callback adds the selected lipid to the selection."""
     logging.info("Entering function to update lipid data")
@@ -1130,9 +1200,6 @@ def page_2_add_toast_selection(
                 else:   
                     name = "_".join(header.split(" ")[::2])
                     structure = "_".join(header.split(" ")[1::2])
-                # print(f"name: {name}")
-                # print(f"structure: {structure}")
-                # name, structure = header.split(" ")
                 # print(f"name: {name}")
                 # print(f"structure: {structure}")
             
@@ -1476,6 +1543,7 @@ clientside_callback(
 @app.callback(
     Output("page-2-rgb-button", "disabled"),
     Output("page-2-colormap-button", "disabled"),
+    Output("page-2-all-sections-button", "disabled"),
     Input("page-2-selected-lipid-1", "data"),
     Input("page-2-selected-lipid-2", "data"),
     Input("page-2-selected-lipid-3", "data"),
@@ -1493,10 +1561,10 @@ def page_2_active_download(lipid_1_index, lipid_2_index, lipid_3_index):
     # If lipids has been selected from the dropdown, activate button
     if len(l_lipids_indexes) > 0:
         # print("=============Disabled rgb and colormap buttons=============")
-        return False, False
+        return False, False, False
     else:
         # print("=============Enabled rgb and colormap buttons=============")
-        return True, True
+        return True, True, True
 
 
 # @app.callback(

@@ -111,7 +111,7 @@ def return_layout(basic_config, slice_index):
                                                 children=[
                                                     dmc.Center(
                                                         dmc.Text(
-                                                            "Select brain structure(s)",
+                                                            "Select up to 3 brain structures. To see the whole brain, select root",
                                                             size="xl",
                                                         )
                                                     ),
@@ -830,7 +830,7 @@ def page_4_plot_graph_volume(
     if len(set_id) == 0:
         set_id = None
 
-    decrease_resolution_factor = 3
+    decrease_resolution_factor = 2
 
     logging.info(
         "For the computation of 3D volume, decrease_resolution_factor is "

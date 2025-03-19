@@ -23,6 +23,10 @@ sm341all_method1.html
 test.html
 
 assets/
+
+annotation/
+mouse_connectivity_manifest.json
+structures.json
 celltype_data/
 gene_data/
 grayscale_image.npy

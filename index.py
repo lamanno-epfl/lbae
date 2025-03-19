@@ -66,16 +66,19 @@ def return_main_content():
             # # Record the state of the range sliders for low and high resolution spectra in page 2
             # dcc.Store(id="boundaries-low-resolution-mz-plot"),
             # dcc.Store(id="boundaries-high-resolution-mz-plot"),
+            
             # Record the lipids selected in page 2
             dcc.Store(id="page-2-selected-lipid-1", data=-1),
             dcc.Store(id="page-2-selected-lipid-2", data=-1),
             dcc.Store(id="page-2-selected-lipid-3", data=-1),
             dcc.Store(id="page-2-last-selected-lipids", data=[]),
-            # Record the lipid programs selected in page 5
+            
+            # Record the lipid programs selected in page 2bis
             dcc.Store(id="page-2bis-selected-lp-1", data=-1),
             dcc.Store(id="page-2bis-selected-lp-2", data=-1),
             dcc.Store(id="page-2bis-selected-lp-3", data=-1),
             dcc.Store(id="page-2bis-last-selected-lps", data=[]),
+
             # Record the lipizones selected in page 6
             dcc.Store(id="page-6-selected-lipizone-1", data=-1),
             dcc.Store(id="page-6-selected-lipizone-2", data=-1),
@@ -90,6 +93,12 @@ def return_main_content():
             dcc.Store(id="page-4-selected-region-2", data=""),
             dcc.Store(id="page-4-selected-region-3", data=""),
             dcc.Store(id="page-4-last-selected-lipids", data=[]),
+            
+            # Record the lipids selected in page 3
+            dcc.Store(id="page-3-selected-lipid-1", data=-1),
+            dcc.Store(id="page-3-selected-lipid-2", data=-1),
+            dcc.Store(id="page-3-selected-lipid-3", data=-1),
+            dcc.Store(id="page-3-last-selected-lipids", data=[]),
             # Record the shapes drawn in page 3
             dcc.Store(id="dcc-store-color-mask", data=[]),
             dcc.Store(id="dcc-store-reset", data=False),
@@ -102,6 +111,7 @@ def return_main_content():
             dcc.Store(id="dcc-store-list-mz-spectra", data=[]),
             # Record the lipids expressed in the region in page 3
             dcc.Store(id="page-3-dcc-store-lipids-region", data=[]),
+            
             # Actual app layout
             html.Div(
                 children=[
@@ -406,7 +416,7 @@ def return_validation_layout(main_content, initial_slice=1):
             lipid_selection.return_layout(basic_config, initial_slice),
             lp_selection.return_layout(basic_config, initial_slice),
             lipizones_selection.return_layout(basic_config, initial_slice),
-            # region_analysis.return_layout(basic_config, initial_slice),
+            region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
             lipizones_exploration.return_layout(basic_config, initial_slice),
             threeD_lipizones.return_layout(basic_config, initial_slice),
@@ -447,8 +457,8 @@ def render_page_content(pathname, slice_index, brain):
     elif pathname == "/id-cards":
         page = id_cards.return_layout(basic_config, slice_index)
 
-    # elif pathname == "/region-analysis":
-    #     page = region_analysis.return_layout(basic_config, slice_index)
+    elif pathname == "/region-analysis":
+        page = region_analysis.return_layout(basic_config, slice_index)
 
     elif pathname == "/3D-exploration":
         page = threeD_exploration.return_layout(basic_config, slice_index)

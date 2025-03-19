@@ -674,10 +674,10 @@ class Figures:
                 slice_index.
         """
         logging.info("Entering compute_image_per_lipid")
-        print("===================== entering compute_image_per_lipid ===========================")
-        print("RGB_format:", RGB_format)
-        print("lipid_name:", lipid_name)
-        print("slice_index:", slice_index)
+        # print("===================== entering compute_image_per_lipid ===========================")
+        # print("RGB_format:", RGB_format)
+        # print("lipid_name:", lipid_name)
+        # print("slice_index:", slice_index)
 
         # Get image from raw mass spec data
         # image = compute_thread_safe_function(
@@ -700,7 +700,7 @@ class Figures:
 
         # print all the attributes and methods of the data object
         # print the class of the data object
-        print(f"self._data: {type(self._data)}")
+        # print(f"self._data: {type(self._data)}")
         
         image = self._data.extract_lipid_image(slice_index, lipid_name)
         # print("\nimage.min():", np.nanmin(image))
@@ -749,6 +749,7 @@ class Figures:
         #     image = project_image(
         #         slice_index, image, self._atlas.array_projection_correspondence_corrected
         #     )
+        # print("image before returning:", image)
         return image
 
     def compute_normalization_factor_across_slices(self, cache_flask=None):
@@ -849,6 +850,7 @@ class Figures:
         draw=False,
         type_image=None,
         return_go_image=False,
+        overlay=None,
     ):
         """This function converts a numpy array into a base64 string, which can be returned
         directly, or itself be turned into a go.Image, which can be returned directly, or be
@@ -866,18 +868,19 @@ class Figures:
                 requirement (None). Defaults to None.
             return_go_image (bool, optional): If True, the go.Image is returned directly, before
                 being integrated to a Plotly Figure. Defaults to False.
-
+            overlay (np.ndarray, optional): An array representing the overlay to be added to the
+                image. Defaults to None.
         Returns:
             Depending on the inputted arguments, may either return a base64 string, a go.Image, or
                 a Plotly Figure.
         """
 
         logging.info("Converting image to string")
-        print("image.shape:", image.shape)
+        # print("image.shape:", image.shape)
 
         # Set optimize to False to gain computation time
         base64_string = convert_image_to_base64(
-            image, type=type_image, overlay=None, transparent_zeros=True, optimize=False
+            image, type=type_image, overlay=overlay, transparent_zeros=True, optimize=False
         )
 
         # Either return image directly
@@ -1002,6 +1005,7 @@ class Figures:
         # projected_image=True,
         return_base64_string=False,
         cache_flask=None,
+        overlay=None,
     ):
         """This function takes two boundaries and a slice index, and returns a heatmap of the lipid
         expressed in the slice whose m/z is between the two boundaries.
@@ -1041,7 +1045,7 @@ class Figures:
 
         # Compute corresponding figure
         fig = self.build_lipid_heatmap_from_image(
-            image, return_base64_string=return_base64_string, draw=draw
+            image, return_base64_string=return_base64_string, draw=draw, overlay=overlay
         )
 
         return fig
@@ -1202,7 +1206,7 @@ class Figures:
                 lipid_name=lipid_name,
                 cache_flask=cache_flask,
             ) if lipid_name is not None else np.full(self._data.image_shape, np.nan) #np.zeros(self._atlas.image_shape)
-            print("--------- image_temp ---------", np.isnan(image_temp).sum(), image_temp.shape[0] * image_temp.shape[1])
+            # print("--------- image_temp ---------", np.isnan(image_temp).sum(), image_temp.shape[0] * image_temp.shape[1])
             # if image_temp is not None:
             #     image += image_temp
 
@@ -1237,6 +1241,7 @@ class Figures:
         ll_lipid_names=None,
         return_base64_string=False,
         cache_flask=None,
+        overlay=None,
     ):
         """This function is very similar to compute_heatmap_per_lipid_selection, but it returns a
         RGB image instead of a heatmap.
@@ -1306,6 +1311,7 @@ class Figures:
             draw=False,
             type_image="RGB",
             return_go_image=return_image,
+            overlay=overlay,
         )
 
     # def compute_spectrum_low_res(self, slice_index, annotations=None):
@@ -1810,7 +1816,7 @@ class Figures:
         lipid_path = f"/data/luca/lipidatlas/ManuscriptAnalysisRound3/3d_interpolated_native/{lipid_name}interpolation_log.npy"
         np3d = np.load(lipid_path)
 
-        print(downsample_factor)
+        # print(downsample_factor)
 
         # CRITICAL: Use the same downsampling factor for both datasets
         # Get root data with the same downsampling factor
@@ -1840,7 +1846,7 @@ class Figures:
             # If no filtering, use the downsampled data as is
             sub_np3d_clean = sub_np3d
 
-        print(sub_np3d_clean.shape)
+        # print(sub_np3d_clean.shape)
 
         # Create coordinate grid for lipid data
         z, y, x = np.indices(sub_np3d_clean.shape)

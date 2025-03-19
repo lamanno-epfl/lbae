@@ -95,6 +95,7 @@ def return_layout(basic_config, slice_index):
                             },
                             class_name="position-absolute",
                             children=[
+                                dmc.Text("Choose up to 3 lipids", size="lg"),
                                 dmc.Group(
                                     spacing="xs",
                                     align="flex-start",
@@ -102,12 +103,6 @@ def return_layout(basic_config, slice_index):
                                         dmc.MultiSelect(
                                             id="page-2-dropdown-lipids",
                                             data=data.return_lipid_options(),
-                                            # storage.return_shelved_object(
-                                            #     "annotations",
-                                            #     "lipid_options",
-                                            #     force_update=False,
-                                            #     compute_function=data.return_lipid_options,
-                                            # ),
                                             value=['SM 34:1;O2'],
                                             searchable=True,
                                             nothingFound="No lipid found",
@@ -198,86 +193,6 @@ def return_layout(basic_config, slice_index):
                             class_name="d-none",
                             style={"right": "1%", "top": "8em"},
                         ),
-                        # dmc.Group(
-                        #     spacing="xs",
-                        #     align="flex-end",
-                        #     children=[
-                        #         dmc.Group(
-                        #             direction="column",
-                        #             spacing=0,
-                        #             children=[
-                        #                 dmc.Tooltip(
-                        #                     wrapLines=True,
-                        #                     width=220,
-                        #                     withArrow=True,
-                        #                     transition="fade",
-                        #                     transitionDuration=200,
-                        #                     label="Your selection can't exceed a range of "
-                        #                     + "10m/z, and must be comprised in-between 400 "
-                        #                     + "and 1600.",
-                        #                     children=[
-                        #                         dmc.NumberInput(
-                        #                             id="page-2-lower-bound",
-                        #                             min=380,
-                        #                             max=1600,
-                        #                             precision=3,
-                        #                             radius="md",
-                        #                             size="xs",
-                        #                             value=800,
-                        #                             hideControls=True,
-                        #                             label="Lower bound (m/z)",
-                        #                         ),
-                        #                     ],
-                        #                 ),
-                        #             ],
-                        #         ),
-                        #         dmc.Group(
-                        #             direction="column",
-                        #             spacing=0,
-                        #             children=[
-                        #                 dmc.Tooltip(
-                        #                     wrapLines=True,
-                        #                     width=220,
-                        #                     withArrow=True,
-                        #                     transition="fade",
-                        #                     transitionDuration=200,
-                        #                     label="Your selection can't exceed a range of "
-                        #                     + "10m/z, and must be comprised in-between"
-                        #                     + " 400 and 1600.",
-                        #                     children=[
-                        #                         dmc.NumberInput(
-                        #                             id="page-2-upper-bound",
-                        #                             min=380,
-                        #                             max=1600,
-                        #                             precision=3,
-                        #                             radius="md",
-                        #                             size="xs",
-                        #                             value=802,
-                        #                             hideControls=True,
-                        #                             label="Upper bound (m/z)",
-                        #                         ),
-                        #                     ],
-                        #                 ),
-                        #             ],
-                        #         ),
-                        #         dmc.Button(
-                        #             children="Display as colormap",
-                        #             id="page-2-button-bounds",
-                        #             variant="filled",
-                        #             color="cyan",
-                        #             radius="md",
-                        #             size="xs",
-                        #             compact=False,
-                        #             loading=False,
-                        #         ),
-                        #     ],
-                        #     style={
-                        #         "width": "35em",
-                        #         "left": "1%",
-                        #         "bottom": "4rem",
-                        #     },
-                        #     class_name="position-absolute",
-                        # ),
                         dmc.Group(
                             position="right",
                             direction="row",
@@ -290,29 +205,6 @@ def return_layout(basic_config, slice_index):
                             class_name="position-absolute",
                             spacing=0,
                             children=[
-                                # dmc.Button(
-                                #     children="Show zoomed-in spectrum",
-                                #     id="page-2-show-high-res-spectrum-button",
-                                #     variant="filled",
-                                #     disabled=False,
-                                #     color="cyan",
-                                #     radius="md",
-                                #     size="xs",
-                                #     compact=False,
-                                #     loading=False,
-                                # ),
-                                # dmc.Button(
-                                #     children="Show entire spectrum",
-                                #     id="page-2-show-low-res-spectrum-button",
-                                #     variant="filled",
-                                #     disabled=False,
-                                #     color="cyan",
-                                #     radius="md",
-                                #     size="xs",
-                                #     compact=False,
-                                #     loading=False,
-                                #     class_name="mt-1",
-                                # ),
                                 dmc.Button(
                                     children="Download data",
                                     id="page-2-download-data-button",
@@ -345,120 +237,6 @@ def return_layout(basic_config, slice_index):
                 ),
             ],
         ),
-        # html.Div(
-        #     children=[
-        #         dbc.Offcanvas(
-        #             id="page-2-drawer-low-res-spectra",
-        #             backdrop=True,
-        #             placement="end",
-        #             style={"width": "30%"},
-        #             children=[
-        #                 html.Div(
-        #                     className="loading-wrapper",
-        #                     style={"margin-top": "5%"},
-        #                     children=[
-        #                         dbc.Spinner(
-        #                             color="dark",
-        #                             children=[
-        #                                 html.Div(
-        #                                     children=[
-        #                                         dmc.Button(
-        #                                             children="Hide spectrum",
-        #                                             id="page-2-close-low-res-spectrum-button",
-        #                                             variant="filled",
-        #                                             disabled=False,
-        #                                             color="red",
-        #                                             radius="md",
-        #                                             size="xs",
-        #                                             compact=False,
-        #                                             loading=False,
-        #                                         ),
-        #                                         dcc.Graph(
-        #                                             id="page-2-graph-low-resolution-spectrum",
-        #                                             figure=figures.compute_spectrum_low_res(
-        #                                                 slice_index
-        #                                             ),
-        #                                             style={
-        #                                                 "height": 280,
-        #                                                 "width": "100%",
-        #                                             },
-        #                                             responsive=True,
-        #                                             config=basic_config
-        #                                             | {
-        #                                                 "toImageButtonOptions": {
-        #                                                     "format": "png",
-        #                                                     "filename": "full_spectrum_low_res",
-        #                                                     "scale": 2,
-        #                                                 }
-        #                                             },
-        #                                         ),
-        #                                     ],
-        #                                 ),
-        #                             ],
-        #                         ),
-        #                     ],
-        #                 ),
-        #             ],
-        #         ),
-        #         dbc.Offcanvas(
-        #             id="page-2-drawer-high-res-spectra",
-        #             backdrop=True,
-        #             placement="end",
-        #             style={"width": "30%"},
-        #             children=[
-        #                 html.Div(
-        #                     className="loading-wrapper",
-        #                     style={"margin-top": "5%"},
-        #                     children=[
-        #                         dbc.Spinner(
-        #                             color="dark",
-        #                             children=[
-        #                                 html.Div(
-        #                                     className="",
-        #                                     children=[
-        #                                         html.Div(
-        #                                             id="page-2-alert",
-        #                                             className="text-center mt-2",
-        #                                             children=html.Strong(
-        #                                                 children="Please select a lipid or zoom "
-        #                                                 + "more on the left graph to display the "
-        #                                                 + "high-resolution spectrum",
-        #                                                 style={"color": "#df5034"},
-        #                                             ),
-        #                                         ),
-        #                                     ],
-        #                                 ),
-        #                                 dmc.Button(
-        #                                     children="Hide spectrum",
-        #                                     id="page-2-close-high-res-spectrum-button",
-        #                                     variant="filled",
-        #                                     disabled=False,
-        #                                     color="red",
-        #                                     radius="md",
-        #                                     size="xs",
-        #                                     compact=False,
-        #                                     loading=False,
-        #                                 ),
-        #                                 dcc.Graph(
-        #                                     id="page-2-graph-high-resolution-spectrum",
-        #                                     style={"display": "none"},
-        #                                     config=basic_config
-        #                                     | {
-        #                                         "toImageButtonOptions": {
-        #                                             "format": "png",
-        #                                             "filename": "spectrum_selection_high_res",
-        #                                             "scale": 2,
-        #                                         }
-        #                                     },
-        #                                 ),
-        #                             ],
-        #                         ),
-        #                     ],
-        #                 ),
-        #             ],
-        #         ),
-        #     ],
-        # ),
     )
 
     return page
@@ -471,9 +249,8 @@ def return_layout(basic_config, slice_index):
 @app.callback(
     Output("page-2-graph-heatmap-mz-selection", "figure"),
     Output("page-2-badge-input", "children"),
+
     Input("main-slider", "data"),
-    # Input("boundaries-high-resolution-mz-plot", "data"),
-    # Input("boundaries-low-resolution-mz-plot", "data"),
     Input("page-2-selected-lipid-1", "data"),
     Input("page-2-selected-lipid-2", "data"),
     Input("page-2-selected-lipid-3", "data"),
@@ -485,12 +262,9 @@ def return_layout(basic_config, slice_index):
     # State("page-2-lower-bound", "value"),
     # State("page-2-upper-bound", "value"),
     State("page-2-badge-input", "children"),
-    # Input("page-2-toggle-apply-transform", "checked"),
 )
 def page_2_plot_graph_heatmap_mz_selection(
     slice_index,
-    # bound_high_res,
-    # bound_low_res,
     lipid_1_index,
     lipid_2_index,
     lipid_3_index,
@@ -502,7 +276,6 @@ def page_2_plot_graph_heatmap_mz_selection(
     # lb,
     # hb,
     graph_input,
-    # apply_transform,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
     print(f"\n========== page_2_plot_graph_heatmap_mz_selection ==========")
@@ -512,23 +285,11 @@ def page_2_plot_graph_heatmap_mz_selection(
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
     print(f"id_input: {id_input}")    
     print("graph_input:", graph_input)
     print("brain_id:", brain_id)
-
-    # # Case a two mz bounds values have been inputed
-    # if id_input == "page-2-button-bounds" or (
-    #     id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
-    # ):
-    #     if lb is not None and hb is not None:
-    #         lb, hb = float(lb), float(hb)
-    #         if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
-    #             return (
-    #                 figures.compute_heatmap_per_mz(slice_index, lb, hb, cache_flask=cache_flask),
-    #                 "Current input: " + "m/z boundaries",
-    #             )
-
-    #     return dash.no_update
+    print("value_input:", value_input)
 
     # If a lipid selection has been done
     if (
@@ -548,21 +309,7 @@ def page_2_plot_graph_heatmap_mz_selection(
             )
         )
     ):
-        print("--- option 1 ---")
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-            # Build the list of mz boundaries for each peak
-            # ll_lipid_bounds = [
-            #     [
-            #         (
-            #             float(data.get_annotations().iloc[index]["min"]),
-            #             float(data.get_annotations().iloc[index]["max"]),
-            #         )
-            #     ]
-            #     if index != -1
-            #     else None
-            #     for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-            # ]
-
             ll_lipid_names = [
                 # [
                     ' '.join([
@@ -581,23 +328,6 @@ def page_2_plot_graph_heatmap_mz_selection(
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
             # print("ll_lipid_names:", ll_lipid_names)
-
-            # # Check that annotations do not intercept with each other
-            # l_lipid_bounds_clean = [
-            #     x
-            #     for l_lipid_bounds in ll_lipid_bounds
-            #     if l_lipid_bounds is not None
-            #     for x in l_lipid_bounds
-            # ]
-            # if len(l_lipid_bounds_clean) >= 2:
-            #     l_t_bounds_sorted = sorted(l_lipid_bounds_clean)
-            #     for t_bounds_1, t_bounds_2 in zip(l_t_bounds_sorted[:-1], l_t_bounds_sorted[1:]):
-            #         if t_bounds_1[1] > t_bounds_2[0]:
-            #             logging.warning("Some pixel annotations intercept each other")
-
-            
-            # TODO : plotting a heatmap for more than one lipid is meaningless. 
-            # If more than one lipid is selected, only the rgb plot is available
             
             # Check if the current plot must be a heatmap
             if (
@@ -611,7 +341,6 @@ def page_2_plot_graph_heatmap_mz_selection(
                 #     and graph_input == "Current input: " + "Lipid selection colormap"
                 # )
             ):
-                print("--- option 1.1 ---")
                 # you also need to check that only one lipid is selected
                 if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
                     nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
@@ -621,7 +350,6 @@ def page_2_plot_graph_heatmap_mz_selection(
                         lipid_name=nonull_ll_lipid_names,
                         cache_flask=cache_flask,
                     )
-                    print("--- option 1.1.1 ---")
                     return (
                         figures.build_lipid_heatmap_from_image(
                             image, 
@@ -636,7 +364,6 @@ def page_2_plot_graph_heatmap_mz_selection(
                     "Current input: " + "Lipid selection colormap",
                 )
                 else:
-                    print("--- option 1.1.2 ---")
                     logging.info("Trying to plot a heatmap for more than one lipid, not possible. Return the rgb plot instead")
                     return (
                         figures.compute_rgb_image_per_lipid_selection(
@@ -654,12 +381,11 @@ def page_2_plot_graph_heatmap_mz_selection(
                     id_input == "main-slider"
                     and graph_input == "Current input: " + "Lipid selection RGB"
                 )
-                or (
-                    id_input == "page-2-toggle-apply-transform"
-                    and graph_input == "Current input: " + "Lipid selection RGB"
-                )
+                # or (
+                #     id_input == "page-2-toggle-apply-transform"
+                #     and graph_input == "Current input: " + "Lipid selection RGB"
+                # )
             ):
-                print("--- option 1.2 ---")
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
@@ -713,7 +439,6 @@ def page_2_plot_graph_heatmap_mz_selection(
             
             # Plot RBG By default
             else:
-                print("--- option 1.3 ---")
                 logging.info("Right before calling the graphing function")
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
@@ -728,7 +453,6 @@ def page_2_plot_graph_heatmap_mz_selection(
         elif (
             id_input == "main-slider" and graph_input == "Current input: "
         ):
-            print("--- option 2 ---")
             print(f"No lipid has been selected, the current lipid is SM 34:1;O2 and the slice is {slice_index}")
             return (
                 figures.compute_heatmap_per_lipid(slice_index, 
@@ -738,9 +462,8 @@ def page_2_plot_graph_heatmap_mz_selection(
                 "Current input: " + "SM 34:1;O2",
             )
         else:
-            print("--- option 3 ---")
-            # No lipid has been selected, return image from boundaries
-            # if lb is not None and hb is not None:
+            # No lipid has been selected
+            print(slice_index)
             return (
                 figures.compute_heatmap_per_lipid(slice_index, 
                                                 "SM 34:1;O2",
@@ -748,319 +471,10 @@ def page_2_plot_graph_heatmap_mz_selection(
                                                 cache_flask=cache_flask),
                 "Current input: " + "SM 34:1;O2", # + "m/z boundaries"
             )
-            # else:
-            #     return (
-            #         figures.compute_heatmap_per_mz(slice_index, 500, 500, cache_flask=cache_flask),
-            #         "Current input: " + "m/z boundaries",
-            #     )
-    # # Case trigger is range slider from high resolution spectrum
-    # if id_input == "boundaries-high-resolution-mz-plot" or (
-    #     id_input == "main-slider"
-    #     and graph_input == "Current input: " + "Selection from high-res m/z graph"
-    # ):
-    #     if bound_high_res is not None:
-    #         bound_high_res = json.loads(bound_high_res)
-    #         return (
-    #             figures.compute_heatmap_per_mz(
-    #                 slice_index,
-    #                 bound_high_res[0],
-    #                 bound_high_res[1],
-    #                 cache_flask=cache_flask,
-    #             ),
-    #             "Current input: " + "Selection from high-res m/z graph",
-    #         )
-
-    # # Case trigger is range slider from low resolution spectrum
-    # if id_input == "boundaries-low-resolution-mz-plot" or (
-    #     id_input == "main-slider"
-    #     and graph_input == "Current input: " + "Selection from low-res m/z graph"
-    # ):
-    #     if bound_low_res is not None:
-    #         bound_low_res = json.loads(bound_low_res)
-    #         return (
-    #             figures.compute_heatmap_per_mz(
-    #                 slice_index,
-    #                 bound_low_res[0],
-    #                 bound_low_res[1],
-    #                 cache_flask=cache_flask,
-    #             ),
-    #             "Current input: " + "Selection from low-res m/z graph",
-    #         )
 
     # If no trigger, the page has just been loaded, so load new figure with default parameters
     else:
         return dash.no_update
-
-
-# @app.callback(
-#     Output("page-2-graph-low-resolution-spectrum", "figure"),
-#     Input("main-slider", "data"),
-#     State("page-2-selected-lipid-1", "data"),
-#     State("page-2-selected-lipid-2", "data"),
-#     State("page-2-selected-lipid-3", "data"),
-#     Input("page-2-rgb-button", "n_clicks"),
-#     Input("page-2-colormap-button", "n_clicks"),
-#     Input("page-2-button-bounds", "n_clicks"),
-#     State("page-2-lower-bound", "value"),
-#     State("page-2-upper-bound", "value"),
-#     State("page-2-badge-input", "children"),
-#     State("page-2-graph-low-resolution-spectrum", "relayoutData"),
-# )
-# def page_2_plot_graph_low_res_spectrum(
-#     slice_index,
-#     lipid_1_index,
-#     lipid_2_index,
-#     lipid_3_index,
-#     n_clicks_rgb,
-#     n_clicks_colormap,
-#     n_clicks_button_bounds,
-#     lb,
-#     hb,
-#     graph_input,
-#     relayoutData,
-# ):
-#     """This callbacks generates the graph of the low resolution spectrum when the current input
-#     gets updated.""
-
-#     # Find out which input triggered the function
-#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-
-#     # If a lipid selection has been done
-#     if (
-#         id_input == "page-2-selected-lipid-1"
-#         or id_input == "page-2-selected-lipid-2"
-#         or id_input == "page-2-selected-lipid-3"
-#         or id_input == "page-2-rgb-button"
-#         or id_input == "page-2-colormap-button"
-#         or (
-#             id_input == "main-slider"
-#             and (
-#                 graph_input == "Current input: " + "Lipid selection colormap"
-#                 or graph_input == "Current input: " + "Lipid selection RGB"
-#             )
-#         )
-#     ):
-#         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-#             # build the list of mz boundaries for each peak
-#             l_lipid_bounds = [
-#                 (
-#                     float(data.get_annotations().iloc[index]["min"]),
-#                     float(data.get_annotations().iloc[index]["max"]),
-#                 )
-#                 if index != -1
-#                 else None
-#                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-#             ]
-#             return figures.compute_spectrum_low_res(slice_index, l_lipid_bounds)
-
-#         else:
-#             # Probably the page has just been loaded, so load new figure with default parameters
-#             return dash.no_update
-
-#     # Or if the plot has been updated from range or slider
-#     elif id_input == "page-2-button-bounds" or (
-#         id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
-#     ):
-#         lb, hb = float(lb), float(hb)
-#         if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
-#             l_lipid_bounds = [(lb, hb), None, None]
-#             return figures.compute_spectrum_low_res(slice_index, l_lipid_bounds)
-
-#     elif (
-#         id_input == "main-slider"
-#         and graph_input == "Current input: " + "Selection from low-res m/z graph"
-#     ):
-#         # TODO : find a way to set relayoutdata properly
-#         pass
-
-#     return dash.no_update
-
-
-# @app.callback(
-#     Output("boundaries-low-resolution-mz-plot", "data"),
-#     Input("page-2-graph-low-resolution-spectrum", "relayoutData"),
-#     State("main-slider", "data"),
-# )
-# def page_2_store_boundaries_mz_from_graph_low_res_spectrum(relayoutData, slice_index):
-#     """This callback stores in a dcc store the m/z boundaries of the low resolution spectrum when
-#     they are updated."""
-
-#     # If the plot has been updated from the low resolution spectrum
-#     if relayoutData is not None:
-#         if "xaxis.range[0]" in relayoutData:
-#             return json.dumps([relayoutData["xaxis.range[0]"], relayoutData["xaxis.range[1]"]])
-#         elif "xaxis.range" in relayoutData:
-#             return json.dumps(relayoutData["xaxis.range"])
-
-#         # If the range is re-initialized, need to explicitely pass the first
-#         # and last values of the spectrum to the figure
-#         elif "xaxis.autorange" in relayoutData:
-#             return json.dumps(
-#                 [
-#                     data.get_array_avg_spectrum_downsampled(slice_index)[0, 0].astype("float"),
-#                     data.get_array_avg_spectrum_downsampled(slice_index)[0, -1].astype("float"),
-#                 ]
-#             )
-
-#     # When the app is launched, or when the plot is displayed and autoresized,
-#     # no boundaries are passed not to update the heatmap for nothing
-#     return dash.no_update
-
-
-# @app.callback(
-#     Output("page-2-graph-high-resolution-spectrum", "figure"),
-#     Input("main-slider", "data"),
-#     Input("boundaries-low-resolution-mz-plot", "data"),
-#     Input("page-2-selected-lipid-1", "data"),
-#     Input("page-2-selected-lipid-2", "data"),
-#     Input("page-2-selected-lipid-3", "data"),
-#     Input("page-2-rgb-button", "n_clicks"),
-#     Input("page-2-colormap-button", "n_clicks"),
-#     Input("page-2-button-bounds", "n_clicks"),
-#     State("page-2-lower-bound", "value"),
-#     State("page-2-upper-bound", "value"),
-#     State("page-2-badge-input", "children"),
-#     Input("page-2-toggle-apply-transform", "checked"),
-# )
-# def page_2_plot_graph_high_res_spectrum(
-#     slice_index,
-#     bound_high_res,
-#     lipid_1_index,
-#     lipid_2_index,
-#     lipid_3_index,
-#     n_clicks_rgb,
-#     n_clicks_colormap,
-#     n_clicks_button_bounds,
-#     lb,
-#     hb,
-#     graph_input,
-#     apply_transform,
-# ):
-#     """This callback generates the graph of the high resolution spectrum when the current input has
-#     a small enough m/z range."""
-
-#     # Find out which input triggered the function
-#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-
-#     # If a lipid selection has been done
-#     if (
-#         id_input == "page-2-selected-lipid-1"
-#         or id_input == "page-2-selected-lipid-2"
-#         or id_input == "page-2-selected-lipid-3"
-#         or id_input == "page-2-rgb-button"
-#         or id_input == "page-2-colormap-button"
-#         or id_input == "page-2-last-selected-lipids"
-#         or (
-#             id_input == "main-slider"
-#             and (
-#                 graph_input == "Current input: " + "Lipid selection colormap"
-#                 or graph_input == "Current input: " + "Lipid selection RGB"
-#             )
-#         )
-#     ):
-#         # If at least one lipid index has been recorded
-#         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-#             # Build the list of mz boundaries for each peak
-#             l_indexes = [lipid_1_index, lipid_2_index, lipid_3_index]
-#             l_lipid_bounds = [
-#                 (
-#                     float(data.get_annotations().iloc[index]["min"]),
-#                     float(data.get_annotations().iloc[index]["max"]),
-#                 )
-#                 if index != -1
-#                 else None
-#                 for index in l_indexes
-#             ]
-#             if lipid_3_index >= 0:
-#                 current_lipid_index = 2
-#             elif lipid_2_index >= 0:
-#                 current_lipid_index = 1
-#             else:
-#                 current_lipid_index = 0
-#             return figures.compute_spectrum_high_res(
-#                 slice_index,
-#                 l_lipid_bounds[current_lipid_index][0] - 10**-2,
-#                 l_lipid_bounds[current_lipid_index][1] + 10**-2,
-#                 annotations=l_lipid_bounds,
-#                 force_xlim=True,
-#                 standardization=apply_transform,
-#                 cache_flask=cache_flask,
-#             )
-
-#     # If the user has selected a new m/z range
-#     elif id_input == "page-2-button-bounds" or (
-#         id_input == "main-slider" and graph_input == "Current input: " + "m/z boundaries"
-#     ):
-#         lb, hb = float(lb), float(hb)
-#         if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
-#             # l_lipid_bounds = [(lb, hb), None, None]
-#             return figures.compute_spectrum_high_res(
-#                 slice_index,
-#                 lb - 10**-2,
-#                 hb + 10**-2,
-#                 force_xlim=True,  # annotations=l_lipid_bounds,
-#                 standardization=apply_transform,
-#                 cache_flask=cache_flask,
-#             )
-
-#     # If the figure is created at app launch or after load button is cliked, or with an empty lipid
-#     # selection, don't plot anything
-#     elif "page-2-selected-lipid" in id_input:
-#         return dash.no_update
-
-#     # Otherwise, if new boundaries have been selected on the low-resolution spectrum
-#     elif id_input == "boundaries-low-resolution-mz-plot" and bound_high_res is not None:
-#         bound_high_res = json.loads(bound_high_res)
-
-#         # Case the zoom is high enough
-#         if bound_high_res[1] - bound_high_res[0] <= 3:
-#             return figures.compute_spectrum_high_res(
-#                 slice_index,
-#                 bound_high_res[0],
-#                 bound_high_res[1],
-#                 standardization=apply_transform,
-#                 cache_flask=cache_flask,
-#             )
-#         # Otherwise just return default (empty) graph
-#         else:
-#             return dash.no_update
-
-#     # The page has just been loaded, no spectrum is displayed
-#     return dash.no_update
-
-
-# @app.callback(
-#     Output("boundaries-high-resolution-mz-plot", "data"),
-#     Input("page-2-graph-high-resolution-spectrum", "relayoutData"),
-#     Input("boundaries-low-resolution-mz-plot", "data"),
-# )
-# def page_2_store_boundaries_mz_from_graph_high_res_spectrum(relayoutData, bound_low_res):
-#     """This callback records the m/z boundaries of the high resolution spectrum in a dcc store."""
-
-#     # Primarily update high-res boundaries with high-res range slider
-#     if relayoutData is not None:
-#         if "xaxis.range[0]" in relayoutData:
-#             return json.dumps([relayoutData["xaxis.range[0]"], relayoutData["xaxis.range[1]"]])
-#         elif "xaxis.range" in relayoutData:
-#             return json.dumps(relayoutData["xaxis.range"])
-
-#         # If the range is re-initialized, need to explicitely pass the low-res value of the slider
-#         elif "xaxis.autorange" in relayoutData:
-#             if bound_low_res is not None:
-#                 bound_low_res = json.loads(bound_low_res)
-#                 if bound_low_res[1] - bound_low_res[0] <= 3:
-#                     return json.dumps(bound_low_res)
-
-#     # But also needs to be updated when low-res slider is changed and is zoomed enough
-#     elif bound_low_res is not None:
-#         bound_low_res = json.loads(bound_low_res)
-#         if bound_low_res[1] - bound_low_res[0] <= 3:
-#             return json.dumps(bound_low_res)
-
-#     # Page has just been loaded, do nothing
-#     else:
-#         return dash.no_update
-
 
 @app.callback(
     Output("page-2-badge-lipid-1", "children"),
@@ -1186,7 +600,6 @@ def page_2_add_toast_selection(
     if (
         id_input == "page-2-dropdown-lipids" and l_lipid_names is not None
     ) or id_input == "main-slider":
-
         # If a new slice has been selected
         if id_input == "main-slider":
             # print(f"header_1: {header_1}")
@@ -1267,8 +680,8 @@ def page_2_add_toast_selection(
             else:   
                 name = "_".join(l_lipid_names[-1].split(" ")[::2])
                 structure = "_".join(l_lipid_names[-1].split(" ")[1::2])
-            # print(f"name: {name}")
-            # print(f"structure: {structure}")
+            print(f"name: {name}")
+            print(f"structure: {structure}")
 
             # Find lipid location
             l_lipid_loc = (
@@ -1342,16 +755,6 @@ def page_2_add_toast_selection(
                     "Changes have been made to the lipid selection or indexation,"
                     + " propagating callback."
                 )
-                # print("just before returning")
-                # print(f"header_1: {header_1}")
-                # print(f"header_2: {header_2}")
-                # print(f"header_3: {header_3}")
-                # print(f"lipid_1_index: {lipid_1_index}")
-                # print(f"lipid_2_index: {lipid_2_index}")
-                # print(f"lipid_3_index: {lipid_3_index}")
-                # print(f"class_name_badge_1: {class_name_badge_1}")
-                # print(f"class_name_badge_2: {class_name_badge_2}")
-                # print(f"class_name_badge_3: {class_name_badge_3}")
                 return (
                     header_1,
                     header_2,
@@ -1368,31 +771,6 @@ def page_2_add_toast_selection(
                 return dash.no_update
 
     return dash.no_update
-
-
-# @app.callback(
-#     Output("page-2-graph-high-resolution-spectrum", "style"),
-#     Input("page-2-graph-high-resolution-spectrum", "figure"),
-# )
-# def page_2_display_high_res_mz_plot(figure):
-#     """This callback is used to turn visible the high-resolution m/z plot."""
-#     if figure is not None:
-#         if figure["data"][0]["x"] != [[]]:
-#             return {"height": 280}
-
-#     return {"display": "none"}
-
-
-# @app.callback(
-#     Output("page-2-alert", "style"),
-#     Input("page-2-graph-high-resolution-spectrum", "figure"),
-# )
-# def page_2_display_alert(figure):
-#     """This callback is used to turn visible the alert regarding the high-res m/z plot."""
-#     if figure is not None:
-#         if figure["data"][0]["x"] != [[]]:
-#             return {"display": "none"}
-#     return {}
 
 
 @app.callback(
@@ -1521,25 +899,6 @@ def page_2_download(
 
     return dash.no_update
 
-
-clientside_callback(
-    """
-    function(n_clicks){
-        if(n_clicks > 0){
-            domtoimage.toBlob(document.getElementById('page-2-graph-heatmap-mz-selection'))
-                .then(function (blob) {
-                    window.saveAs(blob, 'lipid_selection_plot.png');
-                }
-            );
-        }
-    }
-    """,
-    Output("page-2-download-image-button", "n_clicks"),
-    Input("page-2-download-image-button", "n_clicks"),
-)
-"""This clientside callback is used to download the current heatmap."""
-
-
 @app.callback(
     Output("page-2-rgb-button", "disabled"),
     Output("page-2-colormap-button", "disabled"),
@@ -1566,44 +925,19 @@ def page_2_active_download(lipid_1_index, lipid_2_index, lipid_3_index):
         # print("=============Enabled rgb and colormap buttons=============")
         return True, True, True
 
-
-# @app.callback(
-#     Output("page-2-button-bounds", "disabled"),
-#     Input("page-2-lower-bound", "value"),
-#     Input("page-2-upper-bound", "value"),
-# )
-# def page_2_button_window(lb, hb):
-#     """This callaback is used to toggle on/off the display heatmap from bounds button."""
-
-#     # Check that the user has inputted something
-#     if lb is not None and hb is not None:
-#         lb, hb = float(lb), float(hb)
-#         if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
-#             return False
-#     return True
-
-
-# @app.callback(
-#     Output("page-2-drawer-low-res-spectra", "is_open"),
-#     Input("page-2-show-low-res-spectrum-button", "n_clicks"),
-#     Input("page-2-close-low-res-spectrum-button", "n_clicks"),
-#     [State("page-2-drawer-low-res-spectra", "is_open")],
-# )
-# def toggle_offcanvas(n1, n2, is_open):
-#     """This callback is used to toggle the low-res spectra drawer."""
-#     if n1 or n2:
-#         return not is_open
-#     return is_open
-
-
-# @app.callback(
-#     Output("page-2-drawer-high-res-spectra", "is_open"),
-#     Input("page-2-show-high-res-spectrum-button", "n_clicks"),
-#     Input("page-2-close-high-res-spectrum-button", "n_clicks"),
-#     [State("page-2-drawer-high-res-spectra", "is_open")],
-# )
-# def toggle_offcanvas_high_res(n1, n2, is_open):
-#     """This callback is used to toggle the high-res spectra drawer."""
-#     if n1 or n2:
-#         return not is_open
-#     return is_open
+clientside_callback(
+    """
+    function(n_clicks){
+        if(n_clicks > 0){
+            domtoimage.toBlob(document.getElementById('page-2-graph-heatmap-mz-selection'))
+                .then(function (blob) {
+                    window.saveAs(blob, 'lipid_selection_plot.png');
+                }
+            );
+        }
+    }
+    """,
+    Output("page-2-download-image-button", "n_clicks"),
+    Input("page-2-download-image-button", "n_clicks"),
+)
+"""This clientside callback is used to download the current heatmap."""

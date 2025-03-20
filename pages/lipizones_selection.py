@@ -116,12 +116,12 @@ def compute_hybrid_image(hex_colors_to_highlight, brain_id="ReferenceAtlas"):
 
     return padded_image
 
-lipizonenames = pd.read_csv("lipizonename2color.csv", index_col=0)
+lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)
 lipizonenames = lipizonenames['lipizone_names'].values
-lipizonecolors = pd.read_csv("lipizonename2color.csv", index_col=0)
+lipizonecolors = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)
 lipizonecolors = lipizonecolors.to_dict(orient="records")
 lipizonecolors = {row["lipizone_names"]: row["lipizone_color"] for row in lipizonecolors}
-annotations = pd.read_csv("./data/annotations/lipizones_annotation.csv")
+annotations = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_annotation.csv")
 
 # def build_tree_from_csv(csv_path):
 #     df = pd.read_csv(csv_path)
@@ -151,7 +151,7 @@ annotations = pd.read_csv("./data/annotations/lipizones_annotation.csv")
 # # Build the hierarchical data from your CSV file
 # hierarchy_data = build_tree_from_csv("./data/annotations/lipizones_hierarchy.csv")
 
-df_hierarchy = pd.read_csv("./data/annotations/lipizones_hierarchy.csv")
+df_hierarchy = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
 
 def return_layout(basic_config, slice_index):
     # Precompute your level_1 options:

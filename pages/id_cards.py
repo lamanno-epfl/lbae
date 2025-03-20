@@ -30,11 +30,11 @@ from app import app, figures, data, storage, cache_flask
 ID_CARDS_PATH = "/data/luca/lipidatlas/ManuscriptAnalysisRound3/ID_cards"
 
 # Load lipizone names from CSV
-lipizonenames = pd.read_csv("lipizonename2color.csv", index_col=0)
+lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)
 lipizonenames = lipizonenames['lipizone_names'].values
 
 # Load hierarchy data for the multiselect
-df_hierarchy = pd.read_csv("./data/annotations/lipizones_hierarchy.csv")
+df_hierarchy = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
 
 # ==================================================================================================
 # --- Layout

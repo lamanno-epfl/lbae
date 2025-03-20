@@ -53,21 +53,21 @@ ID_CARDS_PATH = "/data/luca/lipidatlas/ManuscriptAnalysisRound3/ID_cards"
 
 # Define paths for the sample/not sample data
 if SAMPLE_DATA:
-    path_data = "data_sample/whole_dataset/"
-    path_program_data = "data_sample/program_data/"
-    path_annotations = "data_sample/annotations/"
-    path_db = "data_sample/app_data/data.db"
-    cache_dir = "data_sample/cache/"
+    path_data = "/data/LBA_DATA/lbae/data_sample/whole_dataset/"
+    path_program_data = "/data/LBA_DATA/lbae/data_sample/program_data/"
+    path_annotations = "/data/LBA_DATA/lbae/data_sample/annotations/"
+    path_db = "/data/LBA_DATA/lbae/data_sample/app_data/data.db"
+    cache_dir = "/data/LBA_DATA/lbae/data_sample/cache/"
 else:
     # path_data = "data/whole_dataset/"
     # path_annotations = "data/annotations/"
     # path_db = "data/app_data/data.db"
-    cache_dir = "data/cache/"
-    path_data = "./new_data/"
-    path_grid_data = "./grid_data/"
-    path_program_data = "./program_data/"
-    path_annotations = "./data/annotations/"
-    path_db = "./data/app_data/data.db"
+    cache_dir = "/data/LBA_DATA/lbae/data/cache/"
+    path_data = "/data/LBA_DATA/lbae/new_data/"
+    path_grid_data = "/data/LBA_DATA/lbae/grid_data/"
+    path_program_data = "/data/LBA_DATA/lbae/program_data/"
+    path_annotations = "/data/LBA_DATA/lbae/data/annotations/"
+    path_db = "/data/LBA_DATA/lbae/data/app_data/data.db"
 
 # # Load shelve database
 # storage = Storage(path_db)

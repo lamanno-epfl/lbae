@@ -653,7 +653,7 @@ def page_6_plot_graph_heatmap_mz_selection(
                         draw=False,
                         type_image="RGB",
                         return_go_image=False,
-                    ), ""
+                    ), "Current input: " + "Lipid selection RGB"
                 except KeyError as e:
                     # If section data not found, fall back to the hybrid image
                     logging.warning(f"Section data not found: {e}. Using hybrid image instead.")
@@ -663,7 +663,7 @@ def page_6_plot_graph_heatmap_mz_selection(
                         draw=False,
                         type_image="RGB",
                         return_go_image=False,
-                    ), ""
+                    ), "Current input: " + "Lipid selection RGB"
 
             # Or if the current plot must be all sections
             elif (

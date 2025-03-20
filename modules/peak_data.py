@@ -170,6 +170,15 @@ class PeakData:
         Returns:
             2D numpy array with the peak distribution or None if not found
         """
+
+        df_percentiles = pd.read_csv('peak_percentiles.csv')
+        df_percentiles = df_percentiles.loc[df_percentiles["peak"].astype(str) == str(peak_name), :]
+        vmin = df_percentiles["vmin"].values[0] if not df_percentiles.empty else 0
+        vmax = df_percentiles["vmax"].values[0] if not df_percentiles.empty else 1
+
+        print(f"vmin: {vmin}")
+        print(f"vmax: {vmax}")
+
         try:
             # Use the parameters passed to the function
             peak_data = self.get_peak_image(slice_index, peak_name)
@@ -220,8 +229,13 @@ class PeakData:
                     nan_count_after = np.isnan(filled_arr).sum()
                     print(f"After filling: {nan_count_after} NaN values remain")
 
-                    return filled_arr
+                    arr = filled_arr
 
+            # Normalize the image
+            arr = (arr - vmin) / (vmax - vmin)  
+            # Clip the values below 0 or above 1
+            arr = np.clip(arr, 0, 1)
+            
             return arr
 
         except Exception as e:
@@ -383,6 +397,22 @@ class PeakData:
             }
             for ln in self.get_available_peaks(1)
         ]
+
+    def extract_lipid_image(self, slice_index, lipid_name, fill_holes=True):
+        """Extract a lipid image from peak data with optional hole filling.
+        
+        This method is a wrapper around extract_peak_image to make it compatible
+        with the Figures class interface.
+        
+        Args:
+            slice_index: Index of the slice
+            lipid_name: Name of the lipid (peak)
+            fill_holes: Whether to fill holes using nearest neighbor interpolation
+            
+        Returns:
+            2D numpy array with the lipid distribution or None if not found
+        """
+        return self.extract_peak_image(slice_index, lipid_name, fill_holes)
 
     """
     def empty_database(self):

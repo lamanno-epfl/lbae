@@ -6,11 +6,41 @@ import pandas as pd
 from dataclasses import dataclass
 from time import time
 from typing import Dict, List, Optional, Tuple
+from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
+import numpy as np
+from scipy.ndimage import generic_filter
+from collections import Counter
+import pickle
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
 ABA_DIM = (528, 320, 456)
+ABA_CONTOURS = np.load("/data/francesca/lbae/data/atlas/eroded_annot.npy")
+METADATA = pd.read_parquet("/data/LBA_DATA/Explorer2Paper/maindata_2.parquet").iloc[:, 173:221]
+ACRONYM_MASKS = pickle.load(open("/data/francesca/lbae/data/atlas/acronyms_masks.pkl", "rb"))
+
+def majority_vote_9x9(window):
+    # The window is flattened (9*9=81 elements); the center pixel is at index 40.
+    center_index = len(window) // 2  
+    center_value = window[center_index]
+    
+    # If the center is not NaN, keep its original value.
+    if not np.isnan(center_value):
+        return center_value
+    
+    # Exclude NaN values from the window.
+    valid = window[~np.isnan(window)]
+    if valid.size == 0:
+        # If all neighbors are NaN, we return NaN (or you could choose another default).
+        return np.nan
+    
+    # Count the occurrences of each valid value.
+    counts = Counter(valid)
+    # Get the most common value (the mode).
+    mode, _ = counts.most_common(1)[0]
+    return mode
+
 
 @dataclass
 class LipidImage:
@@ -57,6 +87,11 @@ class MaldiData:
         self._init_metadata()
 
         self.image_shape = (ABA_DIM[1], ABA_DIM[2])
+
+        self.acronyms_masks = ACRONYM_MASKS
+        # for slice_idx in self.get_slice_list():
+        #     # append get_acronym_mask to the list
+        #     self.acronyms_masks[slice_idx] = self.get_acronym_mask(slice_idx)
 
     def get_annotations(self) -> pd.DataFrame:
         return self._df_annotations
@@ -159,6 +194,121 @@ class MaldiData:
             return brain_info[brain_id][slice_index]
             # Use the parameters passed to the function
 
+    def get_acronym_mask(self, slice_index, fill_holes=True):
+        """
+        Retrieves the acronyms mask for a given slice index.
+        """
+        # print(f"slice_index: {slice_index}")
+        # z_coord = METADATA[METADATA["SectionID"] == slice_index]["x_index"].values
+        # take the acronyms of the rows of metadata that have SectionID == slice_index
+        acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "acronym", "x_index"]].values
+        acronym_scatter = pd.DataFrame(acronym_points, columns=["x", "y", "acronym", "x_index"])
+
+        # print unique values of the third column
+        # if the elements of acronym_scatter["acronym"].values are None, replace them with "undefined"
+        if slice_index in [33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0]:
+            return np.full(self.image_shape, 'Undefined')
+        max_len = max(len(s) for s in acronym_scatter["acronym"].values)
+        arr = np.full(self.image_shape, 'Undefined', dtype=f'U{max(max_len, len("Undefined"))}')  # Adjust dimensions if needed
+
+        # Convert coordinates to integers for indexing
+        x_indices = acronym_scatter["x"].astype(int).values
+        y_indices = acronym_scatter["y"].astype(int).values
+        # Ensure indices are within bounds
+        valid_indices = (
+            (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
+        )
+
+        # Fill the array with values at the specified coordinates
+        arr[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["acronym"].values[
+            valid_indices
+        ]
+        arr_z = np.full(self.image_shape, np.nan)
+        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["x_index"].values[
+            valid_indices
+        ]
+        arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
+
+        mcc = MouseConnectivityCache(manifest_file='mouse_connectivity_manifest.json')
+        structure_tree = mcc.get_structure_tree()
+
+        # pixels = pixels
+        annotation, _ = mcc.get_annotation_volume()
+
+        # Check if we need to fill holes
+        if fill_holes:
+            # Count how many NaN values we have
+            # nan_count_before = (arr == 'Undefined').sum()
+            # print(f"Found {nan_count_before} NaN values (holes) in the image")
+
+            for i in range(arr.shape[0]):
+                for j in range(arr.shape[1]):
+                    if arr[i,j] == 'Undefined':
+                        x_index = arr_z[i,j]
+                        # x_index = z_coord[0]
+                        y_index = i
+                        z_index = j
+
+                    try:
+                        index = annotation[int(x_index), int(y_index), int(z_index)]
+                        brain_region = structure_tree.get_structures_by_id([index])[0]
+                    
+                        if brain_region is not None:
+                            arr[y_index, z_index] = brain_region['acronym']
+                    except:
+                        continue
+                        # print error message
+                        # print(f"Error at {i}, {j}")
+
+        return arr
+
+    def get_aba_contours(self, slice_index):
+        """
+        Retrieves the contours of the ABA brain for a given slice.
+        
+        Args:
+            slice_index: Index of the slice to retrieve
+            
+        Returns:
+            array_image_atlas: RGBA image array of shape (320, 456, 4) containing the contours
+                            in orange (255, 165, 0) with transparency 243 for lines and 255
+                            for background
+        """
+        acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "x_index"]].values
+        acronym_scatter = pd.DataFrame(acronym_points, columns=["x", "y", "x_index"])
+
+        
+        # Convert coordinates to integers for indexing
+        x_indices = acronym_scatter["x"].astype(int).values
+        y_indices = acronym_scatter["y"].astype(int).values
+        # Ensure indices are within bounds
+        valid_indices = (
+            (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
+        )
+
+        arr_z = np.full(self.image_shape, np.nan)
+        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["x_index"].values[
+            valid_indices
+        ]
+        arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
+
+        # define array_image_atlas as all values to be (255, 255, 255, 0)
+        array_image_atlas = np.ones((arr_z.shape[0], arr_z.shape[1], 4), dtype=np.uint8)
+        array_image_atlas[:, :, :3] = 255
+        array_image_atlas[:, :, 3] = 0
+
+        for i in range(arr_z.shape[0]):
+            for j in range(arr_z.shape[1]):
+                k = arr_z[i,j]
+                try:
+                    is_contour = ABA_CONTOURS[int(k), i, j] == 1
+                    if is_contour:
+                        array_image_atlas[i, j] = [255, 165, 0, 200]
+                except:
+                    continue
+        
+        return array_image_atlas
+
     def extract_lipid_image(self, slice_index, lipid_name, fill_holes=True):
         """Extract a lipid image from scatter data with optional hole filling.
 
@@ -193,8 +343,8 @@ class MaldiData:
             arr = np.full(self.image_shape, np.nan)  # Adjust dimensions if needed
 
             # Convert coordinates to integers for indexing
-            x_indices = scatter["x"].astype(int).values
-            y_indices = scatter["y"].astype(int).values
+            x_indices = scatter["x"].astype(int).values # z_index
+            y_indices = scatter["y"].astype(int).values # y_index
 
             # Ensure indices are within bounds
             valid_indices = (
@@ -398,6 +548,7 @@ class GridImageShelve:
         Initializes the shelve database in the given directory.
         """
         self.shelf_dir = shelf_dir
+        print("QUIIII shelf_dir:", self.shelf_dir)
         # Create the grid_data folder if it does not exist
         if not os.path.exists(shelf_dir):
             os.makedirs(shelf_dir)
@@ -481,6 +632,8 @@ class GridImageShelve:
             sample = self.get_brain_id_from_sliceindex(slice_index)
 
         key = f"{lipid}_{sample}_grid"
+        print("self.shelf_path:", self.shelf_path)
+        print("key:", key)
         with shelve.open(self.shelf_path) as db:
             if key in db:
                 return db[key]

@@ -40,3 +40,4 @@ lipizonename2color.csv
 lipizones_annotation.csv
 peak_annotation.csv
 data_sample/
+color_array_fullres.npy

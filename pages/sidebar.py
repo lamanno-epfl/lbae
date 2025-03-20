@@ -110,6 +110,26 @@ layout = html.Div(
                             target="sidebar-page-2bis",
                             placement="right",
                         ),
+                        # Link to page for peak-selection
+                        dbc.NavLink(
+                            href="/peak-selection",
+                            active="exact",
+                            children=[
+                                html.I(
+                                    id="sidebar-page-peak",
+                                    className="icon-lipid fs-5",
+                                    style={"margin-left": "0.7em"},
+                                )
+                            ],
+                            className="my-4",
+                        ),
+                        dbc.Tooltip(
+                            children=(
+                                "Analyse brain composition by peak selection"
+                            ),
+                            target="sidebar-page-peak",
+                            placement="right",
+                        ),
                         # Link to page 3
                         dbc.NavLink(
                             href="/region-analysis",
@@ -145,24 +165,6 @@ layout = html.Div(
                         dbc.Tooltip(
                             children="Analyse brain data in 3D",
                             target="sidebar-page-4",
-                            placement="right",
-                        ),
-                        # Link to lipizones exploration
-                        dbc.NavLink(
-                            href="/lipizones-exploration",
-                            active="exact",
-                            children=[
-                                html.I(
-                                    id="sidebar-page-5",
-                                    className="icon-chart-bar fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
-                            ],
-                            className="my-4",
-                        ),
-                        dbc.Tooltip(
-                            children="Explore lipizones visualization",
-                            target="sidebar-page-5",
                             placement="right",
                         ),
                         # Link to ID Cards

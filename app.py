@@ -32,6 +32,9 @@ logging.info("Memory use after MaldiData import" + logmem())
 from modules.program_data import LipiMapData
 logging.info("Memory use after LipiMapData import" + logmem())
 
+from modules.peak_data import PeakData
+logging.info("Memory use after PeakData import" + logmem())
+
 from modules.figures import Figures
 logging.info("Memory use after Figures import" + logmem())
 
@@ -101,6 +104,10 @@ grid_data = GridImageShelve(path_grid_data, path_annotations)
 logging.info("Loading program data..." + logmem())
 program_data = LipiMapData(path_program_data, path_annotations)
 
+# Load peak data
+logging.info("Loading peak data..." + logmem())
+peak_data = PeakData()
+
 # Load Atlas and Figures objects
 logging.info("Loading Atlas..." + logmem())
 atlas = Atlas(data, storage, resolution=25)
@@ -108,6 +115,7 @@ atlas = Atlas(data, storage, resolution=25)
 logging.info("Loading Figures..." + logmem())
 figures = Figures(data, storage, atlas)
 program_figures = Figures(program_data, storage, atlas)
+peak_figures = Figures(peak_data, storage, atlas)
 
 logging.info("Memory use after three main object have been instantiated" + logmem())
 
@@ -201,12 +209,12 @@ def display_page(pathname):
         return lipizones_selection.return_layout(basic_config, slice_index)
     elif pathname == "/lp-selection":
         return lp_selection.return_layout(basic_config, slice_index)
+    elif pathname == "/peak-selection":
+        return peak_selection.return_layout(basic_config, slice_index)
     elif pathname == "/region-analysis":
         return region_analysis.return_layout(basic_config, slice_index)
     elif pathname == "/3D-exploration":
         return threeD_exploration.return_layout(basic_config, slice_index)
-    elif pathname == "/lipizones-exploration":
-        return lipizones_exploration.return_layout(basic_config, slice_index)
     elif pathname == "/id-cards":
         return id_cards.return_layout(basic_config, slice_index)
     elif pathname == "/3D-lipizones":

@@ -1782,7 +1782,7 @@ class Figures:
         annotation_path=None,
         set_id_regions=None,
         downsample_factor=1,
-        opacity=0.1,
+        opacity=0.4,
         surface_count=15,  # Reduced from 40 to 15
         colorscale="Inferno",
     ):
@@ -1855,9 +1855,9 @@ class Figures:
         # This makes background transparent while highlighting important features
         opacityscale = [
             [0.0, 0.0],      # Fully transparent for background/low values
-            [0.3, 0.05],     # Very transparent for low values
-            [0.7, 0.2],      # More visible for higher values
-            [1.0, 0.5]       # Most visible for highest values
+            [0.3, 0.2],      # Increase from 0.05 to 0.2
+            [0.7, 0.5],      # Increase from 0.2 to 0.5
+            [1.0, 0.8]       # Increase from 0.5 to 0.8
         ]
 
         # Set up volume plot with lipid data
@@ -1883,22 +1883,34 @@ class Figures:
             margin=dict(t=0, r=0, b=0, l=0),
             scene=dict(
                 xaxis=dict(
-                    showticklabels=False,
-                    showgrid=False,
+                    showticklabels=True,
+                    showgrid=True,
                     zeroline=False,
                     backgroundcolor="rgba(0,0,0,0)",
+                    showline=False,
+                    tickmode="auto",
+                    nticks=5,  # Infrequent ticks
+                    gridcolor="rgba(255,255,255,0.1)",  # Light grid
                 ),
                 yaxis=dict(
-                    showticklabels=False,
-                    showgrid=False,
+                    showticklabels=True,
+                    showgrid=True,
                     zeroline=False,
                     backgroundcolor="rgba(0,0,0,0)",
+                    showline=False,
+                    tickmode="auto",
+                    nticks=5,  # Infrequent ticks
+                    gridcolor="rgba(255,255,255,0.1)",  # Light grid
                 ),
                 zaxis=dict(
-                    showticklabels=False,
-                    showgrid=False,
+                    showticklabels=True,
+                    showgrid=True,
                     zeroline=False,
                     backgroundcolor="rgba(0,0,0,0)",
+                    showline=False,
+                    tickmode="auto",
+                    nticks=5,  # Infrequent ticks
+                    gridcolor="rgba(255,255,255,0.1)",  # Light grid
                 ),
                 aspectmode="data",
             ),

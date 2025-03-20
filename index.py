@@ -27,10 +27,10 @@ from pages import (
     lipizones_selection,
     region_analysis,
     threeD_exploration,
-    lipizones_exploration,
     lp_selection,
     id_cards,
     threeD_lipizones,
+    peak_selection,
 )
 from in_app_documentation.documentation import return_documentation
 from config import basic_config
@@ -78,6 +78,12 @@ def return_main_content():
             dcc.Store(id="page-2bis-selected-lp-2", data=-1),
             dcc.Store(id="page-2bis-selected-lp-3", data=-1),
             dcc.Store(id="page-2bis-last-selected-lps", data=[]),
+
+            # Record the peaks selected in peak selection page
+            dcc.Store(id="page-peak-selected-lp-1", data=-1),
+            dcc.Store(id="page-peak-selected-lp-2", data=-1),
+            dcc.Store(id="page-peak-selected-lp-3", data=-1),
+            dcc.Store(id="page-peak-last-selected-lps", data=[]),
 
             # Record the lipizones selected in page 6
             dcc.Store(id="page-6-selected-lipizone-1", data=-1),
@@ -418,7 +424,6 @@ def return_validation_layout(main_content, initial_slice=1):
             lipizones_selection.return_layout(basic_config, initial_slice),
             region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
-            lipizones_exploration.return_layout(basic_config, initial_slice),
             threeD_lipizones.return_layout(basic_config, initial_slice),
         ]
     )
@@ -451,6 +456,9 @@ def render_page_content(pathname, slice_index, brain):
     elif pathname == "/lp-selection":
         page = lp_selection.return_layout(basic_config, slice_index)
     
+    elif pathname == "/peak-selection":
+        page = peak_selection.return_layout(basic_config, slice_index)
+    
     elif pathname == "/lipizones-selection":
         page = lipizones_selection.return_layout(basic_config, slice_index)
 
@@ -462,9 +470,6 @@ def render_page_content(pathname, slice_index, brain):
 
     elif pathname == "/3D-exploration":
         page = threeD_exploration.return_layout(basic_config, slice_index)
-
-    elif pathname == "/lipizones-exploration":
-        page = lipizones_exploration.return_layout(basic_config, slice_index)
 
     elif pathname == "/3D-lipizones":
         page = threeD_lipizones.return_layout(basic_config, slice_index)
@@ -509,6 +514,7 @@ def hide_slider(pathname):
     l_path_with_slider = [
         "/lipid-selection",
         "/lp-selection",
+        "/peak-selection",
         "/lipizones-selection",
         "/region-analysis",
         "/3D-exploration",

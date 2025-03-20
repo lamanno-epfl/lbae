@@ -45,6 +45,9 @@ from functools import lru_cache
 # New constant for the Zarr store location
 LIPIZONES_ZARR_PATH = "/data/luca/lipidatlas/ManuscriptAnalysisRound3/3d_lipizones.zarr"
 
+# New constant for the color array file
+COLOR_ARRAY_PATH = "/data/LBA_DATA/lbae/color_array_fullres.npy"
+
 @lru_cache(maxsize=50)
 def load_lipizone_array(safe_name, downsample_factor):
     """
@@ -63,7 +66,7 @@ def load_lipizone_array(safe_name, downsample_factor):
             # This array is loaded lazily; slicing will read only needed chunks.
             return group[key][:]
         elif "full" in group:
-            # If the precomputed downsampled version isn’t available, fall back to downsampling on the fly.
+            # If the precomputed downsampled version isn't available, fall back to downsampling on the fly.
             arr = group["full"][:]
             return arr[::downsample_factor, ::downsample_factor, ::downsample_factor]
         else:
@@ -165,7 +168,14 @@ def return_layout(basic_config, slice_index):
                     html.Div(
                         id="3d-lipizones-selected-list",
                         style={"width": "20em", "marginTop": "1em", "color": "white"}
-                    )
+                    ),
+                    # Button to view all lipizones together
+                    dmc.Button(
+                        "View All Lipizones",
+                        id="view-all-lipizones-btn",
+                        color="blue",
+                        style={"width": "20em", "marginTop": "1.5em"},
+                    ),
                 ],
             ),
             
@@ -191,6 +201,9 @@ def return_layout(basic_config, slice_index):
                     )
                 ]
             ),
+            
+            # Store to track view state
+            dcc.Store(id="all-lipizones-view-state", data=False),
         ],
     )
     
@@ -320,6 +333,9 @@ def get_background_brain(downsample_factor=12):
         brain_root_data = figures.compute_3D_root_volume(
             decrease_dimensionality_factor=downsample_factor
         )
+        # Add showscale=False to the returned volume
+        if hasattr(brain_root_data, 'showscale'):
+            brain_root_data.showscale = False
         logging.info("Successfully created background brain")
         return brain_root_data
     except Exception as e:
@@ -385,6 +401,7 @@ def create_lipizone_3d_figure(array, color, downsample_factor=12):
             surface_count=10,  # Reduce surface count for performance
             colorscale=[[0, 'rgba(0,0,0,0)'], [1, color]],
             caps=dict(x_show=False, y_show=False, z_show=False),
+            showscale=False,  # Added this line to hide the colorbar
         )
         
         # Clean up to free memory
@@ -432,16 +449,189 @@ def update_selected_lipizones_list(selected_lipizones):
     
     return lipizones_list
 
+def create_all_lipizones_figure(downsample_factor=1):
+    """
+    Create a 3D visualization of all lipizones together using the color array
+    
+    Parameters:
+    -----------
+    downsample_factor : int
+        Factor by which to downsample the array to reduce memory usage
+        
+    Returns:
+    --------
+    go.Figure
+        The 3D figure with the volume rendering
+    """
+    try:
+        start_time = time.time()
+        logging.info("Loading all lipizones color array")
+        
+        # Load the color array
+        color_array = np.load(COLOR_ARRAY_PATH)
+        original_shape = color_array.shape
+        logging.info(f"Loaded color array with shape: {original_shape}")
+        
+        # Downsample the array
+        if downsample_factor > 1:
+            color_array = color_array[::downsample_factor, ::downsample_factor, ::downsample_factor, :]
+            logging.info(f"Downsampled color array to shape: {color_array.shape}")
+        
+        # Create coordinate grid based on array shape
+        z, y, x = np.indices(color_array.shape[:3])
+        
+        # Create a mask for voxels with non-zero values
+        # Convert RGB to a single intensity value based on average brightness
+        intensity = np.mean(color_array, axis=-1)
+        mask = intensity > 0
+        
+        if not np.any(mask):
+            logging.warning("No non-zero values found in the color array!")
+            return go.Figure().update_layout(
+                title="No data found in color array",
+                template="plotly_dark",
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+            )
+        
+        # Normalize RGB values to 0-1 range if they're not already
+        if color_array.max() > 1:
+            color_array = color_array / 255.0
+        
+        # Get the coordinates and colors of non-zero voxels
+        x_points = x[mask]
+        y_points = y[mask]
+        z_points = z[mask]
+        colors = color_array[mask]
+        
+        # Log some statistics about the data
+        logging.info(f"Non-zero voxels: {len(x_points)}")
+        logging.info(f"Min color values: {np.min(colors, axis=0)}")
+        logging.info(f"Max color values: {np.max(colors, axis=0)}")
+        
+        # Create a figure with a scatter3d trace using the actual RGB colors
+        fig = go.Figure()
+        
+        # Add a scatter3d trace for the point cloud with RGB colors
+        color_strings = [f'rgb({r*255},{g*255},{b*255})' for r, g, b in colors]
+        
+        # Reduce points if there are too many (for performance)
+        max_points = 400000  # Limit the number of points for performance
+        if len(x_points) > max_points:
+            logging.info(f"Reducing points from {len(x_points)} to {max_points} for performance")
+            indices = np.random.choice(len(x_points), max_points, replace=False)
+            x_points = x_points[indices]
+            y_points = y_points[indices]
+            z_points = z_points[indices]
+            color_strings = [color_strings[i] for i in indices]
+        
+        # Add the scatter3d trace
+        fig.add_trace(go.Scatter3d(
+            x=x_points, 
+            y=y_points, 
+            z=z_points,
+            mode='markers',
+            marker=dict(
+                size=downsample_factor,  # Increased size from 2 to 10 (5x larger)
+                color=color_strings,
+                opacity=1.0
+            ),
+            hoverinfo='none'
+        ))
+        
+        # Improve layout
+        fig.update_layout(
+            margin=dict(t=0, r=0, b=0, l=0),
+            scene=dict(
+                xaxis=dict(
+                    showticklabels=False,
+                    showgrid=False,
+                    zeroline=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                ),
+                yaxis=dict(
+                    showticklabels=False,
+                    showgrid=False,
+                    zeroline=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                ),
+                zaxis=dict(
+                    showticklabels=False,
+                    showgrid=False,
+                    zeroline=False,
+                    backgroundcolor="rgba(0,0,0,0)",
+                ),
+                aspectmode="data",
+            ),
+            template="plotly_dark",
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+        )
+        
+        # Clean up to free memory
+        del color_array, x, y, z, x_points, y_points, z_points, colors, color_strings
+        gc.collect()
+        
+        end_time = time.time()
+        logging.info(f"All lipizones figure creation completed in {end_time - start_time:.2f} seconds")
+        
+        return fig
+        
+    except Exception as e:
+        logging.error(f"Error creating all lipizones figure: {str(e)}")
+        logging.error(traceback.format_exc())
+        raise e
+
 @app.callback(
-    Output("3d-lipizones-visualization-container", "children"),
-    Input("3d-lipizones-dropdown-lipizones", "value"),
+    Output("all-lipizones-view-state", "data"),
+    Input("view-all-lipizones-btn", "n_clicks"),
+    State("all-lipizones-view-state", "data"),
     prevent_initial_call=True,
 )
-def update_3d_visualization(selected_lipizones):
+def toggle_all_lipizones_view(n_clicks, current_state):
+    if n_clicks:
+        return True
+    return current_state
+
+@app.callback(
+    Output("3d-lipizones-visualization-container", "children"),
+    [Input("3d-lipizones-dropdown-lipizones", "value"),
+     Input("all-lipizones-view-state", "data")],
+    prevent_initial_call=True,
+)
+def update_3d_visualization(selected_lipizones, view_all_lipizones):
     start_time = time.time()
-    logging.info(f"Callback triggered with selected lipizones: {selected_lipizones}")
+    ctx = dash.callback_context
+    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
+    
+    logging.info(f"Callback triggered by {trigger_id} with view_all_lipizones={view_all_lipizones}")
     
     try:
+        # If the "View All Lipizones" button was clicked
+        if view_all_lipizones:
+            logging.info("Displaying all lipizones view")
+            try:
+                # Create figure with all lipizones
+                fig = create_all_lipizones_figure(downsample_factor=1)
+                
+                return dcc.Graph(
+                    figure=fig,
+                    style={"height": "100%", "width": "100%"},
+                    config={
+                        "displayModeBar": True,
+                        "displaylogo": False,
+                        "scrollZoom": True
+                    }
+                )
+            except Exception as e:
+                logging.error(f"Error rendering all lipizones: {str(e)}")
+                logging.error(traceback.format_exc())
+                return html.Div(
+                    f"Error loading all lipizones visualization: {str(e)}", 
+                    style={"color": "white", "textAlign": "center", "marginTop": "20%"}
+                )
+        
+        # Otherwise, handle individual lipizone selection
         if not selected_lipizones or len(selected_lipizones) == 0:
             return html.Div(
                 "Select lipizones to view their 3D distribution. Consider that this might take seconds to minutes to load.", 

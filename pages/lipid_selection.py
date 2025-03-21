@@ -24,11 +24,7 @@ import os
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
-from app import app, figures, data, storage, cache_flask, atlas
-from modules.maldi_data import GridImageShelve
-
-# Initialize GridImageShelve
-grid_data = GridImageShelve(shelf_filename="grid_shelve", shelf_dir="./grid_data/")
+from app import app, figures, data, storage, cache_flask, atlas, grid_data
 
 # ==================================================================================================
 # --- Layout
@@ -344,11 +340,11 @@ def page_2_plot_graph_heatmap_mz_selection(
 
     # Handle annotations toggle separately to preserve figure state
     if id_input == "page-2-toggle-annotations":
-        print("annotations_checked:", annotations_checked)
-        print("lipid_1_index:", lipid_1_index)
-        print("lipid_2_index:", lipid_2_index)
-        print("lipid_3_index:", lipid_3_index)
-        print("overlay:", overlay.shape if overlay is not None else "None")
+        # print("annotations_checked:", annotations_checked)
+        # print("lipid_1_index:", lipid_1_index)
+        # print("lipid_2_index:", lipid_2_index)
+        # print("lipid_3_index:", lipid_3_index)
+        # print("overlay:", overlay.shape if overlay is not None else "None")
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
             ll_lipid_names = [
                 # [
@@ -557,7 +553,8 @@ def page_2_plot_graph_heatmap_mz_selection(
                     return(figures.build_lipid_heatmap_from_image(
                                 image, 
                                 return_base64_string=False,
-                                overlay=overlay),
+                                # overlay=overlay
+                                ),
                             "Current input: " + "Lipid selection all sections")
                 else:
                     print("--- option 1.4.2 ---")

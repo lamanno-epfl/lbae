@@ -543,17 +543,18 @@ class GridImageShelve:
     A class to generate, store, and retrieve grid images for given lipid and sample.
     The images are stored in a shelve database located in the 'grid_data' folder.
     """
-    def __init__(self, shelf_filename="grid_shelve", shelf_dir="grid_data"):
+    def __init__(self, shelf_dir="grid_data", shelf_filename="grid_shelve"):
         """
         Initializes the shelve database in the given directory.
         """
         self.shelf_dir = shelf_dir
+        # self.shelf_dir = os.path.abspath(shelf_dir)
         print("QUIIII shelf_dir:", self.shelf_dir)
         # Create the grid_data folder if it does not exist
-        if not os.path.exists(shelf_dir):
-            os.makedirs(shelf_dir)
+        if not os.path.exists(self.shelf_dir):
+            os.makedirs(self.shelf_dir)
         # Shelve uses the given filename as the base for its files
-        self.shelf_path = os.path.join(shelf_dir, shelf_filename)
+        self.shelf_path = os.path.join(self.shelf_dir, shelf_filename)
 
     def create_grid_image(self, maindata, lipid, sample):
         """

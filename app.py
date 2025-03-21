@@ -26,7 +26,7 @@ from modules.scRNAseq import ScRNAseq
 from modules.tools.misc import logmem
 logging.info("Memory use before any LBAE import" + logmem())
 
-from modules.maldi_data import MaldiData, GridImageShelve
+from modules.maldi_data import MaldiData, GridImageShelve, SampleDataShelve, SectionDataShelve
 logging.info("Memory use after MaldiData import" + logmem())
 
 from modules.program_data import LipiMapData
@@ -65,6 +65,8 @@ else:
     cache_dir = "/data/LBA_DATA/lbae/data/cache/"
     path_data = "/data/LBA_DATA/lbae/new_data/"
     path_grid_data = "/data/LBA_DATA/lbae/grid_data/"
+    path_sample_data = "/data/LBA_DATA/lbae/sample_data/"
+    path_section_data = "/data/LBA_DATA/lbae/section_data/"
     path_program_data = "/data/LBA_DATA/lbae/program_data/"
     path_annotations = "/data/LBA_DATA/lbae/data/annotations/"
     path_db = "/data/LBA_DATA/lbae/data/app_data/data.db"
@@ -95,7 +97,13 @@ data = MaldiData(path_data, path_annotations)
 
 # Load grid data
 logging.info("Loading grid data..." + logmem())
-grid_data = GridImageShelve(path_grid_data, path_annotations)
+grid_data = GridImageShelve(shelf_dir=path_grid_data)
+
+logging.info("Loading sample data..." + logmem())
+sample_data_shelve = SampleDataShelve(shelf_dir=path_sample_data)
+
+logging.info("Loading section data..." + logmem())
+section_data_shelve = SectionDataShelve(shelf_dir=path_section_data)
 
 # Load program data
 logging.info("Loading program data..." + logmem())
@@ -213,3 +221,12 @@ def display_page(pathname):
         return threeD_lipizones.return_layout(basic_config, slice_index)
     else:
         return home.return_layout(basic_config, slice_index)
+
+# Make grid_data available for import
+__all__ = ['data', 
+            'program_data',
+            'atlas',
+            'figures', 
+            'grid_data', 
+            'sample_data_shelve', 
+            'section_data_shelve']

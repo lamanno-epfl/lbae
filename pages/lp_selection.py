@@ -536,30 +536,20 @@ def page_2bis_plot_graph_heatmap_mz_selection(
 
     overlay = program_data.get_aba_contours(slice_index) if annotations_checked else None
 
-        # Handle annotations toggle separately to preserve figure state
+    # Handle annotations toggle separately to preserve figure state
     if id_input == "page-2bis-toggle-annotations":
         print("annotations_checked:", annotations_checked)
         print("overlay:", overlay.shape if overlay is not None else "None")
         if lp_1_index >= 0 or lp_2_index >= 0 or lp_3_index >= 0:
             ll_lp_names = [
-                # [
-                    ' '.join([
-                        program_data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
-                        + program_data.get_annotations().iloc[index]["structure"].split('_')[i] 
-                        for i in range(len(program_data.get_annotations().iloc[index]["name"].split('_')))
-                    ])
-                    # data.get_annotations().iloc[index]["name"]
-                    # + " "
-                    # + data.get_annotations().iloc[index]["structure"]
-                    # + "_"
-                    # + data.get_annotations().iloc[index]["cation"]
-                # ]
+                program_data.get_annotations().iloc[index]["name"]
+                
                 if index != -1
                 else None
                 for index in [lp_1_index, lp_2_index, lp_3_index]
             ]
-            print("ll_lipid_names:", ll_lp_names)
-            print("graph_input:", graph_input)
+            # print("ll_lipid_names:", ll_lp_names)
+            # print("graph_input:", graph_input)
 
             if graph_input == "Current input: " + "LP selection RGB":
                 print("returning option 1")
@@ -574,7 +564,7 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                 )
 
             elif graph_input == "Current input: " + "LP selection colormap":
-                print("returning option 2")
+                # print("returning option 2")
                 # you also need to check that only one lipid is selected
                 if ll_lp_names.count(None) == len(ll_lp_names) - 1 and None in ll_lp_names:
                     nonull_ll_lp_names = [x for x in ll_lp_names if x is not None][0]
@@ -605,7 +595,7 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                     return (
                         program_figures.compute_rgb_image_per_lipid_selection(
                             slice_index,
-                            ll_lipid_names=ll_lipid_names,
+                            ll_lipid_names=ll_lp_names,
                             cache_flask=cache_flask,
                             overlay=overlay,
                         ),

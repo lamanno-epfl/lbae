@@ -78,11 +78,11 @@ def load_lipizone_array(safe_name, downsample_factor):
 
 
 # Load lipizone names from CSV
-lipizonenames = pd.read_csv("lipizonename2color.csv")
+lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv")
 lipizonenames = lipizonenames['lipizone_names'].values
 
 # Load hierarchy data for the multiselect
-df_hierarchy = pd.read_csv("./data/annotations/lipizones_hierarchy.csv")
+df_hierarchy = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
 
 # ==================================================================================================
 # --- Layout

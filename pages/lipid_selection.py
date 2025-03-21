@@ -24,11 +24,7 @@ import os
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
-from app import app, figures, data, storage, cache_flask
-from modules.maldi_data import GridImageShelve
-
-# Initialize GridImageShelve
-grid_data = GridImageShelve(shelf_filename="grid_shelve", shelf_dir="./grid_data/")
+from app import app, figures, data, storage, cache_flask, atlas, grid_data
 
 # ==================================================================================================
 # --- Layout
@@ -53,37 +49,29 @@ def return_layout(basic_config, slice_index):
                         "background-color": "#1d1c1f",
                     },
                     children=[
-                        dbc.Spinner(
-                            color="info",
-                            spinner_style={
-                                "margin-top": "40%",
-                                "width": "3rem",
-                                "height": "3rem",
+                        dcc.Graph(
+                            id="page-2-graph-heatmap-mz-selection",
+                            config=basic_config
+                            | {
+                                "toImageButtonOptions": {
+                                    "format": "png",
+                                    "filename": "brain_lipid_selection",
+                                    "scale": 2,
+                                },"scrollZoom": True
+                            }
+                            | {"staticPlot": False},
+                            style={
+                                "width": "95%",
+                                "height": "95%",
+                                "position": "absolute",
+                                "left": "0",
+                                "top": "0",
+                                "background-color": "#1d1c1f",
                             },
-                            children=dcc.Graph(
-                                id="page-2-graph-heatmap-mz-selection",
-                                config=basic_config
-                                | {
-                                    "toImageButtonOptions": {
-                                        "format": "png",
-                                        "filename": "brain_lipid_selection",
-                                        "scale": 2,
-                                    },"scrollZoom": True
-                                }
-                                | {"staticPlot": False},
-                                style={
-                                    "width": "95%",
-                                    "height": "95%",
-                                    "position": "absolute",
-                                    "left": "0",
-                                    "top": "0",
-                                    "background-color": "#1d1c1f",
-                                },
-                                figure=figures.compute_heatmap_per_lipid(
-                                    slice_index,
-                                    "SM 34:1;O2",
-                                    cache_flask=cache_flask,
-                                ),
+                            figure=figures.compute_heatmap_per_lipid(
+                                slice_index,
+                                "SM 34:1;O2",
+                                cache_flask=cache_flask,
                             ),
                         ),
                         dmc.Group(
@@ -193,6 +181,39 @@ def return_layout(basic_config, slice_index):
                             class_name="d-none",
                             style={"right": "1%", "top": "8em"},
                         ),
+                        dmc.Text(
+                            "",
+                            id="page-2-graph-hover-text",
+                            size="xl",
+                            align="center",
+                            color="cyan",
+                            class_name="mt-5",
+                            weight=500,
+                            style={
+                                "width": "auto",
+                                "position": "absolute",
+                                "left": "50%",
+                                "transform": "translateX(-50%)",
+                                "top": "1em",
+                                "fontSize": "1.5em",
+                                "textAlign": "center",
+                                "zIndex": 1000,
+                                "backgroundColor": "rgba(0, 0, 0, 0.7)",
+                                "padding": "0.5em 2em",
+                                "borderRadius": "8px",
+                                "minWidth": "200px",
+                            },
+                        ),
+                        dmc.Switch(
+                            id="page-2-toggle-annotations",
+                            label="Allen Brain Atlas Annotations",
+                            checked=False,
+                            color="cyan",
+                            radius="xl",
+                            size="sm",
+                            style={"left": "1%", "top": "20em"},
+                            class_name="position-absolute",
+                        ),
                         dmc.Group(
                             position="right",
                             direction="row",
@@ -247,6 +268,27 @@ def return_layout(basic_config, slice_index):
 # ==================================================================================================
 
 @app.callback(
+    Output("page-2-graph-hover-text", "children"),
+    Input("page-2-graph-heatmap-mz-selection", "hoverData"),
+    Input("main-slider", "data"),
+)
+def page_3_hover(hoverData, slice_index):
+    """This callback is used to update the text displayed when hovering over the slice image."""
+    # print("\n============ page_3_hover =============")
+    acronym_mask = data.acronyms_masks[slice_index]
+    if hoverData is not None:
+        if len(hoverData["points"]) > 0:
+            x = hoverData["points"][0]["x"] # --> from 0 to 456
+            y = hoverData["points"][0]["y"] # --> from 0 to 320
+            # z = arr_z[y, x]
+            try:
+                return atlas.dic_acronym_name[acronym_mask[y, x]]
+            except:
+                return "Undefined"
+
+    return dash.no_update
+
+@app.callback(
     Output("page-2-graph-heatmap-mz-selection", "figure"),
     Output("page-2-badge-input", "children"),
 
@@ -259,6 +301,8 @@ def return_layout(basic_config, slice_index):
     Input("page-2-all-sections-button", "n_clicks"),
     Input("main-brain", "value"),
     # Input("page-2-button-bounds", "n_clicks"),
+    Input("page-2-toggle-annotations", "checked"),
+
     # State("page-2-lower-bound", "value"),
     # State("page-2-upper-bound", "value"),
     State("page-2-badge-input", "children"),
@@ -275,6 +319,7 @@ def page_2_plot_graph_heatmap_mz_selection(
     # n_clicks_button_bounds,
     # lb,
     # hb,
+    annotations_checked,
     graph_input,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
@@ -290,6 +335,89 @@ def page_2_plot_graph_heatmap_mz_selection(
     print("graph_input:", graph_input)
     print("brain_id:", brain_id)
     print("value_input:", value_input)
+
+    overlay = data.get_aba_contours(slice_index) if annotations_checked else None
+
+    # Handle annotations toggle separately to preserve figure state
+    if id_input == "page-2-toggle-annotations":
+        # print("annotations_checked:", annotations_checked)
+        # print("lipid_1_index:", lipid_1_index)
+        # print("lipid_2_index:", lipid_2_index)
+        # print("lipid_3_index:", lipid_3_index)
+        # print("overlay:", overlay.shape if overlay is not None else "None")
+        if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
+            ll_lipid_names = [
+                # [
+                    ' '.join([
+                        data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
+                        + data.get_annotations().iloc[index]["structure"].split('_')[i] 
+                        for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
+                    ])
+                    # data.get_annotations().iloc[index]["name"]
+                    # + " "
+                    # + data.get_annotations().iloc[index]["structure"]
+                    # + "_"
+                    # + data.get_annotations().iloc[index]["cation"]
+                # ]
+                if index != -1
+                else None
+                for index in [lipid_1_index, lipid_2_index, lipid_3_index]
+            ]
+            print("ll_lipid_names:", ll_lipid_names)
+            print("graph_input:", graph_input)
+
+            if graph_input == "Current input: " + "Lipid selection RGB":
+                print("returning option 1")
+                return (
+                    figures.compute_rgb_image_per_lipid_selection(
+                        slice_index,
+                        ll_lipid_names=ll_lipid_names,
+                        cache_flask=cache_flask,
+                        overlay=overlay,
+                    ),
+                    graph_input,
+                )
+
+            elif graph_input == "Current input: " + "Lipid selection colormap":
+                print("returning option 2")
+                # you also need to check that only one lipid is selected
+                if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
+                    nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
+                    image = figures.compute_image_per_lipid(
+                        slice_index,
+                        RGB_format=False,
+                        lipid_name=nonull_ll_lipid_names,
+                        cache_flask=cache_flask,
+                    )
+                    print("returning option 2.1")
+                    return (
+                        figures.build_lipid_heatmap_from_image(
+                            image, 
+                            return_base64_string=False,
+                            overlay=overlay,
+                        )
+                        # figures.compute_heatmap_per_lipid_selection(
+                        #     slice_index,
+                        # # ll_lipid_bounds,
+                        # # apply_transform=apply_transform,
+                        # ll_lipid_names=ll_lipid_names,
+                        # cache_flask=cache_flask,
+                        ,
+                        "Current input: " + "Lipid selection colormap",
+                    )
+                else:
+                    print("returning option 2.2")
+                    return (
+                        figures.compute_rgb_image_per_lipid_selection(
+                            slice_index,
+                            ll_lipid_names=ll_lipid_names,
+                            cache_flask=cache_flask,
+                            overlay=overlay,
+                        ),
+                        "Current input: " + "Lipid selection RGB",
+                    )
+
+        return dash.no_update
 
     # If a lipid selection has been done
     if (
@@ -353,7 +481,9 @@ def page_2_plot_graph_heatmap_mz_selection(
                     return (
                         figures.build_lipid_heatmap_from_image(
                             image, 
-                            return_base64_string=False)
+                            return_base64_string=False,
+                            overlay=overlay,
+                        )
                         # figures.compute_heatmap_per_lipid_selection(
                         #     slice_index,
                         # # ll_lipid_bounds,
@@ -370,6 +500,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                             slice_index,
                             ll_lipid_names=ll_lipid_names,
                             cache_flask=cache_flask,
+                            overlay=overlay,
                         ),
                         "Current input: " + "Lipid selection RGB",
                     )
@@ -393,6 +524,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                         # apply_transform=apply_transform,
                         ll_lipid_names=ll_lipid_names,
                         cache_flask=cache_flask,
+                        overlay=overlay,
                     ),
                     "Current input: " + "Lipid selection RGB",
                 )
@@ -420,7 +552,9 @@ def page_2_plot_graph_heatmap_mz_selection(
 
                     return(figures.build_lipid_heatmap_from_image(
                                 image, 
-                                return_base64_string=False),
+                                return_base64_string=False,
+                                # overlay=overlay
+                                ),
                             "Current input: " + "Lipid selection all sections")
                 else:
                     print("--- option 1.4.2 ---")
@@ -434,7 +568,8 @@ def page_2_plot_graph_heatmap_mz_selection(
                     
                     return(figures.build_lipid_heatmap_from_image(
                                 image, 
-                                return_base64_string=False),
+                                return_base64_string=False,
+                                overlay=overlay),
                             "Current input: " + "Lipid selection all sections")
             
             # Plot RBG By default
@@ -447,6 +582,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                         # apply_transform=apply_transform,
                         ll_lipid_names=ll_lipid_names,
                         cache_flask=cache_flask,
+                        overlay=overlay,
                     ),
                     "Current input: " + "Lipid selection RGB",
                 )
@@ -458,7 +594,8 @@ def page_2_plot_graph_heatmap_mz_selection(
                 figures.compute_heatmap_per_lipid(slice_index, 
                                                 "SM 34:1;O2",
                                                 # lb, hb, 
-                                                cache_flask=cache_flask),
+                                                cache_flask=cache_flask,
+                                                overlay=overlay),
                 "Current input: " + "SM 34:1;O2",
             )
         else:
@@ -468,7 +605,8 @@ def page_2_plot_graph_heatmap_mz_selection(
                 figures.compute_heatmap_per_lipid(slice_index, 
                                                 "SM 34:1;O2",
                                                 # lb, hb, 
-                                                cache_flask=cache_flask),
+                                                cache_flask=cache_flask,
+                                                overlay=overlay),
                 "Current input: " + "SM 34:1;O2", # + "m/z boundaries"
             )
 

@@ -268,7 +268,7 @@ class Atlas:
         #     # Since this function is called at startup, no data locking is needed
         #     self.save_all_projected_masks_and_spectra(cache_flask=None, sample=sample)
         self.dic_existing_masks = pickle.load(open('/data/francesca/lbae/data/atlas/dic_existing_masks.pkl', 'rb'))
-        print("self.dic_existing_masks:\n", self.dic_existing_masks.keys())
+        # print("self.dic_existing_masks:\n", self.dic_existing_masks)
         # # These attributes are defined later as properties as they are only used during
         # # precomputations
         # self._array_projection_corrected = None

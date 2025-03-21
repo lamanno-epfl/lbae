@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from time import time
 from typing import Dict, List, Optional, Tuple
 
+from modules.maldi_data import METADATA, ABA_CONTOURS, majority_vote_9x9, ACRONYM_MASKS
+from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
+from scipy.ndimage import generic_filter
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
@@ -55,6 +59,8 @@ class LipiMapData:
         self._init_metadata()
 
         self.image_shape = (ABA_DIM[1], ABA_DIM[2])
+
+        self.acronyms_masks = ACRONYM_MASKS
 
     def get_annotations(self) -> pd.DataFrame:
         return self._df_annotations
@@ -147,6 +153,121 @@ class LipiMapData:
             if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
                 return []
             return brain_info[brain_id][slice_index]
+
+    def get_acronym_mask(self, slice_index, fill_holes=True):
+        """
+        Retrieves the acronyms mask for a given slice index.
+        """
+        # print(f"slice_index: {slice_index}")
+        # z_coord = METADATA[METADATA["SectionID"] == slice_index]["x_index"].values
+        # take the acronyms of the rows of metadata that have SectionID == slice_index
+        acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "acronym", "x_index"]].values
+        acronym_scatter = pd.DataFrame(acronym_points, columns=["x", "y", "acronym", "x_index"])
+
+        # print unique values of the third column
+        # if the elements of acronym_scatter["acronym"].values are None, replace them with "undefined"
+        if slice_index in [33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0]:
+            return np.full(self.image_shape, 'Undefined')
+        max_len = max(len(s) for s in acronym_scatter["acronym"].values)
+        arr = np.full(self.image_shape, 'Undefined', dtype=f'U{max(max_len, len("Undefined"))}')  # Adjust dimensions if needed
+
+        # Convert coordinates to integers for indexing
+        x_indices = acronym_scatter["x"].astype(int).values
+        y_indices = acronym_scatter["y"].astype(int).values
+        # Ensure indices are within bounds
+        valid_indices = (
+            (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
+        )
+
+        # Fill the array with values at the specified coordinates
+        arr[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["acronym"].values[
+            valid_indices
+        ]
+        arr_z = np.full(self.image_shape, np.nan)
+        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["x_index"].values[
+            valid_indices
+        ]
+        arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
+
+        mcc = MouseConnectivityCache(manifest_file='mouse_connectivity_manifest.json')
+        structure_tree = mcc.get_structure_tree()
+
+        # pixels = pixels
+        annotation, _ = mcc.get_annotation_volume()
+
+        # Check if we need to fill holes
+        if fill_holes:
+            # Count how many NaN values we have
+            # nan_count_before = (arr == 'Undefined').sum()
+            # print(f"Found {nan_count_before} NaN values (holes) in the image")
+
+            for i in range(arr.shape[0]):
+                for j in range(arr.shape[1]):
+                    if arr[i,j] == 'Undefined':
+                        x_index = arr_z[i,j]
+                        # x_index = z_coord[0]
+                        y_index = i
+                        z_index = j
+
+                    try:
+                        index = annotation[int(x_index), int(y_index), int(z_index)]
+                        brain_region = structure_tree.get_structures_by_id([index])[0]
+                    
+                        if brain_region is not None:
+                            arr[y_index, z_index] = brain_region['acronym']
+                    except:
+                        continue
+                        # print error message
+                        # print(f"Error at {i}, {j}")
+
+        return arr
+
+    def get_aba_contours(self, slice_index):
+        """
+        Retrieves the contours of the ABA brain for a given slice.
+        
+        Args:
+            slice_index: Index of the slice to retrieve
+            
+        Returns:
+            array_image_atlas: RGBA image array of shape (320, 456, 4) containing the contours
+                            in orange (255, 165, 0) with transparency 243 for lines and 255
+                            for background
+        """
+        acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "x_index"]].values
+        acronym_scatter = pd.DataFrame(acronym_points, columns=["x", "y", "x_index"])
+
+        
+        # Convert coordinates to integers for indexing
+        x_indices = acronym_scatter["x"].astype(int).values
+        y_indices = acronym_scatter["y"].astype(int).values
+        # Ensure indices are within bounds
+        valid_indices = (
+            (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
+        )
+
+        arr_z = np.full(self.image_shape, np.nan)
+        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["x_index"].values[
+            valid_indices
+        ]
+        arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
+
+        # define array_image_atlas as all values to be (255, 255, 255, 0)
+        array_image_atlas = np.ones((arr_z.shape[0], arr_z.shape[1], 4), dtype=np.uint8)
+        array_image_atlas[:, :, :3] = 255
+        array_image_atlas[:, :, 3] = 0
+
+        for i in range(arr_z.shape[0]):
+            for j in range(arr_z.shape[1]):
+                k = arr_z[i,j]
+                try:
+                    is_contour = ABA_CONTOURS[int(k), i, j] == 1
+                    if is_contour:
+                        array_image_atlas[i, j] = [255, 165, 0, 200]
+                except:
+                    continue
+        
+        return array_image_atlas
 
     def extract_lipid_image(self, slice_index, program_name, fill_holes=True):
         """Extract a program image from scatter data with optional hole filling.

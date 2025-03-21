@@ -24,6 +24,7 @@ import logging
 import dash_draggable
 from numba import njit
 import dash_mantine_components as dmc
+import pickle
 
 # LBAE imports
 from app import app, figures, data, storage, atlas, cache_flask
@@ -126,24 +127,6 @@ def return_layout(basic_config, slice_index=1):
                             ),
                         ],
                     ),
-                    dmc.Group(
-                        direction="row",
-                        position="center",
-                        style={
-                            "top": "1em",
-                        },
-                        class_name="position-absolute w-100",
-                        children=[
-                            dmc.Switch(
-                                id="page-3-toggle-annotations",
-                                label="Allen Brain Atlas Annotations",
-                                checked=False,
-                                color="cyan",
-                                radius="xl",
-                                size="sm",
-                            ),
-                        ],
-                    ),
                     dmc.Text(
                         id="page-3-badge-input",
                         children="Colors: NA",
@@ -174,34 +157,37 @@ def return_layout(basic_config, slice_index=1):
                         class_name="d-none",
                         style={"left": "1%", "top": "17em"},
                     ),
-                    # dmc.Text(
-                    #     "Hovered region: ",
-                    #     id="page-3-graph-hover-text",
-                    #     size="lg",
-                    #     align="center",
-                    #     color="cyan",
-                    #     class_name="mt-5",
-                    #     weight=500,
-                    #     style={
-                    #         "width": "100%",
-                    #         "position": "absolute",
-                    #         "top": "7%",
-                    #     },
-                    # ),
-                    dmc.Button(
-                        children="Compute spectral analysis",
-                        id="page-3-button-compute-spectra",
-                        variant="filled",
+                    dmc.Text(
+                        "",
+                        id="page-3-graph-hover-text",
+                        size="xl",
+                        align="center",
                         color="cyan",
-                        radius="md",
-                        size="xs",
-                        disabled=True,
-                        compact=False,
-                        loading=False,
+                        class_name="mt-5",
+                        weight=500,
                         style={
-                            "right": "1%",
-                            "top": "3em",
+                            "width": "auto",
+                            "position": "absolute",
+                            "left": "50%",
+                            "transform": "translateX(-50%)",
+                            "top": "1em",
+                            "fontSize": "1.5em",
+                            "textAlign": "center",
+                            "zIndex": 1000,
+                            "backgroundColor": "rgba(0, 0, 0, 0.7)",
+                            "padding": "0.5em 2em",
+                            "borderRadius": "8px",
+                            "minWidth": "200px",
                         },
+                    ),
+                    dmc.Switch(
+                        id="page-3-toggle-annotations",
+                        label="Allen Brain Atlas Annotations",
+                        checked=False,
+                        color="cyan",
+                        radius="xl",
+                        size="sm",
+                        style={"left": "1%", "top": "20em"},
                         class_name="position-absolute",
                     ),
                     dmc.Group(
@@ -209,11 +195,11 @@ def return_layout(basic_config, slice_index=1):
                         spacing=0,
                         style={
                             "left": "1%",
-                            "bottom": "8em",
+                            "top": "24em",
                         },
                         class_name="position-absolute",
                         children=[
-                            dmc.Text("Draw a region or choose a structure below", size="lg"),
+                            dmc.Text("Select brain regions", size="lg"),
                             dmc.Group(
                                 spacing="xs",
                                 align="flex-start",
@@ -231,7 +217,7 @@ def return_layout(basic_config, slice_index=1):
                                         nothingFound="No structure found",
                                         radius="md",
                                         size="xs",
-                                        placeholder="Choose brain structure",
+                                        placeholder="Select a brain region",
                                         clearable=False,
                                         maxSelectedValues=3,
                                         transitionDuration=150,
@@ -241,20 +227,70 @@ def return_layout(basic_config, slice_index=1):
                                             "width": "20em",
                                         },
                                     ),
-                                    dmc.Button(
-                                        children="Reset",
-                                        id="page-3-reset-button",
-                                        variant="filled",
-                                        color="cyan",
-                                        radius="md",
-                                        size="xs",
-                                        disabled=False,
-                                        compact=False,
-                                        loading=False,
-                                    ),
                                 ],
                             ),
                         ],
+                    ),
+                    dmc.Group(
+                        direction="row",
+                        spacing="xl",
+                        align="center",
+                        style={
+                            "left": "1%",
+                            "top": "32em",
+                            "width": "100%",
+                        },
+                        class_name="position-absolute",
+                        children=[
+                            dmc.Text(
+                                "... And draw a region on the brain",
+                                size="lg",
+                                color="cyan",
+                                weight=500,
+                            ),
+                            dmc.Text(
+                                "➜",
+                                size="xl",
+                                color="cyan",
+                                style={
+                                    "fontSize": "2em",
+                                    "marginLeft": "0.5em",
+                                    "marginTop": "-0.1em",
+                                },
+                            ),
+                        ],
+                    ),
+                    dmc.Button(
+                        children="Reset all regions",
+                        id="page-3-reset-button",
+                        variant="filled",
+                        color="cyan",
+                        radius="md",
+                        size="md",
+                        disabled=False,
+                        compact=False,
+                        loading=False,
+                        style={
+                            "left": "1%",
+                            "top": "35em",
+                        },
+                        class_name="position-absolute",
+                    ),
+                    dmc.Button(
+                        children="Compute spectral analysis",
+                        id="page-3-button-compute-spectra",
+                        variant="filled",
+                        color="cyan",
+                        radius="md",
+                        size="xs",
+                        disabled=True,
+                        compact=False,
+                        loading=False,
+                        style={
+                            "right": "1%",
+                            "top": "3em",
+                        },
+                        class_name="position-absolute",
                     ),
                 ],
             ),
@@ -521,40 +557,26 @@ def return_layout(basic_config, slice_index=1):
 # ==================================================================================================
 
 
-# @app.callback(
-#     Output("page-3-graph-hover-text", "children"),
-#     Input("page-3-graph-heatmap-mz-selection", "hoverData"),
-#     Input("main-slider", "data"),
-# )
-# def page_3_hover(hoverData, slice_index):
-#     """This callback is used to update the text displayed when hovering over the slice image."""
-#     print("hoverData:", hoverData)
-#     coords_csv_x = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
-#     slice_z_coords = coords_csv_x[coords_csv_x['SectionID'] == slice_index]['xccf'].iloc[0]
-#     # If there is a region hovered, find out the region name with the current coordinates
-#     if hoverData is not None:
-#         if len(hoverData["points"]) > 0:
-#             # rostro-caudal axis
-#             z = int(slice_z_coords*40) # int(slice_index) - 1 # --> from 0 to 528
-#             print("z: ", z)
-            
-#             x = hoverData["points"][0]["x"] # --> from 0 to 456
-#             print("x: ", x)
-#             y = hoverData["points"][0]["y"] # --> from 0 to 320
-#             print("y: ", y)
+@app.callback(
+    Output("page-3-graph-hover-text", "children"),
+    Input("page-3-graph-heatmap-mz-selection", "hoverData"),
+    Input("main-slider", "data"),
+)
+def page_3_hover(hoverData, slice_index):
+    """This callback is used to update the text displayed when hovering over the slice image."""
+    # print("\n============ page_3_hover =============")
+    acronym_mask = data.acronyms_masks[slice_index]
+    if hoverData is not None:
+        if len(hoverData["points"]) > 0:
+            x = hoverData["points"][0]["x"] # --> from 0 to 456
+            y = hoverData["points"][0]["y"] # --> from 0 to 320
+            # z = arr_z[y, x]
+            try:
+                return atlas.dic_acronym_name[acronym_mask[y, x]]
+            except:
+                return "Undefined"
 
-#             # slice_coor_rescaled = np.asarray(
-#             #     atlas.array_coordinates[x, y, z], # array_coordinates_warped_data[x, y, z] * 1000 / atlas.resolution).round(0)
-#             #     dtype=np.int16,
-#             # )
-#             # print("slice_coor_rescaled:", slice_coor_rescaled)
-#             try:
-#                 label = atlas.labels[(x, y, z)] # atlas.labels[tuple(slice_coor_rescaled)]
-#             except:
-#                 label = "undefined"
-#             return "Hovered region: " + label
-
-#     return dash.no_update
+    return dash.no_update
 
 
 @app.callback(
@@ -620,7 +642,7 @@ def page_3_plot_heatmap(
     print("value_input:", value_input)
     
     # Define overlay based on annotations toggle
-    overlay = None if annotations_checked else None
+    overlay = data.get_aba_contours(slice_index) if annotations_checked else None
 
     # If a lipid selection has been done
     if (
@@ -629,7 +651,7 @@ def page_3_plot_heatmap(
         or id_input == "page-3-selected-lipid-3"
         # or id_input == "page-3-rgb-button"
         or id_input == "page-3-colormap-button"
-        or id_input == "page-3-toggle-annotations"
+        # or id_input == "page-3-toggle-annotations"
         or (
             (id_input == "main-slider")
             and graph_input == "Colors: "
@@ -788,6 +810,42 @@ def page_3_plot_heatmap(
     if value_input == "relayoutData" and relayoutData == {"autosize": True}:
         return dash.no_update
 
+    # Handle annotations toggle separately to preserve shapes
+    if id_input == "page-3-toggle-annotations":
+        # print("\n~~~~~ BEFORE: l_shapes_and_masks:", l_shapes_and_masks)
+        fig = figures.compute_rgb_image_per_lipid_selection(
+            slice_index,
+            ll_lipid_names=ll_lipid_names,
+            cache_flask=cache_flask,
+            overlay=overlay,
+        )
+        
+        # Preserve existing shapes and layout settings
+        if relayoutData and "shapes" in relayoutData:
+            fig.update_layout(shapes=relayoutData["shapes"])
+        
+        # Preserve existing color masks
+        if l_shapes_and_masks:
+            for shape_or_mask in l_shapes_and_masks:
+                if shape_or_mask[0] == "mask":
+                    mask_name = shape_or_mask[1]
+                    base64_string = shape_or_mask[2]
+                    fig.add_trace(
+                        go.Image(visible=True, source=base64_string, hoverinfo="skip")
+                    )
+        
+        fig.update_layout(
+            dragmode="drawclosedpath",
+            newshape=dict(
+                fillcolor=l_colors[len(l_shapes_and_masks) % 4] if l_shapes_and_masks else l_colors[0],
+                opacity=0.7,
+                line=dict(color="white", width=1),
+            ),
+            autosize=True,
+        )
+        # print("\n~~~~~ AFTER: l_shapes_and_masks:", l_shapes_and_masks)
+        return fig, graph_input, l_color_mask, False, l_shapes_and_masks
+
     # Fix other bug with automatic dropdown selection
     if (
         id_input == "page-3-dropdown-brain-regions"
@@ -830,17 +888,17 @@ def page_3_plot_heatmap(
                 if len(l_mask_name) > 0:
                     for idx_mask, mask_name in enumerate(l_mask_name):
                         id_name = atlas.dic_name_acronym[mask_name]
-                        
+                        print(f"id_name: {id_name}")
+                        # dic_existing_masks = pickle.load(open('/data/francesca/lbae/data/atlas/dic_existing_masks.pkl', 'rb'))
+                        # print("slice_index", slice_index)
+                        # print("id_name", id_name)
+                        # print("dic_existing_masks[slice_index]", atlas.dic_existing_masks[slice_index])
                         if id_name in atlas.dic_existing_masks[slice_index]:
+                            descendants = atlas.bg_atlas.get_structure_descendants(id_name)
 
-                            mask3D = atlas.get_atlas_mask(id_name) # this gives the 3d mask
-                            # TODO
-                            coords_csv_x = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
-                            slice_z_coords = coords_csv_x[coords_csv_x['SectionID'] == slice_index]['xccf'].iloc[0]
-                            mask2D = mask3D[int(slice_z_coords*40), :, :] ######
-                            # projected_mask = atlas.get_projected_mask_and_spectrum(
-                            #     slice_index - 1, mask_name, MAIA_correction=False
-                            # )[0]
+                            acronym_mask = data.acronyms_masks[slice_index]
+                            mask2D = np.isin(acronym_mask, descendants + [id_name])
+                            print(f"mask2D: {mask2D.shape}")
                         else:
                             logging.warning("The mask " + str(mask_name) + " couldn't be found")
 

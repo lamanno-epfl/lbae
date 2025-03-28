@@ -26,7 +26,7 @@ from modules.scRNAseq import ScRNAseq
 from modules.tools.misc import logmem
 logging.info("Memory use before any LBAE import" + logmem())
 
-from modules.maldi_data import MaldiData, GridImageShelve, SampleDataShelve, SectionDataShelve
+from modules.maldi_data import MaldiData
 logging.info("Memory use after MaldiData import" + logmem())
 
 from modules.program_data import LipiMapData
@@ -35,12 +35,20 @@ logging.info("Memory use after LipiMapData import" + logmem())
 from modules.peak_data import PeakData
 logging.info("Memory use after PeakData import" + logmem())
 
+from modules.grid_data import GridImageShelve, SampleDataShelve, SectionDataShelve
+logging.info("Memory use after GridImageShelve, SampleDataShelve, SectionDataShelve import" + logmem())
+
 from modules.figures import Figures
 logging.info("Memory use after Figures import" + logmem())
 
 from modules.atlas import Atlas
+logging.info("Memory use after Atlas import" + logmem())
+
 from modules.launch import Launch
+logging.info("Memory use after Launch import" + logmem())
+
 from modules.storage import Storage
+logging.info("Memory use after Storage import" + logmem())
 
 # ==================================================================================================
 # --- App pre-computations
@@ -66,29 +74,13 @@ else:
     # path_annotations = "data/annotations/"
     # path_db = "data/app_data/data.db"
     cache_dir = "/data/LBA_DATA/lbae/data/cache/"
-    path_data = "/data/LBA_DATA/lbae/new_data/"
+    path_data = "/data/LBA_DATA/lbae/new_data_mm/"
     path_grid_data = "/data/LBA_DATA/lbae/grid_data/"
     path_sample_data = "/data/LBA_DATA/lbae/sample_data/"
     path_section_data = "/data/LBA_DATA/lbae/section_data/"
     path_program_data = "/data/LBA_DATA/lbae/program_data/"
     path_annotations = "/data/LBA_DATA/lbae/data/annotations/"
     path_db = "/data/LBA_DATA/lbae/data/app_data/data.db"
-
-# # Load shelve database
-# storage = Storage(path_db)
-
-# # Load data
-# data = MaldiData(path_data, path_annotations, sample_data=SAMPLE_DATA)
-
-# # If True, only a small portions of the figures are precomputed (if precomputation has not already
-# # been done). Used for debugging purposes.
-# sample = False
-
-# # Load Atlas and Figures objects. At first launch, many objects will be precomputed and shelved in
-# # the classes Atlas and Figures.
-# atlas = Atlas(data, storage, resolution=25, sample=sample)
-# scRNAseq = ScRNAseq()
-# figures = Figures(data, storage, atlas, scRNAseq, sample=sample)
 
 # Load shelve database
 logging.info("Loading storage..." + logmem())
@@ -217,8 +209,8 @@ def display_page(pathname):
         return lipizones_selection.return_layout(basic_config, slice_index)
     elif pathname == "/lp-selection":
         return lp_selection.return_layout(basic_config, slice_index)
-    elif pathname == "/peak-selection":
-        return peak_selection.return_layout(basic_config, slice_index)
+    # elif pathname == "/peak-selection":
+    #     return peak_selection.return_layout(basic_config, slice_index)
     elif pathname == "/region-analysis":
         return region_analysis.return_layout(basic_config, slice_index)
     elif pathname == "/3D-exploration":
@@ -232,7 +224,8 @@ def display_page(pathname):
 
 # Make grid_data available for import
 __all__ = ['data', 
-            'program_data',
+            # 'program_data',
+            # 'peak_data',
             'atlas',
             'figures', 
             'grid_data', 

@@ -627,13 +627,7 @@ class Figures:
     def compute_image_per_lipid(
         self,
         slice_index,
-        # lb_mz,
-        # hb_mz,
         RGB_format=True,
-        # normalize=True,
-        # log=False,
-        # projected_image=True,
-        # apply_transform=False,
         lipid_name="",
         cache_flask=None,
     ):
@@ -1002,7 +996,6 @@ class Figures:
         slice_index,
         lipid_name,
         draw=False,
-        # projected_image=True,
         return_base64_string=False,
         cache_flask=None,
         overlay=None,
@@ -1039,7 +1032,6 @@ class Figures:
             slice_index,
             RGB_format=False,
             lipid_name=lipid_name,
-            # projected_image=projected_image,
             cache_flask=cache_flask,
         )
 

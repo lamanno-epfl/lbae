@@ -80,10 +80,10 @@ def return_main_content():
             dcc.Store(id="page-2bis-last-selected-lps", data=[]),
 
             # Record the peaks selected in peak selection page
-            dcc.Store(id="page-peak-selected-lp-1", data=-1),
-            dcc.Store(id="page-peak-selected-lp-2", data=-1),
-            dcc.Store(id="page-peak-selected-lp-3", data=-1),
-            dcc.Store(id="page-peak-last-selected-lps", data=[]),
+            dcc.Store(id="page-2tris-selected-peak-1", data=-1),
+            dcc.Store(id="page-2tris-selected-peak-2", data=-1),
+            dcc.Store(id="page-2tris-selected-peak-3", data=-1),
+            dcc.Store(id="page-2tris-last-selected-peaks", data=[]),
 
             # Record the lipizones selected in page 6
             dcc.Store(id="page-6-selected-lipizone-1", data=-1),
@@ -109,12 +109,16 @@ def return_main_content():
             dcc.Store(id="dcc-store-color-mask", data=[]),
             dcc.Store(id="dcc-store-reset", data=False),
             dcc.Store(id="dcc-store-shapes-and-masks", data=[]),
+            dcc.Store(id="dcc-store-shapes-and-masks-A", data=[]),
+            dcc.Store(id="dcc-store-shapes-and-masks-B", data=[]),
             dcc.Store(id="dcc-store-list-idx-lipids", data=[]),
             # Record the annotated paths drawn in page 3
             dcc.Store(id="page-3-dcc-store-path-heatmap"),
             dcc.Store(id="page-3-dcc-store-basic-figure", data=True),
-            # Record the computed spectra drawn in page 3
-            dcc.Store(id="dcc-store-list-mz-spectra", data=[]),
+            # Record the computed volcano plots drawn in page 3
+            # dcc.Store(id="dcc-store-list-mz-spectra", data=[]),
+            dcc.Store(id="dcc-store-list-volcano-A", data=[]),
+            dcc.Store(id="dcc-store-list-volcano-B", data=[]),
             # Record the lipids expressed in the region in page 3
             dcc.Store(id="page-3-dcc-store-lipids-region", data=[]),
             
@@ -148,7 +152,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='ReferenceAtlas').loc[data.get_coordinates(indices='ReferenceAtlas')['SectionID']==slice_index, 'xccf'].values[0]:.2f}" if i%3 == 0 else ""
+                                     "label": f"{data.get_AP_avg_coordinates(indices='ReferenceAtlas').loc[data.get_AP_avg_coordinates(indices='ReferenceAtlas')['SectionID']==slice_index, 'xccf'].values[0]:.2f}" if i%3 == 0 else ""
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="ReferenceAtlas"
@@ -166,7 +170,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='SecondAtlas').loc[data.get_coordinates(indices='SecondAtlas')['SectionID']==slice_index, 'xccf'].values[0]:.2f}" if i%3 == 0 else ""
+                                     "label": f"{data.get_AP_avg_coordinates(indices='SecondAtlas').loc[data.get_AP_avg_coordinates(indices='SecondAtlas')['SectionID']==slice_index, 'xccf'].values[0]:.2f}" if i%3 == 0 else ""
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="SecondAtlas"
@@ -185,7 +189,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='Male1').loc[data.get_coordinates(indices='Male1')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                     "label": f"{data.get_AP_avg_coordinates(indices='Male1').loc[data.get_AP_avg_coordinates(indices='Male1')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="Male1"
@@ -203,7 +207,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='Male2').loc[data.get_coordinates(indices='Male2')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                     "label": f"{data.get_AP_avg_coordinates(indices='Male2').loc[data.get_AP_avg_coordinates(indices='Male2')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="Male2"
@@ -221,7 +225,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='Male3').loc[data.get_coordinates(indices='Male3')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                     "label": f"{data.get_AP_avg_coordinates(indices='Male3').loc[data.get_AP_avg_coordinates(indices='Male3')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="Male3"
@@ -240,7 +244,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='Female1').loc[data.get_coordinates(indices='Female1')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                     "label": f"{data.get_AP_avg_coordinates(indices='Female1').loc[data.get_AP_avg_coordinates(indices='Female1')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="Female1"
@@ -258,7 +262,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='Female2').loc[data.get_coordinates(indices='Female2')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                     "label": f"{data.get_AP_avg_coordinates(indices='Female2').loc[data.get_AP_avg_coordinates(indices='Female2')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="Female2"
@@ -276,7 +280,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='Female3').loc[data.get_coordinates(indices='Female3')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                     "label": f"{data.get_AP_avg_coordinates(indices='Female3').loc[data.get_AP_avg_coordinates(indices='Female3')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="Female3"
@@ -295,7 +299,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='Pregnant1').loc[data.get_coordinates(indices='Pregnant1')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                     "label": f"{data.get_AP_avg_coordinates(indices='Pregnant1').loc[data.get_AP_avg_coordinates(indices='Pregnant1')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="Pregnant1"
@@ -313,7 +317,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='Pregnant2').loc[data.get_coordinates(indices='Pregnant2')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                     "label": f"{data.get_AP_avg_coordinates(indices='Pregnant2').loc[data.get_AP_avg_coordinates(indices='Pregnant2')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="Pregnant2"
@@ -331,7 +335,7 @@ def return_main_content():
                                 step=1,
                                 marks=[
                                     {"value": slice_index,
-                                     "label": f"{data.get_coordinates(indices='Pregnant4').loc[data.get_coordinates(indices='Pregnant4')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
+                                     "label": f"{data.get_AP_avg_coordinates(indices='Pregnant4').loc[data.get_AP_avg_coordinates(indices='Pregnant4')['SectionID']==slice_index, 'xccf'].values[0]:.2f}"
                                     }
                                     for i, slice_index in enumerate(data.get_slice_list(
                                         indices="Pregnant4"
@@ -420,8 +424,10 @@ def return_validation_layout(main_content, initial_slice=1):
             main_content,
             home.layout,
             lipid_selection.return_layout(basic_config, initial_slice),
-            lp_selection.return_layout(basic_config, initial_slice),
+            # lp_selection.return_layout(basic_config, initial_slice),
+            # peak_selection.return_layout(basic_config, initial_slice),
             lipizones_selection.return_layout(basic_config, initial_slice),
+            id_cards.return_layout(basic_config, initial_slice),
             region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
             threeD_lipizones.return_layout(basic_config, initial_slice),
@@ -453,11 +459,11 @@ def render_page_content(pathname, slice_index, brain):
     elif pathname == "/lipid-selection":
         page = lipid_selection.return_layout(basic_config, slice_index)
 
-    elif pathname == "/lp-selection":
-        page = lp_selection.return_layout(basic_config, slice_index)
+    # elif pathname == "/lp-selection":
+    #     page = lp_selection.return_layout(basic_config, slice_index)
     
-    elif pathname == "/peak-selection":
-        page = peak_selection.return_layout(basic_config, slice_index)
+    # elif pathname == "/peak-selection":
+    #     page = peak_selection.return_layout(basic_config, slice_index)
     
     elif pathname == "/lipizones-selection":
         page = lipizones_selection.return_layout(basic_config, slice_index)
@@ -514,7 +520,7 @@ def hide_slider(pathname):
     l_path_with_slider = [
         "/lipid-selection",
         "/lp-selection",
-        "/peak-selection",
+        # "/peak-selection",
         "/lipizones-selection",
         "/region-analysis",
         "/3D-exploration",

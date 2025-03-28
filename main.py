@@ -87,6 +87,6 @@ server = app.server
 if __name__ == "__main__":
     logging.info("Starting app" + logmem())
     try:
-        app.run(port=8011, debug=False)
+        app.run(port=8099, debug=False)
     except Exception as e:
         print(e)

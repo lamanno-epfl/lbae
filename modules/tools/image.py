@@ -27,7 +27,6 @@ from matplotlib import cm
 def black_to_transparency(img, original_array):
 
     x = np.asarray(img.convert("RGB")).copy()
-    # print("original_array.shape:", original_array.shape)
     nan_mask = np.isnan(original_array) if len(original_array.shape) == 2 else np.isnan(original_array[:,:,0])
     nan_mask = nan_mask.astype(np.uint8)*255
     # concatenate the mask to the image

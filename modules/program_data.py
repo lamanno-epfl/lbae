@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from time import time
 from typing import Dict, List, Optional, Tuple
 
-from modules.maldi_data import METADATA, ABA_CONTOURS, majority_vote_9x9, ACRONYM_MASKS
+from modules.maldi_data import ABA_CONTOURS, majority_vote_9x9, ACRONYM_MASKS, ACRONYMS_PIXELS
 from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
 from scipy.ndimage import generic_filter
 
@@ -29,7 +29,8 @@ class programImage:
     """
 
     name: str
-    image: np.ndarray
+    image: np.ndarray   ########## lipid_expression (dim: num_pixels, 1) --> change this!!
+    indices: np.ndarray ########## x_index, y_index, z_index (dim: num_pixels, 3)
     brain_id: str
     slice_index: int
     is_scatter: bool = False
@@ -154,6 +155,15 @@ class LipiMapData:
                 return []
             return brain_info[brain_id][slice_index]
 
+    def get_image_indices(self, slice_index):
+        """Get the indices of a lipid image from the database.
+
+        Args:
+            slice_index: Index of the slice
+            lipid_name: Name of the lipid
+        """
+        return self.get_program_image(slice_index, self.get_available_programs(slice_index)[0]).indices
+
     def get_acronym_mask(self, slice_index, fill_holes=True):
         """
         Retrieves the acronyms mask for a given slice index.
@@ -161,8 +171,9 @@ class LipiMapData:
         # print(f"slice_index: {slice_index}")
         # z_coord = METADATA[METADATA["SectionID"] == slice_index]["x_index"].values
         # take the acronyms of the rows of metadata that have SectionID == slice_index
-        acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "acronym", "x_index"]].values
-        acronym_scatter = pd.DataFrame(acronym_points, columns=["x", "y", "acronym", "x_index"])
+        acronym_points = ACRONYMS_PIXELS[slice_index]
+        coordinates = self.get_image_indices(slice_index)
+        acronym_scatter = pd.DataFrame([coordinates, acronym_points], columns=["x_index", "x", "y", "acronym"])
 
         # print unique values of the third column
         # if the elements of acronym_scatter["acronym"].values are None, replace them with "undefined"
@@ -234,20 +245,20 @@ class LipiMapData:
                             in orange (255, 165, 0) with transparency 243 for lines and 255
                             for background
         """
-        acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "x_index"]].values
-        acronym_scatter = pd.DataFrame(acronym_points, columns=["x", "y", "x_index"])
-
+        # acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "x_index"]].values
+        coordinates = self.get_image_indices(slice_index)
+        coordinates_scatter = pd.DataFrame(coordinates, columns=["x_index", "y", "x"])
         
         # Convert coordinates to integers for indexing
-        x_indices = acronym_scatter["x"].astype(int).values
-        y_indices = acronym_scatter["y"].astype(int).values
+        x_indices = coordinates_scatter["x"].astype(int).values
+        y_indices = coordinates_scatter["y"].astype(int).values
         # Ensure indices are within bounds
         valid_indices = (
             (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
         )
 
         arr_z = np.full(self.image_shape, np.nan)
-        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["x_index"].values[
+        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = coordinates_scatter["x_index"].values[
             valid_indices
         ]
         arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
@@ -283,21 +294,27 @@ class LipiMapData:
         try:
             # Use the parameters passed to the function
             program_data = self.get_program_image(slice_index, program_name)
+            # program_data.indices --> x_index, y_index, z_index (dim: num_pixels, 3)
+            # program_data.image --> lipid_expression (dim: num_pixels, 1)
             
             if program_data is None:
                 print(f"{program_name} in slice {slice_index} was not found.")
                 return None
                 
-            # Check if it's scatter data
-            if not program_data.is_scatter:
-                # If it's already an image, just return it
-                return program_data.image
+            # # Check if it's scatter data
+            # if not program_data.is_scatter:
+            #     # If it's already an image, just return it
+            #     return program_data.image
                 
             # Convert scatter data to image
-            scatter_points = program_data.image  # This is a numpy array with shape (N, 3)
+            # scatter_points = program_data.image  # This is a numpy array with shape (N, 3)
             
-            # Create a DataFrame from the scatter points
-            scatter = pd.DataFrame(scatter_points, columns=["y", "x", "value"])
+             # Create a DataFrame from the scatter points
+            scatter = pd.DataFrame({
+                            "x": program_data.indices[:, 2],
+                            "y": program_data.indices[:, 1],
+                            "value": program_data.image.flatten()  # ensure it's 1D
+                        })
             
             # Create an empty array to hold the image
             arr = np.full(self.image_shape, np.nan)  # Adjust dimensions if needed
@@ -310,21 +327,21 @@ class LipiMapData:
             valid_indices = (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
             
             # Fill the array with values at the specified coordinates
-            arr[x_indices[valid_indices], y_indices[valid_indices]] = scatter["value"].values[valid_indices]
+            arr[y_indices[valid_indices],x_indices[valid_indices]] = scatter["value"].values[valid_indices]
             
             # Check if we need to fill holes
             if fill_holes:
                 # Count how many NaN values we have
                 nan_count_before = np.isnan(arr).sum()
-                print(f"Found {nan_count_before} NaN values (holes) in the image")
+                # print(f"Found {nan_count_before} NaN values (holes) in the image")
                 
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
                     filled_arr = self._fill_holes_nearest_neighbor(arr)
                     
                     # Count remaining NaN values after filling
-                    nan_count_after = np.isnan(filled_arr).sum()
-                    print(f"After filling: {nan_count_after} NaN values remain")
+                    # nan_count_after = np.isnan(filled_arr).sum()
+                    # print(f"After filling: {nan_count_after} NaN values remain")
                     
                     return filled_arr
                 

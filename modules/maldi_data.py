@@ -17,8 +17,12 @@ logging.basicConfig(level=logging.INFO)
 
 ABA_DIM = (528, 320, 456)
 ABA_CONTOURS = np.load("/data/francesca/lbae/data/atlas/eroded_annot.npy")
-METADATA = pd.read_parquet("/data/LBA_DATA/Explorer2Paper/maindata_2.parquet").iloc[:, 173:221]
 ACRONYM_MASKS = pickle.load(open("/data/francesca/lbae/data/atlas/acronyms_masks.pkl", "rb"))
+ACRONYMS_PIXELS = pickle.load(open("/data/francesca/lbae/data/atlas/acronyms.pkl", "rb"))
+
+# MAINDATA = pd.read_parquet("/data/LBA_DATA/Explorer2Paper/maindata_2.parquet")
+# DATA = MAINDATA.iloc[:, :173]
+# METADATA = MAINDATA.iloc[:, 173:221]
 
 def majority_vote_9x9(window):
     # The window is flattened (9*9=81 elements); the center pixel is at index 40.
@@ -55,7 +59,8 @@ class LipidImage:
     """
 
     name: str
-    image: np.ndarray
+    image: np.ndarray   ########## lipid_expression (dim: num_pixels, 1) --> change this!!
+    indices: np.ndarray ########## x_index, y_index, z_index (dim: num_pixels, 3)
     brain_id: str
     slice_index: int
     is_scatter: bool = False
@@ -88,25 +93,27 @@ class MaldiData:
 
         self.image_shape = (ABA_DIM[1], ABA_DIM[2])
 
+        self.lookup_brainid = pd.read_csv(os.path.join(self.path_db, "lookup_brainid.csv"), index_col=0)
         self.acronyms_masks = ACRONYM_MASKS
         # for slice_idx in self.get_slice_list():
         #     # append get_acronym_mask to the list
         #     self.acronyms_masks[slice_idx] = self.get_acronym_mask(slice_idx)
+        # self.acronyms_masks_with_holes = ACRONYM_MASKS_WITH_HOLES
 
     def get_annotations(self) -> pd.DataFrame:
         return self._df_annotations
 
-    def get_coordinates(self, indices="ReferenceAtlas"):
+    def get_AP_avg_coordinates(self, indices="ReferenceAtlas"):
         coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
         slices = self.get_slice_list(indices=indices)
         return coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), :]
 
     def get_brain_id_from_sliceindex(self, slice_index):
-        lookup_brainid = pd.read_csv(os.path.join(self.path_db, "lookup_brainid.csv"), index_col=0)
+        # lookup_brainid = pd.read_csv(os.path.join(self.path_db, "lookup_brainid.csv"), index_col=0)
 
         try:
-            sample = lookup_brainid.loc[
-                lookup_brainid["SectionID"] == slice_index, "Sample"
+            sample = self.lookup_brainid.loc[
+                self.lookup_brainid["SectionID"] == slice_index, "Sample"
             ].values[0]
             return sample
 
@@ -168,6 +175,20 @@ class MaldiData:
         with shelve.open(os.path.join(self.path_db, "lipid_images")) as db:
             return db.get(key)
 
+    # # TODO: change the name of the function (get_image_indices)
+    # def get_lipid_image_indices(self, slice_index):
+    #     """Get the indices of a lipid image from the database.
+
+    #     Args:
+    #         slice_index: Index of the slice
+    #         lipid_name: Name of the lipid
+    #     """
+    #     brain_id = self.get_brain_id_from_sliceindex(slice_index)
+    #     lipid_name = self.get_available_lipids(slice_index)[0]
+    #     key = f"{brain_id}/slice_{float(slice_index)}/{lipid_name}"
+    #     with shelve.open(os.path.join(self.path_db, "lipid_images")) as db:
+    #         return db.get(key).image[:, :2]
+
     def get_available_brains(self) -> List[str]:
         """Get list of available brain IDs in the database."""
         with shelve.open(os.path.join(self.path_db, "metadata")) as db:
@@ -194,15 +215,24 @@ class MaldiData:
             return brain_info[brain_id][slice_index]
             # Use the parameters passed to the function
 
+    def get_image_indices(self, slice_index):
+        """Get the indices of a lipid image from the database.
+
+        Args:
+            slice_index: Index of the slice
+            lipid_name: Name of the lipid
+        """
+        return self.get_lipid_image(slice_index, self.get_available_lipids(slice_index)[0]).indices
+
     def get_acronym_mask(self, slice_index, fill_holes=True):
         """
         Retrieves the acronyms mask for a given slice index.
         """
-        # print(f"slice_index: {slice_index}")
-        # z_coord = METADATA[METADATA["SectionID"] == slice_index]["x_index"].values
         # take the acronyms of the rows of metadata that have SectionID == slice_index
-        acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "acronym", "x_index"]].values
-        acronym_scatter = pd.DataFrame(acronym_points, columns=["x", "y", "acronym", "x_index"])
+        # acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "acronym", "x_index"]].values
+        acronym_points = ACRONYMS_PIXELS[slice_index]
+        coordinates = self.get_image_indices(slice_index)
+        acronym_scatter = pd.DataFrame([coordinates, acronym_points], columns=["x_index", "x", "y", "acronym"])
 
         # print unique values of the third column
         # if the elements of acronym_scatter["acronym"].values are None, replace them with "undefined"
@@ -274,20 +304,20 @@ class MaldiData:
                             in orange (255, 165, 0) with transparency 243 for lines and 255
                             for background
         """
-        acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "x_index"]].values
-        acronym_scatter = pd.DataFrame(acronym_points, columns=["x", "y", "x_index"])
-
-        
+        # acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "x_index"]].values
+        coordinates = self.get_image_indices(slice_index)
+        coordinates_scatter = pd.DataFrame(coordinates, columns=["x_index", "y", "x"])
+ 
         # Convert coordinates to integers for indexing
-        x_indices = acronym_scatter["x"].astype(int).values
-        y_indices = acronym_scatter["y"].astype(int).values
+        x_indices = coordinates_scatter["x"].astype(int).values
+        y_indices = coordinates_scatter["y"].astype(int).values
         # Ensure indices are within bounds
         valid_indices = (
             (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
         )
 
         arr_z = np.full(self.image_shape, np.nan)
-        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["x_index"].values[
+        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = coordinates_scatter["x_index"].values[
             valid_indices
         ]
         arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
@@ -323,21 +353,27 @@ class MaldiData:
         try:
             # Use the parameters passed to the function
             lipid_data = self.get_lipid_image(slice_index, lipid_name)
-
+            # lipid_data.indices --> x_index, y_index, z_index (dim: num_pixels, 3)
+            # lipid_data.image --> lipid_expression (dim: num_pixels, 1)
+            
             if lipid_data is None:
                 print(f"{lipid_name} in slice {slice_index} was not found.")
                 return None
 
-            # Check if it's scatter data
-            if not lipid_data.is_scatter:
-                # If it's already an image, just return it
-                return lipid_data.image
+            # # Check if it's scatter data
+            # if not lipid_data.is_scatter:
+            #     # If it's already an image, just return it
+            #     return lipid_data.image
 
             # Convert scatter data to image
-            scatter_points = lipid_data.image  # This is a numpy array with shape (N, 3)
+            # scatter_points = lipid_data.image  # This is a numpy array with shape (N, 1)
 
             # Create a DataFrame from the scatter points
-            scatter = pd.DataFrame(scatter_points, columns=["y", "x", "value"])
+            scatter = pd.DataFrame({
+                            "x": lipid_data.indices[:, 2],
+                            "y": lipid_data.indices[:, 1],
+                            "value": lipid_data.image.flatten()  # ensure it's 1D
+                        })
 
             # Create an empty array to hold the image
             arr = np.full(self.image_shape, np.nan)  # Adjust dimensions if needed
@@ -352,7 +388,7 @@ class MaldiData:
             )
 
             # Fill the array with values at the specified coordinates
-            arr[x_indices[valid_indices], y_indices[valid_indices]] = scatter["value"].values[
+            arr[y_indices[valid_indices], x_indices[valid_indices]] = scatter["value"].values[
                 valid_indices
             ]
 
@@ -360,15 +396,15 @@ class MaldiData:
             if fill_holes:
                 # Count how many NaN values we have
                 nan_count_before = np.isnan(arr).sum()
-                print(f"Found {nan_count_before} NaN values (holes) in the image")
+                # print(f"Found {nan_count_before} NaN values (holes) in the image")
 
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
                     filled_arr = self._fill_holes_nearest_neighbor(arr)
 
                     # Count remaining NaN values after filling
-                    nan_count_after = np.isnan(filled_arr).sum()
-                    print(f"After filling: {nan_count_after} NaN values remain")
+                    # nan_count_after = np.isnan(filled_arr).sum()
+                    # print(f"After filling: {nan_count_after} NaN values remain")
 
                     return filled_arr
 
@@ -517,6 +553,81 @@ class MaldiData:
             for ln in self.get_available_lipids(1)
         ]
 
+    # def get_pixels_from_indices(self, slice_index, z_indices, y_indices):
+    #     # Merge method
+    #     # mask_set = set(zip(z_indices, y_indices))
+    #     # valid_df = pd.DataFrame(list(mask_set), columns=['z_index', 'y_index'])
+    #     # pixels = pd.merge(MAINDATA, valid_df, on=['z_index', 'y_index'])
+    #     # pixels = pixels[pixels['SectionID'] == slice_index]
+
+    #     # Masking method
+    #     pixels = []
+    #     for lipid_name in self.get_available_lipids(slice_index):
+    #         image = self.get_lipid_image(slice_index, lipid_name)
+    #         pix = image[z_indices, y_indices]
+    #         pixels.append(pix[~np.isnan(pix)])
+    #     pixels = np.array(pixels).T
+    #     return pixels
+    def get_pixels_from_indices(self, slice_index, z_indices, y_indices):
+        # Get the mask
+        # mask_set = set(zip(z_indices, y_indices))
+        # valid_df = pd.DataFrame(list(mask_set), columns=['z_index', 'y_index'])
+        # pixels = pd.merge(MAINDATA, valid_df, on=['z_index', 'y_index'])
+        # pixels = pixels[pixels['SectionID'] == slice_index]
+
+        yz_coords = self.get_image_indices(slice_index)[:, 1:]
+        
+        mask_set = set(zip(y_indices, z_indices))
+        mask = np.array([(y, z) in mask_set for y, z in yz_coords])
+
+        # pixels = np.zeros((mask.sum(), 173))
+        # for i, lipid_name in enumerate(self.get_available_lipids(slice_index)):
+        #     image = self.get_lipid_image(slice_index=slice_index, lipid_name=lipid_name).image
+        #     pixels[:, i] = image[mask]
+        pixels = np.array([
+            self.get_lipid_image(slice_index=slice_index, lipid_name=lipid_name).image[mask]
+            for lipid_name in self.get_available_lipids(slice_index)
+        ]).T
+        
+        return pixels
+
+    # pixel_masks_path = "/data/francesca/lbae/data/atlas/pixel_masks" # os.path.join(data.path_db, "pixel_masks")
+    # if not os.path.exists(pixel_masks_path):
+    #         os.makedirs(pixel_masks_path)
+
+    # with shelve.open(pixel_masks_path) as db:
+    #     for brain_id in data.get_available_brains():
+    #         print(f"\n{brain_id}")
+    #         for slice_index in data.get_available_slices(brain_id):
+    #             print(f"{slice_index} --> {len(atlas.dic_existing_masks[slice_index])} masks to process")
+    #             for id_name in atlas.dic_existing_masks[slice_index]:
+    #                 descendants = atlas.bg_atlas.get_structure_descendants(id_name)
+    #                 acronym_mask = data.acronyms_masks[slice_index]
+    #                 mask2D = np.isin(acronym_mask, descendants + [id_name])
+    #                 indices = np.where(mask2D)
+    #                 y_indices = indices[0]
+    #                 z_indices = indices[1]
+    #                 pixels = get_pixels_from_indices(slice_index, z_indices, y_indices)
+                    
+    #                 # Store data in shelve with a structured key
+    #                 key = f"{brain_id}/slice_{slice_index}/{id_name}"
+    #                 db[key] = pixels
+
+    # def get_pixels_from_mask(self, slice_index, mask_id_name):
+    #     """
+    #     Get pixels from indices in the main data.
+
+    #     Args:
+    #         slice_index (int): The slice index.
+    #         mask_id_name (str): The mask id name.
+
+    #     Returns:
+    #         pixels (np.ndarray): The lipid expression values corresponding to the mask.
+    #     """
+    #     brain_id = self.get_brain_id_from_sliceindex(slice_index)
+    #     key = f"{brain_id}/slice_{slice_index}/{mask_id_name}"
+    #     with shelve.open(os.path.join(self.path_db, "pixel_masks")) as db:
+    #         return db[key]
     """
     def empty_database(self):
         # Remove all data from the database.
@@ -529,258 +640,3 @@ class MaldiData:
         with shelve.open(os.path.join(self.path_db, "lipid_images")) as db:
             db.clear()
     """
-
-import os
-import shelve
-import numpy as np
-from tqdm import tqdm
-
-# Make sure to import or define these functions:
-# from your_module import create_section_grid, normalize_grid_with_percentiles
-
-class GridImageShelve:
-    """
-    A class to generate, store, and retrieve grid images for given lipid and sample.
-    The images are stored in a shelve database located in the 'grid_data' folder.
-    """
-    def __init__(self, shelf_dir="grid_data", shelf_filename="grid_shelve"):
-        """
-        Initializes the shelve database in the given directory.
-        """
-        self.shelf_dir = shelf_dir
-        # self.shelf_dir = os.path.abspath(shelf_dir)
-        print("QUIIII shelf_dir:", self.shelf_dir)
-        # Create the grid_data folder if it does not exist
-        if not os.path.exists(self.shelf_dir):
-            os.makedirs(self.shelf_dir)
-        # Shelve uses the given filename as the base for its files
-        self.shelf_path = os.path.join(self.shelf_dir, shelf_filename)
-
-    def create_grid_image(self, maindata, lipid, sample):
-        """
-        Given the main DataFrame, a lipid, and a sample,
-        this method generates the grid image.
-        
-        Parameters:
-            maindata (DataFrame): The complete data.
-            lipid (str): The lipid column to process.
-            sample (str): The sample identifier.
-        
-        Returns:
-            grid_image (np.ndarray): The processed grid image.
-        """
-        # Get the unique sorted SectionIDs for the sample
-        section_ids = np.sort(maindata.loc[maindata['Sample'] == sample, 'SectionID'].unique())
-        
-        # Determine number of columns based on sample name
-        if sample in ["ReferenceAtlas", "SecondAtlas"]:
-            cols = 8
-        else:
-            cols = 3
-        
-        # Create the grid and normalize it
-        grid = create_section_grid(maindata, section_ids, lipid, cols=cols)
-        grid_image = normalize_grid_with_percentiles(grid)
-        return grid_image
-
-    def get_brain_id_from_sliceindex(self, slice_index):
-        lookup_brainid = pd.read_csv("./new_data/lookup_brainid.csv", index_col=0)
-
-        try:
-            sample = lookup_brainid.loc[
-                lookup_brainid["SectionID"] == slice_index, "Sample"
-            ].values[0]
-            return sample
-
-        except:
-            print("Missing sample")
-            return np.nan
-
-    def store_grid_image(self, lipid, sample, grid_image):
-        """
-        Stores the grid image in the shelve database with a key based on lipid and sample.
-        
-        Parameters:
-            lipid (str): The lipid identifier.
-            sample (str): The sample identifier.
-            grid_image (np.ndarray): The grid image to store.
-        """
-        key = f"{lipid}_{sample}_grid"
-        with shelve.open(self.shelf_path) as db:
-            db[key] = grid_image
-
-    def retrieve_grid_image(self, lipid, sample=None, slice_index=None):
-        """
-        Retrieves the grid image for the given lipid and sample from the shelve database.
-        
-        Parameters:
-            lipid (str): The lipid identifier.
-            sample (str, optional): The sample identifier. If provided, this is used directly.
-            slice_index (int, optional): The slice index. If provided and sample is None, 
-                                        this is converted to a sample using get_brain_id_from_sliceindex.
-        
-        Returns:
-            grid_image (np.ndarray): The retrieved grid image.
-            
-        Raises:
-            KeyError: If no grid image is found for the given key.
-            ValueError: If neither sample nor slice_index is provided.
-        """
-        if sample is None and slice_index is None:
-            raise ValueError("Either sample or slice_index must be provided")
-            
-        if sample is None:
-            sample = self.get_brain_id_from_sliceindex(slice_index)
-
-        key = f"{lipid}_{sample}_grid"
-        print("self.shelf_path:", self.shelf_path)
-        print("key:", key)
-        with shelve.open(self.shelf_path) as db:
-            if key in db:
-                return db[key]
-            else:
-                raise KeyError(f"Grid image for lipid '{lipid}' and sample '{sample}' not found.")
-
-    def process_maindata(self, maindata, lipids=None, samples=None):
-        """
-        Processes the main DataFrame by generating and storing grid images for each
-        combination of lipid and sample.
-        
-        Parameters:
-            maindata (DataFrame): The complete data.
-            lipids (iterable, optional): List of lipids to process. If None, uses the first 173 columns.
-            samples (iterable, optional): List of samples to process. If None, uses all unique samples from maindata.
-        """
-        # Use default selections if none provided
-        if lipids is None:
-            lipids = maindata.columns[:173].values
-        if samples is None:
-            samples = maindata['Sample'].unique()
-
-        for lipid in tqdm(lipids):
-            for sample in samples:
-                grid_image = self.create_grid_image(maindata, lipid, sample)
-                self.store_grid_image(lipid, sample, grid_image)
-                print(f"Stored grid image for lipid '{lipid}' and sample '{sample}'.")
-
-class SampleDataShelve:
-    """
-    A class to store and retrieve processed sample data (grid image,
-    grayscale image, and color masks) using a shelve database.
-    """
-    def __init__(self, shelf_filename="sample_data_shelve", shelf_dir="sample_data"):
-        """
-        Initializes the shelve database.
-        
-        Parameters:
-            shelf_filename (str): Base filename for the shelve database.
-            shelf_dir (str): Directory in which to store the shelve files.
-        """
-        self.shelf_dir = shelf_dir
-        # Create the directory if it does not exist
-        if not os.path.exists(shelf_dir):
-            os.makedirs(shelf_dir)
-        self.shelf_path = os.path.join(shelf_dir, shelf_filename)
-    
-    def store_sample_data(self, sample, grid_image, rgb_image, grayscale_image, color_masks):
-        """
-        Stores the processed data for a given sample.
-        
-        Parameters:
-            sample (str): The sample identifier.
-            grid_image (np.ndarray): The full grid image (3D).
-            rgb_image (np.ndarray): The RGB portion of the grid image.
-            grayscale_image (np.ndarray): The grayscale image.
-            color_masks (dict): The precomputed color masks.
-        """
-        data = {
-            "grid_image": grid_image,
-            "grayscale_image": grayscale_image,
-            "color_masks": color_masks
-        }
-        with shelve.open(self.shelf_path) as db:
-            db[sample] = data
-        print(f"Stored data for sample: {sample}")
-    
-    def retrieve_sample_data(self, sample):
-        """
-        Retrieves the processed data for a given sample.
-        
-        Parameters:
-            sample (str): The sample identifier.
-        
-        Returns:
-            dict: A dictionary containing 'grid_image', 'rgb_image', 
-                  'grayscale_image', and 'color_masks'.
-        
-        Raises:
-            KeyError: If the sample is not found in the database.
-        """
-        with shelve.open(self.shelf_path) as db:
-            if sample in db:
-                return db[sample]
-            else:
-                raise KeyError(f"Data for sample '{sample}' not found.")
-
-
-class SectionDataShelve:
-    """
-    A class to store and retrieve processed section data (grid image, RGB image,
-    grayscale image, and color masks) using a shelve database.
-    """
-    def __init__(self, shelf_filename="section_data_shelve", shelf_dir="section_data"):
-        """
-        Initializes the shelve database.
-        
-        Parameters:
-            shelf_filename (str): Base filename for the shelve database.
-            shelf_dir (str): Directory in which to store the shelve files.
-        """
-        self.shelf_dir = shelf_dir
-        # Create the directory if it does not exist
-        if not os.path.exists(shelf_dir):
-            os.makedirs(shelf_dir)
-        self.shelf_path = os.path.join(shelf_dir, shelf_filename)
-    
-    def store_section_data(self, section, grid_image, grayscale_image, color_masks):
-        """
-        Stores the processed data for a given section.
-        
-        Parameters:
-            section (str or int): The section identifier.
-            grid_image (np.ndarray): The grid image (3D).
-            rgb_image (np.ndarray): The RGB portion of the grid image.
-            grayscale_image (np.ndarray): The grayscale image.
-            color_masks (dict): The precomputed color masks.
-        """
-        data = {
-            "grid_image": grid_image,
-            "grayscale_image": grayscale_image,
-            "color_masks": color_masks
-        }
-        # Use the section name (or id) as the key (converted to string)
-        key = str(section)
-        with shelve.open(self.shelf_path) as db:
-            db[key] = data
-        print(f"Stored data for section: {key}")
-    
-    def retrieve_section_data(self, section):
-        """
-        Retrieves the processed data for a given section.
-        
-        Parameters:
-            section (str or int): The section identifier.
-        
-        Returns:
-            dict: A dictionary containing 'grid_image', 'rgb_image', 
-                  'grayscale_image', and 'color_masks'.
-        
-        Raises:
-            KeyError: If the section is not found in the database.
-        """
-        key = str(section)
-        with shelve.open(self.shelf_path) as db:
-            if key in db:
-                return db[key]
-            else:
-                raise KeyError(f"Data for section '{key}' not found.")

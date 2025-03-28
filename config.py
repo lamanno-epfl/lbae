@@ -20,9 +20,12 @@ dic_colors = {
     "green": "#5fa970",
     "orange": "#de9334",
     "red": "#df5034",
+    "purple": "#800080",
+    "pink": "#ffc0cb",
+    "yellow": "#ffff00",
     "dark": "#222222",
 }
-l_colors = ["#50bdda", "#5fa970", "#de9334", "#df5034", "#222222"]
+l_colors = ["#50bdda", "#5fa970", "#de9334", "#df5034", "#800080", "#ffc0cb", "#ffff00", "#222222"]
 
 
 # Define basic config for graphs

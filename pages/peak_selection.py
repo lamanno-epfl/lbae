@@ -25,7 +25,6 @@ from app import app, peak_figures, peak_data, cache_flask
 # --- Layout
 # ==================================================================================================
 
-
 def return_layout(basic_config, slice_index):
     page = (
         html.Div(
@@ -52,7 +51,7 @@ def return_layout(basic_config, slice_index):
                                 "height": "3rem",
                             },
                             children=dcc.Graph(
-                                id="page-peak-graph-heatmap-mz-selection",
+                                id="page-2tris-graph-heatmap-mz-selection",
                                 config=basic_config
                                 | {
                                     "toImageButtonOptions": {
@@ -92,7 +91,7 @@ def return_layout(basic_config, slice_index):
                                     align="flex-start",
                                     children=[
                                         dmc.MultiSelect(
-                                            id="page-peak-dropdown-lps",
+                                            id="page-2tris-dropdown-peaks",
                                             data=peak_data.return_peak_options(),
                                             value=['1000.169719'],
                                             searchable=True,
@@ -111,7 +110,7 @@ def return_layout(basic_config, slice_index):
                                         ),
                                         dmc.Button(
                                             children="Display as RGB",
-                                            id="page-peak-rgb-button",
+                                            id="page-2tris-rgb-button",
                                             variant="filled",
                                             color="cyan",
                                             radius="md",
@@ -122,7 +121,7 @@ def return_layout(basic_config, slice_index):
                                         ),
                                         dmc.Button(
                                             children="Display as colormap",
-                                            id="page-peak-colormap-button",
+                                            id="page-2tris-colormap-button",
                                             variant="filled",
                                             color="cyan",
                                             radius="md",
@@ -133,7 +132,7 @@ def return_layout(basic_config, slice_index):
                                         ),
                                         dmc.Button(
                                             children="Show section mass spectrum",
-                                            id="page-peak-show-spectrum-button",
+                                            id="page-2tris-show-spectrum-button",
                                             variant="filled",
                                             color="cyan",
                                             radius="md",
@@ -147,53 +146,88 @@ def return_layout(basic_config, slice_index):
                             ],
                         ),
                         dmc.Text(
-                            id="page-peak-badge-input",
-                            children="Current input: ",  #  + "m/z boundaries",
+                            id="page-2tris-badge-input",
+                            children="Current input: ",
                             class_name="position-absolute",
                             style={"right": "1%", "top": "1em"},
                         ),
                         dmc.Badge(
-                            id="page-peak-badge-lp-1",
-                            children="name-lp-1",
+                            id="page-2tris-badge-peak-1",
+                            children="name-peak-1",
                             color="red",
                             variant="filled",
                             class_name="d-none",
                             style={"right": "1%", "top": "4em"},
                         ),
                         dmc.Text(
-                            id="page-peak-annotation-lp-1",
+                            id="page-2tris-annotation-peak-1",
                             children="",
                             class_name="d-none",
                             style={"right": "calc(1% + 120px)", "top": "3.7em", "font-style": "italic", "font-size": "0.85rem", "line-height": "1.8", "text-align": "right"},
                         ),
                         dmc.Badge(
-                            id="page-peak-badge-lp-2",
-                            children="name-lp-2",
+                            id="page-2tris-badge-peak-2",
+                            children="name-peak-2",
                             color="teal",
                             variant="filled",
                             class_name="d-none",
                             style={"right": "1%", "top": "6em"},
                         ),
                         dmc.Text(
-                            id="page-peak-annotation-lp-2",
+                            id="page-2tris-annotation-peak-2",
                             children="",
                             class_name="d-none",
                             style={"right": "calc(1% + 120px)", "top": "5.7em", "font-style": "italic", "font-size": "0.85rem", "line-height": "1.8", "text-align": "right"},
                         ),
                         dmc.Badge(
-                            id="page-peak-badge-lp-3",
-                            children="name-lp-3",
+                            id="page-2tris-badge-peak-3",
+                            children="name-peak-3",
                             color="blue",
                             variant="filled",
                             class_name="d-none",
                             style={"right": "1%", "top": "8em"},
                         ),
                         dmc.Text(
-                            id="page-peak-annotation-lp-3",
+                            id="page-2tris-annotation-peak-3",
                             children="",
                             class_name="d-none",
                             style={"right": "calc(1% + 120px)", "top": "7.7em", "font-style": "italic", "font-size": "0.85rem", "line-height": "1.8", "text-align": "right"},
                         ),
+
+                        dmc.Text(
+                            "",
+                            id="page-2tris-graph-hover-text",
+                            size="xl",
+                            align="center",
+                            color="cyan",
+                            class_name="mt-5",
+                            weight=500,
+                            style={
+                                "width": "auto",
+                                "position": "absolute",
+                                "left": "50%",
+                                "transform": "translateX(-50%)",
+                                "top": "1em",
+                                "fontSize": "1.5em",
+                                "textAlign": "center",
+                                "zIndex": 1000,
+                                "backgroundColor": "rgba(0, 0, 0, 0.7)",
+                                "padding": "0.5em 2em",
+                                "borderRadius": "8px",
+                                "minWidth": "200px",
+                            },
+                        ),
+                        dmc.Switch(
+                            id="page-2tris-toggle-annotations",
+                            label="Allen Brain Atlas Annotations",
+                            checked=False,
+                            color="cyan",
+                            radius="xl",
+                            size="sm",
+                            style={"left": "1%", "top": "20em"},
+                            class_name="position-absolute",
+                        ),
+
                         dmc.Group(
                             position="right",
                             direction="row",
@@ -208,7 +242,7 @@ def return_layout(basic_config, slice_index):
                             children=[
                                 dmc.Button(
                                     children="Download data",
-                                    id="page-peak-download-data-button",
+                                    id="page-2tris-download-data-button",
                                     variant="filled",
                                     disabled=False,
                                     color="cyan",
@@ -221,7 +255,7 @@ def return_layout(basic_config, slice_index):
                                 ),
                                 dmc.Button(
                                     children="Download image",
-                                    id="page-peak-download-image-button",
+                                    id="page-2tris-download-image-button",
                                     variant="filled",
                                     disabled=False,
                                     color="cyan",
@@ -233,7 +267,7 @@ def return_layout(basic_config, slice_index):
                                 ),
                             ],
                         ),
-                        dcc.Download(id="page-peak-download-data"),
+                        dcc.Download(id="page-2tris-download-data"),
                     ],
                 ),
             ],
@@ -241,7 +275,7 @@ def return_layout(basic_config, slice_index):
         html.Div(
             children=[
                 dbc.Offcanvas(
-                    id="page-peak-drawer-spectrum",
+                    id="page-2tris-drawer-spectrum",
                     backdrop=True,
                     placement="end",
                     style={"width": "30%"},
@@ -257,7 +291,7 @@ def return_layout(basic_config, slice_index):
                                             children=[
                                                 dmc.Button(
                                                     children="Hide spectrum",
-                                                    id="page-peak-close-spectrum-button",
+                                                    id="page-2tris-close-spectrum-button",
                                                     variant="filled",
                                                     disabled=False,
                                                     color="red",
@@ -267,7 +301,7 @@ def return_layout(basic_config, slice_index):
                                                     loading=False,
                                                 ),
                                                 dcc.Graph(
-                                                    id="page-peak-graph-spectrum",
+                                                    id="page-2tris-graph-spectrum",
                                                     style={
                                                         "height": 280,
                                                         "width": "100%",
@@ -302,137 +336,117 @@ def return_layout(basic_config, slice_index):
 # ==================================================================================================
 
 @app.callback(
-    Output("page-peak-graph-heatmap-mz-selection", "figure"),
-    Output("page-peak-badge-input", "children"),
+    Output("page-2tris-graph-heatmap-mz-selection", "figure"),
+    Output("page-2tris-badge-input", "children"),
     Input("main-slider", "data"),
-    Input("page-peak-selected-lp-1", "data"),
-    Input("page-peak-selected-lp-2", "data"),
-    Input("page-peak-selected-lp-3", "data"),
-    Input("page-peak-rgb-button", "n_clicks"),
-    Input("page-peak-colormap-button", "n_clicks"),
-    State("page-peak-badge-input", "children"),
+    Input("page-2tris-selected-peak-1", "data"),
+    Input("page-2tris-selected-peak-2", "data"),
+    Input("page-2tris-selected-peak-3", "data"),
+    Input("page-2tris-rgb-button", "n_clicks"),
+    Input("page-2tris-colormap-button", "n_clicks"),
+    State("page-2tris-badge-input", "children"),
 )
 def page_peak_plot_graph_heatmap_mz_selection(
     slice_index,
-    lp_1_index,
-    lp_2_index,
-    lp_3_index,
+    peak_1_index,
+    peak_2_index,
+    peak_3_index,
     n_clicks_button_rgb,
     n_clicks_button_colormap,
     graph_input,
 ):
-    """This callback plots the heatmap of the selected LP(s)."""
+    """This callback plots the heatmap of the selected Peak(s)."""
     print(f"\n========== page_peak_plot_graph_heatmap_mz_selection ==========")
-    print('indices:', lp_1_index, lp_2_index, lp_3_index)
-    print(f"slice_index: {slice_index}")
-    logging.info("Entering function to plot heatmap or RGB depending on LP selection")
+    logging.info("Entering function to plot heatmap or RGB depending on Peak selection")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    print(f"id_input: {id_input}")    
-    print("graph_input:", graph_input)
-
+    
     if (
-        id_input == "page-peak-selected-lp-1"
-        or id_input == "page-peak-selected-lp-2"
-        or id_input == "page-peak-selected-lp-3"
-        or id_input == "page-peak-rgb-button"
-        or id_input == "page-peak-colormap-button"
+        id_input == "page-2tris-selected-peak-1"
+        or id_input == "page-2tris-selected-peak-2"
+        or id_input == "page-2tris-selected-peak-3"
+        or id_input == "page-2tris-rgb-button"
+        or id_input == "page-2tris-colormap-button"
         or (
             (id_input == "main-slider")
             and (
-                graph_input == "Current input: " + "LP selection colormap"
-                or graph_input == "Current input: " + "LP selection RGB"
+                graph_input == "Current input: " + "Peak selection colormap"
+                or graph_input == "Current input: " + "Peak selection RGB"
             )
         )
     ):
-        print("--- option 1 ---")
-        if lp_1_index >= 0 or lp_2_index >= 0 or lp_3_index >= 0:
-            ll_lp_names = [
+        if peak_1_index >= 0 or peak_2_index >= 0 or peak_3_index >= 0:
+            ll_peak_names = [
                 peak_data.get_annotations().iloc[index]["name"]
                 if index != -1
                 else None
-                for index in [lp_1_index, lp_2_index, lp_3_index]
+                for index in [peak_1_index, peak_2_index, peak_3_index]
             ]
-            print("ll_lp_names:", ll_lp_names)
-
+        
             if (
-                id_input == "page-peak-colormap-button"
+                id_input == "page-2tris-colormap-button"
                 or (
                     id_input == "main-slider"
-                    and graph_input == "Current input: " + "LP selection colormap"
+                    and graph_input == "Current input: " + "Peak selection colormap"
                 )
             ):
-                print("--- option 1.1 ---")
-                if ll_lp_names.count(None) == len(ll_lp_names) - 1 and None in ll_lp_names:
-                    nonull_ll_lp_names = [x for x in ll_lp_names if x is not None][0]
+                if ll_peak_names.count(None) == len(ll_peak_names) - 1 and None in ll_peak_names:
+                    nonull_ll_peak_names = [x for x in ll_peak_names if x is not None][0]
                     image = peak_figures.compute_image_per_lipid(
                         slice_index,
                         RGB_format=False,
-                        lipid_name=nonull_ll_lp_names,
+                        lipid_name=nonull_ll_peak_names,
                         cache_flask=cache_flask,
                     )
-                    print("--- option 1.1.1 ---")
                     return (
                         peak_figures.build_lipid_heatmap_from_image(
                             image, 
                             return_base64_string=False)
                     ,
-                    "Current input: " + "LP selection colormap",
+                    "Current input: " + "Peak selection colormap",
                 )
                 else:
-                    print("--- option 1.1.2 ---")
-                    logging.info("Trying to plot a heatmap for more than one LP, not possible. Return the rgb plot instead")
+                    logging.info("Trying to plot a heatmap for more than one peak, not possible. Return the rgb plot instead")
                     return (
                         peak_figures.compute_rgb_image_per_lipid_selection(
                             slice_index,
-                            ll_lipid_names=ll_lp_names,
+                            ll_lipid_names=ll_peak_names,
                             cache_flask=cache_flask,
                         ),
-                        "Current input: " + "LP selection RGB",
+                        "Current input: " + "Peak selection RGB",
                     )
 
             elif (
-                id_input == "page-peak-rgb-button"
+                id_input == "page-2tris-rgb-button"
                 or (
                     id_input == "main-slider"
-                    and graph_input == "Current input: " + "LP selection RGB"
+                    and graph_input == "Current input: " + "Peak selection RGB"
                 )
-                or (
-                    id_input == "page-peak-toggle-apply-transform"
-                    and graph_input == "Current input: " + "LP selection RGB"
-                )
+                or graph_input == "Current input: " + "Peak selection RGB"
             ):
-                print("--- option 1.2 ---")
                 return (
                     peak_figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
-                        ll_lipid_names=ll_lp_names,
+                        ll_lipid_names=ll_peak_names,
                         cache_flask=cache_flask,
                     ),
-                    "Current input: " + "LP selection RGB",
+                    "Current input: " + "Peak selection RGB",
                 )
 
             else:
-                print("--- option 1.3 ---")
                 logging.info("Right before calling the graphing function")
-                print("########################################################")
-                print(graph_input)
-                print(f"ll_lp_names: {ll_lp_names}")
-                print(f"slice_index: {slice_index}")
                 return (
                     peak_figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
-                        ll_lipid_names=ll_lp_names,
+                        ll_lipid_names=ll_peak_names,
                         cache_flask=cache_flask,
                     ),
-                    "Current input: " + "LP selection RGB",
+                    "Current input: " + "Peak selection RGB",
                 )
         elif (
             id_input == "main-slider" and graph_input == "Current input: "
         ):
-            print("--- option 2 ---")
-            print(f"No LP has been selected, the current LP is '1000.169719' and the slice is {slice_index}")
             return (
                 peak_figures.compute_heatmap_per_lipid(slice_index, 
                                                 '1000.169719',
@@ -440,7 +454,6 @@ def page_peak_plot_graph_heatmap_mz_selection(
                 "Current input: " + '1000.169719',
             )
         else:
-            print("--- option 3 ---")
             return (
                 peak_figures.compute_heatmap_per_lipid(slice_index, 
                                                 '1000.169719',
@@ -452,55 +465,53 @@ def page_peak_plot_graph_heatmap_mz_selection(
 
 
 @app.callback(
-    Output("page-peak-badge-lp-1", "children"),
-    Output("page-peak-badge-lp-2", "children"),
-    Output("page-peak-badge-lp-3", "children"),
-    Output("page-peak-selected-lp-1", "data"),
-    Output("page-peak-selected-lp-2", "data"),
-    Output("page-peak-selected-lp-3", "data"),
-    Output("page-peak-badge-lp-1", "class_name"),
-    Output("page-peak-badge-lp-2", "class_name"),
-    Output("page-peak-badge-lp-3", "class_name"),
-    Output("page-peak-annotation-lp-1", "children"),
-    Output("page-peak-annotation-lp-1", "class_name"),
-    Output("page-peak-annotation-lp-2", "children"),
-    Output("page-peak-annotation-lp-2", "class_name"),
-    Output("page-peak-annotation-lp-3", "children"),
-    Output("page-peak-annotation-lp-3", "class_name"),
-    Input("page-peak-dropdown-lps", "value"),
-    Input("page-peak-badge-lp-1", "class_name"),
-    Input("page-peak-badge-lp-2", "class_name"),
-    Input("page-peak-badge-lp-3", "class_name"),
+    Output("page-2tris-badge-peak-1", "children"),
+    Output("page-2tris-badge-peak-2", "children"),
+    Output("page-2tris-badge-peak-3", "children"),
+    Output("page-2tris-selected-peak-1", "data"),
+    Output("page-2tris-selected-peak-2", "data"),
+    Output("page-2tris-selected-peak-3", "data"),
+    Output("page-2tris-badge-peak-1", "class_name"),
+    Output("page-2tris-badge-peak-2", "class_name"),
+    Output("page-2tris-badge-peak-3", "class_name"),
+    Output("page-2tris-annotation-peak-1", "children"),
+    Output("page-2tris-annotation-peak-1", "class_name"),
+    Output("page-2tris-annotation-peak-2", "children"),
+    Output("page-2tris-annotation-peak-2", "class_name"),
+    Output("page-2tris-annotation-peak-3", "children"),
+    Output("page-2tris-annotation-peak-3", "class_name"),
+    Input("page-2tris-dropdown-peaks", "value"),
+    Input("page-2tris-badge-peak-1", "class_name"),
+    Input("page-2tris-badge-peak-2", "class_name"),
+    Input("page-2tris-badge-peak-3", "class_name"),
     Input("main-slider", "data"),
-    State("page-peak-selected-lp-1", "data"),
-    State("page-peak-selected-lp-2", "data"),
-    State("page-peak-selected-lp-3", "data"),
-    State("page-peak-badge-lp-1", "children"),
-    State("page-peak-badge-lp-2", "children"),
-    State("page-peak-badge-lp-3", "children"),
+    State("page-2tris-selected-peak-1", "data"),
+    State("page-2tris-selected-peak-2", "data"),
+    State("page-2tris-selected-peak-3", "data"),
+    State("page-2tris-badge-peak-1", "children"),
+    State("page-2tris-badge-peak-2", "children"),
+    State("page-2tris-badge-peak-3", "children"),
 )
 def page_peak_add_toast_selection(
-    l_lp_names,
+    l_peak_names,
     class_name_badge_1,
     class_name_badge_2,
     class_name_badge_3,
     slice_index,
-    lp_1_index,
-    lp_2_index,
-    lp_3_index,
+    peak_1_index,
+    peak_2_index,
+    peak_3_index,
     header_1,
     header_2,
     header_3,
 ):
-    """This callback adds the selected LP to the selection."""
-    logging.info("Entering function to update LP data")
+    """This callback adds the selected peak to the selection."""
+    logging.info("Entering function to update peak data")
     print("\n================ page_peak_add_toast_selection ================")
     
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    print(f"id_input: {id_input}")
-    print(f"value_input: {value_input}")
     
     # Initialize annotation variables
     annotation_1 = ""
@@ -510,11 +521,11 @@ def page_peak_add_toast_selection(
     class_name_annotation_2 = "d-none"
     class_name_annotation_3 = "d-none"
     
-    if len(id_input) == 0 or (id_input == "page-peak-dropdown-lps" and l_lp_names is None):
+    if len(id_input) == 0 or (id_input == "page-2tris-dropdown-peaks" and l_peak_names is None):
         # Initialize with '1000.169719' as the default peak
-        default_lp = '1000.169719'
-        name = default_lp
-        l_lp_loc = (
+        default_peak = '1000.169719'
+        name = default_peak
+        l_peak_loc = (
             peak_data.get_annotations()
             .index[
                 (peak_data.get_annotations()["name"] == name)
@@ -522,72 +533,70 @@ def page_peak_add_toast_selection(
             ]
             .tolist()
         )
-        print(f"l_lp_loc: {l_lp_loc}")
         
-        if len(l_lp_loc) == 0:
-            l_lp_loc = (
+        if len(l_peak_loc) == 0:
+            l_peak_loc = (
                 peak_data.get_annotations()
                 .index[
                     (peak_data.get_annotations()["name"] == name)
                 ]
                 .tolist()
             )[:1]
-        print(f"l_lp_loc: {l_lp_loc}")
-
-        if len(l_lp_loc) > 0:
-            lp_1_index = l_lp_loc[0]
-            header_1 = default_lp
+    
+        if len(l_peak_loc) > 0:
+            peak_1_index = l_peak_loc[0]
+            header_1 = default_peak
             class_name_badge_1 = "position-absolute"
             
             # Get annotation for the default peak
-            annotation_value = peak_data.get_annotations().iloc[lp_1_index]["annotation"]
+            annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
             annotation_1 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
             class_name_annotation_1 = "position-absolute"
             
-            return (header_1, "", "", lp_1_index, -1, -1, class_name_badge_1, "d-none", "d-none", 
+            return (header_1, "", "", peak_1_index, -1, -1, class_name_badge_1, "d-none", "d-none", 
                     annotation_1, class_name_annotation_1, "", "d-none", "", "d-none")
         else:
             return ("", "", "", -1, -1, -1, "d-none", "d-none", "d-none", 
                     "", "d-none", "", "d-none", "", "d-none")
 
-    if l_lp_names is not None:
-        if len(l_lp_names) < len(
-            [x for x in [lp_1_index, lp_2_index, lp_3_index] if x != -1]
+    if l_peak_names is not None:
+        if len(l_peak_names) < len(
+            [x for x in [peak_1_index, peak_2_index, peak_3_index] if x != -1]
         ):
-            logging.info("One or several LPs have been deleter. Cleaning LP badges now.")
+            logging.info("One or several peaks have been deleter. Cleaning peak badges now.")
             for idx_header, header in enumerate([header_1, header_2, header_3]):
                 found = False
-                for lp_name in l_lp_names:
-                    if lp_name == header:
+                for peak_name in l_peak_names:
+                    if peak_name == header:
                         found = True
                 if not found:
                     if idx_header == 0:
                         header_1 = ""
-                        lp_1_index = -1
+                        peak_1_index = -1
                         class_name_badge_1 = "d-none"
                         class_name_annotation_1 = "d-none"
                     if idx_header == 1:
                         header_2 = ""
-                        lp_2_index = -1
+                        peak_2_index = -1
                         class_name_badge_2 = "d-none"
                         class_name_annotation_2 = "d-none"
                     if idx_header == 2:
                         header_3 = ""
-                        lp_3_index = -1
+                        peak_3_index = -1
                         class_name_badge_3 = "d-none"
                         class_name_annotation_3 = "d-none"
 
             # Prepare annotations for remaining peaks
-            if lp_1_index != -1:
-                annotation_value = peak_data.get_annotations().iloc[lp_1_index]["annotation"]
+            if peak_1_index != -1:
+                annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
                 annotation_1 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                 class_name_annotation_1 = "position-absolute"
-            if lp_2_index != -1:
-                annotation_value = peak_data.get_annotations().iloc[lp_2_index]["annotation"]
+            if peak_2_index != -1:
+                annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
                 annotation_2 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                 class_name_annotation_2 = "position-absolute"
-            if lp_3_index != -1:
-                annotation_value = peak_data.get_annotations().iloc[lp_3_index]["annotation"]
+            if peak_3_index != -1:
+                annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
                 annotation_3 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                 class_name_annotation_3 = "position-absolute"
 
@@ -595,9 +604,9 @@ def page_peak_add_toast_selection(
                 header_1,
                 header_2,
                 header_3,
-                lp_1_index,
-                lp_2_index,
-                lp_3_index,
+                peak_1_index,
+                peak_2_index,
+                peak_3_index,
                 class_name_badge_1,
                 class_name_badge_2,
                 class_name_badge_3,
@@ -610,62 +619,57 @@ def page_peak_add_toast_selection(
             )
 
     if (
-        id_input == "page-peak-dropdown-lps" and l_lp_names is not None
+        id_input == "page-2tris-dropdown-peaks" and l_peak_names is not None
     ) or id_input == "main-slider":
 
         if id_input == "main-slider":
-            print(f"header_1: {header_1}")
-            print(f"header_2: {header_2}")
-            print(f"header_3: {header_3}")
             for header in [header_1, header_2, header_3]:
                 name = header
-                l_lp_loc_temp = (
+                l_peak_loc_temp = (
                     peak_data.get_annotations()
                     .index[
                         (peak_data.get_annotations()["name"].astype(str) == str(name))
                     ]
                     .tolist()
                 )
-                print(f"l_lp_loc_temp: {l_lp_loc_temp}")
-                l_lp_loc = [
-                    l_lp_loc_temp[i]
+                l_peak_loc = [
+                    l_peak_loc_temp[i]
                     for i, x in enumerate(
-                        peak_data.get_annotations().iloc[l_lp_loc_temp]["slice"] == slice_index
+                        peak_data.get_annotations().iloc[l_peak_loc_temp]["slice"] == slice_index
                     )
                     if x
                 ]
-                print(f"l_lp_loc: {l_lp_loc}")
-                lp_index = l_lp_loc[0] if len(l_lp_loc) > 0 else -1
+                peak_index = l_peak_loc[0] if len(l_peak_loc) > 0 else -1
 
                 if header_1 == header:
-                    lp_1_index = lp_index
+                    peak_1_index = peak_index
                 elif header_2 == header:
-                    lp_2_index = lp_index
+                    peak_2_index = peak_index
                 elif header_3 == header:
-                    lp_3_index = lp_index
+                    peak_3_index = peak_index
 
             # Update annotations for all peaks
-            if lp_1_index != -1:
-                annotation_value = peak_data.get_annotations().iloc[lp_1_index]["annotation"]
+            if peak_1_index != -1:
+                annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
                 annotation_1 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                 class_name_annotation_1 = "position-absolute"
-            if lp_2_index != -1:
-                annotation_value = peak_data.get_annotations().iloc[lp_2_index]["annotation"]
+            if peak_2_index != -1:
+                annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
                 annotation_2 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                 class_name_annotation_2 = "position-absolute"
-            if lp_3_index != -1:
-                annotation_value = peak_data.get_annotations().iloc[lp_3_index]["annotation"]
+            if peak_3_index != -1:
+                annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
                 annotation_3 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                 class_name_annotation_3 = "position-absolute"
 
-            logging.info("Returning updated LP data")
+            logging.info("Returning updated peak data")
             return (
                 header_1,
                 header_2,
                 header_3,
-                lp_1_index,
-                lp_2_index,
-                lp_3_index,
+                peak_1_index,
+                peak_2_index,
+                peak_3_index,
                 class_name_badge_1,
                 class_name_badge_2,
                 class_name_badge_3,
@@ -677,20 +681,9 @@ def page_peak_add_toast_selection(
                 class_name_annotation_3,
             )
 
-        elif id_input == "page-peak-dropdown-lps":
-            print(f"l_lp_names: {l_lp_names}")
-            print(f"l_lp_names[-1]: {l_lp_names[-1]}")
-            name = l_lp_names[-1]
-            print(f"name: {name}")
-
-            print("########################################################")
-
-            print(peak_data.get_annotations())
-
-            print(f"slice_index: {slice_index}")
-
-
-            l_lp_loc = (
+        elif id_input == "page-2tris-dropdown-peaks":
+            name = l_peak_names[-1]
+            l_peak_loc = (
                 peak_data.get_annotations()
                 .index[
                     (peak_data.get_annotations()["name"].astype(str) == str(name))
@@ -699,15 +692,13 @@ def page_peak_add_toast_selection(
                 .tolist()
             )
 
-            print(f"l_lp_loc: {l_lp_loc}")
+            if len(l_peak_loc) > 1:
+                logging.warning("More than one peak corresponds to the selection")
+                l_peak_loc = [l_peak_loc[-1]]
 
-            if len(l_lp_loc) > 1:
-                logging.warning("More than one LP corresponds to the selection")
-                l_lp_loc = [l_lp_loc[-1]]
-
-            if len(l_lp_loc) < 1:
-                logging.warning("No LP annotation exist. Taking another slice annotation")
-                l_lp_loc = (
+            if len(l_peak_loc) < 1:
+                logging.warning("No peak annotation exist. Taking another slice annotation")
+                l_peak_loc = (
                     peak_data.get_annotations()
                     .index[
                         (peak_data.get_annotations()["name"] == name)
@@ -715,113 +706,113 @@ def page_peak_add_toast_selection(
                     .tolist()
                 )[:1]
 
-            lp_index = l_lp_loc[0]
-            lp_string = l_lp_names[-1]
+            peak_index = l_peak_loc[0]
+            peak_string = l_peak_names[-1]
 
             change_made = False
 
-            if header_1 == lp_string:
-                lp_1_index = lp_index
+            if header_1 == peak_string:
+                peak_1_index = peak_index
                 change_made = True
-            elif header_2 == lp_string:
-                lp_2_index = lp_index
+            elif header_2 == peak_string:
+                peak_2_index = peak_index
                 change_made = True
-            elif header_3 == lp_string:
-                lp_3_index = lp_index
+            elif header_3 == peak_string:
+                peak_3_index = peak_index
                 change_made = True
 
-            if lp_string not in [header_1, header_2, header_2]:
+            if peak_string not in [header_1, header_2, header_2]:
                 if class_name_badge_1 == "d-none":
-                    header_1 = lp_string
-                    lp_1_index = lp_index
+                    header_1 = peak_string
+                    peak_1_index = peak_index
                     class_name_badge_1 = "position-absolute"
                     
                     # Add annotation for peak 1
-                    annotation_value = peak_data.get_annotations().iloc[lp_1_index]["annotation"]
+                    annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
                     annotation_1 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                     class_name_annotation_1 = "position-absolute"
                     
                     # Make sure existing annotations remain visible
-                    if lp_2_index != -1:
-                        annotation_value = peak_data.get_annotations().iloc[lp_2_index]["annotation"]
+                    if peak_2_index != -1:
+                        annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
                         annotation_2 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                         class_name_annotation_2 = "position-absolute"
-                    if lp_3_index != -1:
-                        annotation_value = peak_data.get_annotations().iloc[lp_3_index]["annotation"]
+                    if peak_3_index != -1:
+                        annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
                         annotation_3 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                         class_name_annotation_3 = "position-absolute"
                     
                 elif class_name_badge_2 == "d-none":
-                    header_2 = lp_string
-                    lp_2_index = lp_index
+                    header_2 = peak_string
+                    peak_2_index = peak_index
                     class_name_badge_2 = "position-absolute"
                     
                     # Add annotation for peak 2
-                    annotation_value = peak_data.get_annotations().iloc[lp_2_index]["annotation"]
+                    annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
                     annotation_2 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                     class_name_annotation_2 = "position-absolute"
                     
                     # Make sure existing annotations remain visible
-                    if lp_1_index != -1:
-                        annotation_value = peak_data.get_annotations().iloc[lp_1_index]["annotation"]
+                    if peak_1_index != -1:
+                        annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
                         annotation_1 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                         class_name_annotation_1 = "position-absolute"
-                    if lp_3_index != -1:
-                        annotation_value = peak_data.get_annotations().iloc[lp_3_index]["annotation"]
+                    if peak_3_index != -1:
+                        annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
                         annotation_3 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                         class_name_annotation_3 = "position-absolute"
                     
                 elif class_name_badge_3 == "d-none":
-                    header_3 = lp_string
-                    lp_3_index = lp_index
+                    header_3 = peak_string
+                    peak_3_index = peak_index
                     class_name_badge_3 = "position-absolute"
                     
                     # Add annotation for peak 3
-                    annotation_value = peak_data.get_annotations().iloc[lp_3_index]["annotation"]
+                    annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
                     annotation_3 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                     class_name_annotation_3 = "position-absolute"
                     
                     # Make sure existing annotations remain visible
-                    if lp_1_index != -1:
-                        annotation_value = peak_data.get_annotations().iloc[lp_1_index]["annotation"]
+                    if peak_1_index != -1:
+                        annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
                         annotation_1 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                         class_name_annotation_1 = "position-absolute"
-                    if lp_2_index != -1:
-                        annotation_value = peak_data.get_annotations().iloc[lp_2_index]["annotation"]
+                    if peak_2_index != -1:
+                        annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
                         annotation_2 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                         class_name_annotation_2 = "position-absolute"
                     
                 else:
-                    logging.warning("More than 3 LPs have been selected")
+                    logging.warning("More than 3 peakss have been selected")
                     return dash.no_update
                 change_made = True
             else:
                 # Update annotations for all visible peaks
-                if lp_1_index != -1:
-                    annotation_value = peak_data.get_annotations().iloc[lp_1_index]["annotation"]
+                if peak_1_index != -1:
+                    annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
                     annotation_1 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                     class_name_annotation_1 = "position-absolute"
-                if lp_2_index != -1:
-                    annotation_value = peak_data.get_annotations().iloc[lp_2_index]["annotation"]
+                if peak_2_index != -1:
+                    annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
                     annotation_2 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                     class_name_annotation_2 = "position-absolute"
-                if lp_3_index != -1:
-                    annotation_value = peak_data.get_annotations().iloc[lp_3_index]["annotation"]
+                if peak_3_index != -1:
+                    annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
                     annotation_3 = "No match" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                     class_name_annotation_3 = "position-absolute"
 
             if change_made:
                 logging.info(
-                    "Changes have been made to the LP selection or indexation,"
+                    "Changes have been made to the peak selection or indexation,"
                     + " propagating callback."
                 )
                 return (
                     header_1,
                     header_2,
                     header_3,
-                    lp_1_index,
-                    lp_2_index,
-                    lp_3_index,
+                    peak_1_index,
+                    peak_2_index,
+                    peak_3_index,
                     class_name_badge_1,
                     class_name_badge_2,
                     class_name_badge_3,
@@ -842,7 +833,7 @@ clientside_callback(
     """
     function(n_clicks){
         if(n_clicks > 0){
-            domtoimage.toBlob(document.getElementById('page-peak-graph-heatmap-mz-selection'))
+            domtoimage.toBlob(document.getElementById('page-2tris-graph-heatmap-mz-selection'))
                 .then(function (blob) {
                     window.saveAs(blob, 'peak_selection_plot.png');
                 });
@@ -850,39 +841,36 @@ clientside_callback(
         return null;
     }
     """,
-    Output("page-peak-download-image-button", "n_clicks"),
-    Input("page-peak-download-image-button", "n_clicks"),
+    Output("page-2tris-download-image-button", "n_clicks"),
+    Input("page-2tris-download-image-button", "n_clicks"),
 )
 """This clientside callback is used to download the current heatmap."""
 
 
 @app.callback(
-    Output("page-peak-rgb-button", "disabled"),
-    Output("page-peak-colormap-button", "disabled"),
-    Input("page-peak-selected-lp-1", "data"),
-    Input("page-peak-selected-lp-2", "data"),
-    Input("page-peak-selected-lp-3", "data"),
+    Output("page-2tris-rgb-button", "disabled"),
+    Output("page-2tris-colormap-button", "disabled"),
+    Input("page-2tris-selected-peak-1", "data"),
+    Input("page-2tris-selected-peak-2", "data"),
+    Input("page-2tris-selected-peak-3", "data"),
 )
-def page_peak_active_download(lp_1_index, lp_2_index, lp_3_index):
+def page_peak_active_download(peak_1_index, peak_2_index, peak_3_index):
     logging.info("Enabled rgb and colormap buttons")
-    print(f"lp_1_index: {lp_1_index}")
-    print(f"lp_2_index: {lp_2_index}")
-    print(f"lp_3_index: {lp_3_index}")
-    l_lps_indexes = [
-        x for x in [lp_1_index, lp_2_index, lp_3_index] if x is not None and x != -1
+    l_peaks_indexes = [
+        x for x in [peak_1_index, peak_2_index, peak_3_index] if x is not None and x != -1
     ]
 
-    if len(l_lps_indexes) > 0:
+    if len(l_peaks_indexes) > 0:
         return False, False
     else:
         return True, True
 
 
 @app.callback(
-    Output("page-peak-drawer-spectrum", "is_open"),
-    Input("page-peak-show-spectrum-button", "n_clicks"),
-    Input("page-peak-close-spectrum-button", "n_clicks"),
-    [State("page-peak-drawer-spectrum", "is_open")],
+    Output("page-2tris-drawer-spectrum", "is_open"),
+    Input("page-2tris-show-spectrum-button", "n_clicks"),
+    Input("page-2tris-close-spectrum-button", "n_clicks"),
+    [State("page-2tris-drawer-spectrum", "is_open")],
 )
 def toggle_spectrum_drawer(n1, n2, is_open):
     """This callback is used to toggle the mass spectrum drawer."""
@@ -892,9 +880,9 @@ def toggle_spectrum_drawer(n1, n2, is_open):
 
 
 @app.callback(
-    Output("page-peak-graph-spectrum", "figure"),
+    Output("page-2tris-graph-spectrum", "figure"),
     Input("main-slider", "data"),
-    Input("page-peak-drawer-spectrum", "is_open"),
+    Input("page-2tris-drawer-spectrum", "is_open"),
 )
 def plot_section_mass_spectrum(slice_index, is_open):
     """This callback plots the mass spectrum for the current section."""
@@ -907,6 +895,7 @@ def plot_section_mass_spectrum(slice_index, is_open):
         return dash.no_update
         
     # Check if mzsectionaverages.csv exists, if not create a placeholder
+    # TODO: what is this file? absolute path?
     df = pd.read_csv('mzsectionaverages.csv', index_col=0)
     df.index = df.index.astype(int)
     

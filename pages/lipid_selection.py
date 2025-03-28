@@ -272,9 +272,8 @@ def return_layout(basic_config, slice_index):
     Input("page-2-graph-heatmap-mz-selection", "hoverData"),
     Input("main-slider", "data"),
 )
-def page_3_hover(hoverData, slice_index):
+def page_2_hover(hoverData, slice_index):
     """This callback is used to update the text displayed when hovering over the slice image."""
-    # print("\n============ page_3_hover =============")
     acronym_mask = data.acronyms_masks[slice_index]
     if hoverData is not None:
         if len(hoverData["points"]) > 0:
@@ -300,11 +299,8 @@ def page_3_hover(hoverData, slice_index):
     Input("page-2-colormap-button", "n_clicks"),
     Input("page-2-all-sections-button", "n_clicks"),
     Input("main-brain", "value"),
-    # Input("page-2-button-bounds", "n_clicks"),
     Input("page-2-toggle-annotations", "checked"),
 
-    # State("page-2-lower-bound", "value"),
-    # State("page-2-upper-bound", "value"),
     State("page-2-badge-input", "children"),
 )
 def page_2_plot_graph_heatmap_mz_selection(
@@ -316,58 +312,34 @@ def page_2_plot_graph_heatmap_mz_selection(
     n_clicks_button_colormap,
     n_clicks_button_all_sections,
     brain_id,
-    # n_clicks_button_bounds,
-    # lb,
-    # hb,
     annotations_checked,
     graph_input,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
-    print(f"\n========== page_2_plot_graph_heatmap_mz_selection ==========")
-    print('indices:', lipid_1_index, lipid_2_index, lipid_3_index)
-    print(f"slice_index: {slice_index}")
+    # print(f"\n========== page_2_plot_graph_heatmap_mz_selection ==========")
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    print(f"id_input: {id_input}")    
-    print("graph_input:", graph_input)
-    print("brain_id:", brain_id)
-    print("value_input:", value_input)
-
+    
     overlay = data.get_aba_contours(slice_index) if annotations_checked else None
 
     # Handle annotations toggle separately to preserve figure state
     if id_input == "page-2-toggle-annotations":
-        # print("annotations_checked:", annotations_checked)
-        # print("lipid_1_index:", lipid_1_index)
-        # print("lipid_2_index:", lipid_2_index)
-        # print("lipid_3_index:", lipid_3_index)
-        # print("overlay:", overlay.shape if overlay is not None else "None")
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
             ll_lipid_names = [
-                # [
                     ' '.join([
                         data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
                         + data.get_annotations().iloc[index]["structure"].split('_')[i] 
                         for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
                     ])
-                    # data.get_annotations().iloc[index]["name"]
-                    # + " "
-                    # + data.get_annotations().iloc[index]["structure"]
-                    # + "_"
-                    # + data.get_annotations().iloc[index]["cation"]
-                # ]
                 if index != -1
                 else None
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
-            print("ll_lipid_names:", ll_lipid_names)
-            print("graph_input:", graph_input)
-
+        
             if graph_input == "Current input: " + "Lipid selection RGB":
-                print("returning option 1")
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
@@ -379,7 +351,6 @@ def page_2_plot_graph_heatmap_mz_selection(
                 )
 
             elif graph_input == "Current input: " + "Lipid selection colormap":
-                print("returning option 2")
                 # you also need to check that only one lipid is selected
                 if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
                     nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
@@ -389,24 +360,15 @@ def page_2_plot_graph_heatmap_mz_selection(
                         lipid_name=nonull_ll_lipid_names,
                         cache_flask=cache_flask,
                     )
-                    print("returning option 2.1")
                     return (
                         figures.build_lipid_heatmap_from_image(
                             image, 
                             return_base64_string=False,
                             overlay=overlay,
-                        )
-                        # figures.compute_heatmap_per_lipid_selection(
-                        #     slice_index,
-                        # # ll_lipid_bounds,
-                        # # apply_transform=apply_transform,
-                        # ll_lipid_names=ll_lipid_names,
-                        # cache_flask=cache_flask,
-                        ,
+                        ),
                         "Current input: " + "Lipid selection colormap",
                     )
                 else:
-                    print("returning option 2.2")
                     return (
                         figures.compute_rgb_image_per_lipid_selection(
                             slice_index,
@@ -429,7 +391,7 @@ def page_2_plot_graph_heatmap_mz_selection(
         or id_input == "page-2-all-sections-button"
         or id_input == "main-brain"
         or (
-            (id_input == "main-slider") # or id_input == "page-2-toggle-apply-transform")
+            (id_input == "main-slider")
             and (
                 graph_input == "Current input: " + "Lipid selection colormap"
                 or graph_input == "Current input: " + "Lipid selection RGB"
@@ -439,24 +401,15 @@ def page_2_plot_graph_heatmap_mz_selection(
     ):
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
             ll_lipid_names = [
-                # [
                     ' '.join([
                         data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
                         + data.get_annotations().iloc[index]["structure"].split('_')[i] 
                         for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
                     ])
-                    # data.get_annotations().iloc[index]["name"]
-                    # + " "
-                    # + data.get_annotations().iloc[index]["structure"]
-                    # + "_"
-                    # + data.get_annotations().iloc[index]["cation"]
-                # ]
                 if index != -1
                 else None
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
-            # print("ll_lipid_names:", ll_lipid_names)
-            
             # Check if the current plot must be a heatmap
             if (
                 id_input == "page-2-colormap-button"
@@ -464,10 +417,6 @@ def page_2_plot_graph_heatmap_mz_selection(
                     id_input == "main-slider"
                     and graph_input == "Current input: " + "Lipid selection colormap"
                 )
-                # or (
-                #     id_input == "page-2-toggle-apply-transform"
-                #     and graph_input == "Current input: " + "Lipid selection colormap"
-                # )
             ):
                 # you also need to check that only one lipid is selected
                 if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
@@ -483,14 +432,7 @@ def page_2_plot_graph_heatmap_mz_selection(
                             image, 
                             return_base64_string=False,
                             overlay=overlay,
-                        )
-                        # figures.compute_heatmap_per_lipid_selection(
-                        #     slice_index,
-                        # # ll_lipid_bounds,
-                        # # apply_transform=apply_transform,
-                        # ll_lipid_names=ll_lipid_names,
-                        # cache_flask=cache_flask,
-                    ,
+                        ),
                     "Current input: " + "Lipid selection colormap",
                 )
                 else:
@@ -512,16 +454,10 @@ def page_2_plot_graph_heatmap_mz_selection(
                     id_input == "main-slider"
                     and graph_input == "Current input: " + "Lipid selection RGB"
                 )
-                # or (
-                #     id_input == "page-2-toggle-apply-transform"
-                #     and graph_input == "Current input: " + "Lipid selection RGB"
-                # )
             ):
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
-                        # ll_lipid_bounds,
-                        # apply_transform=apply_transform,
                         ll_lipid_names=ll_lipid_names,
                         cache_flask=cache_flask,
                         overlay=overlay,
@@ -537,12 +473,8 @@ def page_2_plot_graph_heatmap_mz_selection(
                     and graph_input == "Current input: " + "Lipid selection all sections"
                 )
             ):
-                print("--- option 1.4 ---")
                 # Check that only one lipid is selected
                 if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
-
-                    print("INSIDE! brain_id:", brain_id)
-
                     nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
                     # Use the selected lipid instead of hardcoded one
                     image = grid_data.retrieve_grid_image(
@@ -557,7 +489,6 @@ def page_2_plot_graph_heatmap_mz_selection(
                                 ),
                             "Current input: " + "Lipid selection all sections")
                 else:
-                    print("--- option 1.4.2 ---")
                     logging.info("Trying to display all sections for more than one lipid, not possible. Using first selected lipid.")
                     # Get the first non-None lipid name
                     first_lipid = next((name for name in ll_lipid_names if name is not None), "SM 34:1;O2")
@@ -578,8 +509,6 @@ def page_2_plot_graph_heatmap_mz_selection(
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
-                        # ll_lipid_bounds,
-                        # apply_transform=apply_transform,
                         ll_lipid_names=ll_lipid_names,
                         cache_flask=cache_flask,
                         overlay=overlay,
@@ -589,25 +518,23 @@ def page_2_plot_graph_heatmap_mz_selection(
         elif (
             id_input == "main-slider" and graph_input == "Current input: "
         ):
-            print(f"No lipid has been selected, the current lipid is SM 34:1;O2 and the slice is {slice_index}")
+            logging.info(f"No lipid has been selected, the current lipid is SM 34:1;O2 and the slice is {slice_index}")
             return (
                 figures.compute_heatmap_per_lipid(slice_index, 
                                                 "SM 34:1;O2",
-                                                # lb, hb, 
                                                 cache_flask=cache_flask,
                                                 overlay=overlay),
                 "Current input: " + "SM 34:1;O2",
             )
         else:
             # No lipid has been selected
-            print(slice_index)
+            logging.info(f"No lipid has been selected, the current lipid is SM 34:1;O2 and the slice is {slice_index}")
             return (
                 figures.compute_heatmap_per_lipid(slice_index, 
                                                 "SM 34:1;O2",
-                                                # lb, hb, 
                                                 cache_flask=cache_flask,
                                                 overlay=overlay),
-                "Current input: " + "SM 34:1;O2", # + "m/z boundaries"
+                "Current input: " + "SM 34:1;O2",
             )
 
     # If no trigger, the page has just been loaded, so load new figure with default parameters
@@ -653,14 +580,8 @@ def page_2_add_toast_selection(
 ):
     """This callback adds the selected lipid to the selection."""
     logging.info("Entering function to update lipid data")
-    print("\n================ page_2_add_toast_selection ================")
-    # Find out which input triggered the function
+    # print("\n================ page_2_add_toast_selection ================")
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    # print(f"id_input: {id_input}")
-    # print(f"value_input: {value_input}")
-    # if page-2-dropdown-lipids is called while there's no lipid name defined, it means the page
-    # just got loaded
     if len(id_input) == 0 or (id_input == "page-2-dropdown-lipids" and l_lipid_names is None):
         # Initialize with SM 34:1;O2 as the default lipid
         default_lipid = "SM 34:1;O2"
@@ -740,9 +661,6 @@ def page_2_add_toast_selection(
     ) or id_input == "main-slider":
         # If a new slice has been selected
         if id_input == "main-slider":
-            # print(f"header_1: {header_1}")
-            # print(f"header_2: {header_2}")
-            # print(f"header_3: {header_3}")
             # for each lipid, get lipid name, structure and cation
             for header in [header_1, header_2, header_3]:
                 # if len(header) > 1:
@@ -751,9 +669,7 @@ def page_2_add_toast_selection(
                 else:   
                     name = "_".join(header.split(" ")[::2])
                     structure = "_".join(header.split(" ")[1::2])
-                # print(f"name: {name}")
-                # print(f"structure: {structure}")
-            
+
                 # Find lipid location
                 l_lipid_loc_temp = (
                     data.get_annotations()
@@ -763,7 +679,7 @@ def page_2_add_toast_selection(
                     ]
                     .tolist()
                 )
-                # print(f"l_lipid_loc_temp: {l_lipid_loc_temp}")
+                
                 l_lipid_loc = [
                     l_lipid_loc_temp[i]
                     for i, x in enumerate(
@@ -771,12 +687,7 @@ def page_2_add_toast_selection(
                     )
                     if x
                 ]
-                # print(f"l_lipid_loc: {l_lipid_loc}")
-                # # Fill list with first annotation that exists if it can't find one for the
-                # # current slice
-                # if len(l_lipid_loc) == 0:
-                #     l_lipid_loc = l_lipid_loc_temp[:1]
-
+                
                 # Record location and lipid name
                 lipid_index = l_lipid_loc[0] if len(l_lipid_loc) > 0 else -1
 
@@ -804,22 +715,12 @@ def page_2_add_toast_selection(
 
         # If lipids have been added from dropdown menu
         elif id_input == "page-2-dropdown-lipids":
-            # print(f"header_1: {header_1}")
-            # print(f"header_2: {header_2}")
-            # print(f"header_3: {header_3}")
-            
             # Get the lipid name and structure
-            # name, structure = l_lipid_names[-1].split(" ")
-
-            # print(f"l_lipid_names[-1]: {l_lipid_names[-1]}")
-
             if len(l_lipid_names[-1]) == 2:
                 name, structure = l_lipid_names[-1].split(" ")
             else:   
                 name = "_".join(l_lipid_names[-1].split(" ")[::2])
                 structure = "_".join(l_lipid_names[-1].split(" ")[1::2])
-            print(f"name: {name}")
-            print(f"structure: {structure}")
 
             # Find lipid location
             l_lipid_loc = (
@@ -831,8 +732,7 @@ def page_2_add_toast_selection(
                 ]
                 .tolist()
             )
-            # print(f"l_lipid_loc: {l_lipid_loc}")
-
+            
             # If several lipids correspond to the selection, we have a problem...
             if len(l_lipid_loc) > 1:
                 logging.warning("More than one lipid corresponds to the selection")
@@ -852,13 +752,12 @@ def page_2_add_toast_selection(
 
             # Record location and lipid name
             lipid_index = l_lipid_loc[0]
-            lipid_string = l_lipid_names[-1] # name + " " + structure ################################
+            lipid_string = l_lipid_names[-1]
 
             change_made = False
 
             # If lipid has already been selected before, replace the index
             if header_1 == lipid_string:
-                # print("I am here")
                 lipid_1_index = lipid_index
                 change_made = True
             elif header_2 == lipid_string:
@@ -910,132 +809,68 @@ def page_2_add_toast_selection(
 
     return dash.no_update
 
+# # TODO: This callback must be completely rewritten to be able to download the data
+# @app.callback(
+#     Output("page-2-download-data", "data"),
+#     Input("page-2-download-data-button", "n_clicks"),
+#     State("page-2-selected-lipid-1", "data"),
+#     State("page-2-selected-lipid-2", "data"),
+#     State("page-2-selected-lipid-3", "data"),
+#     State("main-slider", "data"),
+#     State("page-2-badge-input", "children"),
+#     prevent_initial_call=True,
+# )
+# def page_2_download(
+#     n_clicks,
+#     lipid_1_index,
+#     lipid_2_index,
+#     lipid_3_index,
+#     slice_index,
+#     graph_input,
+# ):
+#     """This callback is used to generate and download the data in proper format."""
 
-@app.callback(
-    Output("page-2-download-data", "data"),
-    Input("page-2-download-data-button", "n_clicks"),
-    State("page-2-selected-lipid-1", "data"),
-    State("page-2-selected-lipid-2", "data"),
-    State("page-2-selected-lipid-3", "data"),
-    State("main-slider", "data"),
-    State("page-2-toggle-apply-transform", "checked"),
-    State("page-2-badge-input", "children"),
-    State("boundaries-low-resolution-mz-plot", "data"),
-    State("page-2-lower-bound", "value"),
-    State("page-2-upper-bound", "value"),
-    prevent_initial_call=True,
-)
-def page_2_download(
-    n_clicks,
-    lipid_1_index,
-    lipid_2_index,
-    lipid_3_index,
-    slice_index,
-    apply_transform,
-    graph_input,
-    bound_high_res,
-    lb,
-    hb,
-):
-    """This callback is used to generate and download the data in proper format."""
+#     # Current input is lipid selection
+#     if (
+#         graph_input == "Current input: " + "Lipid selection colormap"
+#         or graph_input == "Current input: " + "Lipid selection RGB"
+#     ):
+#         l_lipids_indexes = [
+#             x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x is not None and x != -1
+#         ]
+#         # If lipids has been selected from the dropdown, filter them in the df and download them
+#         if len(l_lipids_indexes) > 0:
 
-    # Current input is lipid selection
-    if (
-        graph_input == "Current input: " + "Lipid selection colormap"
-        or graph_input == "Current input: " + "Lipid selection RGB"
-    ):
-        l_lipids_indexes = [
-            x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x is not None and x != -1
-        ]
-        # If lipids has been selected from the dropdown, filter them in the df and download them
-        if len(l_lipids_indexes) > 0:
+#             def to_excel(bytes_io):
+#                 xlsx_writer = pd.ExcelWriter(bytes_io, engine="xlsxwriter")
+#                 data.get_annotations().iloc[l_lipids_indexes].to_excel(
+#                     xlsx_writer, index=False, sheet_name="Selected lipids"
+#                 )
+#                 for i, index in enumerate(l_lipids_indexes):
+#                     name = (
+#                         data.get_annotations().iloc[index]["name"]
+#                         + " "
+#                         + data.get_annotations().iloc[index]["structure"]
+#                     )
 
-            def to_excel(bytes_io):
-                xlsx_writer = pd.ExcelWriter(bytes_io, engine="xlsxwriter")
-                data.get_annotations().iloc[l_lipids_indexes].to_excel(
-                    xlsx_writer, index=False, sheet_name="Selected lipids"
-                )
-                for i, index in enumerate(l_lipids_indexes):
-                    name = (
-                        data.get_annotations().iloc[index]["name"]
-                        + " "
-                        + data.get_annotations().iloc[index]["structure"]
-                    )
+#                     # Need to clean name to use it as a sheet name
+#                     name = name.replace(":", "").replace("/", "")
+#                     lb = float(data.get_annotations().iloc[index]["min"]) - 10**-2
+#                     hb = float(data.get_annotations().iloc[index]["max"]) + 10**-2
+#                     x, y = figures.compute_spectrum_high_res(
+#                         slice_index,
+#                         lb,
+#                         hb,
+#                         plot=False,
+#                         cache_flask=cache_flask,
+#                     )
+#                     df = pd.DataFrame.from_dict({"m/z": x, "Intensity": y})
+#                     df.to_excel(xlsx_writer, index=False, sheet_name=name[:31])
+#                 xlsx_writer.save()
 
-                    # Need to clean name to use it as a sheet name
-                    name = name.replace(":", "").replace("/", "")
-                    lb = float(data.get_annotations().iloc[index]["min"]) - 10**-2
-                    hb = float(data.get_annotations().iloc[index]["max"]) + 10**-2
-                    x, y = figures.compute_spectrum_high_res(
-                        slice_index,
-                        lb,
-                        hb,
-                        plot=False,
-                        standardization=apply_transform,
-                        cache_flask=cache_flask,
-                    )
-                    df = pd.DataFrame.from_dict({"m/z": x, "Intensity": y})
-                    df.to_excel(xlsx_writer, index=False, sheet_name=name[:31])
-                xlsx_writer.save()
+#             return dcc.send_data_frame(to_excel, "my_lipid_selection.xlsx")
 
-            return dcc.send_data_frame(to_excel, "my_lipid_selection.xlsx")
-
-    # Current input is manual boundaries selection from input box
-    if graph_input == "Current input: " + "m/z boundaries":
-        lb, hb = float(lb), float(hb)
-        if lb >= 400 and hb <= 1600 and hb - lb > 0 and hb - lb < 10:
-
-            def to_excel(bytes_io):
-                # Get spectral data
-                mz, intensity = figures.compute_spectrum_high_res(
-                    slice_index,
-                    lb - 10**-2,
-                    hb + 10**-2,
-                    force_xlim=True,
-                    standardization=apply_transform,
-                    cache_flask=cache_flask,
-                    plot=False,
-                )
-
-                # Turn to dataframe
-                dataset = pd.DataFrame.from_dict({"m/z": mz, "Intensity": intensity})
-
-                # Export to excel
-                xlsx_writer = pd.ExcelWriter(bytes_io, engine="xlsxwriter")
-                dataset.to_excel(xlsx_writer, index=False, sheet_name="mz selection")
-                xlsx_writer.save()
-
-            return dcc.send_data_frame(to_excel, "my_boundaries_selection.xlsx")
-
-    # Current input is boundaries from the low-res m/z plot
-    elif graph_input == "Current input: " + "Selection from high-res m/z graph":
-        if bound_high_res is not None:
-            # Case the zoom is high enough
-            if bound_high_res[1] - bound_high_res[0] <= 3:
-
-                def to_excel(bytes_io):
-                    # Get spectral data
-                    bound_high_res = json.loads(bound_high_res)
-                    mz, intensity = figures.compute_spectrum_high_res(
-                        slice_index,
-                        bound_high_res[0],
-                        bound_high_res[1],
-                        standardization=apply_transform,
-                        cache_flask=cache_flask,
-                        plot=False,
-                    )
-
-                    # Turn to dataframe
-                    dataset = pd.DataFrame.from_dict({"m/z": mz, "Intensity": intensity})
-
-                    # Export to excel
-                    xlsx_writer = pd.ExcelWriter(bytes_io, engine="xlsxwriter")
-                    dataset.to_excel(xlsx_writer, index=False, sheet_name="mz selection")
-                    xlsx_writer.save()
-
-                return dcc.send_data_frame(to_excel, "my_boundaries_selection.xlsx")
-
-    return dash.no_update
+#     return dash.no_update
 
 @app.callback(
     Output("page-2-rgb-button", "disabled"),
@@ -1046,21 +881,15 @@ def page_2_download(
     Input("page-2-selected-lipid-3", "data"),
 )
 def page_2_active_download(lipid_1_index, lipid_2_index, lipid_3_index):
-    # print("lipid_1_index", lipid_1_index)
-    # print("lipid_2_index", lipid_2_index)
-    # print("lipid_3_index", lipid_3_index)
     """This callback is used to toggle on/off the display rgb and colormap buttons."""
-    # logging.info("Enabled rgb and colormap buttons")
     # Get the current lipid selection
     l_lipids_indexes = [
         x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x is not None and x != -1
     ]
     # If lipids has been selected from the dropdown, activate button
     if len(l_lipids_indexes) > 0:
-        # print("=============Disabled rgb and colormap buttons=============")
         return False, False, False
     else:
-        # print("=============Enabled rgb and colormap buttons=============")
         return True, True, True
 
 clientside_callback(

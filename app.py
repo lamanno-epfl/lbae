@@ -12,7 +12,7 @@ variables shared across all user sessions are also instantiated: data, atlas and
 # Standard modules
 import dash
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
+from dash import Input, Output
 from dash.long_callback import DiskcacheLongCallbackManager
 import flask
 from flask_caching import Cache
@@ -20,7 +20,19 @@ import logging
 from uuid import uuid4
 import diskcache
 import os
-from modules.scRNAseq import ScRNAseq
+
+# from pages import (
+#     home, 
+#     lipid_selection, 
+#     lipizones_selection, 
+#     lp_selection, 
+#     peak_selection, 
+#     region_analysis, 
+#     threeD_exploration, 
+#     threeD_lipizones, id_cards
+# )
+
+# from config import basic_config
 
 # LBAE modules
 from modules.tools.misc import logmem
@@ -35,8 +47,17 @@ logging.info("Memory use after LipiMapData import" + logmem())
 from modules.peak_data import PeakData
 logging.info("Memory use after PeakData import" + logmem())
 
-from modules.grid_data import GridImageShelve, SampleDataShelve, SectionDataShelve
-logging.info("Memory use after GridImageShelve, SampleDataShelve, SectionDataShelve import" + logmem())
+from modules.lipizone_data import LipizoneSampleData, LipizoneSectionData
+logging.info("Memory use after LipizoneSampleData, LipizoneSectionData import" + logmem())
+
+from modules.celltype_data import CelltypeData
+logging.info("Memory use after CelltypeData import" + logmem())
+
+from modules.stream_data import StreamData
+logging.info("Memory use after StreakData import" + logmem())
+
+from modules.grid_data import GridImageShelve
+logging.info("Memory use after GridImageShelve import" + logmem())
 
 from modules.figures import Figures
 logging.info("Memory use after Figures import" + logmem())
@@ -62,63 +83,124 @@ SAMPLE_DATA = False
 # Path to the ID cards
 ID_CARDS_PATH = "/data/luca/lipidatlas/ManuscriptAnalysisRound3/ID_cards"
 
-# Define paths for the sample/not sample data
-if SAMPLE_DATA:
-    path_data = "/data/LBA_DATA/lbae/data_sample/whole_dataset/"
-    path_program_data = "/data/LBA_DATA/lbae/data_sample/program_data/"
-    path_annotations = "/data/LBA_DATA/lbae/data_sample/annotations/"
-    path_db = "/data/LBA_DATA/lbae/data_sample/app_data/data.db"
-    cache_dir = "/data/LBA_DATA/lbae/data_sample/cache/"
-else:
-    # path_data = "data/whole_dataset/"
-    # path_annotations = "data/annotations/"
-    # path_db = "data/app_data/data.db"
-    cache_dir = "/data/LBA_DATA/lbae/data/cache/"
-    path_data = "/data/LBA_DATA/lbae/new_data_mm/"
-    path_grid_data = "/data/LBA_DATA/lbae/grid_data/"
-    path_sample_data = "/data/LBA_DATA/lbae/sample_data/"
-    path_section_data = "/data/LBA_DATA/lbae/section_data/"
-    path_program_data = "/data/LBA_DATA/lbae/program_data/"
-    path_annotations = "/data/LBA_DATA/lbae/data/annotations/"
-    path_db = "/data/LBA_DATA/lbae/data/app_data/data.db"
+# # Define paths for the sample/not sample data
+# if SAMPLE_DATA:
+#     path_data = "/data/LBA_DATA/lbae/data_sample/whole_dataset/"
+#     path_program_data = "/data/LBA_DATA/lbae/data_sample/program_data/"
+#     path_annotations = "/data/LBA_DATA/lbae/data_sample/annotations/"
+#     path_db = "/data/LBA_DATA/lbae/data_sample/app_data/data.db"
+#     cache_dir = "/data/LBA_DATA/lbae/data_sample/cache/"
+# else:
+#     # path_data = "data/whole_dataset/"
+#     # path_annotations = "data/annotations/"
+#     # path_db = "data/app_data/data.db"
+
+cache_dir = "./new_data_lbae/cache/"
+
+# path_data = "./new_data_lbae"
+path_metadata = "./new_data_lbae/metadata"
+
+path_grid_data = "./new_data_lbae/grid_data"
+path_celltype_data = "./new_data_lbae/celltype_data"
+path_lipid_data = "./new_data_lbae/lipid_data"
+path_peak_data = "./new_data_lbae/peak_data"
+path_program_data = "./new_data_lbae/program_data"
+path_lipizone_data = "./new_data_lbae/lipizone_data"
+path_stream_data = "./new_data_lbae/stream_data"
+
+path_annotations = "./new_data_lbae/annotations/"
+
+path_db = "./new_data_lbae/app_data/data.db"
 
 # Load shelve database
 logging.info("Loading storage..." + logmem())
 storage = Storage(path_db)
 
-# Load data
+# Load lipid data
 logging.info("Loading MALDI data..." + logmem())
-data = MaldiData(path_data, path_annotations)
-
-# Load grid data
-logging.info("Loading grid data..." + logmem())
-grid_data = GridImageShelve(shelf_dir=path_grid_data)
-
-logging.info("Loading sample data..." + logmem())
-sample_data_shelve = SampleDataShelve(shelf_dir=path_sample_data)
-
-logging.info("Loading section data..." + logmem())
-section_data_shelve = SectionDataShelve(shelf_dir=path_section_data)
-
-# Load program data
-logging.info("Loading program data..." + logmem())
-program_data = LipiMapData(path_program_data, path_annotations)
+data = MaldiData(
+    path_data=path_lipid_data, 
+    path_metadata=path_metadata,
+    path_annotations=path_annotations,
+    )
 
 # Load peak data
 logging.info("Loading peak data..." + logmem())
-peak_data = PeakData()
+peak_data = PeakData(
+    path_data=path_peak_data,
+    path_metadata=path_metadata,
+    path_annotations=path_annotations,
+)
+
+# Load program data
+logging.info("Loading program data..." + logmem())
+program_data = LipiMapData(
+    path_data=path_program_data,
+    path_metadata=path_metadata,
+    path_annotations=path_annotations,
+)
+
+# Load stream data
+logging.info("Loading stream data..." + logmem())
+stream_data = StreamData(
+    path_data=path_stream_data, 
+    path_metadata=path_metadata,
+    path_annotations=path_annotations,
+)
+
+# Load lipizone data
+logging.info("Loading lipizone sample data..." + logmem())
+lipizone_sample_data = LipizoneSampleData(
+    path_data=path_lipizone_data,
+)
+logging.info("Loading lipizone section data..." + logmem())
+lipizone_section_data = LipizoneSectionData(
+    path_data=path_lipizone_data,
+)
+
+# Load celltype data
+logging.info("Loading celltype data..." + logmem())
+celltype_data = CelltypeData(
+    path_data=path_celltype_data,
+)
+
+# Load grid data
+logging.info("Loading grid data..." + logmem())
+grid_data = GridImageShelve(
+    path_data=path_grid_data,
+)
 
 # Load Atlas and Figures objects
 logging.info("Loading Atlas..." + logmem())
-atlas = Atlas(data, storage, resolution=25)
+atlas = Atlas(
+    maldi_data=data,
+    storage=storage,
+    resolution=25,
+)
 
 logging.info("Loading Figures..." + logmem())
-figures = Figures(data, storage, atlas)
-program_figures = Figures(program_data, storage, atlas)
-peak_figures = Figures(peak_data, storage, atlas)
+figures = Figures(
+    maldi_data=data,
+    storage=storage,
+    atlas=atlas,
+)
+program_figures = Figures(
+    maldi_data=program_data,
+    storage=storage,
+    atlas=atlas,
+)
+peak_figures = Figures(
+    maldi_data=peak_data,
+    storage=storage,
+    atlas=atlas,
+)
+stream_figures = Figures(
+    maldi_data=stream_data,
+    storage=storage,
+    atlas=atlas,
+)
 
 logging.info("Memory use after three main object have been instantiated" + logmem())
-
 
 # Compute and shelve potentially missing objects
 launch = Launch(data, atlas, figures, storage)
@@ -154,6 +236,7 @@ app = dash.Dash(
     suppress_callback_exceptions=False,
     long_callback_manager=long_callback_manager,
     compress=True,
+    # use_pages=True  # Enable pages feature for Dash 3.0.1
 )
 
 
@@ -199,35 +282,67 @@ def serve_pdf(lipizone_name):
     pdf_filename = f"lipizone_ID_card_{lipizone_name}.pdf"
     return flask.send_from_directory(ID_CARDS_PATH, pdf_filename)
 
-@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
-def display_page(pathname):
-    if pathname == "/":
-        return home.return_layout(basic_config, slice_index)
-    elif pathname == "/lipid-selection":
-        return lipid_selection.return_layout(basic_config, slice_index)
-    elif pathname == "/lipizones-selection":
-        return lipizones_selection.return_layout(basic_config, slice_index)
-    elif pathname == "/lp-selection":
-        return lp_selection.return_layout(basic_config, slice_index)
-    # elif pathname == "/peak-selection":
-    #     return peak_selection.return_layout(basic_config, slice_index)
-    elif pathname == "/region-analysis":
-        return region_analysis.return_layout(basic_config, slice_index)
-    elif pathname == "/3D-exploration":
-        return threeD_exploration.return_layout(basic_config, slice_index)
-    elif pathname == "/id-cards":
-        return id_cards.return_layout(basic_config, slice_index)
-    elif pathname == "/3D-lipizones":
-        return threeD_lipizones.return_layout(basic_config, slice_index)
-    else:
-        return home.return_layout(basic_config, slice_index)
+# @app.callback(
+#     Output("page-content", "children"), 
+#     Input("url", "pathname"))
+# def display_page(pathname):
+#     if pathname == "/":
+#         return home.return_layout(basic_config, slice_index)
+#     elif pathname == "/lipid-selection":
+#         return lipid_selection.return_layout(basic_config, slice_index)
+#     elif pathname == "/lipizones-selection":
+#         return lipizones_selection.return_layout(basic_config, slice_index)
+#     elif pathname == "/lp-selection":
+#         return lp_selection.return_layout(basic_config, slice_index)
+#     elif pathname == "/peak-selection":
+#         return peak_selection.return_layout(basic_config, slice_index)
+#     elif pathname == "/region-analysis":
+#         return region_analysis.return_layout(basic_config, slice_index)
+#     elif pathname == "/3D-exploration":
+#         return threeD_exploration.return_layout(basic_config, slice_index)
+#     elif pathname == "/id-cards":
+#         return id_cards.return_layout(basic_config, slice_index)
+#     elif pathname == "/3D-lipizones":
+#         return threeD_lipizones.return_layout(basic_config, slice_index)
+#     else:
+#         return home.return_layout(basic_config, slice_index)
 
 # Make grid_data available for import
-__all__ = ['data', 
-            # 'program_data',
-            # 'peak_data',
-            'atlas',
-            'figures', 
-            'grid_data', 
-            'sample_data_shelve', 
-            'section_data_shelve']
+__all__ = [
+    'data', 
+    'program_data',
+    'peak_data',
+    'lipizone_sample_data', 
+    'lipizone_section_data',
+    'celltype_data',
+    'grid_data', 
+    'stream_data',
+    'atlas',
+    'figures', 
+    'program_figures',
+    'peak_figures',
+    'stream_figures',
+    ]
+
+# Add a callback to combine the styles from both pages and apply them to the main-slider
+@app.callback(
+    Output("main-slider", "style"),
+    Input("page-2-main-slider-style", "data"),
+    Input("page-2bis-main-slider-style", "data"),
+)
+def combine_slider_styles(style1, style2):
+    """Combines the styles from both pages and applies them to the main-slider."""
+    # If either style is None, use the other one
+    if style1 is None:
+        return style2
+    if style2 is None:
+        return style1
+    
+    # If both styles are present, use the one that has display: block
+    if style1.get("display") == "block":
+        return style1
+    if style2.get("display") == "block":
+        return style2
+    
+    # Default to the first style
+    return style1

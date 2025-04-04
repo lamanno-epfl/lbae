@@ -25,12 +25,13 @@ from pages import (
     home,
     lipid_selection,
     lipizones_selection,
+    lipizones_vs_celltypes,
     region_analysis,
     threeD_exploration,
     lp_selection,
     id_cards,
     threeD_lipizones,
-    peak_selection,
+    # peak_selection,
 )
 from in_app_documentation.documentation import return_documentation
 from config import basic_config
@@ -63,21 +64,16 @@ def return_main_content():
             dcc.Store(id="session-id", data=session_id),
             # Record the slider index
             dcc.Store(id="main-slider", data=1),
-            # # Record the state of the range sliders for low and high resolution spectra in page 2
-            # dcc.Store(id="boundaries-low-resolution-mz-plot"),
-            # dcc.Store(id="boundaries-high-resolution-mz-plot"),
             
             # Record the lipids selected in page 2
             dcc.Store(id="page-2-selected-lipid-1", data=-1),
             dcc.Store(id="page-2-selected-lipid-2", data=-1),
             dcc.Store(id="page-2-selected-lipid-3", data=-1),
-            dcc.Store(id="page-2-last-selected-lipids", data=[]),
             
             # Record the lipid programs selected in page 2bis
-            dcc.Store(id="page-2bis-selected-lp-1", data=-1),
-            dcc.Store(id="page-2bis-selected-lp-2", data=-1),
-            dcc.Store(id="page-2bis-selected-lp-3", data=-1),
-            dcc.Store(id="page-2bis-last-selected-lps", data=[]),
+            dcc.Store(id="page-2bis-selected-program-1", data=-1),
+            dcc.Store(id="page-2bis-selected-program-2", data=-1),
+            dcc.Store(id="page-2bis-selected-program-3", data=-1),
 
             # Record the peaks selected in peak selection page
             dcc.Store(id="page-2tris-selected-peak-1", data=-1),
@@ -86,10 +82,15 @@ def return_main_content():
             dcc.Store(id="page-2tris-last-selected-peaks", data=[]),
 
             # Record the lipizones selected in page 6
-            dcc.Store(id="page-6-selected-lipizone-1", data=-1),
-            dcc.Store(id="page-6-selected-lipizone-2", data=-1),
-            dcc.Store(id="page-6-selected-lipizone-3", data=-1),
-            dcc.Store(id="page-6-last-selected-lipizones", data=[]),
+            dcc.Store(id="page-6-all-selected-lipizones", data={}),
+            dcc.Store(id="page-6-current-treemap-selection", data=None),
+
+            # Record the lipizones and celltypes selected in page 6bis
+            dcc.Store(id="page-6bis-all-selected-lipizones", data={}),
+            dcc.Store(id="page-6bis-all-selected-celltypes", data={}),
+            dcc.Store(id="page-6bis-current-lipizone-treemap-selection", data=None),
+            dcc.Store(id="page-6bis-current-celltype-treemap-selection", data=None),
+
             # Record the lipids selected in page 4
             dcc.Store(id="page-4-selected-lipid-1", data=empty_lipid_list),
             dcc.Store(id="page-4-selected-lipid-2", data=empty_lipid_list),
@@ -407,7 +408,7 @@ def return_main_content():
     return main_content
 
 
-def return_validation_layout(main_content, initial_slice=1):
+def return_validation_layout(main_content, initial_slice=12):
     """This function compute the layout of the app, including the main container, the sidebar and
     the different pages.
 
@@ -424,9 +425,10 @@ def return_validation_layout(main_content, initial_slice=1):
             main_content,
             home.layout,
             lipid_selection.return_layout(basic_config, initial_slice),
-            # lp_selection.return_layout(basic_config, initial_slice),
+            lp_selection.return_layout(basic_config, initial_slice),
             # peak_selection.return_layout(basic_config, initial_slice),
             lipizones_selection.return_layout(basic_config, initial_slice),
+            lipizones_vs_celltypes.return_layout(basic_config, initial_slice),
             id_cards.return_layout(basic_config, initial_slice),
             region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
@@ -459,14 +461,17 @@ def render_page_content(pathname, slice_index, brain):
     elif pathname == "/lipid-selection":
         page = lipid_selection.return_layout(basic_config, slice_index)
 
-    # elif pathname == "/lp-selection":
-    #     page = lp_selection.return_layout(basic_config, slice_index)
+    elif pathname == "/lp-selection":
+        page = lp_selection.return_layout(basic_config, slice_index)
     
     # elif pathname == "/peak-selection":
     #     page = peak_selection.return_layout(basic_config, slice_index)
     
     elif pathname == "/lipizones-selection":
         page = lipizones_selection.return_layout(basic_config, slice_index)
+
+    elif pathname == "/lipizones-vs-celltypes":
+        page = lipizones_vs_celltypes.return_layout(basic_config, slice_index)
 
     elif pathname == "/id-cards":
         page = id_cards.return_layout(basic_config, slice_index)
@@ -520,11 +525,12 @@ def hide_slider(pathname):
     l_path_with_slider = [
         "/lipid-selection",
         "/lp-selection",
-        # "/peak-selection",
+        "/peak-selection",
         "/lipizones-selection",
         "/region-analysis",
         "/3D-exploration",
         "/3D-lipizones",
+        "/lipizones-vs-celltypes",
     ]
 
     # Set the content according to the current pathname
@@ -630,3 +636,25 @@ app.clientside_callback(
     State("main-brain", "value"),
 )
 """This clientside callback is used to update the slider indices with the selected brain."""
+
+@app.callback(
+    Output("main-brain", "style"),
+    Input("url", "pathname"),
+    prevent_initial_call=False,
+)
+def hide_brain_chips(pathname):
+    """This callback is used to hide the brain selection chips when they are not needed."""
+    if pathname == "/lipizones-vs-celltypes":
+        return {"display": "none"}
+    else:
+        return {
+            "position": "fixed",
+            "right": "0.5rem",
+            "top": "50%",
+            "transform": "translateY(-50%)",
+            "zIndex": 1000,
+            "padding": "1rem",
+            "borderRadius": "8px",
+            "display": "flex",
+            "alignItems": "flex-end",
+        }

@@ -139,7 +139,7 @@ def differential_lipids(l_A, l_B):
         # except ValueError:
         #     p_value = np.nan
     
-        results.append({'lipid': lip, 'log2fold_change': log2fold_change[i], 'p_value': p_value})
+        results.append({'lipid': lip, 'log2fold_change': log2fold_change.iloc[i], 'p_value': p_value})
 
     results_df = pd.DataFrame(results)
 
@@ -515,48 +515,80 @@ def return_layout(basic_config, slice_index=1):
                                                     "overflow": "hidden",  # Prevent scrolling
                                                 },
                                                 children=[
-                                                    dbc.Spinner(
-                                                        color="cyan",
-                                                        type="grow",
+                                                    # dbc.Spinner(
+                                                    #     color="cyan",
+                                                    #     type="grow",
+                                                    dcc.Loading(
+                                                        id="loading-volcano",
+                                                        type="default",
                                                         children=[
-                                                            # Alerts
-                                                            html.Div(
-                                                                className="px-5",
-                                                                children=[
-                                                                    html.Div(
-                                                                        id="page-3-alert",
-                                                                        className="text-center my-5",
-                                                                        style={"display": "none"},
-                                                                        children=html.Strong(
-                                                                            children="Please draw at least one region on the heatmap and click on 'compute differential analysis'.",
-                                                                            style={"color": "#df5034"},
-                                                                        ),
-                                                                    ),
-                                                                    html.Div(
-                                                                        id="page-3-alert-2",
-                                                                        className="text-center my-2",
-                                                                        style={"display": "none"},
-                                                                        children=html.Strong(
-                                                                            children="Too many regions selected, please reset the annotations.",
-                                                                            style={"color": "#df5034"},
-                                                                        ),
-                                                                    ),
-                                                                ],
-                                                            ),
-                                                            # Graph
+                                                            # # Alerts
+                                                            # html.Div(
+                                                            #     className="px-5",
+                                                            #     children=[
+                                                            #         html.Div(
+                                                            #             id="page-3-alert",
+                                                            #             className="text-center my-5",
+                                                            #             style={"display": "none"},
+                                                            #             children=html.Strong(
+                                                            #                 children="Please draw at least one region on the heatmap and click on 'compute differential analysis'.",
+                                                            #                 style={"color": "#df5034"},
+                                                            #             ),
+                                                            #         ),
+                                                            #         html.Div(
+                                                            #             id="page-3-alert-2",
+                                                            #             className="text-center my-2",
+                                                            #             style={"display": "none"},
+                                                            #             children=html.Strong(
+                                                            #                 children="Too many regions selected, please reset the annotations.",
+                                                            #                 style={"color": "#df5034"},
+                                                            #             ),
+                                                            #         ),
+                                                            #     ],
+                                                            # ),
+                                                            # # Graph
+                                                            # dcc.Graph(
+                                                            #     id="page-3-graph-volcano",
+                                                            #     style={
+                                                            #         "height": "calc(100% - 2rem)",
+                                                            #         "display": "none",
+                                                            #     },
+                                                            #     config=basic_config | {
+                                                            #         "toImageButtonOptions": {
+                                                            #             "format": "png",
+                                                            #             "filename": "volcano_from_custom_region",
+                                                            #             "scale": 2,
+                                                            #         }
+                                                            #     },
                                                             dcc.Graph(
                                                                 id="page-3-graph-volcano",
                                                                 style={
-                                                                    "height": "calc(100% - 2rem)",
-                                                                    "display": "none",
-                                                                },
-                                                                config=basic_config | {
-                                                                    "toImageButtonOptions": {
-                                                                        "format": "png",
-                                                                        "filename": "volcano_from_custom_region",
-                                                                        "scale": 2,
-                                                                    }
-                                                                },
+                                                                    "height": "calc(100vh - 8rem)",
+                                                                    "width": "100%",
+                                                                }
+                                                            )
+                                                        ]
+                                                    ),
+                                                    html.Div(
+                                                        className="px-5",
+                                                        children=[
+                                                            html.Div(
+                                                                id="page-3-alert",
+                                                                className="text-center my-5",
+                                                                style={"display": "none"},
+                                                                children=html.Strong(
+                                                                    children="Please draw at least one region on the heatmap and click on 'compute differential analysis'.",
+                                                                    style={"color": "#df5034"},
+                                                                ),
+                                                            ),
+                                                            html.Div(
+                                                                id="page-3-alert-2",
+                                                                className="text-center my-2",
+                                                                style={"display": "none"},
+                                                                children=html.Strong(
+                                                                    children="Too many regions selected, please reset the annotations.",
+                                                                    style={"color": "#df5034"},
+                                                                ),
                                                             ),
                                                         ],
                                                     ),
@@ -1443,6 +1475,8 @@ def page_3_record_volcano(
         l_expressions_B = global_store(
             slice_index, l_shapes_and_masks_B
         )
+        print(len(l_expressions_A))
+        print(len(l_expressions_B))
 
         if l_expressions_A is not None and l_expressions_B is not None:
             if l_expressions_A != [] and l_expressions_B != []:
@@ -1608,6 +1642,8 @@ def page_3_plot_volcano(
             logging.info("Volcano plotted. Returning it now")
 
             # Return dummy variable for ll_idx_labels to confirm that it has been computed
+            # # save the figure in the working directory
+            # fig.write_html("volcano.html")
             return fig
 
     return dash.no_update

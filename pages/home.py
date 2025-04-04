@@ -161,12 +161,12 @@ def toggle_documentation(n, is_open):
     return is_open
 
 
-@app.long_callback(output=Output("javascript", "run"), inputs=[Input("main-slider", "data")])
-def display_rotating_brain(x):
-    """This callback loads some javascript code to display the rotating brain."""
-    with open("js/rotating-brain.js") as f:
-        js = f.read()
-    return js
+# @app.long_callback(output=Output("javascript", "run"), inputs=[Input("main-slider", "data")])
+# def display_rotating_brain(x):
+#     """This callback loads some javascript code to display the rotating brain."""
+#     with open("js/rotating-brain.js") as f:
+#         js = f.read()
+#     return js
 
 
 app.clientside_callback(

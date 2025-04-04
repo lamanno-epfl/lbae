@@ -119,12 +119,13 @@ def return_layout(basic_config, slice_index):
                                                         id="page-4-graph-region-selection",
                                                         config=basic_config,
                                                         style={},
-                                                        figure=storage.return_shelved_object(
-                                                            "figures/atlas_page/3D",
-                                                            "treemaps",
-                                                            force_update=False,
-                                                            compute_function=figures.compute_treemaps_figure,
-                                                        ),
+                                                        figure=figures.compute_treemaps_figure(),
+                                                        # figure=storage.return_shelved_object(
+                                                        #     "figures/atlas_page/3D",
+                                                        #     "treemaps",
+                                                        #     force_update=False,
+                                                        #     compute_function=figures.compute_treemaps_figure,
+                                                        # ),
                                                     ),
                                                 ],
                                             ),
@@ -367,11 +368,6 @@ def return_layout(basic_config, slice_index):
                                             "background-color": "#1d1c1f",
                                         },
                                         children=[
-                                            dbc.Progress(
-                                                id="page-4-progress-bar-volume",
-                                                style={"width ": "100%"},
-                                                color="#338297",
-                                            ),
                                             dbc.Spinner(
                                                 color="light",
                                                 show_initially=False,
@@ -380,17 +376,6 @@ def return_layout(basic_config, slice_index):
                                                         className="fixed-aspect-ratio",
                                                         id="page-4-graph-volume-parent",
                                                         children=[
-                                                            # html.Div(
-                                                            #     id="page-4-alert",
-                                                            #     className="text-center my-2",
-                                                            #     children=html.Strong(
-                                                            #         children=(
-                                                            #             "Please select at least one"
-                                                            #             " lipid."
-                                                            #         ),
-                                                            #         style={"color": "#df5034"},
-                                                            #     ),
-                                                            # ),
                                                             dcc.Graph(
                                                                 id="page-4-graph-volume",
                                                                 config=basic_config
@@ -530,10 +515,6 @@ def page_4_display_volume(clicked_compute, l_lipids):
     """This callback is used to turn visible the volume plot when the corresponding button has been
     clicked."""
 
-    print(f"\n========== page_4_display_volume ==========")
-    print(f"clicked_compute: {clicked_compute}")
-    print(f"l_lipids: {l_lipids}")
-
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
 
@@ -565,16 +546,9 @@ def page_4_click(clickData, region_1_id, region_2_id, region_3_id):
     """This callback is used to update the label of the add structure button depending on the number
     of structures already selected, and the state of the corresponding widget."""
 
-    print(f"\n========== page_4_click ==========")
-    print(f"clickData: {clickData}")
-    print(f"region_1_id: {region_1_id}")
-    print(f"region_2_id: {region_2_id}")
-    print(f"region_3_id: {region_3_id}")
-
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    print(f"id_input: {id_input}")
-
+    
     # Check if a structure has already been selected in the widget
     if id_input == "page-4-graph-region-selection":
         if clickData is not None:
@@ -604,14 +578,9 @@ def page_4_click_lipid(header_1, name):
     """This callback is used to update the label of the add lipid button, depending on whether a lipid
     is already selected."""
 
-    print(f"\n========== page_4_click_lipid ==========")
-    print(f"header_1: {header_1}")
-    print(f"name: {name}")
-
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    print(f"id_input: {id_input}")
-
+    
     # If no lipid is selected yet
     if header_1 == "":
         if name is not None and name != "":
@@ -664,19 +633,9 @@ def page_4_add_toast_region_selection(
     """This callback checks for a free spot and adds the selected region to the selection when
     clicking on the 'add structure' button."""
 
-    print(f"\n========== page_4_add_toast_region_selection ==========")
-    print(f"clicked_add: {clicked_add}")
-    print(f"bool_toast_1: {bool_toast_1}")
-    print(f"bool_toast_2: {bool_toast_2}")
-    print(f"bool_toast_3: {bool_toast_3}")
-    print(f"region_1_id: {region_1_id}")
-
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-
-    print(f"id_input: {id_input}")
-    print(f"value_input: {value_input}")
 
     if len(id_input) == 0:
         return "", "", "", "", "", "", False, False, False, []
@@ -766,58 +725,39 @@ def page_4_add_toast_region_selection(
         Input("page-4-display-button", "n_clicks"),
     ],
     state=[
+        State("page-4-modal-volume", "is_open"),
         State("page-4-toast-lipid-1", "header"),
         State("page-4-last-selected-regions", "data"),
         State("page-4-selected-region-1", "data"),
         State("page-4-selected-region-2", "data"),
         State("page-4-selected-region-3", "data"),
-        State("page-4-modal-volume", "is_open"),
         State("main-brain", "value"),
     ],
     running=[
-        (
-            Output("page-4-progress-bar-volume", "className"),
-            "",
-            "d-none",
-        ),
         (Output("page-4-graph-volume", "className"), "d-none", ""),
     ],
-    progress=[
-        Output("page-4-progress-bar-volume", "value"),
-        Output("page-4-progress-bar-volume", "label"),
-    ],
     prevent_initial_call=True,
+    cache_args_to_ignore=[0],  # Ignore n_clicks in caching
 )
 def page_4_plot_graph_volume(
-    set_progress,
     n_clicks_button_display,
+    is_open_modal,
     name_lipid_1,
     l_selected_regions,
     name_region_1,
     name_region_2,
     name_region_3,
-    is_open_modal,
     brain,
 ):
     """This callback is used to plot the volume graph of expression of the selected lipid(s) in the
     selected structure(s), when clicking on the corresponding button."""
 
-    print(f"\n========== page_4_plot_graph_volume ==========")
-    print(f"set_progress: {set_progress}")
-    print(f"n_clicks_button_display: {n_clicks_button_display}")
-    print(f"name_lipid_1: {name_lipid_1}")
-
-    set_progress((0, "Inspecting dataset..."))
-
     # Since we're only triggered by the display button, we know what triggered us
     id_input = "page-4-display-button"
     value_input = "n_clicks"
 
-    print(f"id_input: {id_input}")
-    print(f"value_input: {value_input}")
-
     # If the modal is closed, delete the graph
-    if is_open_modal == False:
+    if not is_open_modal:
         logging.info("Modal closed, deleting graph")
         return {}
 
@@ -836,8 +776,6 @@ def page_4_plot_graph_volume(
         "For the computation of 3D volume, decrease_resolution_factor is "
         + str(decrease_resolution_factor)
     )
-
-    print(f"set_id: {set_id}")
 
     return figures.compute_3D_volume_figure(
         lipid_name=name_lipid_1,
@@ -862,16 +800,9 @@ def page_4_handle_dropdowns(n_clicks, name, options_names, brain):
     """This callback is used to progressively refine dropdown selection for lipid names and structures.
     It is triggered when a new selection is made in the corresponding dropdowns."""
 
-    print(f"\n========== page_4_handle_dropdowns ==========")
-    print(f"n_clicks: {n_clicks}")
-    print(f"name: {name}")
-    print(f"options_names: {options_names}")
-    print(f"brain: {brain}")
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     brain_1 = True  # if brain == "brain_1" else False
-
-    print(f"id_input: {id_input}")
 
     # If the page just loaded or button 'add lipid' has been clicked, or brain dropdown has changed, reset selection
     if len(id_input) == 0 or id_input == "page-4-add-lipid-button" or id_input == "ReferenceAtlas":
@@ -895,16 +826,10 @@ def page_4_add_toast_selection(
     brain,
 ):
     """This callback is used to add the selected lipid to the selection for further plotting."""
-    print(f"\n========== page_4_add_toast_selection ==========")
-    print(f"selected_lipid: {selected_lipid}")
-    print(f"bool_toast_1: {bool_toast_1}")
-    print(f"header_1: {header_1}")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    print(f"id_input: {id_input}")
-    print(f"value_input: {value_input}")
 
     # If toast has been closed, remove the lipid from selection
     if id_input == "page-4-toast-lipid-1" and value_input == "is_open":
@@ -912,39 +837,6 @@ def page_4_add_toast_selection(
 
     # If a lipid has been selected from dropdown
     elif selected_lipid is not None and id_input == "page-4-dropdown-lipids":
-        print(f"selected_lipid: {selected_lipid}")
-
-        # Get the lipid name and structure
-        if len(selected_lipid.split(" ")) == 2:
-            name, structure = selected_lipid.split(" ")
-        else:
-            name = "_".join(selected_lipid.split(" ")[::2])
-            structure = "_".join(selected_lipid.split(" ")[1::2])
-
-        # # Find lipid location
-        # l_lipid_loc = (
-        #     data.get_annotations()
-        #     .index[
-        #         (data.get_annotations()["name"] == name)
-        #         & (data.get_annotations()["structure"] == structure)
-        #         & (data.get_annotations()["slice"] == slice_index)
-        #     ]
-        #     .tolist()
-        # )
-
-        # # If several lipids correspond to the selection, take the last one
-        # if len(l_lipid_loc) > 1:
-        #     logging.warning("More than one lipid corresponds to the selection")
-        #     l_lipid_loc = [l_lipid_loc[-1]]
-        # if len(l_lipid_loc) == 0:
-        #     l_lipid_loc = [-1]
-
-        # # Record location and lipid name
-        # lipid_index = l_lipid_loc[0]
-        # l_lipid_1_index = [-1 for i in data.get_slice_list(indices=brain)]
-        # l_lipid_1_index[0] = lipid_index
-        # l_selected_lipids = [lipid_index]
-
         return selected_lipid  # , l_lipid_1_index, True, l_selected_lipids
 
     return dash.no_update
@@ -959,16 +851,6 @@ def page_4_add_toast_selection(
 )
 def page_4_active_display(region_1_id, region_2_id, region_3_id, brain):  # l_lipid_1_index,
     """This callback is used to enable/disable the display button."""
-    print(f"\n========== page_4_active_display ==========")
-    # print(f"l_lipid_1_index: {l_lipid_1_index}")
-    print(f"region_1_id: {region_1_id}")
-    print(f"region_2_id: {region_2_id}")
-    print(f"region_3_id: {region_3_id}")
-    print(f"brain: {brain}")
-
-    # # Compute number of slices for current brain
-    # n_slices = len(data.get_slice_list(indices=brain))
-
     # If at least one structure is selected and a lipid is selected, enable the button
     if region_1_id != "" or region_2_id != "" or region_3_id != "":  # and np.sum(
         #     l_lipid_1_index
@@ -979,28 +861,6 @@ def page_4_active_display(region_1_id, region_2_id, region_3_id, brain):  # l_li
     return True
 
 
-# @app.callback(
-#     Output("page-4-dropdown-lipids", "disabled"),
-#     Input("page-4-selected-lipid-1", "data"),
-#     State("main-brain", "value"),
-# )
-# def page_4_disable_dropdowns(l_lipid_1_index, brain):
-#     """This callback is triggered when a lipid is selected, and enables/disables the corresponding
-#     dropdown."""
-#     print(f"\n========== page_4_disable_dropdowns ==========")
-#     print(f"l_lipid_1_index: {l_lipid_1_index}")
-#     print(f"brain: {brain}")
-
-#     # Compute number of slices for current brain
-#     n_slices = len(data.get_slice_list(indices=brain))
-
-#     # If lipid is selected, disable dropdown
-#     if np.sum(l_lipid_1_index) > -n_slices:
-#         return True
-#     else:
-#         return False
-
-
 @app.callback(
     Output("page-4-modal-volume", "is_open"),
     Input("page-4-display-button", "n_clicks"),
@@ -1008,29 +868,10 @@ def page_4_active_display(region_1_id, region_2_id, region_3_id, brain):  # l_li
 )
 def page_4_toggle_modal_volume(n1, is_open):
     """This callback is used to toggle the modal window for volume plot"""
-    print(f"\n========== page_4_toggle_modal_volume ==========")
-    print(f"n1: {n1}")
-    print(f"is_open: {is_open}")
     if n1:
         # Always open the modal when the button is clicked
         return True
     return is_open
-
-
-# @app.callback(
-#     Output("page-4-modal-heatmap", "is_open"),
-#     Input("page-4-compare-structure-button", "n_clicks"),
-#     [State("page-4-modal-heatmap", "is_open")],
-# )
-# def page_4_toggle_modal_clustergram(n1, is_open):
-#     """This callback is used to toggle the modal window for clustergram plot"""
-#     print(f"\n========== page_4_toggle_modal_clustergram ==========")
-#     print(f"n1: {n1}")
-#     print(f"is_open: {is_open}")
-#     if n1:
-#         return not is_open
-#     return is_open
-
 
 clientside_callback(
     """

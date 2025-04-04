@@ -41,12 +41,21 @@ def return_layout(basic_config, slice_index):
                 "bottom": "0px",
                 "left": "6rem",
                 "background-color": "#1d1c1f",
+                "overflow": "hidden",  # Prevent any scrolling
             },
             children=[
+                # Add a store component to hold the slider style
+                dcc.Store(id="page-2-main-slider-style", data={"display": "block"}),
                 html.Div(
                     className="fixed-aspect-ratio",
                     style={
                         "background-color": "#1d1c1f",
+                        "position": "absolute",
+                        "top": "0",
+                        "left": "0",
+                        "right": "0",
+                        "bottom": "0",
+                        "overflow": "hidden",
                     },
                     children=[
                         dcc.Graph(
@@ -61,8 +70,8 @@ def return_layout(basic_config, slice_index):
                             }
                             | {"staticPlot": False},
                             style={
-                                "width": "95%",
-                                "height": "95%",
+                                "height": "100vh",
+                                "width": "100%",
                                 "position": "absolute",
                                 "left": "0",
                                 "top": "0",
@@ -70,28 +79,75 @@ def return_layout(basic_config, slice_index):
                             },
                             figure=figures.compute_heatmap_per_lipid(
                                 slice_index,
-                                "SM 34:1;O2",
+                                "HexCer 42:2;O2",
                                 cache_flask=cache_flask,
                             ),
                         ),
+                        # Allen Brain Atlas switch (independent)
+                        html.Div(
+                            id="page-2-annotations-container",
+                            style={
+                                "position": "absolute",
+                                "left": "50%",
+                                "transform": "translateX(-50%)",
+                                "top": "0.5em",
+                                "z-index": 1000,
+                                "display": "flex",
+                                "flexDirection": "row",
+                                "alignItems": "center",
+                                "justifyContent": "center",
+                                "padding": "0.5em 2em",
+                            },
+                            children=[
+                                dmc.Switch(
+                                    id="page-2-toggle-annotations",
+                                    checked=False,
+                                    color="cyan",
+                                    radius="xl",
+                                    size="sm",
+                                ),
+                                html.Span(
+                                    "Allen Brain Atlas Annotations",
+                                    style={
+                                        "color": "white",
+                                        "marginLeft": "10px",
+                                        "whiteSpace": "nowrap",
+                                    },
+                                ),
+                            ],
+                        ),
+                        # Title
+                        html.H4(
+                            "Visualize Lipids",
+                            style={
+                                "color": "white",
+                                "marginBottom": "15px",
+                                "fontSize": "1.2em",
+                                "fontWeight": "500",
+                                "position": "absolute",
+                                "left": "1%",
+                                "top": "1em",
+                            }
+                        ),
+                        # Lipid selection controls group
                         dmc.Group(
                             direction="column",
                             spacing=0,
                             style={
                                 "left": "1%",
-                                "top": "1em",
+                                "top": "3.5em",
+                                "position": "absolute",
                             },
-                            class_name="position-absolute",
                             children=[
                                 dmc.Text("Choose up to 3 lipids", size="lg"),
                                 dmc.Group(
                                     spacing="xs",
-                                    align="flex-start",
+                                    align="center",
                                     children=[
                                         dmc.MultiSelect(
                                             id="page-2-dropdown-lipids",
                                             data=data.return_lipid_options(),
-                                            value=['SM 34:1;O2'],
+                                            value=['HexCer 42:2;O2'],
                                             searchable=True,
                                             nothingFound="No lipid found",
                                             radius="md",
@@ -106,54 +162,59 @@ def return_layout(basic_config, slice_index):
                                                 "width": "20em",
                                             },
                                         ),
-                                        dmc.Button(
-                                            children="Display as RGB",
-                                            id="page-2-rgb-button",
-                                            variant="filled",
-                                            color="cyan",
-                                            radius="md",
-                                            size="xs",
-                                            disabled=True,
-                                            compact=False,
-                                            loading=False,
+                                        html.Div(
+                                            id="page-2-rgb-group",
+                                            style={
+                                                "display": "flex", 
+                                                "alignItems": "center", 
+                                                "marginLeft": "15px"
+                                            },
+                                            children=[
+                                                dmc.Switch(
+                                                    id="page-2-rgb-switch",
+                                                    checked=False,
+                                                    color="cyan",
+                                                    radius="xl",
+                                                    size="sm",
+                                                ),
+                                                html.Span(
+                                                    "Display as RGB",
+                                                    style={
+                                                        "color": "white",
+                                                        "marginLeft": "8px",
+                                                        "fontWeight": "500",
+                                                        "fontSize": "14px",
+                                                    },
+                                                ),
+                                            ],
                                         ),
-                                        dmc.Button(
-                                            children="Display as colormap",
-                                            id="page-2-colormap-button",
-                                            variant="filled",
-                                            color="cyan",
-                                            radius="md",
-                                            size="xs",
-                                            disabled=True,
-                                            compact=False,
-                                            loading=False,
-                                        ),
-                                        dmc.Button(
-                                            children="Display all sections",
-                                            id="page-2-all-sections-button",
-                                            variant="filled",
-                                            color="cyan",
-                                            radius="md",
-                                            size="xs",
-                                            disabled=True,
-                                            compact=False,
-                                            loading=False,
-                                        ),
-                                        # dmc.Switch(
-                                        #     id="page-2-toggle-apply-transform",
-                                        #     label="Apply MAIA transform (if applicable)",
-                                        #     checked=True,
-                                        #     color="cyan",
-                                        #     radius="xl",
-                                        #     size="sm",
-                                        # ),
                                     ],
                                 ),
                             ],
                         ),
+                        # Sections mode control
+                        dmc.SegmentedControl(
+                            id="page-2-sections-mode",
+                            value="one",
+                            data=[
+                                {"value": "one", "label": "One section"},
+                                {"value": "all", "label": "All sections"},
+                            ],
+                            color="cyan",
+                            disabled=True,
+                            size="xs",
+                            style={
+                                "position": "absolute",
+                                "left": "1%",
+                                "top": "9em",
+                                "width": "20em",
+                                "border": "1px solid rgba(255, 255, 255, 0.1)",
+                                "borderRadius": "4px",
+                            }
+                        ),
                         dmc.Text(
                             id="page-2-badge-input",
-                            children="Current input: ",  #  + "m/z boundaries",
+                            children="Now displaying:",
                             class_name="position-absolute",
                             style={"right": "1%", "top": "1em"},
                         ),
@@ -203,16 +264,6 @@ def return_layout(basic_config, slice_index):
                                 "borderRadius": "8px",
                                 "minWidth": "200px",
                             },
-                        ),
-                        dmc.Switch(
-                            id="page-2-toggle-annotations",
-                            label="Allen Brain Atlas Annotations",
-                            checked=False,
-                            color="cyan",
-                            radius="xl",
-                            size="sm",
-                            style={"left": "1%", "top": "20em"},
-                            class_name="position-absolute",
                         ),
                         dmc.Group(
                             position="right",
@@ -295,9 +346,8 @@ def page_2_hover(hoverData, slice_index):
     Input("page-2-selected-lipid-1", "data"),
     Input("page-2-selected-lipid-2", "data"),
     Input("page-2-selected-lipid-3", "data"),
-    Input("page-2-rgb-button", "n_clicks"),
-    Input("page-2-colormap-button", "n_clicks"),
-    Input("page-2-all-sections-button", "n_clicks"),
+    Input("page-2-rgb-switch", "checked"),
+    Input("page-2-sections-mode", "value"),
     Input("main-brain", "value"),
     Input("page-2-toggle-annotations", "checked"),
 
@@ -308,15 +358,13 @@ def page_2_plot_graph_heatmap_mz_selection(
     lipid_1_index,
     lipid_2_index,
     lipid_3_index,
-    n_clicks_button_rgb,
-    n_clicks_button_colormap,
-    n_clicks_button_all_sections,
+    rgb_mode,
+    sections_mode,
     brain_id,
     annotations_checked,
     graph_input,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
-    # print(f"\n========== page_2_plot_graph_heatmap_mz_selection ==========")
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
 
     # Find out which input triggered the function
@@ -339,7 +387,21 @@ def page_2_plot_graph_heatmap_mz_selection(
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
         
-            if graph_input == "Current input: " + "Lipid selection RGB":
+            # If all sections view is requested, only use first lipid
+            if sections_mode == "all":
+                active_lipids = [name for name in ll_lipid_names if name is not None]
+                first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+                image = grid_data.retrieve_grid_image(
+                    lipid=first_lipid,
+                    sample=brain_id
+                )
+                return(figures.build_lipid_heatmap_from_image(
+                            image, 
+                            return_base64_string=False,
+                            overlay=overlay),
+                        "Now displaying:")
+            
+            if rgb_mode and sections_mode != "all":
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
@@ -347,17 +409,16 @@ def page_2_plot_graph_heatmap_mz_selection(
                         cache_flask=cache_flask,
                         overlay=overlay,
                     ),
-                    graph_input,
+                    "Now displaying:",
                 )
-
-            elif graph_input == "Current input: " + "Lipid selection colormap":
-                # you also need to check that only one lipid is selected
-                if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
-                    nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
+            else:
+                # Check that only one lipid is selected for colormap mode
+                active_lipids = [name for name in ll_lipid_names if name is not None]
+                if len(active_lipids) == 1:
                     image = figures.compute_image_per_lipid(
                         slice_index,
                         RGB_format=False,
-                        lipid_name=nonull_ll_lipid_names,
+                        lipid_name=active_lipids[0],
                         cache_flask=cache_flask,
                     )
                     return (
@@ -366,18 +427,32 @@ def page_2_plot_graph_heatmap_mz_selection(
                             return_base64_string=False,
                             overlay=overlay,
                         ),
-                        "Current input: " + "Lipid selection colormap",
+                        "Now displaying:",
                     )
                 else:
-                    return (
-                        figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_lipid_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        ),
-                        "Current input: " + "Lipid selection RGB",
-                    )
+                    # If multiple lipids and not in RGB mode, force RGB mode (except in all sections mode)
+                    if sections_mode != "all":
+                        return (
+                            figures.compute_rgb_image_per_lipid_selection(
+                                slice_index,
+                                ll_lipid_names=ll_lipid_names,
+                                cache_flask=cache_flask,
+                                overlay=overlay,
+                            ),
+                            "Now displaying:",
+                        )
+                    else:
+                        # In all sections mode, use only first lipid
+                        first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+                        image = grid_data.retrieve_grid_image(
+                            lipid=first_lipid,
+                            sample=brain_id
+                        )
+                        return(figures.build_lipid_heatmap_from_image(
+                                    image, 
+                                    return_base64_string=False,
+                                    overlay=overlay),
+                                "Now displaying:")
 
         return dash.no_update
 
@@ -386,18 +461,10 @@ def page_2_plot_graph_heatmap_mz_selection(
         id_input == "page-2-selected-lipid-1"
         or id_input == "page-2-selected-lipid-2"
         or id_input == "page-2-selected-lipid-3"
-        or id_input == "page-2-rgb-button"
-        or id_input == "page-2-colormap-button"
-        or id_input == "page-2-all-sections-button"
+        or id_input == "page-2-rgb-switch"
+        or id_input == "page-2-sections-mode"
         or id_input == "main-brain"
-        or (
-            (id_input == "main-slider")
-            and (
-                graph_input == "Current input: " + "Lipid selection colormap"
-                or graph_input == "Current input: " + "Lipid selection RGB"
-                or graph_input == "Current input: " + "Lipid selection all sections"
-            )
-        )
+        or id_input == "main-slider"
     ):
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
             ll_lipid_names = [
@@ -410,21 +477,43 @@ def page_2_plot_graph_heatmap_mz_selection(
                 else None
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
-            # Check if the current plot must be a heatmap
-            if (
-                id_input == "page-2-colormap-button"
-                or (
-                    id_input == "main-slider"
-                    and graph_input == "Current input: " + "Lipid selection colormap"
+
+            # If all sections view is requested
+            if sections_mode == "all":
+                active_lipids = [name for name in ll_lipid_names if name is not None]
+                # Use first available lipid for all sections view
+                first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+                image = grid_data.retrieve_grid_image(
+                    lipid=first_lipid,
+                    sample=brain_id
                 )
-            ):
-                # you also need to check that only one lipid is selected
-                if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
-                    nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
+                
+                return(figures.build_lipid_heatmap_from_image(
+                            image, 
+                            return_base64_string=False,
+                            overlay=overlay),
+                        "Now displaying:")
+            
+            # Handle normal display mode (RGB or colormap)
+            else:
+                active_lipids = [name for name in ll_lipid_names if name is not None]
+                if rgb_mode:
+                    return (
+                        figures.compute_rgb_image_per_lipid_selection(
+                            slice_index,
+                            ll_lipid_names=ll_lipid_names,
+                            cache_flask=cache_flask,
+                            overlay=overlay,
+                        ),
+                        "Now displaying:",
+                    )
+                else:
+                    # If not in RGB mode, use first lipid only
+                    first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
                     image = figures.compute_image_per_lipid(
                         slice_index,
                         RGB_format=False,
-                        lipid_name=nonull_ll_lipid_names,
+                        lipid_name=first_lipid,
                         cache_flask=cache_flask,
                     )
                     return (
@@ -433,113 +522,39 @@ def page_2_plot_graph_heatmap_mz_selection(
                             return_base64_string=False,
                             overlay=overlay,
                         ),
-                    "Current input: " + "Lipid selection colormap",
-                )
-                else:
-                    logging.info("Trying to plot a heatmap for more than one lipid, not possible. Return the rgb plot instead")
-                    return (
-                        figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_lipid_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        ),
-                        "Current input: " + "Lipid selection RGB",
+                        "Now displaying:",
                     )
-
-            # Or if the current plot must be an RGB image
-            elif (
-                id_input == "page-2-rgb-button"
-                or (
-                    id_input == "main-slider"
-                    and graph_input == "Current input: " + "Lipid selection RGB"
-                )
-            ):
-                return (
-                    figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=ll_lipid_names,
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    ),
-                    "Current input: " + "Lipid selection RGB",
-                )
-
-            # Or if the current plot must be all sections
-            elif (
-                id_input == "page-2-all-sections-button"
-                or (
-                    id_input == "main-slider"
-                    and graph_input == "Current input: " + "Lipid selection all sections"
-                )
-            ):
-                # Check that only one lipid is selected
-                if ll_lipid_names.count(None) == len(ll_lipid_names) - 1 and None in ll_lipid_names:
-                    nonull_ll_lipid_names = [x for x in ll_lipid_names if x is not None][0]
-                    # Use the selected lipid instead of hardcoded one
-                    image = grid_data.retrieve_grid_image(
-                        lipid=nonull_ll_lipid_names,
-                        sample=brain_id
-                    )
-
-                    return(figures.build_lipid_heatmap_from_image(
-                                image, 
-                                return_base64_string=False,
-                                # overlay=overlay
-                                ),
-                            "Current input: " + "Lipid selection all sections")
-                else:
-                    logging.info("Trying to display all sections for more than one lipid, not possible. Using first selected lipid.")
-                    # Get the first non-None lipid name
-                    first_lipid = next((name for name in ll_lipid_names if name is not None), "SM 34:1;O2")
-                    image = grid_data.retrieve_grid_image(
-                        lipid=first_lipid,
-                        sample=brain_id
-                    )
-                    
-                    return(figures.build_lipid_heatmap_from_image(
-                                image, 
-                                return_base64_string=False,
-                                overlay=overlay),
-                            "Current input: " + "Lipid selection all sections")
-            
-            # Plot RBG By default
-            else:
-                logging.info("Right before calling the graphing function")
-                return (
-                    figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=ll_lipid_names,
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    ),
-                    "Current input: " + "Lipid selection RGB",
-                )
         elif (
-            id_input == "main-slider" and graph_input == "Current input: "
+            id_input == "main-slider" and graph_input == "Now displaying:"
         ):
-            logging.info(f"No lipid has been selected, the current lipid is SM 34:1;O2 and the slice is {slice_index}")
+            logging.info(f"No lipid has been selected, the current lipid is HexCer 42:2;O2 and the slice is {slice_index}")
             return (
                 figures.compute_heatmap_per_lipid(slice_index, 
-                                                "SM 34:1;O2",
+                                                "HexCer 42:2;O2",
                                                 cache_flask=cache_flask,
                                                 overlay=overlay),
-                "Current input: " + "SM 34:1;O2",
+                "Now displaying:",
             )
         else:
             # No lipid has been selected
-            logging.info(f"No lipid has been selected, the current lipid is SM 34:1;O2 and the slice is {slice_index}")
+            logging.info(f"No lipid has been selected, the current lipid is HexCer 42:2;O2 and the slice is {slice_index}")
             return (
                 figures.compute_heatmap_per_lipid(slice_index, 
-                                                "SM 34:1;O2",
+                                                "HexCer 42:2;O2",
                                                 cache_flask=cache_flask,
                                                 overlay=overlay),
-                "Current input: " + "SM 34:1;O2",
+                "Now displaying:",
             )
 
     # If no trigger, the page has just been loaded, so load new figure with default parameters
     else:
-        return dash.no_update
+        return (
+            figures.compute_heatmap_per_lipid(slice_index, 
+                                            "HexCer 42:2;O2",
+                                            cache_flask=cache_flask,
+                                            overlay=overlay),
+            "Now displaying:",
+        )
 
 @app.callback(
     Output("page-2-badge-lipid-1", "children"),
@@ -551,11 +566,14 @@ def page_2_plot_graph_heatmap_mz_selection(
     Output("page-2-badge-lipid-1", "class_name"),
     Output("page-2-badge-lipid-2", "class_name"),
     Output("page-2-badge-lipid-3", "class_name"),
+    Output("page-2-dropdown-lipids", "value"),
     Input("page-2-dropdown-lipids", "value"),
     Input("page-2-badge-lipid-1", "class_name"),
     Input("page-2-badge-lipid-2", "class_name"),
     Input("page-2-badge-lipid-3", "class_name"),
     Input("main-slider", "data"),
+    Input("page-2-sections-mode", "value"),
+    Input("page-2-rgb-switch", "checked"),
     State("page-2-selected-lipid-1", "data"),
     State("page-2-selected-lipid-2", "data"),
     State("page-2-selected-lipid-3", "data"),
@@ -570,6 +588,8 @@ def page_2_add_toast_selection(
     class_name_badge_2,
     class_name_badge_3,
     slice_index,
+    sections_mode,
+    rgb_switch,
     lipid_1_index,
     lipid_2_index,
     lipid_3_index,
@@ -580,12 +600,11 @@ def page_2_add_toast_selection(
 ):
     """This callback adds the selected lipid to the selection."""
     logging.info("Entering function to update lipid data")
-    # print("\n================ page_2_add_toast_selection ================")
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    
+    # Initialize with default lipid if no selection exists
     if len(id_input) == 0 or (id_input == "page-2-dropdown-lipids" and l_lipid_names is None):
-        # Initialize with SM 34:1;O2 as the default lipid
         default_lipid = "SM 34:1;O2"
-        # Find lipid location for the default lipid
         name, structure = default_lipid.split(" ")
         l_lipid_loc = (
             data.get_annotations()
@@ -597,7 +616,6 @@ def page_2_add_toast_selection(
             .tolist()
         )
         
-        # If no match for current slice, try to find it in any slice
         if len(l_lipid_loc) == 0:
             l_lipid_loc = (
                 data.get_annotations()
@@ -608,41 +626,104 @@ def page_2_add_toast_selection(
                 .tolist()
             )[:1]
         
-        # Set default lipid if found
         if len(l_lipid_loc) > 0:
             lipid_1_index = l_lipid_loc[0]
             header_1 = default_lipid
             class_name_badge_1 = "position-absolute"
-            return header_1, "", "", lipid_1_index, -1, -1, class_name_badge_1, "d-none", "d-none"
+            return header_1, "", "", lipid_1_index, -1, -1, class_name_badge_1, "d-none", "d-none", [default_lipid]
         else:
-            # Fallback if lipid not found
-            return "", "", "", -1, -1, -1, "d-none", "d-none", "d-none", # None
+            return "", "", "", -1, -1, -1, "d-none", "d-none", "d-none", []
 
-    # If one or several lipids have been deleted
-    if l_lipid_names is not None:
-        if len(l_lipid_names) < len(
-            [x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]
-        ):
-            logging.info("One or several lipids have been deleter. Cleaning lipid badges now.")
-            for idx_header, header in enumerate([header_1, header_2, header_3]):
-                found = False
-                for lipid_name in l_lipid_names:
-                    if lipid_name == header:
-                        found = True
-                if not found:
-                    if idx_header == 0:
-                        header_1 = ""
-                        lipid_1_index = -1
-                        class_name_badge_1 = "d-none"
-                    if idx_header == 1:
-                        header_2 = ""
-                        lipid_2_index = -1
-                        class_name_badge_2 = "d-none"
-                    if idx_header == 2:
-                        header_3 = ""
-                        lipid_3_index = -1
-                        class_name_badge_3 = "d-none"
+    # If RGB is turned off or sections mode is "all", keep only the first lipid
+    if (id_input == "page-2-rgb-switch" and not rgb_switch) or (id_input == "page-2-sections-mode" and sections_mode == "all"):
+        active_lipids = []
+        if header_1 and lipid_1_index != -1:
+            active_lipids.append((header_1, lipid_1_index))
+        elif header_2 and lipid_2_index != -1:
+            active_lipids.append((header_2, lipid_2_index))
+        elif header_3 and lipid_3_index != -1:
+            active_lipids.append((header_3, lipid_3_index))
+            
+        if active_lipids:
+            first_lipid, first_index = active_lipids[0]
+            return (first_lipid, "", "", first_index, -1, -1, 
+                    "position-absolute", "d-none", "d-none", [first_lipid])
+        return dash.no_update
 
+    # Handle lipid deletion
+    if l_lipid_names is not None and len(l_lipid_names) < len([x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]):
+        logging.info("One or several lipids have been deleted. Reorganizing lipid badges.")
+        
+        # Create list of remaining lipids and their indices
+        remaining_lipids = []
+        for lipid_name in l_lipid_names:
+            if len(lipid_name.split(" ")) == 2:
+                name, structure = lipid_name.split(" ")
+            else:   
+                name = "_".join(lipid_name.split(" ")[::2])
+                structure = "_".join(lipid_name.split(" ")[1::2])
+                
+            l_lipid_loc = (
+                data.get_annotations()
+                .index[
+                    (data.get_annotations()["name"] == name)
+                    & (data.get_annotations()["structure"] == structure)
+                    & (data.get_annotations()["slice"] == slice_index)
+                ]
+                .tolist()
+            )
+            
+            if len(l_lipid_loc) == 0:
+                l_lipid_loc = (
+                    data.get_annotations()
+                    .index[
+                        (data.get_annotations()["name"] == name)
+                        & (data.get_annotations()["structure"] == structure)
+                    ]
+                    .tolist()
+                )[:1]
+                
+            if len(l_lipid_loc) > 0:
+                remaining_lipids.append((lipid_name, l_lipid_loc[0]))
+        
+        # Reset all slots
+        header_1, header_2, header_3 = "", "", ""
+        lipid_1_index, lipid_2_index, lipid_3_index = -1, -1, -1
+        class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none", "d-none", "d-none"
+        
+        # Fill slots in order with remaining lipids
+        # If in all sections mode, only fill the first slot
+        if sections_mode == "all" and remaining_lipids:
+            header_1 = remaining_lipids[0][0]
+            lipid_1_index = remaining_lipids[0][1]
+            class_name_badge_1 = "position-absolute"
+            return (
+                header_1,
+                "",
+                "",
+                lipid_1_index,
+                -1,
+                -1,
+                class_name_badge_1,
+                "d-none",
+                "d-none",
+                [header_1]
+            )
+        else:
+            for idx, (lipid_name, lipid_idx) in enumerate(remaining_lipids):
+                if idx == 0:
+                    header_1 = lipid_name
+                    lipid_1_index = lipid_idx
+                    class_name_badge_1 = "position-absolute"
+                elif idx == 1:
+                    header_2 = lipid_name
+                    lipid_2_index = lipid_idx
+                    class_name_badge_2 = "position-absolute"
+                elif idx == 2:
+                    header_3 = lipid_name
+                    lipid_3_index = lipid_idx
+                    class_name_badge_3 = "position-absolute"
+                
             return (
                 header_1,
                 header_2,
@@ -653,18 +734,16 @@ def page_2_add_toast_selection(
                 class_name_badge_1,
                 class_name_badge_2,
                 class_name_badge_3,
+                l_lipid_names
             )
 
-    # Otherwise, update selection or add lipid
-    if (
-        id_input == "page-2-dropdown-lipids" and l_lipid_names is not None
-    ) or id_input == "main-slider":
+    # Handle new lipid addition or slice change
+    if (id_input == "page-2-dropdown-lipids" and l_lipid_names is not None) or id_input == "main-slider":
         # If a new slice has been selected
         if id_input == "main-slider":
-            # for each lipid, get lipid name, structure and cation
+            # Update indices for existing lipids
             for header in [header_1, header_2, header_3]:
-                # if len(header) > 1:
-                if len(header.split(" ")) == 2:
+                if header and len(header.split(" ")) == 2:
                     name, structure = header.split(" ")
                 else:   
                     name = "_".join(header.split(" ")[::2])
@@ -688,10 +767,8 @@ def page_2_add_toast_selection(
                     if x
                 ]
                 
-                # Record location and lipid name
                 lipid_index = l_lipid_loc[0] if len(l_lipid_loc) > 0 else -1
 
-                # If lipid has already been selected before, replace the index
                 if header_1 == header:
                     lipid_1_index = lipid_index
                 elif header_2 == header:
@@ -699,7 +776,30 @@ def page_2_add_toast_selection(
                 elif header_3 == header:
                     lipid_3_index = lipid_index
 
-            logging.info("Returning updated lipid data")
+            # If in all sections mode, keep only first lipid
+            if sections_mode == "all":
+                current_lipids = []
+                if header_1:
+                    current_lipids.append(header_1)
+                elif header_2:
+                    current_lipids.append(header_2)
+                elif header_3:
+                    current_lipids.append(header_3)
+                    
+                if current_lipids:
+                    return (
+                        current_lipids[0],
+                        "",
+                        "",
+                        lipid_1_index if header_1 else (lipid_2_index if header_2 else lipid_3_index),
+                        -1,
+                        -1,
+                        "position-absolute",
+                        "d-none",
+                        "d-none",
+                        current_lipids[:1]
+                    )
+
             return (
                 header_1,
                 header_2,
@@ -710,7 +810,7 @@ def page_2_add_toast_selection(
                 class_name_badge_1,
                 class_name_badge_2,
                 class_name_badge_3,
-                # None,
+                [h for h in [header_1, header_2, header_3] if h]
             )
 
         # If lipids have been added from dropdown menu
@@ -733,13 +833,7 @@ def page_2_add_toast_selection(
                 .tolist()
             )
             
-            # If several lipids correspond to the selection, we have a problem...
-            if len(l_lipid_loc) > 1:
-                logging.warning("More than one lipid corresponds to the selection")
-                l_lipid_loc = [l_lipid_loc[-1]]
-
             if len(l_lipid_loc) < 1:
-                logging.warning("No lipid annotation exist. Taking another slice annotation")
                 l_lipid_loc = (
                     data.get_annotations()
                     .index[
@@ -748,50 +842,54 @@ def page_2_add_toast_selection(
                     ]
                     .tolist()
                 )[:1]
-                # return dash.no_update
 
-            # Record location and lipid name
-            lipid_index = l_lipid_loc[0]
-            lipid_string = l_lipid_names[-1]
+            if len(l_lipid_loc) > 0:
+                lipid_index = l_lipid_loc[0]
+                lipid_string = l_lipid_names[-1]
 
-            change_made = False
-
-            # If lipid has already been selected before, replace the index
-            if header_1 == lipid_string:
-                lipid_1_index = lipid_index
-                change_made = True
-            elif header_2 == lipid_string:
-                lipid_2_index = lipid_index
-                change_made = True
-            elif header_3 == lipid_string:
-                lipid_3_index = lipid_index
-                change_made = True
-
-            # If it's a new lipid selection, fill the first available header
-            if lipid_string not in [header_1, header_2, header_2]:
-                # Check first slot available
-                if class_name_badge_1 == "d-none":
+                # If in all sections mode, only allow one lipid
+                if sections_mode == "all":
                     header_1 = lipid_string
                     lipid_1_index = lipid_index
                     class_name_badge_1 = "position-absolute"
-                elif class_name_badge_2 == "d-none":
-                    header_2 = lipid_string
-                    lipid_2_index = lipid_index
-                    class_name_badge_2 = "position-absolute"
-                elif class_name_badge_3 == "d-none":
-                    header_3 = lipid_string
-                    lipid_3_index = lipid_index
-                    class_name_badge_3 = "position-absolute"
-                else:
-                    logging.warning("More than 3 lipids have been selected")
-                    return dash.no_update
-                change_made = True
+                    return (
+                        header_1,
+                        "",
+                        "",
+                        lipid_1_index,
+                        -1,
+                        -1,
+                        class_name_badge_1,
+                        "d-none",
+                        "d-none",
+                        [header_1]
+                    )
 
-            if change_made:
-                logging.info(
-                    "Changes have been made to the lipid selection or indexation,"
-                    + " propagating callback."
-                )
+                # If lipid already exists, update its index
+                if header_1 == lipid_string:
+                    lipid_1_index = lipid_index
+                elif header_2 == lipid_string:
+                    lipid_2_index = lipid_index
+                elif header_3 == lipid_string:
+                    lipid_3_index = lipid_index
+                # If it's a new lipid, fill the first available slot
+                else:
+                    if class_name_badge_1 == "d-none":
+                        header_1 = lipid_string
+                        lipid_1_index = lipid_index
+                        class_name_badge_1 = "position-absolute"
+                    elif class_name_badge_2 == "d-none":
+                        header_2 = lipid_string
+                        lipid_2_index = lipid_index
+                        class_name_badge_2 = "position-absolute"
+                    elif class_name_badge_3 == "d-none":
+                        header_3 = lipid_string
+                        lipid_3_index = lipid_index
+                        class_name_badge_3 = "position-absolute"
+                    else:
+                        logging.warning("More than 3 lipids have been selected")
+                        return dash.no_update
+
                 return (
                     header_1,
                     header_2,
@@ -802,10 +900,8 @@ def page_2_add_toast_selection(
                     class_name_badge_1,
                     class_name_badge_2,
                     class_name_badge_3,
-                    # None,
+                    l_lipid_names
                 )
-            else:
-                return dash.no_update
 
     return dash.no_update
 
@@ -830,10 +926,10 @@ def page_2_add_toast_selection(
 # ):
 #     """This callback is used to generate and download the data in proper format."""
 
-#     # Current input is lipid selection
+#     # Now displaying is lipid selection
 #     if (
-#         graph_input == "Current input: " + "Lipid selection colormap"
-#         or graph_input == "Current input: " + "Lipid selection RGB"
+#         graph_input == "Now displaying:"
+#         or graph_input == "Now displaying:"
 #     ):
 #         l_lipids_indexes = [
 #             x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x is not None and x != -1
@@ -873,24 +969,38 @@ def page_2_add_toast_selection(
 #     return dash.no_update
 
 @app.callback(
-    Output("page-2-rgb-button", "disabled"),
-    Output("page-2-colormap-button", "disabled"),
-    Output("page-2-all-sections-button", "disabled"),
+    Output("page-2-rgb-switch", "checked"),
+    Input("page-2-selected-lipid-1", "data"),
+    Input("page-2-selected-lipid-2", "data"),
+    Input("page-2-selected-lipid-3", "data"),
+    Input("page-2-sections-mode", "value"),
+    State("page-2-rgb-switch", "checked"),
+)
+def page_2_auto_toggle_rgb(lipid_1_index, lipid_2_index, lipid_3_index, sections_mode, current_rgb_state):
+    """This callback automatically toggles the RGB switch when multiple lipids are selected."""
+    # Force RGB off when in all sections mode
+    if sections_mode == "all":
+        return False
+        
+    active_lipids = [x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]
+    # Only turn on RGB automatically when going from 1 to multiple lipids
+    # Don't turn it off when going from multiple to 1
+    if len(active_lipids) > 1:
+        return True
+    return current_rgb_state  # Keep current state otherwise
+
+@app.callback(
+    Output("page-2-sections-mode", "disabled"),
     Input("page-2-selected-lipid-1", "data"),
     Input("page-2-selected-lipid-2", "data"),
     Input("page-2-selected-lipid-3", "data"),
 )
-def page_2_active_download(lipid_1_index, lipid_2_index, lipid_3_index):
-    """This callback is used to toggle on/off the display rgb and colormap buttons."""
+def page_2_active_sections_control(lipid_1_index, lipid_2_index, lipid_3_index):
+    """This callback enables/disables the sections mode control based on lipid selection."""
     # Get the current lipid selection
-    l_lipids_indexes = [
-        x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x is not None and x != -1
-    ]
-    # If lipids has been selected from the dropdown, activate button
-    if len(l_lipids_indexes) > 0:
-        return False, False, False
-    else:
-        return True, True, True
+    active_lipids = [x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]
+    # Enable control if at least one lipid is selected
+    return len(active_lipids) == 0
 
 clientside_callback(
     """
@@ -908,3 +1018,58 @@ clientside_callback(
     Input("page-2-download-image-button", "n_clicks"),
 )
 """This clientside callback is used to download the current heatmap."""
+
+@app.callback(
+    Output("page-2-main-slider-style", "data"),
+    Output("page-2-graph-hover-text", "style"),
+    Output("page-2-annotations-container", "style"),
+    Input("page-2-sections-mode", "value"),
+)
+def page_2_toggle_elements_visibility(sections_mode):
+    """This callback toggles the visibility of elements based on sections mode."""
+    if sections_mode == "all":
+        # Hide elements
+        return {"display": "none"}, {"display": "none"}, {"display": "none"}
+    else:
+        # Show elements
+        return (
+            {"display": "block"}, 
+            {
+                "width": "auto",
+                "position": "absolute",
+                "left": "50%",
+                "transform": "translateX(-50%)",
+                "top": "1em",
+                "fontSize": "1.5em",
+                "textAlign": "center",
+                "zIndex": 1000,
+                "backgroundColor": "rgba(0, 0, 0, 0.7)",
+                "padding": "0.5em 2em",
+                "borderRadius": "8px",
+                "minWidth": "200px",
+            },
+            {
+                "position": "absolute",
+                "left": "50%",
+                "transform": "translateX(-50%)",
+                "top": "0.5em",
+                "z-index": 1000,
+                "display": "flex",
+                "flexDirection": "row",
+                "alignItems": "center",
+                "justifyContent": "center",
+                "padding": "0.5em 2em",
+            }
+        )
+
+# Add a separate callback just for the RGB group visibility
+@app.callback(
+    Output("page-2-rgb-group", "style"),
+    Input("page-2-sections-mode", "value"),
+)
+def page_2_toggle_rgb_group_visibility(sections_mode):
+    """Controls the visibility of the RGB group."""
+    if sections_mode == "all":
+        return {"display": "none"}
+    else:
+        return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}

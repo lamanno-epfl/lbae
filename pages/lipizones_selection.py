@@ -18,13 +18,15 @@ import pandas as pd
 from dash.dependencies import Input, Output, State, ALL
 import dash_mantine_components as dmc
 import numpy as np
+from scipy.ndimage import gaussian_filter
 # threadpoolctl import threadpool_limits, threadpool_info
 #threadpool_limits(limits=8)
 import os
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
-from app import app, figures, data, atlas, sample_data_shelve, section_data_shelve, grid_data
+from app import app, figures, data, atlas, lipizone_sample_data, lipizone_section_data, grid_data
+import plotly.express as px
 
 # ==================================================================================================
 # --- Helper functions
@@ -38,7 +40,7 @@ def compute_hybrid_image(hex_colors_to_highlight, brain_id="ReferenceAtlas"):
     
     try:
         # Retrieve sample data from shelve database
-        sample_data = sample_data_shelve.retrieve_sample_data(brain_id)
+        sample_data = lipizone_sample_data.retrieve_sample_data(brain_id)
         color_masks = sample_data["color_masks"]
         grayscale_image = sample_data["grayscale_image"]
         rgb_image = sample_data["grid_image"][:, :, :3]  # remove transparency channel for now
@@ -57,7 +59,11 @@ def compute_hybrid_image(hex_colors_to_highlight, brain_id="ReferenceAtlas"):
         rgb_image = np.load("grid_image_lipizones.npy")[:, :, :3]
     
     # Apply square root transformation to enhance contrast
-    grayscale_image = np.sqrt(np.sqrt(grayscale_image))
+    # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
+    grayscale_image = np.power(grayscale_image, float(1/6))
+    grayscale_image = gaussian_filter(grayscale_image, sigma=3)
+    # grayscale_image = np.power(grayscale_image, 2) * 0.3
+    grayscale_image *= ~color_masks[list(color_masks.keys())[0]]
     
     rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight]
     
@@ -92,7 +98,7 @@ def compute_hybrid_image(hex_colors_to_highlight, brain_id="ReferenceAtlas"):
     # Compute pad sizes
     pad_top = height // 2
     pad_bottom = height // 2
-    pad_left = width // 3
+    pad_left = 0
 
     # Pad the image: note that no padding is added on the right.
     padded_image = np.pad(
@@ -111,15 +117,166 @@ def black_aba_contours(overlay):
     
     return black_overlay
 
+def hex_to_rgb(hex_color):
+    """Convert hexadecimal color to RGB values."""
+    hex_color = hex_color.lstrip('#')
+    return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
+
+def rgb_to_hex(rgb):
+    """Convert RGB values to hexadecimal color."""
+    return f'#{int(rgb[0]):02x}{int(rgb[1]):02x}{int(rgb[2]):02x}'
+
+def calculate_mean_color(hex_colors):
+    """Calculate the mean color from a list of hex colors."""
+    if not hex_colors:
+        return '#808080'  # Default gray if no colors
+    
+    # Convert hex to RGB
+    rgb_colors = [hex_to_rgb(color) for color in hex_colors]
+    
+    # Calculate mean for each channel
+    mean_r = sum(color[0] for color in rgb_colors) / len(rgb_colors)
+    mean_g = sum(color[1] for color in rgb_colors) / len(rgb_colors)
+    mean_b = sum(color[2] for color in rgb_colors) / len(rgb_colors)
+    
+    return rgb_to_hex([mean_r, mean_g, mean_b])
+
+def create_treemap_data(df_hierarchy):
+    """Create data structure for treemap visualization with color information."""
+    # Create a copy to avoid modifying the original
+    df = df_hierarchy.copy()
+    
+    # Add a constant value column for equal-sized end nodes
+    df['value'] = 1
+    
+    # Create a dictionary to store colors for each node
+    node_colors = {}
+    
+    # First, assign colors to leaf nodes (lipizones)
+    for _, row in df.iterrows():
+        lipizone = row['lipizone_names']
+        if lipizone in lipizone_to_color:
+            path = '/'.join([str(row[col]) for col in ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']])
+            node_colors[path] = lipizone_to_color[lipizone]
+    
+    # Function to get all leaf colors under a node
+    def get_leaf_colors(path_prefix):
+        colors = []
+        for full_path, color in node_colors.items():
+            if full_path.startswith(path_prefix):
+                colors.append(color)
+        return colors
+    
+    # Calculate colors for each level, from bottom to top
+    columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
+    for i in range(len(columns)-1):  # Don't process the last level (lipizones)
+        level_paths = set()
+        # Build paths up to current level
+        for _, row in df.iterrows():
+            path = '/'.join([str(row[col]) for col in columns[:i+1]])
+            level_paths.add(path)
+        
+        # Calculate mean colors for each path
+        for path in level_paths:
+            leaf_colors = get_leaf_colors(path + '/')
+            if leaf_colors:
+                node_colors[path] = calculate_mean_color(leaf_colors)
+    
+    return df, node_colors
+
+def create_treemap_figure(df_treemap, node_colors):
+    """Create treemap figure using plotly with custom colors."""
+    fig = px.treemap(
+        df_treemap,
+        path=[
+            'level_1_name',
+            'level_2_name',
+            'level_3_name',
+            'level_4_name',
+            'subclass_name',
+            'lipizone_names'
+        ],
+        values='value'
+    )
+    
+    # Update traces with custom colors
+    def get_node_color(node_path):
+        # Convert node path to string format matching our dictionary
+        path_str = '/'.join(str(x) for x in node_path if x)
+        return node_colors.get(path_str, '#808080')
+    
+    # Apply colors to each node based on its path
+    colors = [get_node_color(node_path.split('/')) for node_path in fig.data[0].ids]
+    
+    fig.update_traces(
+        marker=dict(colors=colors),
+        hovertemplate='%{label}<extra></extra>',  # Only show the label
+        textposition='middle center',
+        root_color="rgba(0,0,0,0)",  # Make root node transparent
+    )
+    
+    # Update layout for better visibility
+    fig.update_layout(
+        margin=dict(t=0, l=0, r=0, b=0),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
+    )
+    
+    return fig
+
 # ==================================================================================================
 # --- Data
 # ==================================================================================================
 
-lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)['lipizone_names'].values
-lipizonecolors = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0).to_dict(orient="records")
-lipizonecolors = {row["lipizone_names"]: row["lipizone_color"] for row in lipizonecolors}
-annotations = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_annotation.csv")
-annotations_historic = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_annotation_historic.csv")
+manual_naming_lipizones_level_1 = {
+    '1' : 'White matter-rich',
+    '2' : 'Gray matter-rich',
+}
+manual_naming_lipizones_level_2 = {
+    '1_1' : 'Core white matter',
+    '1_2' : 'Mixed gray and white matter, ventricles',
+    '2_1' : 'Outer cortex, cerebellar molecular layer, amygdala, part of hippocampus',
+    '2_2' : 'Deep cortex, part of hippocampus, striatum, cerebellar granule cells',
+}
+manual_naming_lipizones_level_3 = {
+    '1_1_1' : 'Oligodendroglia-rich regions',
+    '1_1_2' : 'Mixed white matter with neurons',
+    '1_2_1' : 'Ventricular system, gray-white boundary, hypothalamus',
+    '1_2_2' : 'Thalamus and midbrain',
+    '2_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
+    '2_1_2' : 'Layer 1 to border between 2/3 and 4, piriform, Purkinje cells, enthorinal, mixed',
+    '2_2_1' : 'Layer 5, hippocampus and noncortical gray matter',
+    '2_2_2' : 'Layers 5 and 6, hippocampus, nuclei, granular layer of the cerebellum',
+}
+manual_naming_lipizones_level_4 = {
+    '1_1_1_1' : 'Core of fiber tracts, arbor vitae and nerves/1',
+    '1_1_1_2' : 'Core of fiber tracts, arbor vitae and nerves/2',
+    '1_1_2_1' : 'Bundle and boundary white matter-rich',
+    '1_1_2_2' : 'Thalamus, midbrain, hindbrain white matter regions',
+    '1_2_1_1' : 'Ventricular system',
+    '1_2_1_2' : 'Gray-white matter boundary',
+    '1_2_2_1' : 'Mostly thalamus, midbrain, hindbrain mixed types',
+    '1_2_2_2' : 'Myelin-rich deep cortex, striatum, hindbrain and more',
+    '2_1_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
+    '2_1_1_2' : 'HPF, AMY, CTXSP, HY and more',
+    '2_1_2_1' : 'Purkinje layer, L2/3 and boundary with L4',
+    '2_1_2_2' : 'Layer 1, 2/3, piriform and enthorinal cortex, CA1',
+    '2_2_1_1' : 'Layer 5, retrosplenial, hippocampus',
+    '2_2_1_2' : 'Noncortical gray matter',
+    '2_2_2_1' : 'Layer 5-6, nuclei, granule cells layer',
+    '2_2_2_2' : 'Layer 6, mixed complex GM, granule cells layer',
+}
+
+lipizones = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0) # HEX
+lipizone_to_color = {name: color for name, color in zip(lipizones["lipizone_names"], lipizones["lipizone_color"])}
+df_hierarchy_lipizones = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
+
+# lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)['lipizone_names'].values
+df_hierarchy_lipizones['level_1_name'] = df_hierarchy_lipizones['level_1'].astype(str).map(manual_naming_lipizones_level_1)
+df_hierarchy_lipizones['level_2_name'] = df_hierarchy_lipizones['level_2'].astype(str).map(manual_naming_lipizones_level_2)
+df_hierarchy_lipizones['level_3_name'] = df_hierarchy_lipizones['level_3'].astype(str).map(manual_naming_lipizones_level_3)
+df_hierarchy_lipizones['level_4_name'] = df_hierarchy_lipizones['level_4'].astype(str).map(manual_naming_lipizones_level_4)
 
 # def build_tree_from_csv(csv_path):
 #     df = pd.read_csv(csv_path)
@@ -139,7 +296,7 @@ annotations_historic = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizon
     
 #     for _, row in df.iterrows():
 #         # Build the path from the level columns
-#         levels = [row["level_1"], row["level_2"], row["level_3"], row["level_4"], row["subclass_name"]]
+#         levels = [row["level_1_name"], row["level_2_name"], row["level_3_name"], row["level_4_name"], row["subclass_name"]]
 #         leaf_label = row["lipizone_names"]
 #         leaf_value = row["lipizone_names"]
 #         add_to_tree(tree, levels, leaf_label, leaf_value)
@@ -149,19 +306,17 @@ annotations_historic = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizon
 # # Build the hierarchical data from your CSV file
 # hierarchy_data = build_tree_from_csv("./data/annotations/lipizones_hierarchy.csv")
 
-df_hierarchy = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
+# df_hierarchy = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
 
 # ==================================================================================================
 # --- Layout
 # ==================================================================================================
 
 def return_layout(basic_config, slice_index):
-    # Precompute your level_1 options:
-    level_1_options = [
-        {"value": str(x), "label": str(x)}
-        for x in sorted(df_hierarchy["level_1"].unique())
-    ]
-
+    """Return the layout for the page."""
+    # Create treemap data
+    df_treemap, node_colors = create_treemap_data(df_hierarchy_lipizones)
+    
     page = html.Div(
         style={
             "position": "absolute",
@@ -176,23 +331,22 @@ def return_layout(basic_config, slice_index):
                 className="fixed-aspect-ratio",
                 style={"background-color": "#1d1c1f"},
                 children=[
+                    # Main visualization
                     dcc.Graph(
                         id="page-6-graph-heatmap-mz-selection",
-                        config=basic_config
-                        | {
+                        config=basic_config | {
                             "toImageButtonOptions": {
                                 "format": "png",
                                 "filename": "brain_lipizone_selection",
                                 "scale": 2,
                             },
                             "scrollZoom": True
-                        }
-                        | {"staticPlot": False},
+                        },
                         style={
-                            "width": "95%",
+                            "width": "70%",
                             "height": "95%",
                             "position": "absolute",
-                            "left": "0",
+                            "left": "20%",
                             "top": "0",
                             "background-color": "#1d1c1f",
                         },
@@ -204,99 +358,7 @@ def return_layout(basic_config, slice_index):
                             return_go_image=False,
                         )
                     ),
-                    dmc.Group(
-                        direction="column",
-                        spacing=0,
-                        style={"left": "1%", "top": "1em"},
-                        class_name="position-absolute",
-                        children=[
-                            # Level 1 dropdown and buttons in a horizontal group
-                            dmc.Group(
-                                direction="row",
-                                spacing="sm",
-                                children=[
-                                    # Level 1 dropdown
-                                    dmc.MultiSelect(
-                                        id="page-6-select-level-1",
-                                        data=level_1_options,
-                                        placeholder="Select Level 1",
-                                        style={"width": "20em"},
-                                    ),
-                                    # Display buttons
-                                    dmc.Button(
-                                        children="Display one section",
-                                        id="page-6-one-section-button",
-                                        variant="filled",
-                                        color="cyan",
-                                        radius="md",
-                                        size="xs",
-                                        disabled=True,
-                                        compact=False,
-                                        loading=False,
-                                    ),
-                                    dmc.Button(
-                                        children="Display all sections",
-                                        id="page-6-all-sections-button",
-                                        variant="filled",
-                                        color="cyan",
-                                        radius="md",
-                                        size="xs",
-                                        disabled=True,
-                                        compact=False,
-                                        loading=False,
-                                    ),
-                                    dmc.Switch(
-                                        id="page-6-toggle-annotations",
-                                        label="Allen Brain Atlas Annotations",
-                                        checked=False,
-                                        color="cyan",
-                                        radius="xl",
-                                        size="sm",
-                                    ),
-                                ],
-                            ),
-                            # Level 2 dropdown
-                            dmc.MultiSelect(
-                                id="page-6-select-level-2",
-                                data=[],  # will be updated by callback
-                                placeholder="Select Level 2",
-                                style={"width": "20em", "marginTop": "0.5em"},
-                            ),
-                            # Level 3 dropdown
-                            dmc.MultiSelect(
-                                id="page-6-select-level-3",
-                                data=[],
-                                placeholder="Select Level 3",
-                                style={"width": "20em", "marginTop": "0.5em"},
-                            ),
-                            # Level 4 dropdown
-                            dmc.MultiSelect(
-                                id="page-6-select-level-4",
-                                data=[],
-                                placeholder="Select Level 4",
-                                style={"width": "20em", "marginTop": "0.5em"},
-                            ),
-                            # Subclass Select
-                            dmc.MultiSelect(
-                                id="page-6-select-subclass",
-                                data=[],
-                                placeholder="Select Subclass",
-                                style={"width": "20em", "marginTop": "0.5em"},
-                            ),
-                            # Final MultiSelect for the lipizone_names
-                            dmc.MultiSelect(
-                                id="page-6-dropdown-lipizones",  # keep the same ID as before
-                                data=[],  # updated by callback
-                                placeholder="Select Lipizone(s)",
-                                searchable=True,
-                                clearable=False,
-                                nothingFound="No lipizone found",
-                                style={"width": "20em", "marginTop": "0.5em"},
-                                value=[],  # start empty
-                                maxSelectedValues=539,
-                            ),
-                        ],
-                    ),
+                    # Hover text
                     dmc.Text(
                         "",
                         id="page-6-graph-hover-text",
@@ -320,17 +382,193 @@ def return_layout(basic_config, slice_index):
                             "minWidth": "200px",
                         },
                     ),
-                    dmc.Group(
-                        position="right",
-                        direction="row",
+                    # Left panel with treemap and controls
+                    html.Div(
+                        style={
+                            "width": "20%",
+                            "height": "95%",
+                            "position": "absolute",
+                            "left": "0",
+                            "top": "0",
+                            "background-color": "#1d1c1f",
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "padding": "10px",
+                        },
+                        children=[
+                            # Title
+                            html.H4(
+                                "Visualize Lipizones",
+                                style={
+                                    "color": "white",
+                                    "marginBottom": "15px",
+                                    "fontSize": "1.2em",
+                                    "fontWeight": "500",
+                                }
+                            ),
+                            # Select All button
+                            dmc.Button(
+                                children="Select All Lipizones",
+                                id="page-6-select-all-lipizones-button",
+                                variant="filled",
+                                color="cyan",
+                                radius="md",
+                                size="sm",
+                                style={
+                                    "marginBottom": "5px",
+                                },
+                            ),
+                            # Treemap visualization
+                            dcc.Graph(
+                                id="page-6-lipizones-treemap",
+                                figure=create_treemap_figure(df_treemap, node_colors),
+                                style={
+                                    "height": "40%",
+                                    "background-color": "#1d1c1f",
+                                },
+                                config={'displayModeBar': False}
+                            ),
+                            # Current selection text
+                            html.Div(
+                                id="page-6-current-selection-text",
+                                style={
+                                    "padding": "10px",
+                                    "color": "white",
+                                    "fontSize": "0.9em",
+                                    "backgroundColor": "#2c2c2c",
+                                    "borderRadius": "5px",
+                                    "marginTop": "10px",
+                                },
+                                children=["Click on a node in the tree to select all lipizones under it"]
+                            ),
+                            # Add selection buttons group
+                            html.Div(
+                                style={
+                                    "marginTop": "10px",
+                                    "display": "flex",
+                                    "flexDirection": "row",
+                                    "gap": "10px",
+                                    "width": "100%",  # Take full width of container
+                                },
+                                children=[
+                                    dmc.Button(
+                                        children="Add current selection",
+                                        id="page-6-add-selection-button",
+                                        variant="filled",
+                                        color="cyan",
+                                        radius="md",
+                                        size="sm",
+                                        style={
+                                            "flex": "1",
+                                            "maxWidth": "50%",  # Ensure button doesn't exceed half the container
+                                        },
+                                    ),
+                                    dmc.Button(
+                                        children="Clear selection",
+                                        id="page-6-clear-selection-button",
+                                        variant="outline",
+                                        color="red",
+                                        radius="md",
+                                        size="sm",
+                                        style={
+                                            "flex": "1",
+                                            "maxWidth": "50%",  # Ensure button doesn't exceed half the container
+                                        },
+                                    ),
+                                ]
+                            ),
+                            # Selected lipizones badges
+                            html.Div(
+                                id="page-6-selected-lipizones-badges",
+                                style={
+                                    "height": "30%",
+                                    "overflowY": "auto",
+                                    "padding": "10px",
+                                    "marginTop": "10px",
+                                    "backgroundColor": "#2c2c2c",
+                                    "borderRadius": "5px",
+                                },
+                                children=[
+                                    html.H6("Selected Lipizones", style={"color": "white", "marginBottom": "10px"}),
+                                ]
+                            ),
+                        ],
+                    ),
+                    # Controls at the top right (display buttons)
+                    html.Div(
                         style={
                             "right": "1rem",
-                            "bottom": "0.5rem",
+                            "top": "1rem",
                             "position": "fixed",
                             "z-index": 1000,
+                            "display": "flex",
+                            "flexDirection": "row",
+                            "gap": "0.5rem",
                         },
-                        class_name="position-absolute",
-                        spacing=0,
+                        children=[
+                            dmc.Button(
+                                children="Display one section",
+                                id="page-6-one-section-button",
+                                variant="filled",
+                                color="cyan",
+                                radius="md",
+                                size="sm",
+                                disabled=True,
+                                style={"width": "180px"},
+                            ),
+                            dmc.Button(
+                                children="Display all sections",
+                                id="page-6-all-sections-button",
+                                variant="filled",
+                                color="cyan",
+                                radius="md",
+                                size="sm",
+                                disabled=True,
+                                style={"width": "180px"},
+                            ),
+                        ],
+                    ),
+                    # Allen Brain Atlas switch (independent)
+                    html.Div(
+                        style={
+                            "right": "1rem",
+                            "top": "4rem",  # Position it below the display buttons
+                            "position": "fixed",
+                            "z-index": 1000,
+                            "display": "flex",
+                            "flexDirection": "row",
+                            "alignItems": "center",
+                            "justifyContent": "flex-end",
+                        },
+                        children=[
+                            html.Span(
+                                "Allen Brain Atlas Annotations",
+                                style={
+                                    "color": "white",
+                                    "marginRight": "10px",
+                                    "whiteSpace": "nowrap",
+                                },
+                            ),
+                            dmc.Switch(
+                                id="page-6-toggle-annotations",
+                                checked=False,
+                                color="cyan",
+                                radius="xl",
+                                size="sm",
+                            ),
+                        ],
+                    ),
+                    # Controls at the bottom right
+                    html.Div(
+                        style={
+                            "right": "1rem",
+                            "bottom": "1rem",
+                            "position": "fixed",
+                            "z-index": 1000,
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "gap": "0.5rem",
+                        },
                         children=[
                             dmc.Button(
                                 children="Download data",
@@ -339,11 +577,8 @@ def return_layout(basic_config, slice_index):
                                 disabled=False,
                                 color="cyan",
                                 radius="md",
-                                size="xs",
-                                compact=False,
-                                loading=False,
-                                class_name="mt-1",
-                                style={"margin-right": "0.5rem"},
+                                size="sm",
+                                style={"width": "150px"},
                             ),
                             dmc.Button(
                                 children="Download image",
@@ -352,27 +587,122 @@ def return_layout(basic_config, slice_index):
                                 disabled=False,
                                 color="cyan",
                                 radius="md",
-                                size="xs",
-                                compact=False,
-                                loading=False,
-                                class_name="mt-1",
+                                size="sm",
+                                style={"width": "150px"},
                             ),
                         ],
                     ),
                     dcc.Download(id="page-6-download-data"),
-                    # Add a store for all selected lipizones
-                    dcc.Store(id="page-6-all-selected-lipizones", data={}),
                 ],
             ),
         ],
     )
-
     return page
 
 
 # ==================================================================================================
 # --- Callbacks
 # ==================================================================================================
+
+@app.callback(
+    Output("page-6-current-treemap-selection", "data"),
+    Output("page-6-current-selection-text", "children"),
+    Input("page-6-lipizones-treemap", "clickData"),
+)
+def update_current_selection(click_data):
+    """Store the current treemap selection."""
+    input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    value = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
+    
+    if not click_data:
+        return None, "Click on a node in the tree to select all lipizones under it"
+    
+    clicked_label = click_data["points"][0]["label"] # 1_1
+    current_path = click_data["points"][0]["id"] # /1/
+    
+    # Filter hierarchy based on the clicked node's path
+    filtered = df_hierarchy_lipizones.copy()
+    
+    # Get the level of the clicked node
+    path_columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
+    
+    # Apply filters based on the entire path up to the clicked node
+    for i, value in enumerate(current_path.split("/")):
+        if i < len(path_columns):
+            column = path_columns[i]
+            filtered = filtered[filtered[column].astype(str) == str(value)]
+    
+    # Get all lipizones under this node
+    lipizones = sorted(filtered["lipizone_names"].unique())
+    
+    if lipizones:
+        return lipizones, f"Selected: {clicked_label} ({len(lipizones)} lipizones)"
+    
+    return None, "Click on a node in the tree to select all lipizones under it"
+
+@app.callback(
+    Output("page-6-all-selected-lipizones", "data"),
+    Input("page-6-select-all-lipizones-button", "n_clicks"),
+    Input("page-6-add-selection-button", "n_clicks"),
+    Input("page-6-clear-selection-button", "n_clicks"),
+    State("page-6-current-treemap-selection", "data"),
+    State("page-6-all-selected-lipizones", "data"),
+    prevent_initial_call=True
+)
+def handle_selection_changes(
+    select_all_clicks,
+    add_clicks,
+    clear_clicks,
+    current_selection,
+    all_selected_lipizones,
+):
+    """Handle all selection changes."""
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return dash.no_update
+    
+    # Get which button was clicked
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    
+    # Handle select all button
+    if triggered_id == "page-6-select-all-lipizones-button":
+        all_lipizones = {"names": [], "indices": []}
+        for lipizone_name in df_hierarchy_lipizones["lipizone_names"].unique():
+            lipizone_indices = lipizones.index[
+                lipizones["lipizone_names"] == lipizone_name
+            ].tolist()
+            if lipizone_indices:
+                all_lipizones["names"].append(lipizone_name)
+                all_lipizones["indices"].extend(lipizone_indices[:1])
+        return all_lipizones
+    
+    # Handle clear button
+    elif triggered_id == "page-6-clear-selection-button":
+        return {"names": [], "indices": []}
+    
+    # Handle add button
+    elif triggered_id == "page-6-add-selection-button":
+        if not current_selection:
+            return all_selected_lipizones or {"names": [], "indices": []}
+        
+        # Initialize all_selected_lipizones if it's empty
+        all_selected_lipizones = all_selected_lipizones or {"names": [], "indices": []}
+        
+        # Add each lipizone that isn't already selected
+        for lipizone_name in current_selection:
+            if lipizone_name not in all_selected_lipizones["names"]:
+                # Find the indices for this lipizone
+                lipizone_indices = lipizones.index[
+                    lipizones["lipizone_names"] == lipizone_name
+                ].tolist()
+                
+                if lipizone_indices:
+                    all_selected_lipizones["names"].append(lipizone_name)
+                    all_selected_lipizones["indices"].extend(lipizone_indices[:1])
+        
+        return all_selected_lipizones
+    
+    return dash.no_update
 
 @app.callback(
     Output("page-6-graph-hover-text", "children"),
@@ -384,142 +714,13 @@ def page_6_hover(hoverData, slice_index):
     acronym_mask = data.acronyms_masks[slice_index]
     if hoverData is not None:
         if len(hoverData["points"]) > 0:
-            x = hoverData["points"][0]["x"] # --> from 0 to 456
-            y = hoverData["points"][0]["y"] # --> from 0 to 320
-            # z = arr_z[y, x]
+            x = hoverData["points"][0]["x"]
+            y = hoverData["points"][0]["y"]
             try:
                 return atlas.dic_acronym_name[acronym_mask[y, x]]
             except:
                 return "Undefined"
-
     return dash.no_update
-
-@app.callback(
-    Output("page-6-select-level-2", "data"),
-    Input("page-6-select-level-1", "value"),
-)
-def update_level2(level1_vals):
-    print("==================== update_level2 =====================")
-    # print("trigger input:", dash.callback_context.triggered)
-    # If nothing is selected, you might show all options or return an empty list
-    if level1_vals:
-        subset = df_hierarchy[df_hierarchy["level_1"].astype(str).isin(level1_vals)]
-    else:
-        subset = df_hierarchy
-    opts = sorted(subset["level_2"].unique())
-    return [{"value": str(x), "label": str(x)} for x in opts]
-
-
-@app.callback(
-    Output("page-6-select-level-3", "data"),
-    [Input("page-6-select-level-1", "value"),
-     Input("page-6-select-level-2", "value")],
-)
-def update_level3(level1_vals, level2_vals):
-    print("==================== update_level3 =====================")
-    # print("trigger input:", dash.callback_context.triggered)
-    subset = df_hierarchy.copy()
-    if level1_vals:
-        subset = subset[subset["level_1"].astype(str).isin(level1_vals)]
-    if level2_vals:
-        subset = subset[subset["level_2"].astype(str).isin(level2_vals)]
-    opts = sorted(subset["level_3"].unique())
-    return [{"value": str(x), "label": str(x)} for x in opts]
-
-
-@app.callback(
-    Output("page-6-select-level-4", "data"),
-    [Input("page-6-select-level-1", "value"),
-     Input("page-6-select-level-2", "value"),
-     Input("page-6-select-level-3", "value")],
-)
-def update_level4(level1_vals, level2_vals, level3_vals):
-    print("==================== update_level4 =====================")
-    # print("trigger input:", dash.callback_context.triggered)
-    subset = df_hierarchy.copy()
-    if level1_vals:
-        subset = subset[subset["level_1"].astype(str).isin(level1_vals)]
-    if level2_vals:
-        subset = subset[subset["level_2"].astype(str).isin(level2_vals)]
-    if level3_vals:
-        subset = subset[subset["level_3"].astype(str).isin(level3_vals)]
-    opts = sorted(subset["level_4"].unique())
-    return [{"value": str(x), "label": str(x)} for x in opts]
-
-
-@app.callback(
-    Output("page-6-select-subclass", "data"),
-    [Input("page-6-select-level-1", "value"),
-     Input("page-6-select-level-2", "value"),
-     Input("page-6-select-level-3", "value"),
-     Input("page-6-select-level-4", "value")],
-)
-def update_subclass(level1_vals, level2_vals, level3_vals, level4_vals):
-    print("==================== update_subclass =====================")
-    # print("trigger input:", dash.callback_context.triggered)
-    filtered = df_hierarchy.copy()
-    if level1_vals:
-        filtered = filtered[filtered["level_1"].astype(str).isin(level1_vals)]
-    if level2_vals:
-        filtered = filtered[filtered["level_2"].astype(str).isin(level2_vals)]
-    if level3_vals:
-        filtered = filtered[filtered["level_3"].astype(str).isin(level3_vals)]
-    if level4_vals:
-        filtered = filtered[filtered["level_4"].astype(str).isin(level4_vals)]
-    opts = sorted(filtered["subclass_name"].unique())
-    return [{"value": x, "label": x} for x in opts]
-
-
-@app.callback(
-    Output("page-6-dropdown-lipizones", "data"),
-    [Input("page-6-select-level-1", "value"),
-     Input("page-6-select-level-2", "value"),
-     Input("page-6-select-level-3", "value"),
-     Input("page-6-select-level-4", "value"),
-     Input("page-6-select-subclass", "value")],
-)
-def update_lipizone_names(level1_vals, level2_vals, level3_vals, level4_vals, subclass_vals):
-    print("==================== update_lipizone_names =====================")
-    # print("trigger input:", dash.callback_context.triggered)
-    filtered = df_hierarchy.copy()
-    if level1_vals:
-        filtered = filtered[filtered["level_1"].astype(str).isin(level1_vals)]
-    if level2_vals:
-        filtered = filtered[filtered["level_2"].astype(str).isin(level2_vals)]
-    if level3_vals:
-        filtered = filtered[filtered["level_3"].astype(str).isin(level3_vals)]
-    if level4_vals:
-        filtered = filtered[filtered["level_4"].astype(str).isin(level4_vals)]
-    if subclass_vals:
-        filtered = filtered[filtered["subclass_name"].isin(subclass_vals)]
-    lipizones = sorted(filtered["lipizone_names"].unique())
-    return [{"value": x, "label": x} for x in lipizones]
-
-
-@app.callback(
-    Output("page-6-dropdown-lipizones", "value"),
-    Input("page-6-dropdown-lipizones", "data"),
-)
-def auto_select_all(leaf_data):
-    print("==================== auto_select_all =====================")
-    # print("trigger input:", dash.callback_context.triggered)
-    if leaf_data:
-        # Return a list of all option values so that they are all selected.
-        return [item["value"] for item in leaf_data]
-    return []
-
-@app.callback(
-    Output("page-6-select-level-2", "value"),
-    Output("page-6-select-level-3", "value"),
-    Output("page-6-select-level-4", "value"),
-    Output("page-6-select-subclass", "value"),
-    Input("page-6-select-level-1", "value"),
-    prevent_initial_call=True
-)
-def clear_lower_levels(_):
-    print("==================== clear_lower_levels =====================")
-    # print("trigger input:", dash.callback_context.triggered)
-    return None, None, None, None
 
 @app.callback(
     Output("page-6-graph-heatmap-mz-selection", "figure"),
@@ -540,8 +741,6 @@ def page_6_plot_graph_heatmap_mz_selection(
     annotations_checked,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
-    print(f"\n========== page_6_plot_graph_heatmap_mz_selection ==========")
-    # print("trigger input:", dash.callback_context.triggered)
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
 
     # Find out which input triggered the function
@@ -557,15 +756,20 @@ def page_6_plot_graph_heatmap_mz_selection(
             selected_lipizone_names = all_selected_lipizones.get("names", [])
             
             # Define hex_colors_to_highlight using all selected lipizones
-            hex_colors_to_highlight = [lipizonecolors[name] for name in selected_lipizone_names if name in lipizonecolors]
+            hex_colors_to_highlight = [lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_to_color]
         
             # Try to get the section data for the current slice and brain
             try:
                 # Create a section key based on brain_id and slice_index
-                section_data = section_data_shelve.retrieve_section_data(float(slice_index))
+                section_data = lipizone_section_data.retrieve_section_data(float(slice_index))
             
                 # Use the section data to create a hybrid image
                 grayscale_image = section_data["grayscale_image"]
+                # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
+                grayscale_image = np.power(grayscale_image, float(1/6))
+                grayscale_image = gaussian_filter(grayscale_image, sigma=3)
+                # grayscale_image = np.power(grayscale_image, 2) * 0.3
+
                 color_masks = section_data["color_masks"]
                 grid_image = section_data["grid_image"]
                 rgb_image = grid_image[:, :, :3]  # remove transparency channel
@@ -577,7 +781,11 @@ def page_6_plot_graph_heatmap_mz_selection(
                     return np.array([int(hex_color[i:i+2], 16) for i in (0, 2, 4)]) / 255.0
                 
                 # Apply square root transformation to enhance contrast
-                grayscale_image = np.sqrt(np.sqrt(grayscale_image))
+                # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
+                grayscale_image = np.power(grayscale_image, float(1/6))
+                grayscale_image = gaussian_filter(grayscale_image, sigma=3)
+                # grayscale_image = np.power(grayscale_image, 2) * 0.3
+                grayscale_image *= ~color_masks[list(color_masks.keys())[0]]
                 
                 rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight]
                 
@@ -631,10 +839,7 @@ def page_6_plot_graph_heatmap_mz_selection(
     
     # If a lipid selection has been done
     if (
-        id_input == "page-6-selected-lipizone-1"
-        or id_input == "page-6-selected-lipizone-2"
-        or id_input == "page-6-selected-lipizone-3"
-        or id_input == "page-6-all-selected-lipizones"
+        id_input == "page-6-all-selected-lipizones"
         or id_input == "page-6-one-section-button"
         or id_input == "page-6-all-sections-button"
         or id_input == "main-brain"
@@ -648,7 +853,7 @@ def page_6_plot_graph_heatmap_mz_selection(
             selected_lipizone_names = all_selected_lipizones.get("names", [])
             
             # Define hex_colors_to_highlight using all selected lipizones
-            hex_colors_to_highlight = [lipizonecolors[name] for name in selected_lipizone_names if name in lipizonecolors]
+            hex_colors_to_highlight = [lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_to_color]
     
             # Or if the current plot must be an RGB image
             if (
@@ -661,7 +866,7 @@ def page_6_plot_graph_heatmap_mz_selection(
                 # Try to get the section data for the current slice and brain
                 try:
                     # Create a section key based on brain_id and slice_index
-                    section_data = section_data_shelve.retrieve_section_data(float(slice_index))
+                    section_data = lipizone_section_data.retrieve_section_data(float(slice_index))
                 
                     # Use the section data to create a hybrid image
                     grayscale_image = section_data["grayscale_image"]
@@ -676,7 +881,11 @@ def page_6_plot_graph_heatmap_mz_selection(
                         return np.array([int(hex_color[i:i+2], 16) for i in (0, 2, 4)]) / 255.0
                     
                     # Apply square root transformation to enhance contrast
-                    grayscale_image = np.sqrt(np.sqrt(grayscale_image))
+                    # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
+                    grayscale_image = np.power(grayscale_image, float(1/6)) 
+                    grayscale_image = gaussian_filter(grayscale_image, sigma=3)
+                    # grayscale_image = np.power(grayscale_image, 2) * 0.3
+                    grayscale_image *= ~color_masks[list(color_masks.keys())[0]]
                     
                     rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight]
                     
@@ -815,255 +1024,6 @@ def page_6_plot_graph_heatmap_mz_selection(
 
 
 @app.callback(
-    Output("page-6-all-selected-lipizones", "data"),
-
-    Input("page-6-dropdown-lipizones", "value"),
-    Input("main-slider", "data"),
-
-    State("main-brain", "value"),
-    State("page-6-all-selected-lipizones", "data"),
-)
-def page_6_add_toast_selection(
-    l_lipizone_names,
-    slice_index,
-    brain_id,
-    all_selected_lipizones,
-):
-    """This callback adds the selected lipid to the selection."""
-    logging.info("Entering function to update lipid data")
-    # annotations = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_annotation.csv")
-    # print("\n================ page_6_add_toast_selection ================")
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    
-    # Initialize all_selected_lipizones if it's empty
-    if not all_selected_lipizones:
-        all_selected_lipizones = {"names": [], "indices": []}
-    
-    # if page-6-dropdown-lipizones is called while there's no lipid name defined, it means the page
-    # just got loaded
-    if len(id_input) == 0 or (id_input == "page-6-dropdown-lipizones" and l_lipizone_names is None):
-        # Initialize with choroid plexus as the default lipid
-        default_lipid = "choroid plexus"
-        # Find lipid location for the default lipid
-        l_lipizone_loc = (
-            annotations
-            .index[
-                (annotations["name"] == default_lipid)
-                #& (annotations["slice"] == slice_index)
-            ]
-            .tolist()
-        )
-        
-        # If no match for current slice, try to find it in any slice
-        if len(l_lipizone_loc) == 0:
-            l_lipizone_loc = (
-                annotations
-                .index[
-                    annotations["name"] == default_lipid
-                ]
-                .tolist()
-            )[:1]
-        
-        # Set default lipid if found
-        if len(l_lipizone_loc) > 0:
-            # Initialize all_selected_lipizones with the default lipid
-            all_selected_lipizones = {
-                "names": [default_lipid],
-                "indices": [ l_lipizone_loc[0]]
-            }
-            
-            return all_selected_lipizones
-        else:
-            # Fallback if lipid not found
-            return {"names": [], "indices": []}
-
-    # If dropdown selection has changed
-    if id_input == "page-6-dropdown-lipizones" and l_lipizone_names is not None:
-        # Update all_selected_lipizones with the new selection
-        all_selected_lipizones = {"names": [], "indices": []}
-        
-        for lipizone_name in l_lipizone_names:
-            # Find lipid location
-            l_lipizone_loc = (
-                annotations
-                .index[
-                    (annotations["name"] == lipizone_name)
-                ]
-                .tolist()
-            )
-            
-            # If several lipids correspond to the selection, take the last one
-            if len(l_lipizone_loc) > 1:
-                logging.warning("More than one lipid corresponds to the selection")
-                l_lipizone_loc = [l_lipizone_loc[-1]]
-            
-            # If no lipid found, try to find it in any slice
-            if len(l_lipizone_loc) < 1:
-                logging.warning("No lipid annotation exist. Taking another slice annotation")
-                l_lipizone_loc = (
-                    annotations
-                    .index[
-                        (annotations["name"] == lipizone_name)
-                    ]
-                    .tolist()
-                )[:1]
-            
-            # Add to all_selected_lipizones if found
-            if len(l_lipizone_loc) > 0:
-                all_selected_lipizones["names"].append(lipizone_name)
-                all_selected_lipizones["indices"].append(l_lipizone_loc[0])
-
-        return all_selected_lipizones
-    
-    # If a new slice has been selected
-    if id_input == "main-slider":
-        # Update indices for all selected lipizones for the new slice
-        updated_indices = []
-        for name in all_selected_lipizones["names"]:
-            # Find lipid location for the new slice
-            l_lipizone_loc_temp = (
-                annotations
-                .index[
-                    (annotations["name"] == name)
-                ]
-                .tolist()
-            )
-
-            l_lipizone_loc = [
-                l_lipizone_loc_temp[i]
-                for i, x in enumerate(
-                    annotations_historic.iloc[l_lipizone_loc_temp]["slice"] == slice_index
-                )
-                if x
-            ]
-            
-            # Record location and lipid name
-            lipizone_index = l_lipizone_loc[0] if len(l_lipizone_loc) > 0 else -1
-            updated_indices.append(lipizone_index)
-        
-        all_selected_lipizones["indices"] = updated_indices
-        return all_selected_lipizones
-    
-    # For any other case, return no update
-    return dash.no_update
-
-# # TODO
-# @app.callback(
-#     Output("page-6-download-data", "data"),
-#     Input("page-6-download-data-button", "n_clicks"),
-#     State("page-6-selected-lipizone-1", "data"),
-#     State("page-6-selected-lipizone-2", "data"),
-#     State("page-6-selected-lipizone-3", "data"),
-#     State("page-6-all-selected-lipizones", "data"),
-#     State("main-slider", "data"),
-#     State("page-6-badge-input", "children"),
-#     prevent_initial_call=True,
-# )
-# def page_6_download(
-#     n_clicks,
-#     lipizone_1_index,
-#     lipizone_2_index,
-#     lipizone_3_index,
-#     all_selected_lipizones,
-#     slice_index,
-#     graph_input,
-# ):
-#     """This callback is used to generate and download the data in proper format."""
-
-#     # Current input is lipid selection
-#     if (
-#         graph_input == "Current input: " + "Lipid selection colormap"
-#         or graph_input == "Current input: " + "Lipid selection RGB"
-#         or graph_input == "Current input: " + "Lipizones selection"
-#     ):
-#         # First check if we have lipizones in the all_selected_lipizones store
-#         if all_selected_lipizones and len(all_selected_lipizones.get("indices", [])) > 0:
-#             l_lipids_indexes = all_selected_lipizones.get("indices", [])
-            
-#             # If lipids has been selected from the dropdown, filter them in the df and download them
-#             if len(l_lipids_indexes) > 0:
-#                 def to_excel(bytes_io):
-#                     xlsx_writer = pd.ExcelWriter(bytes_io, engine="xlsxwriter")
-#                     annotations.iloc[l_lipids_indexes].to_excel(
-#                         xlsx_writer, index=False, sheet_name="Selected lipids"
-#                     )
-#                     for i, index in enumerate(l_lipids_indexes):
-#                         name = annotations.iloc[index]["name"]
-
-#                         # Need to clean name to use it as a sheet name
-#                         name = name.replace(":", "").replace("/", "")
-#                         lb = float(annotations.iloc[index]["min"]) - 10**-2
-#                         hb = float(annotations.iloc[index]["max"]) + 10**-2
-#                         x, y = figures.compute_spectrum_high_res(
-#                             slice_index,
-#                             lb,
-#                             hb,
-#                             plot=False,
-#                             # standardization=apply_transform,
-#                             cache_flask=cache_flask,
-#                         )
-#                         df = pd.DataFrame.from_dict({"m/z": x, "Intensity": y})
-#                         df.to_excel(xlsx_writer, index=False, sheet_name=name[:31])
-#                     xlsx_writer.save()
-
-#                 return dcc.send_data_frame(to_excel, "my_lipizone_selection.xlsx")
-        
-#         # For backward compatibility, check the individual lipizone indices
-#         l_lipids_indexes = [
-#             x for x in [lipizone_1_index, lipizone_2_index, lipizone_3_index] if x is not None and x != -1
-#         ]
-#         # If lipids has been selected from the dropdown, filter them in the df and download them
-#         if len(l_lipids_indexes) > 0:
-
-#             def to_excel(bytes_io):
-#                 xlsx_writer = pd.ExcelWriter(bytes_io, engine="xlsxwriter")
-#                 annotations.iloc[l_lipids_indexes].to_excel(
-#                     xlsx_writer, index=False, sheet_name="Selected lipids"
-#                 )
-#                 for i, index in enumerate(l_lipids_indexes):
-#                     name = annotations.iloc[index]["name"]
-
-#                     # Need to clean name to use it as a sheet name
-#                     name = name.replace(":", "").replace("/", "")
-#                     lb = float(annotations.iloc[index]["min"]) - 10**-2
-#                     hb = float(annotations.iloc[index]["max"]) + 10**-2
-#                     x, y = figures.compute_spectrum_high_res(
-#                         slice_index,
-#                         lb,
-#                         hb,
-#                         plot=False,
-#                         # standardization=apply_transform,
-#                         cache_flask=cache_flask,
-#                     )
-#                     df = pd.DataFrame.from_dict({"m/z": x, "Intensity": y})
-#                     df.to_excel(xlsx_writer, index=False, sheet_name=name[:31])
-#                 xlsx_writer.save()
-
-#             return dcc.send_data_frame(to_excel, "my_lipizone_selection.xlsx")
-
-#     return dash.no_update
-
-
-clientside_callback(
-    """
-    function(n_clicks){
-        if(n_clicks > 0){
-            domtoimage.toBlob(document.getElementById('page-6-graph-heatmap-mz-selection'))
-                .then(function (blob) {
-                    window.saveAs(blob, 'lipizone_selection_plot.png');
-                }
-            );
-        }
-    }
-    """,
-    Output("page-6-download-image-button", "n_clicks"),
-    Input("page-6-download-image-button", "n_clicks"),
-)
-"""This clientside callback is used to download the current heatmap."""
-
-@app.callback(
     Output("page-6-one-section-button", "disabled"),
     Output("page-6-all-sections-button", "disabled"),
     
@@ -1080,3 +1040,36 @@ def page_6_active_download(
     
     else:
         return True, True
+
+# Add callback to update badges
+@app.callback(
+    Output("page-6-selected-lipizones-badges", "children"),
+    Input("page-6-all-selected-lipizones", "data"),
+)
+def update_selected_lipizones_badges(all_selected_lipizones):
+    """Update the badges showing selected lipizones with their corresponding colors."""
+    children = [html.H6("Selected Lipizones", style={"color": "white", "marginBottom": "10px"})]
+    
+    if all_selected_lipizones and "names" in all_selected_lipizones:
+        for name in all_selected_lipizones["names"]:
+            # Get the color for this lipizone, default to cyan if not found
+            lipizone_color = lipizone_to_color.get(name, "#00FFFF")
+            
+            # Create a style that uses the lipizone's color
+            badge_style = {
+                "margin": "2px",
+                "backgroundColor": lipizone_color,
+                "color": "black",  # Use black text for better contrast
+                "border": "none",
+            }
+            
+            children.append(
+                dmc.Badge(
+                    name,
+                    variant="filled",
+                    size="sm",
+                    style=badge_style,
+                )
+            )
+    
+    return children

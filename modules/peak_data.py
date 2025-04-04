@@ -42,17 +42,24 @@ class PeakData:
     """
 
     def __init__(
-        self, path_db: str = "/data/LBA_DATA/lbae/peak_data/", path_annotations: str = "/data/LBA_DATA/lbae/data/annotations/"
+        self,
+        path_data: str = "../new_data_lbae/peak_data/",
+        path_metadata: str = "../new_data_lbae/metadata/",
+        path_annotations: str = "../new_data_lbae/annotations/"
     ):
         """Initialize the storage system.
 
         Args:
-            path_db: Path to the directory where the shelve database will be stored
+            path_data: Path to the directory where the shelve database will be stored
         """
-        self.path_db = path_db
-        if not os.path.exists(self.path_db):
-            os.makedirs(self.path_db)
-        self._df_annotations = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/peak_annotation.csv")
+        self.path_data = path_data
+        self.path_metadata = path_metadata
+        self.path_annotations = path_annotations
+
+        if not os.path.exists(self.path_data):
+            os.makedirs(self.path_data)
+        self._df_annotations = pd.read_csv(os.path.join(self.path_annotations, "peak_annotation.csv"))
+        self.lookup_brainid = pd.read_csv(os.path.join(self.path_annotations, "lookup_brainid.csv"), index_col=0)
         
         # Initialize the metadata file if it doesn't exist
         self._init_metadata()
@@ -68,11 +75,9 @@ class PeakData:
         return coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), :]
 
     def get_brain_id_from_sliceindex(self, slice_index):
-        lookup_brainid = pd.read_csv(os.path.join(self.path_db, "lookup_brainid.csv"), index_col=0)
-
         try:
-            sample = lookup_brainid.loc[
-                lookup_brainid["SectionID"] == slice_index, "Sample"
+            sample = self.lookup_brainid.loc[
+                self.lookup_brainid["SectionID"] == slice_index, "Sample"
             ].values[0]
             return sample
 
@@ -82,9 +87,9 @@ class PeakData:
 
     def _init_metadata(self):
         """Initialize or load the metadata about stored brains and peaks."""
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
-            if "brain_info" not in db:
-                db["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[peak_names]]]
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+            if "brain_info" not in db_metadata:
+                db_metadata["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[peak_names]]]
 
     def add_peak_image(self, peak_data: PeakImage, force_update: bool = False):
         """Add a peak image to the database.
@@ -94,8 +99,8 @@ class PeakData:
             force_update: If True, overwrite existing data
         """
         # Update metadata
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
-            brain_info = db["brain_info"]
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+            brain_info = db_metadata["brain_info"]
 
             if peak_data.brain_id not in brain_info:
                 brain_info[peak_data.brain_id] = {}
@@ -110,7 +115,7 @@ class PeakData:
 
         # Store the actual image data
         key = f"{peak_data.brain_id}/slice_{peak_data.slice_index}/{peak_data.name}"
-        with shelve.open(os.path.join(self.path_db, "peak_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "peak_images")) as db:
             if key in db and not force_update:
                 logging.warning(
                     f"Peak image {key} already exists. Use force_update=True to overwrite."
@@ -131,17 +136,17 @@ class PeakData:
         """
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
         key = f"{brain_id}/slice_{float(slice_index)}/{peak_name}"
-        with shelve.open(os.path.join(self.path_db, "peak_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "peak_images")) as db:
             return db.get(key)
 
     def get_available_brains(self) -> List[str]:
         """Get list of available brain IDs in the database."""
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db:
             return list(db["brain_info"].keys())
 
     def get_available_slices(self, brain_id: str) -> List[int]:
         """Get list of available slice indices for a given brain."""
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db:
             brain_info = db["brain_info"]
             if brain_id not in brain_info:
                 return []
@@ -153,7 +158,7 @@ class PeakData:
     def get_available_peaks(self, slice_index: int) -> List[str]:
         """Get list of available peaks for a given brain and slice."""
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db:
             brain_info = db["brain_info"]
             if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
                 return []
@@ -419,11 +424,11 @@ class PeakData:
     def empty_database(self):
         # Remove all data from the database.
         # Remove metadata
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
+        with shelve.open(self.path) as db:
             db.clear()
         self._init_metadata()
         
         # Remove image data
-        with shelve.open(os.path.join(self.path_db, "peak_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "peak_images")) as db:
             db.clear()
     """

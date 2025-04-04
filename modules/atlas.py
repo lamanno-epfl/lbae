@@ -174,8 +174,7 @@ class Atlas:
         # Atlas class. But they shouldn't be memory-mapped as they are called when hovering and
         # require very fast response from the server
         self.labels = Labels(self.bg_atlas, force_init=True)
-        print("self.labels:\n", self.labels)
-
+        
         # Compute a dictionnary that associates to each structure (acronym) the set of ids (int) of
         # all of its children. Used only in page_4_plot_graph_volume, but it's very light (~3mb) so
         # no problem using it as an attribute
@@ -201,12 +200,10 @@ class Atlas:
         # print(self.array_coordinates_warped_data[0])
         # deve avere dimensione num_slices x ABA_DIM[2] x ABA_DIM[1] x 3
         self.array_coordinates = np.load("/data/francesca/lbae/data/atlas/coords_array.npy")
-        print("self.array_coordinates:\n", self.array_coordinates.shape)
-
+        
         # Record shape of the warped data
         # self.image_shape = list(self.array_coordinates_warped_data.shape[1:-1])
         self.image_shape = [ABA_DIM[1], ABA_DIM[2]]
-        print("self.image_shape:", self.image_shape)
         # moltiplica rostro-caudale per 40 e castare a integer
 
         # Record dict that associate brain region (complete string) to specific id (short label),

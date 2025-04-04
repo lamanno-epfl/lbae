@@ -6,7 +6,7 @@ import pandas as pd
 from dataclasses import dataclass
 from time import time
 from typing import Dict, List, Optional, Tuple
-from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
+# from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
 import numpy as np
 from scipy.ndimage import generic_filter
 from collections import Counter
@@ -21,16 +21,20 @@ class GridImageShelve:
     A class to generate, store, and retrieve grid images for given lipid and sample.
     The images are stored in a shelve database located in the 'grid_data' folder.
     """
-    def __init__(self, shelf_dir="grid_data", shelf_filename="grid_shelve"):
+    def __init__(
+        self, 
+        path_data: str = "./new_data_lbae/grid_data/"
+    ):
         """
         Initializes the shelve database in the given directory.
         """
-        self.shelf_dir = shelf_dir
+        self.path_data = path_data
+        self.filename = "grid_shelve"
         # Create the grid_data folder if it does not exist
-        if not os.path.exists(self.shelf_dir):
-            os.makedirs(self.shelf_dir)
+        if not os.path.exists(self.path_data):
+            os.makedirs(self.path_data)
         # Shelve uses the given filename as the base for its files
-        self.shelf_path = os.path.join(self.shelf_dir, shelf_filename)
+        self.shelf_path = os.path.join(self.path_data, self.filename)
         self.lookup_brainid = pd.read_csv("/data/francesca/lbae/new_data_mm/lookup_brainid.csv", index_col=0)
 
     def create_grid_image(self, maindata, lipid, sample):
@@ -110,8 +114,6 @@ class GridImageShelve:
             sample = self.get_brain_id_from_sliceindex(slice_index)
 
         key = f"{lipid}_{sample}_grid"
-        print("self.shelf_path:", self.shelf_path)
-        print("key:", key)
         with shelve.open(self.shelf_path) as db:
             if key in db:
                 return db[key]
@@ -139,125 +141,3 @@ class GridImageShelve:
                 grid_image = self.create_grid_image(maindata, lipid, sample)
                 self.store_grid_image(lipid, sample, grid_image)
                 print(f"Stored grid image for lipid '{lipid}' and sample '{sample}'.")
-
-class SampleDataShelve:
-    """
-    A class to store and retrieve processed sample data (grid image,
-    grayscale image, and color masks) using a shelve database.
-    """
-    def __init__(self, shelf_filename="sample_data_shelve", shelf_dir="sample_data"):
-        """
-        Initializes the shelve database.
-        
-        Parameters:
-            shelf_filename (str): Base filename for the shelve database.
-            shelf_dir (str): Directory in which to store the shelve files.
-        """
-        self.shelf_dir = shelf_dir
-        # Create the directory if it does not exist
-        if not os.path.exists(shelf_dir):
-            os.makedirs(shelf_dir)
-        self.shelf_path = os.path.join(shelf_dir, shelf_filename)
-    
-    def store_sample_data(self, sample, grid_image, rgb_image, grayscale_image, color_masks):
-        """
-        Stores the processed data for a given sample.
-        
-        Parameters:
-            sample (str): The sample identifier.
-            grid_image (np.ndarray): The full grid image (3D).
-            rgb_image (np.ndarray): The RGB portion of the grid image.
-            grayscale_image (np.ndarray): The grayscale image.
-            color_masks (dict): The precomputed color masks.
-        """
-        data = {
-            "grid_image": grid_image,
-            "grayscale_image": grayscale_image,
-            "color_masks": color_masks
-        }
-        with shelve.open(self.shelf_path) as db:
-            db[sample] = data
-        print(f"Stored data for sample: {sample}")
-    
-    def retrieve_sample_data(self, sample):
-        """
-        Retrieves the processed data for a given sample.
-        
-        Parameters:
-            sample (str): The sample identifier.
-        
-        Returns:
-            dict: A dictionary containing 'grid_image', 'rgb_image', 
-                  'grayscale_image', and 'color_masks'.
-        
-        Raises:
-            KeyError: If the sample is not found in the database.
-        """
-        with shelve.open(self.shelf_path) as db:
-            if sample in db:
-                return db[sample]
-            else:
-                raise KeyError(f"Data for sample '{sample}' not found.")
-
-
-class SectionDataShelve:
-    """
-    A class to store and retrieve processed section data (grid image, RGB image,
-    grayscale image, and color masks) using a shelve database.
-    """
-    def __init__(self, shelf_filename="section_data_shelve", shelf_dir="section_data"):
-        """
-        Initializes the shelve database.
-        
-        Parameters:
-            shelf_filename (str): Base filename for the shelve database.
-            shelf_dir (str): Directory in which to store the shelve files.
-        """
-        self.shelf_dir = shelf_dir
-        # Create the directory if it does not exist
-        if not os.path.exists(shelf_dir):
-            os.makedirs(shelf_dir)
-        self.shelf_path = os.path.join(shelf_dir, shelf_filename)
-    
-    def store_section_data(self, section, grid_image, grayscale_image, color_masks):
-        """
-        Stores the processed data for a given section.
-        
-        Parameters:
-            section (str or int): The section identifier.
-            grid_image (np.ndarray): The grid image (3D).
-            rgb_image (np.ndarray): The RGB portion of the grid image.
-            grayscale_image (np.ndarray): The grayscale image.
-            color_masks (dict): The precomputed color masks.
-        """
-        data = {
-            "grid_image": grid_image,
-            "grayscale_image": grayscale_image,
-            "color_masks": color_masks
-        }
-        # Use the section name (or id) as the key (converted to string)
-        key = str(section)
-        with shelve.open(self.shelf_path) as db:
-            db[key] = data
-        print(f"Stored data for section: {key}")
-    
-    def retrieve_section_data(self, section):
-        """
-        Retrieves the processed data for a given section.
-        
-        Parameters:
-            section (str or int): The section identifier.
-        
-        Returns:
-            dict: A dictionary containing 'grid_image', 'rgb_image', 
-                  'grayscale_image', and 'color_masks'.
-        
-        Raises:
-            KeyError: If the section is not found in the database.
-        """
-        key = str(section)
-        with shelve.open(self.shelf_path) as db:
-            if key in db:
-                return db[key]
-            else:
-                raise KeyError(f"Data for section '{key}' not found.")

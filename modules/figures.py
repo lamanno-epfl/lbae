@@ -1815,15 +1815,14 @@ class Figures:
         root_data = self.compute_3D_root_volume(
             decrease_dimensionality_factor=downsample_factor * 4
         )
-
+        
         # Get annotations with the same downsampling factor
         annotations = self.get_array_of_annotations(
             decrease_dimensionality_factor=downsample_factor * 4
         )
-
         # Downsample lipid data for better performance
         sub_np3d = np3d[::downsample_factor, ::downsample_factor, ::downsample_factor]
-
+        
         # Apply region filtering if regions are provided
         if set_id_regions is not None:
             # Create mask for selected regions

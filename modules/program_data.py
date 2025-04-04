@@ -8,7 +8,7 @@ from time import time
 from typing import Dict, List, Optional, Tuple
 
 from modules.maldi_data import ABA_CONTOURS, majority_vote_9x9, ACRONYM_MASKS, ACRONYMS_PIXELS
-from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
+# from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
 from scipy.ndimage import generic_filter
 
 # Set up logging
@@ -45,16 +45,24 @@ class LipiMapData:
     3. Access metadata about the stored data
     """
 
-    def __init__(self, path_db: str = "../program_data/", path_annotations: str = "../data/annotations/"):
+    def __init__(
+        self, 
+        path_data: str = "./new_data_lbae/program_data/",
+        path_metadata: str = "./new_data_lbae/metadata/",
+        path_annotations: str = "./new_data_lbae/annotations/"
+    ):
         """Initialize the storage system.
 
         Args:
-            path_db: Path to the directory where the shelve database will be stored
+            path_data: Path to the directory where the shelve database will be stored
         """
-        self.path_db = path_db
-        if not os.path.exists(self.path_db):
-            os.makedirs(self.path_db)
-        self._df_annotations = pd.read_csv(os.path.join(path_annotations, "lp_annotation.csv"))
+        self.path_data = path_data
+        self.path_metadata = path_metadata
+        self.path_annotations = path_annotations
+        if not os.path.exists(self.path_data):
+            os.makedirs(self.path_data)
+        self._df_annotations = pd.read_csv(os.path.join(self.path_annotations, "lp_annotation.csv"))
+        self.lookup_brainid = pd.read_csv(os.path.join(self.path_annotations, "lookup_brainid.csv"), index_col=0)
 
         # Initialize the metadata file if it doesn't exist
         self._init_metadata()
@@ -67,11 +75,9 @@ class LipiMapData:
         return self._df_annotations
 
     def get_brain_id_from_sliceindex(self, slice_index):
-        lookup_brainid = pd.read_csv(os.path.join(self.path_db, "lookup_brainid.csv"), index_col=0)
-
         try:
-            sample = lookup_brainid.loc[
-                lookup_brainid["SectionID"] == slice_index, "Sample"
+            sample = self.lookup_brainid.loc[
+                self.lookup_brainid["SectionID"] == slice_index, "Sample"
             ].values[0]
             return sample
 
@@ -81,9 +87,9 @@ class LipiMapData:
 
     def _init_metadata(self):
         """Initialize or load the metadata about stored brains and lipids."""
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
-            if "brain_info" not in db:
-                db["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[lipid_names]]]
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+            if "brain_info" not in db_metadata:
+                db_metadata["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[lipid_names]]]
 
     def add_program_image(self, program_data: programImage, force_update: bool = False):
         """Add a lipid program image to the database.
@@ -93,8 +99,8 @@ class LipiMapData:
             force_update: If True, overwrite existing data
         """
         # Update metadata
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
-            brain_info = db["brain_info"]
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+            brain_info = db_metadata["brain_info"]
 
             if program_data.brain_id not in brain_info:
                 brain_info[program_data.brain_id] = {}
@@ -109,7 +115,7 @@ class LipiMapData:
 
         # Store the actual image data
         key = f"{program_data.brain_id}/slice_{program_data.slice_index}/{program_data.name}"
-        with shelve.open(os.path.join(self.path_db, "lipid_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "lipid_images")) as db:
             if key in db and not force_update:
                 logging.warning(
                     f"Lipid image {key} already exists. Use force_update=True to overwrite."
@@ -130,18 +136,18 @@ class LipiMapData:
         """
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
         key = f"{brain_id}/slice_{float(slice_index)}/{program_name}"
-        with shelve.open(os.path.join(self.path_db, "program_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "program_images")) as db:
             return db.get(key)
 
     def get_available_brains(self) -> List[str]:
         """Get list of available brain IDs in the database."""
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
-            return list(db["brain_info"].keys())
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+            return list(db_metadata["brain_info"].keys())
 
     def get_available_slices(self, brain_id: str) -> List[int]:
         """Get list of available slice indices for a given brain."""
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
-            brain_info = db["brain_info"]
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+            brain_info = db_metadata["brain_info"]
             if brain_id not in brain_info:
                 return []
             return list(brain_info[brain_id].keys())
@@ -149,8 +155,8 @@ class LipiMapData:
     def get_available_programs(self, slice_index: int) -> List[str]:
         """Get list of available programs for a given brain and slice."""
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
-            brain_info = db["brain_info"]
+        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+            brain_info = db_metadata["brain_info"]
             if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
                 return []
             return brain_info[brain_id][slice_index]
@@ -164,74 +170,81 @@ class LipiMapData:
         """
         return self.get_program_image(slice_index, self.get_available_programs(slice_index)[0]).indices
 
-    def get_acronym_mask(self, slice_index, fill_holes=True):
-        """
-        Retrieves the acronyms mask for a given slice index.
-        """
-        # print(f"slice_index: {slice_index}")
-        # z_coord = METADATA[METADATA["SectionID"] == slice_index]["x_index"].values
-        # take the acronyms of the rows of metadata that have SectionID == slice_index
-        acronym_points = ACRONYMS_PIXELS[slice_index]
-        coordinates = self.get_image_indices(slice_index)
-        acronym_scatter = pd.DataFrame([coordinates, acronym_points], columns=["x_index", "x", "y", "acronym"])
+    # def get_acronym_mask(self, slice_index, fill_holes=True):
+    #     """
+    #     Retrieves the acronyms mask for a given slice index.
+    #     """
+    #     # print(f"slice_index: {slice_index}")
+    #     # z_coord = METADATA[METADATA["SectionID"] == slice_index]["x_index"].values
+    #     # take the acronyms of the rows of metadata that have SectionID == slice_index
+    #     acronym_points = ACRONYMS_PIXELS[slice_index]
+    #     coordinates = self.get_image_indices(slice_index)
+        
+    #     # Create DataFrame with proper column alignment
+    #     acronym_scatter = pd.DataFrame({
+    #         'x_index': coordinates[:, 0],
+    #         'x': coordinates[:, 2],
+    #         'y': coordinates[:, 1],
+    #         'acronym': acronym_points
+    #     })
 
-        # print unique values of the third column
-        # if the elements of acronym_scatter["acronym"].values are None, replace them with "undefined"
-        if slice_index in [33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0]:
-            return np.full(self.image_shape, 'Undefined')
-        max_len = max(len(s) for s in acronym_scatter["acronym"].values)
-        arr = np.full(self.image_shape, 'Undefined', dtype=f'U{max(max_len, len("Undefined"))}')  # Adjust dimensions if needed
+    #     # print unique values of the third column
+    #     # if the elements of acronym_scatter["acronym"].values are None, replace them with "undefined"
+    #     if slice_index in [33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0]:
+    #         return np.full(self.image_shape, 'Undefined')
+    #     max_len = max(len(s) for s in acronym_scatter["acronym"].values)
+    #     arr = np.full(self.image_shape, 'Undefined', dtype=f'U{max(max_len, len("Undefined"))}')  # Adjust dimensions if needed
 
-        # Convert coordinates to integers for indexing
-        x_indices = acronym_scatter["x"].astype(int).values
-        y_indices = acronym_scatter["y"].astype(int).values
-        # Ensure indices are within bounds
-        valid_indices = (
-            (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
-        )
+    #     # Convert coordinates to integers for indexing
+    #     x_indices = acronym_scatter["x"].astype(int).values
+    #     y_indices = acronym_scatter["y"].astype(int).values
+    #     # Ensure indices are within bounds
+    #     valid_indices = (
+    #         (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
+    #     )
 
-        # Fill the array with values at the specified coordinates
-        arr[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["acronym"].values[
-            valid_indices
-        ]
-        arr_z = np.full(self.image_shape, np.nan)
-        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["x_index"].values[
-            valid_indices
-        ]
-        arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
+    #     # Fill the array with values at the specified coordinates
+    #     arr[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["acronym"].values[
+    #         valid_indices
+    #     ]
+    #     arr_z = np.full(self.image_shape, np.nan)
+    #     arr_z[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["x_index"].values[
+    #         valid_indices
+    #     ]
+    #     arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
 
-        mcc = MouseConnectivityCache(manifest_file='mouse_connectivity_manifest.json')
-        structure_tree = mcc.get_structure_tree()
+    #     mcc = MouseConnectivityCache(manifest_file='mouse_connectivity_manifest.json')
+    #     structure_tree = mcc.get_structure_tree()
 
-        # pixels = pixels
-        annotation, _ = mcc.get_annotation_volume()
+    #     # pixels = pixels
+    #     annotation, _ = mcc.get_annotation_volume()
 
-        # Check if we need to fill holes
-        if fill_holes:
-            # Count how many NaN values we have
-            # nan_count_before = (arr == 'Undefined').sum()
-            # print(f"Found {nan_count_before} NaN values (holes) in the image")
+    #     # Check if we need to fill holes
+    #     if fill_holes:
+    #         # Count how many NaN values we have
+    #         # nan_count_before = (arr == 'Undefined').sum()
+    #         # print(f"Found {nan_count_before} NaN values (holes) in the image")
 
-            for i in range(arr.shape[0]):
-                for j in range(arr.shape[1]):
-                    if arr[i,j] == 'Undefined':
-                        x_index = arr_z[i,j]
-                        # x_index = z_coord[0]
-                        y_index = i
-                        z_index = j
+    #         for i in range(arr.shape[0]):
+    #             for j in range(arr.shape[1]):
+    #                 if arr[i,j] == 'Undefined':
+    #                     x_index = arr_z[i,j]
+    #                     # x_index = z_coord[0]
+    #                     y_index = i
+    #                     z_index = j
 
-                    try:
-                        index = annotation[int(x_index), int(y_index), int(z_index)]
-                        brain_region = structure_tree.get_structures_by_id([index])[0]
+    #                 try:
+    #                     index = annotation[int(x_index), int(y_index), int(z_index)]
+    #                     brain_region = structure_tree.get_structures_by_id([index])[0]
                     
-                        if brain_region is not None:
-                            arr[y_index, z_index] = brain_region['acronym']
-                    except:
-                        continue
-                        # print error message
-                        # print(f"Error at {i}, {j}")
+    #                     if brain_region is not None:
+    #                         arr[y_index, z_index] = brain_region['acronym']
+    #                 except:
+    #                     continue
+    #                     # print error message
+    #                     # print(f"Error at {i}, {j}")
 
-        return arr
+    #     return arr
 
     def get_aba_contours(self, slice_index):
         """
@@ -500,11 +513,11 @@ class LipiMapData:
     def empty_database(self):
         # Remove all data from the database.
         # Remove metadata
-        with shelve.open(os.path.join(self.path_db, "metadata")) as db:
+        with shelve.open(self.path_metadata) as db:
             db.clear()
         self._init_metadata()
         
         # Remove image data
-        with shelve.open(os.path.join(self.path_db, "program_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "program_images")) as db:
             db.clear()
     """

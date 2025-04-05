@@ -33,89 +33,6 @@ import plotly.express as px
 # ==================================================================================================
 # --- Helper functions
 # ==================================================================================================
-# PROBLEM: LESS THAN HALF BRAIN IS SHOWED WHEN CHANGING THE BRAIN SLICE OR TOGGLING ANNOTATION
-# fix the celltype treemap to be computed dinamically based on the slice and the celltypes available there 
-# (filtering every time the df_hierarchy based on the slice index)... something like that
-def compute_hybrid_image(hex_colors_to_highlight):
-    def hex_to_rgb(hex_color):
-        """Convert hexadecimal color to RGB values (0-1 range)"""
-        hex_color = hex_color.lstrip('#')
-        return np.array([int(hex_color[i:i+2], 16) for i in (0, 2, 4)]) / 255.0
-    
-    try:
-        # Retrieve sample data from shelve database
-        sample_data = lipizone_sample_data.retrieve_sample_data("ReferenceAtlas")
-        color_masks = sample_data["color_masks"]
-        grayscale_image = sample_data["grayscale_image"]
-        rgb_image = sample_data["grid_image"][:, :, :3]  # remove transparency channel for now
-    except KeyError:
-        # Fallback to default files if sample not found
-        logging.warning(f"Sample data for ReferenceAtlas not found, using default files")
-        def load_color_masks_pickle(filename):
-            import pickle
-            with open(filename, 'rb') as f:
-                color_masks = pickle.load(f)
-            logging.info(f"Loaded {len(color_masks)} color masks from {filename}")
-            return color_masks
-        
-        color_masks = load_color_masks_pickle('my_image_masks.pkl')
-        grayscale_image = np.load("grayscale_image.npy")
-        rgb_image = np.load("grid_image_lipizones.npy")[:, :, :3]
-    
-    # Apply Gaussian blur to smooth the grayscale image
-    grayscale_image = gaussian_filter(grayscale_image, sigma=3)
-    
-    # Reduce contrast and overall intensity
-    grayscale_image = np.power(grayscale_image, 2)  # Increase contrast difference
-    grayscale_image = grayscale_image * 0.3  # Reduce overall intensity
-    
-    rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight]
-    
-    hybrid_image = np.zeros_like(rgb_image)
-    for i in range(3):
-        hybrid_image[:, :, i] = grayscale_image
-    
-    combined_mask = np.zeros((rgb_image.shape[0], rgb_image.shape[1]), dtype=bool)
-    for target_rgb in rgb_colors_to_highlight:
-        target_tuple = tuple(target_rgb)
-        
-        # If the exact color exists in our image
-        if target_tuple in color_masks:
-            combined_mask |= color_masks[target_tuple]
-        else:
-            try:
-                distances = np.array([np.sum((np.array(color) - target_rgb) ** 2) for color in color_masks.keys()])
-                closest_color_idx = np.argmin(distances)
-                closest_color = list(color_masks.keys())[closest_color_idx]
-                if distances[closest_color_idx] < 0.05:
-                    combined_mask |= color_masks[closest_color]
-            except:
-                print(f"{target_rgb} not found in color_masks_lipizones")
-                continue
-    
-    for i in range(3):
-        hybrid_image[:, :, i][combined_mask] = rgb_image[:, :, i][combined_mask]
-    
-    hybrid_image = (hybrid_image*255) + 1
-    mask = np.all(hybrid_image == 1, axis=-1)
-    hybrid_image[mask] = np.nan
-
-    height, width, _ = hybrid_image.shape
-    
-    # Compute pad sizes
-    pad_top = height // 2
-    pad_bottom = height // 2
-    pad_left = 0
-    
-    # Pad the image
-    padded_image = np.pad(
-        hybrid_image,
-        pad_width=((pad_top, pad_bottom), (pad_left, 0), (0, 0)),
-        mode='constant',
-        constant_values=np.nan
-    )
-
-    return padded_image
 
 def compute_image_lipizones_celltypes(
     all_selected_lipizones, 
@@ -554,7 +471,11 @@ def return_layout(basic_config, slice_index):
                             "background-color": "#1d1c1f",
                         },
                         figure=figures.build_lipid_heatmap_from_image(
-                            compute_hybrid_image(['#f75400']),
+                            compute_image_lipizones_celltypes(
+                                {"names": list(lipizone_to_color.keys()), "indices": []}, 
+                                {"names": list(celltype_to_color.keys()), "indices": []}, 
+                                slice_index
+                            ),
                             return_base64_string=False,
                             draw=False,
                             type_image="RGB",
@@ -1306,7 +1227,11 @@ def page_6_plot_graph_heatmap_mz_selection(
         # No selections, use default color for choroid plexus
         hex_colors_to_highlight = ['#f75400']
         fig = figures.build_lipid_heatmap_from_image(
-            compute_hybrid_image(hex_colors_to_highlight),
+            compute_image_lipizones_celltypes(
+                {"names": list(lipizone_to_color.keys()), "indices": []}, 
+                {"names": list(celltype_to_color.keys()), "indices": []}, 
+                slice_index
+            ),
             return_base64_string=False,
             draw=False,
             type_image="RGB",

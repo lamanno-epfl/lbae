@@ -65,49 +65,9 @@ layout = html.Div(
                         ),
                         dbc.Tooltip(
                             children=(
-                                "Analyse spectrum and brain composition by custom lipid selection"
+                                "LIPIDS"
                             ),
                             target="sidebar-page-2",
-                            placement="right",
-                        ),
-                        # Link to page 6
-                        dbc.NavLink(
-                            href="/lipizones-selection",
-                            active="exact",
-                            children=[
-                                html.I(
-                                    id="sidebar-page-6",
-                                    className="icon-lipid fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
-                            ],
-                            className="my-4",
-                        ),
-                        dbc.Tooltip(
-                            children=(
-                                "Analyse myself"
-                            ),
-                            target="sidebar-page-6",
-                            placement="right",
-                        ),
-                        # Link to page 5 (lp-selection)
-                        dbc.NavLink(
-                            href="/lp-selection",
-                            active="exact",
-                            children=[
-                                html.I(
-                                    id="sidebar-page-2bis",
-                                    className="icon-lipid fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
-                            ],
-                            className="my-4",
-                        ),
-                        dbc.Tooltip(
-                            children=(
-                                "Analyse brain composition by program selection"
-                            ),
-                            target="sidebar-page-2bis",
                             placement="right",
                         ),
                         # Link to page for peak-selection
@@ -125,9 +85,69 @@ layout = html.Div(
                         ),
                         dbc.Tooltip(
                             children=(
-                                "Analyse brain composition by peak selection"
+                                "M/Z PEAKS"
                             ),
                             target="sidebar-page-peak",
+                            placement="right",
+                        ),
+                        # Link to page 5 (lp-selection)
+                        dbc.NavLink(
+                            href="/lp-selection",
+                            active="exact",
+                            children=[
+                                html.I(
+                                    id="sidebar-page-2bis",
+                                    className="icon-lipid fs-5",
+                                    style={"margin-left": "0.7em"},
+                                )
+                            ],
+                            className="my-4",
+                        ),
+                        dbc.Tooltip(
+                            children=(
+                                "PROGRAMS"
+                            ),
+                            target="sidebar-page-2bis",
+                            placement="right",
+                        ),
+                        # Link to page 6
+                        dbc.NavLink(
+                            href="/lipizones-selection",
+                            active="exact",
+                            children=[
+                                html.I(
+                                    id="sidebar-page-6",
+                                    className="icon-lipid fs-5",
+                                    style={"margin-left": "0.7em"},
+                                )
+                            ],
+                            className="my-4",
+                        ),
+                        dbc.Tooltip(
+                            children=(
+                                "LIPIZONES"
+                            ),
+                            target="sidebar-page-6",
+                            placement="right",
+                        ),
+                        # Link to page 6bis
+                        dbc.NavLink(
+                            href="/lipizones-vs-celltypes",
+                            active="exact",
+                            children=[
+                                html.I(
+                                    id="sidebar-page-6bis",
+                                    className="icon-lipid fs-5",
+                                    style={"margin-left": "0.7em"},
+                                )
+                            ],
+                            className="my-4",
+                        ),
+                        dbc.Tooltip(
+                            children=(
+                                "LIPIZONES VS CELL TYPES"
+                            ),
+                            target="sidebar-page-6bis",
                             placement="right",
                         ),
                         # Link to page 3
@@ -144,7 +164,7 @@ layout = html.Div(
                             className="my-4",
                         ),
                         dbc.Tooltip(
-                            children="Analyse lipid composition by brain region",
+                            children="DIFFERENTIAL ANALYSIS",
                             target="sidebar-page-3",
                             placement="right",
                         ),
@@ -163,7 +183,7 @@ layout = html.Div(
                             className="my-4",
                         ),
                         dbc.Tooltip(
-                            children="Analyse brain data in 3D",
+                            children="3D LIPIDS",
                             target="sidebar-page-4",
                             placement="right",
                         ),
@@ -181,7 +201,7 @@ layout = html.Div(
                             className="my-4",
                         ),
                         dbc.Tooltip(
-                            children="View lipizone ID cards",
+                            children="ID CARDS",
                             target="sidebar-page-id-cards",
                             placement="right",
                         ),
@@ -199,7 +219,7 @@ layout = html.Div(
                             className="my-4",
                         ),
                         dbc.Tooltip(
-                            children="View lipizones in 3D space",
+                            children="3D LIPIZONES",
                             target="sidebar-page-3d-lipizones",
                             placement="right",
                         ),
@@ -220,7 +240,7 @@ layout = html.Div(
                                     ],
                                 ),
                                 dbc.Tooltip(
-                                    children="Open documentation",
+                                    children="DOCUMENTATION",
                                     target="sidebar-documentation-inside",
                                     placement="right",
                                 ),

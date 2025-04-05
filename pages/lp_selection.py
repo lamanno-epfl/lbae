@@ -81,6 +81,7 @@ def return_layout(basic_config, slice_index):
                                 slice_index,
                                 "mitochondrion",
                                 cache_flask=cache_flask,
+                                colormap_type="PuOr",
                             ),
                         ),
                         # Allen Brain Atlas switch (independent)
@@ -395,7 +396,8 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                 return(program_figures.build_lipid_heatmap_from_image(
                             image, 
                             return_base64_string=False,
-                            overlay=overlay),
+                            overlay=overlay,
+                            colormap_type="PuOr"),
                         "Now displaying:")
             
             if rgb_mode and sections_mode != "all":
@@ -423,6 +425,7 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                             image, 
                             return_base64_string=False,
                             overlay=overlay,
+                            colormap_type="PuOr",
                         ),
                         "Now displaying:",
                     )
@@ -448,7 +451,8 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                         return(program_figures.build_lipid_heatmap_from_image(
                                     image, 
                                     return_base64_string=False,
-                                    overlay=overlay),
+                                    overlay=overlay,
+                                    colormap_type="PuOr"),
                                 "Now displaying:")
 
         return dash.no_update
@@ -485,7 +489,8 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                 return(program_figures.build_lipid_heatmap_from_image(
                             image, 
                             return_base64_string=False,
-                            overlay=overlay),
+                            overlay=overlay,
+                            colormap_type="PuOr"),
                         "Now displaying:")
             
             # Handle normal display mode (RGB or colormap)
@@ -515,6 +520,7 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                             image, 
                             return_base64_string=False,
                             overlay=overlay,
+                            colormap_type="PuOr",
                         ),
                         "Now displaying:",
                     )

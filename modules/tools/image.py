@@ -45,6 +45,7 @@ def convert_image_to_base64(
     decrease_resolution_factor=1,
     binary=False,
     transparent_zeros=False,
+    colormap_type="viridis",
 ):
     """This functions allows for the conversion of a numpy array into a bytestring image using PIL.
     All images are paletted so save space.
@@ -70,12 +71,20 @@ def convert_image_to_base64(
         binary (bool, optional): Used to convert the output image to binary format ("LA", in PIL),
             to save a lot of space for greyscales images.
             Defaults to False.
+        colormap_type (str, optional): The type of colormap to use. Options are "viridis" or "PuOr".
+            Defaults to "viridis".
 
     Returns:
         (str): The base 64 image encoded in a string.
     """
     logging.info("Entering string conversion function")
     # print("image_array.shape:", image_array.shape)
+    
+    # Select the appropriate colormap based on colormap_type
+    if colormap_type == "PuOr":
+        colormap = cm.PuOr
+    else:
+        colormap = cm.viridis
     
     # Convert 1D array into a PIL image
     if type is None:

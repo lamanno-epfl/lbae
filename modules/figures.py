@@ -845,6 +845,7 @@ class Figures:
         type_image=None,
         return_go_image=False,
         overlay=None,
+        colormap_type="viridis",
     ):
         """This function converts a numpy array into a base64 string, which can be returned
         directly, or itself be turned into a go.Image, which can be returned directly, or be
@@ -864,6 +865,8 @@ class Figures:
                 being integrated to a Plotly Figure. Defaults to False.
             overlay (np.ndarray, optional): An array representing the overlay to be added to the
                 image. Defaults to None.
+            colormap_type (str, optional): The type of colormap to use. Options are "viridis" or "PuOr".
+                Defaults to "viridis".
         Returns:
             Depending on the inputted arguments, may either return a base64 string, a go.Image, or
                 a Plotly Figure.
@@ -874,7 +877,7 @@ class Figures:
 
         # Set optimize to False to gain computation time
         base64_string = convert_image_to_base64(
-            image, type=type_image, overlay=overlay, transparent_zeros=True, optimize=False
+            image, type=type_image, overlay=overlay, transparent_zeros=True, optimize=False, colormap_type=colormap_type
         )
 
         # Either return image directly
@@ -999,6 +1002,7 @@ class Figures:
         return_base64_string=False,
         cache_flask=None,
         overlay=None,
+        colormap_type="viridis",
     ):
         """This function takes two boundaries and a slice index, and returns a heatmap of the lipid
         expressed in the slice whose m/z is between the two boundaries.
@@ -1037,7 +1041,7 @@ class Figures:
 
         # Compute corresponding figure
         fig = self.build_lipid_heatmap_from_image(
-            image, return_base64_string=return_base64_string, draw=draw, overlay=overlay
+            image, return_base64_string=return_base64_string, draw=draw, overlay=overlay, colormap_type=colormap_type
         )
 
         return fig

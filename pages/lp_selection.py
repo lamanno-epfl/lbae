@@ -26,6 +26,12 @@ os.environ['OMP_NUM_THREADS'] = '6'
 # LBAE imports
 from app import app, program_figures, program_data, storage, cache_flask, atlas, grid_data
 
+def cyan_aba_contours(overlay):
+    cyan_overlay = overlay.copy()
+    contour_mask = overlay[:, :, 3] > 0
+    cyan_overlay[contour_mask] = [0, 255, 255, 200]  # RGB cyan with alpha=200
+    return cyan_overlay
+
 # ==================================================================================================
 # --- Layout
 # ==================================================================================================
@@ -372,7 +378,8 @@ def page_2bis_plot_graph_heatmap_mz_selection(
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
     
-    overlay = program_data.get_aba_contours(slice_index) if annotations_checked else None
+    # overlay = program_data.get_aba_contours(slice_index) if annotations_checked else None
+    overlay = cyan_aba_contours(program_data.get_aba_contours(slice_index)) if annotations_checked else None
 
     # Handle annotations toggle separately to preserve figure state
     if id_input == "page-2bis-toggle-annotations":
@@ -500,7 +507,7 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                     return (
                         program_figures.compute_rgb_image_per_lipid_selection(
                             slice_index,
-                            ll_program_names=ll_program_names,
+                            ll_lipid_names=ll_program_names,
                             cache_flask=cache_flask,
                             overlay=overlay,
                         ),
@@ -532,7 +539,8 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                 program_figures.compute_heatmap_per_lipid(slice_index, 
                                                 "mitochondrion",
                                                 cache_flask=cache_flask,
-                                                overlay=overlay),
+                                                overlay=overlay,
+                                                colormap_type="PuOr"),
                 "Now displaying:",
             )
         else:
@@ -542,7 +550,8 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                 program_figures.compute_heatmap_per_lipid(slice_index, 
                                                 "mitochondrion",
                                                 cache_flask=cache_flask,
-                                                overlay=overlay),
+                                                overlay=overlay,
+                                                colormap_type="PuOr"),
                 "Now displaying:",
             )
 
@@ -552,7 +561,8 @@ def page_2bis_plot_graph_heatmap_mz_selection(
             program_figures.compute_heatmap_per_lipid(slice_index, 
                                             "mitochondrion",
                                             cache_flask=cache_flask,
-                                            overlay=overlay),
+                                            overlay=overlay,
+                                            colormap_type="PuOr"),
             "Now displaying:",
         )
 
@@ -601,7 +611,7 @@ def page_2bis_add_toast_selection(
     """This callback adds the selected lipid program to the selection."""
     logging.info("Entering function to update lipid program data")
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    
+
     # Initialize with default lipid if no selection exists
     if len(id_input) == 0 or (id_input == "page-2bis-dropdown-programs" and l_program_names is None):
         default_program = "mitochondrion"
@@ -663,6 +673,7 @@ def page_2bis_add_toast_selection(
             #     name = "_".join(lipid_name.split(" ")[::2])
             #     structure = "_".join(lipid_name.split(" ")[1::2])
             name = program_name
+            print("name:", name)
                 
             l_program_loc = (
                 program_data.get_annotations()
@@ -673,7 +684,8 @@ def page_2bis_add_toast_selection(
                 ]
                 .tolist()
             )
-            
+            print("l_program_loc:", l_program_loc)
+
             if len(l_program_loc) == 0:
                 l_program_loc = (
                     program_data.get_annotations()
@@ -744,11 +756,12 @@ def page_2bis_add_toast_selection(
         if id_input == "main-slider":
             # Update indices for existing lipids
             for header in [header_1, header_2, header_3]:
-                if header and len(header.split(" ")) == 2:
-                    name, structure = header.split(" ")
-                else:   
-                    name = "_".join(header.split(" ")[::2])
-                    structure = "_".join(header.split(" ")[1::2])
+                # if header and len(header.split(" ")) == 2:
+                #     name, structure = header.split(" ")
+                # else:   
+                #     name = "_".join(header.split(" ")[::2])
+                #     structure = "_".join(header.split(" ")[1::2])
+                name = header
 
                 # Find lipid location
                 l_program_loc_temp = (
@@ -816,12 +829,13 @@ def page_2bis_add_toast_selection(
 
         # If lipids have been added from dropdown menu
         elif id_input == "page-2bis-dropdown-programs":
-            # Get the lipid name and structure
-            if len(l_program_names[-1]) == 2:
-                name, structure = l_program_names[-1].split(" ")
-            else:   
-                name = "_".join(l_program_names[-1].split(" ")[::2])
-                structure = "_".join(l_program_names[-1].split(" ")[1::2])
+            # # Get the lipid name and structure
+            # if len(l_program_names[-1]) == 2:
+            #     name, structure = l_program_names[-1].split(" ")
+            # else:   
+            #     name = "_".join(l_program_names[-1].split(" ")[::2])
+            #     structure = "_".join(l_program_names[-1].split(" ")[1::2])
+            name = l_program_names[-1]
 
             # Find lipid location
             l_program_loc = (

@@ -87,7 +87,7 @@ class LipiMapData:
 
     def _init_metadata(self):
         """Initialize or load the metadata about stored brains and lipids."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open("/data/francesca/lbae/program_data/metadata") as db_metadata: # os.path.join(self.path_metadata, "metadata_programs")
             if "brain_info" not in db_metadata:
                 db_metadata["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[lipid_names]]]
 
@@ -99,7 +99,7 @@ class LipiMapData:
             force_update: If True, overwrite existing data
         """
         # Update metadata
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open("/data/francesca/lbae/program_data/metadata") as db_metadata: # os.path.join(self.path_metadata, "metadata_programs")
             brain_info = db_metadata["brain_info"]
 
             if program_data.brain_id not in brain_info:
@@ -141,12 +141,12 @@ class LipiMapData:
 
     def get_available_brains(self) -> List[str]:
         """Get list of available brain IDs in the database."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open("/data/francesca/lbae/program_data/metadata") as db_metadata: # os.path.join(self.path_metadata, "metadata_programs")
             return list(db_metadata["brain_info"].keys())
 
     def get_available_slices(self, brain_id: str) -> List[int]:
         """Get list of available slice indices for a given brain."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open("/data/francesca/lbae/program_data/metadata") as db_metadata: # os.path.join(self.path_metadata, "metadata_programs")
             brain_info = db_metadata["brain_info"]
             if brain_id not in brain_info:
                 return []
@@ -155,7 +155,7 @@ class LipiMapData:
     def get_available_programs(self, slice_index: int) -> List[str]:
         """Get list of available programs for a given brain and slice."""
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open("/data/francesca/lbae/program_data/metadata") as db_metadata: # os.path.join(self.path_metadata, "metadata_programs")
             brain_info = db_metadata["brain_info"]
             if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
                 return []
@@ -322,7 +322,7 @@ class LipiMapData:
             # Convert scatter data to image
             # scatter_points = program_data.image  # This is a numpy array with shape (N, 3)
             
-             # Create a DataFrame from the scatter points
+            # Create a DataFrame from the scatter points
             scatter = pd.DataFrame({
                             "x": program_data.indices[:, 2],
                             "y": program_data.indices[:, 1],
@@ -356,8 +356,12 @@ class LipiMapData:
                     # nan_count_after = np.isnan(filled_arr).sum()
                     # print(f"After filling: {nan_count_after} NaN values remain")
                     
-                    return filled_arr
-                
+                    arr = filled_arr
+            
+            p02, p98 = np.nanpercentile(arr, [2, 98])
+            arr = np.clip(arr, p02, p98)
+            arr = (arr - p02) / (p98 - p02)
+
             return arr
             
         except Exception as e:

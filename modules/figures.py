@@ -668,82 +668,17 @@ class Figures:
                 slice_index.
         """
         logging.info("Entering compute_image_per_lipid")
-        # print("===================== entering compute_image_per_lipid ===========================")
-        # print("RGB_format:", RGB_format)
-        # print("lipid_name:", lipid_name)
-        # print("slice_index:", slice_index)
-
-        # Get image from raw mass spec data
-        # image = compute_thread_safe_function(
-        #     compute_image_using_index_and_image_lookup,
-        #     cache_flask,
-        #     self._data,
-        #     slice_index,
-        #     lb_mz,
-        #     hb_mz,
-        #     self._data.get_array_spectra(slice_index),
-        #     self._data.get_array_lookup_pixels(slice_index),
-        #     self._data.get_image_shape(slice_index),
-        #     self._data.get_array_lookup_mz(slice_index),
-        #     self._data.get_array_cumulated_lookup_mz_image(slice_index),
-        #     self._data.get_divider_lookup(slice_index),
-        #     self._data.get_array_peaks_transformed_lipids(slice_index),
-        #     self._data.get_array_corrective_factors(slice_index).astype(np.float32),
-        #     apply_transform=apply_transform,
-        # )
-
-        # print all the attributes and methods of the data object
-        # print the class of the data object
-        # print(f"self._data: {type(self._data)}")
         
         image = self._data.extract_lipid_image(slice_index, lipid_name)
-        # print("\nimage.min():", np.nanmin(image))
-        # print("image.max():", np.nanmax(image))
-
-        # # Log-transform the image if requested
-        # if log:
-        #     image = np.log(image + 1)
-
+        
         # In case of bug, return None
         if image is None:
             return None
 
-        # # Normalize the image if requested
-        # if normalize:
-        #     # Normalize across slice if the lipid has been MAIA transformed
-        #     if (
-        #         lipid_name,
-        #         self._data.is_brain_1(slice_index),
-        #     ) in self.dic_normalization_factors and apply_transform:
-        #         perc = self.dic_normalization_factors[
-        #             (lipid_name, self._data.is_brain_1(slice_index))
-        #         ]
-        #         logging.info(
-        #             "Normalization made with respect to percentile computed across all slices."
-        #         )
-        #     else:
-        #         # Normalize by 99 percentile
-        #         perc = np.percentile(image, 99.0)
-        #     if perc == 0:
-        #         perc = np.max(image)
-        #     if perc == 0:
-        #         perc = 1
-        #     image = image / perc
-        #     image = np.clip(0, 1, image)
-
         # Turn to RGB format if requested
         if RGB_format:
             image *= 255
-            # # Change dtype if normalized and RGB to save space
-            # if normalize and RGB_format:
-            # image = np.round(image).astype(np.uint8)
 
-        # # Project image into cleaned and higher resolution version
-        # if projected_image:
-        #     image = project_image(
-        #         slice_index, image, self._atlas.array_projection_correspondence_corrected
-        #     )
-        # print("image before returning:", image)
         return image
 
     def compute_normalization_factor_across_slices(self, cache_flask=None):
@@ -873,8 +808,7 @@ class Figures:
         """
 
         logging.info("Converting image to string")
-        # print("image.shape:", image.shape)
-
+        
         # Set optimize to False to gain computation time
         base64_string = convert_image_to_base64(
             image, type=type_image, overlay=overlay, transparent_zeros=True, optimize=False, colormap_type=colormap_type
@@ -1038,6 +972,7 @@ class Figures:
             lipid_name=lipid_name,
             cache_flask=cache_flask,
         )
+        print("\nimage.shape:", image.shape)
 
         # Compute corresponding figure
         fig = self.build_lipid_heatmap_from_image(
@@ -1228,12 +1163,7 @@ class Figures:
     def compute_rgb_image_per_lipid_selection(
         self,
         slice_index,
-        # ll_t_bounds,
-        # normalize_independently=True,
-        # projected_image=True,
-        # log=False,
         return_image=False,
-        # apply_transform=False,
         ll_lipid_names=None,
         return_base64_string=False,
         cache_flask=None,
@@ -1275,28 +1205,14 @@ class Figures:
         """
 
         logging.info("Started RGB image computation for slice " + str(slice_index) + logmem())
-
-        # # Empty lipid names if no names provided
-        # if ll_lipid_names is None:
-        #     ll_lipid_names = [["" for y in l_t_bounds] for l_t_bounds in ll_t_bounds]
-
         logging.info("Acquiring array_image for slice " + str(slice_index) + logmem())
 
         # Get RGB array for the current lipid selection
         array_image = self.compute_rgb_array_per_lipid_selection(
             slice_index,
-            # ll_t_bounds,
-            # normalize_independently=normalize_independently,
-            # projected_image=projected_image,
-            # log=log,
-            # apply_transform=apply_transform,
             ll_lipid_names=ll_lipid_names,
             cache_flask=cache_flask,
         )
-        # print("\narray_image.shape", array_image.shape, np.isnan(array_image).sum())
-        # print("array_image first channel", array_image[:,:,0].max(), array_image[:,:,0].min(), np.isnan(array_image[:,:,0]).sum())
-        # print("array_image second channel", array_image[:,:,1].max(), array_image[:,:,1].min(), np.isnan(array_image[:,:,1]).sum())
-        # print("array_image third channel", array_image[:,:,2].max(), array_image[:,:,2].min(), np.isnan(array_image[:,:,2]).sum())
 
         logging.info("Returning fig for slice " + str(slice_index) + logmem())
 
@@ -1309,208 +1225,6 @@ class Figures:
             return_go_image=return_image,
             overlay=overlay,
         )
-
-    # def compute_spectrum_low_res(self, slice_index, annotations=None):
-    #     """This function returns the full (low-resolution) spectrum of the requested slice.
-
-    #     Args:
-    #         slice_index (int): The slice index of the requested slice.
-    #         annotations (list(tuple), optional): A list of m/z boundaries (one for each lipid to
-    #             annotate), corresponding to the position of colored box superimposed on the spectra.
-    #             Defaults to None.
-    #     Returns:
-    #         (go.Figure): A Plotly Figure representing the low-resolution spectrum.
-    #     """
-
-    #     # Define figure data
-    #     data = go.Scattergl(
-    #         x=self._data.get_array_avg_spectrum_downsampled(slice_index)[0, :],
-    #         y=self._data.get_array_avg_spectrum_downsampled(slice_index)[1, :],
-    #         visible=True,
-    #         line_color=dic_colors["blue"],
-    #         fill="tozeroy",
-    #     )
-    #     # Define figure layout
-    #     layout = go.Layout(
-    #         margin=dict(t=50, r=0, b=10, l=0),
-    #         showlegend=False,
-    #         xaxis=dict(rangeslider={"visible": False}, title="m/z"),
-    #         yaxis=dict(fixedrange=False, title="Intensity"),
-    #         template="plotly_dark",
-    #         autosize=True,
-    #         title={
-    #             "text": "Low resolution spectrum (averaged across pixels)",
-    #             "y": 0.92,
-    #             "x": 0.5,
-    #             "xanchor": "center",
-    #             "yanchor": "top",
-    #             "font": dict(
-    #                 size=14,
-    #             ),
-    #         },
-    #         paper_bgcolor="rgba(0,0,0,0.3)",
-    #         plot_bgcolor="rgba(0,0,0,0.3)",
-    #     )
-
-    #     # Build figure
-    #     fig = go.Figure(data=data, layout=layout)
-
-    #     # Annotate selected lipids with vertical bars
-    #     if annotations is not None:
-    #         for color, annot in zip(["red", "green", "blue"], annotations):
-    #             if annot is not None:
-    #                 fig.add_vrect(
-    #                     x0=annot[0],
-    #                     x1=annot[1],
-    #                     fillcolor=dic_colors[color],
-    #                     opacity=0.4,
-    #                     line_color=dic_colors[color],
-    #                 )
-    #     return fig
-
-    # def compute_spectrum_high_res(
-    #     self,
-    #     slice_index,
-    #     lb=None,
-    #     hb=None,
-    #     annotations=None,
-    #     force_xlim=False,
-    #     plot=True,
-    #     standardization=False,
-    #     cache_flask=None,
-    # ):
-    #     """This function returns the high-resolution spectrum of the requested slice between the two
-    #     provided m/z boundaries lb and hb. If boundaries are not provided, it returns an empty
-    #     spectrum.
-
-    #     Args:
-    #         slice_index (int): The slice index of the requested slice.
-    #         lb (float, optional): The lower m/z boundary below which the spectrum to display must
-    #             be cropped. Defaults to None.
-    #         hb (float, optional): The higher m/z boundary below which the spectrum to display must
-    #             be cropped. Defaults to None.
-    #         annotations (list(tuple), optional): A list of m/z boundaries (one for each lipid to
-    #             annotate), corresponding to the position of colored box superimposed on the spectra.
-    #             Defaults to None.
-    #         force_xlim (bool, optional): If Truen the zoom level will be set to enclose lb and hb,
-    #             although that may not be the tightest region to enclose the data. Defaults to False.
-    #         plot (bool, optional): If False, only the plotting data (m/z and intensities arrays)
-    #             will be returned. Defaults to True.
-    #         standardization (bool, optional): If True, the displayed spectrum is standardized with
-    #             MAIA when possible.
-    #         cache_flask (flask_caching.Cache, optional): Cache of the Flask database. If set to
-    #             None, the reading of memory-mapped data will not be multithreads-safe. Defaults to
-    #             None.
-    #     Returns:
-    #         Depending on the value of the boundaries, and the plot parameter, it may return a Plotly
-    #             Figure containing an empty spectrum, or a spectrum between the two
-    #             provided boundaries, or the corresponding data of such a spectrum.
-    #     """
-
-    #     # Define default values for graph (empty)
-    #     if lb is None and hb is None:
-    #         x = ([],)
-    #         y = ([],)
-
-    #     # If boundaries are provided, get their index
-    #     else:
-    #         index_lb, index_hb = compute_thread_safe_function(
-    #             compute_index_boundaries,
-    #             cache_flask,
-    #             self._data,
-    #             slice_index,
-    #             lb,
-    #             hb,
-    #             array_spectra_avg=self._data.get_array_avg_spectrum(
-    #                 slice_index, standardization=standardization
-    #             ),
-    #             lookup_table=self._data.get_array_lookup_mz_avg(slice_index),
-    #         )
-
-    #         def return_x_y(array):
-    #             x = np.copy(array[0, index_lb:index_hb])
-    #             y = np.copy(array[1, index_lb:index_hb])
-    #             return x, y
-
-    #         # Get x, y in a thread safe fashion
-    #         # No need to clean memory as it's really small
-    #         x, y = compute_thread_safe_function(
-    #             return_x_y,
-    #             cache_flask,
-    #             self._data,
-    #             slice_index,
-    #             self._data.get_array_avg_spectrum(slice_index, standardization=standardization),
-    #         )
-
-    #     # In case download without plotting
-    #     if not plot:
-    #         return x, y
-
-    #     # Define figure data
-    #     data = go.Scattergl(x=x, y=y, visible=True, line_color=dic_colors["blue"], fill="tozeroy")
-
-    #     # Define figure layout
-    #     layout = go.Layout(
-    #         margin=dict(t=50, r=0, b=10, l=0),
-    #         showlegend=False,
-    #         xaxis=dict(rangeslider={"visible": False}, title="m/z"),
-    #         yaxis=dict(fixedrange=True, title="Intensity"),
-    #         template="plotly_dark",
-    #         title={
-    #             "text": "High resolution spectrum (averaged across pixels)",
-    #             "y": 0.92,
-    #             "x": 0.5,
-    #             "xanchor": "center",
-    #             "yanchor": "top",
-    #             "font": dict(
-    #                 size=14,
-    #             ),
-    #         },
-    #         paper_bgcolor="rgba(0,0,0,0.3)",
-    #         plot_bgcolor="rgba(0,0,0,0.3)",
-    #     )
-    #     # Build figure layout
-    #     fig = go.Figure(data=data, layout=layout)
-
-    #     # Annotate selected lipids with vertical bars
-    #     if annotations is not None:
-    #         for color, x in zip(["red", "green", "blue"], annotations):
-    #             if x is not None:
-    #                 if x[0] >= lb and x[-1] <= hb:
-    #                     fig.add_vrect(
-    #                         x0=x[0], x1=x[1], line_width=0, fillcolor=dic_colors[color], opacity=0.4
-    #                     )
-
-    #     # In case we don't want to zoom in too much on the selected lipid
-    #     if force_xlim:
-    #         fig.update_xaxes(range=[lb, hb])
-    #     return fig
-
-    # def return_empty_spectrum(self):
-    #     """This function returns an empty spectrum, used to display when no spectrum is available.
-
-    #     Returns:
-    #         (Plotly Figure): A Plotly Figure representing an empty spectrum."""
-
-    #     # Define empty figure data
-    #     data = (go.Scattergl(x=[], y=[], visible=True),)
-
-    #     # Define figure layout
-    #     layout = go.Layout(
-    #         margin=dict(t=5, r=0, b=10, l=0),
-    #         showlegend=True,
-    #         xaxis=dict(title="m/z"),
-    #         yaxis=dict(title="Intensity"),
-    #         template="plotly_dark",
-    #     )
-
-    #     # Build figure
-    #     fig = go.Figure(data=data, layout=layout)
-
-    #     # Transparent background
-    #     fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
-    #     fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
-    #     return fig
 
     # ==============================================================================================
     # --- Methods used mainly in region_analysis

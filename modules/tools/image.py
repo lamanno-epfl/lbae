@@ -83,6 +83,12 @@ def convert_image_to_base64(
     # Select the appropriate colormap based on colormap_type
     if colormap_type == "PuOr":
         colormap = cm.PuOr
+        # if type is None:  # Only apply for 1D arrays that use colormaps
+        #     p05, p95 = np.nanpercentile(image_array, [5, 95])
+        #     # Scale the data to use full colormap range based on percentiles
+        #     image_array = np.clip(image_array, p05, p95)
+        #     # Normalize to [0,1] based on the percentile range
+        #     image_array = (image_array - p05) / (p95 - p05)
     else:
         colormap = cm.viridis
     

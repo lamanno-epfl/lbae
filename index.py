@@ -26,6 +26,7 @@ from pages import (
     lipid_selection,
     lipizones_selection,
     lipizones_vs_celltypes,
+    lipids_vs_genes,
     region_analysis,
     threeD_exploration,
     lp_selection,
@@ -90,6 +91,13 @@ def return_main_content():
             dcc.Store(id="page-6bis-all-selected-celltypes", data={}),
             dcc.Store(id="page-6bis-current-lipizone-treemap-selection", data=None),
             dcc.Store(id="page-6bis-current-celltype-treemap-selection", data=None),
+
+            # Record the lipids and celltypes selected in page 6tris
+            dcc.Store(id="page-6tris-all-selected-celltypes", data={}),
+            dcc.Store(id="page-6tris-current-celltype-treemap-selection", data=None),
+            dcc.Store(id="page-6tris-selected-lipid-1", data=-1),
+            dcc.Store(id="page-6tris-selected-lipid-2", data=-1),
+            dcc.Store(id="page-6tris-selected-lipid-3", data=-1),
 
             # Record the lipids selected in page 4
             dcc.Store(id="page-4-selected-lipid-1", data=empty_lipid_list),
@@ -429,6 +437,7 @@ def return_validation_layout(main_content, initial_slice=12):
             # peak_selection.return_layout(basic_config, initial_slice),
             lipizones_selection.return_layout(basic_config, initial_slice),
             lipizones_vs_celltypes.return_layout(basic_config, initial_slice),
+            lipids_vs_genes.return_layout(basic_config, initial_slice),
             id_cards.return_layout(basic_config, initial_slice),
             region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
@@ -472,6 +481,9 @@ def render_page_content(pathname, slice_index, brain):
 
     elif pathname == "/lipizones-vs-celltypes":
         page = lipizones_vs_celltypes.return_layout(basic_config, slice_index)
+
+    elif pathname == "/lipids-vs-genes":
+        page = lipids_vs_genes.return_layout(basic_config, slice_index)
 
     elif pathname == "/id-cards":
         page = id_cards.return_layout(basic_config, slice_index)
@@ -645,6 +657,8 @@ app.clientside_callback(
 def hide_brain_chips(pathname):
     """This callback is used to hide the brain selection chips when they are not needed."""
     if pathname == "/lipizones-vs-celltypes":
+        return {"display": "none"}
+    elif pathname == "/lipids-vs-genes":
         return {"display": "none"}
     else:
         return {

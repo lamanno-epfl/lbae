@@ -150,6 +150,26 @@ layout = html.Div(
                             target="sidebar-page-6bis",
                             placement="right",
                         ),
+                        # Link to page 6tris
+                        dbc.NavLink(
+                            href="/lipids-vs-genes",
+                            active="exact",
+                            children=[
+                                html.I(
+                                    id="sidebar-page-6tris",
+                                    className="icon-lipid fs-5",
+                                    style={"margin-left": "0.7em"},
+                                )
+                            ],
+                            className="my-4",
+                        ),
+                        dbc.Tooltip(
+                            children=(
+                                "LIPIDS VS GENES"
+                            ),
+                            target="sidebar-page-6tris",
+                            placement="right",
+                        ),
                         # Link to page 3
                         dbc.NavLink(
                             href="/region-analysis",

@@ -27,7 +27,7 @@ os.environ['OMP_NUM_THREADS'] = '6'
 import pickle
 
 # LBAE imports
-from app import app, figures, data, atlas, lipizone_sample_data, lipizone_section_data, celltype_data
+from app import app, figures, data, atlas, lipizone_section_data, celltype_data
 import plotly.express as px
 
 # ==================================================================================================
@@ -344,77 +344,81 @@ def create_treemap_figure(df_treemap, node_colors, is_celltypes=False):
 # --- Data
 # ==================================================================================================
 
-manual_naming_lipizones_level_1 = {
-    '1' : 'White matter-rich',
-    '2' : 'Gray matter-rich',
-}
-manual_naming_lipizones_level_2 = {
-    '1_1' : 'Core white matter',
-    '1_2' : 'Mixed gray and white matter, ventricles',
-    '2_1' : 'Outer cortex, cerebellar molecular layer, amygdala, part of hippocampus',
-    '2_2' : 'Deep cortex, part of hippocampus, striatum, cerebellar granule cells',
-}
-manual_naming_lipizones_level_3 = {
-    '1_1_1' : 'Oligodendroglia-rich regions',
-    '1_1_2' : 'Mixed white matter with neurons',
-    '1_2_1' : 'Ventricular system, gray-white boundary, hypothalamus',
-    '1_2_2' : 'Thalamus and midbrain',
-    '2_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
-    '2_1_2' : 'Layer 1 to border between 2/3 and 4, piriform, Purkinje cells, enthorinal, mixed',
-    '2_2_1' : 'Layer 5, hippocampus and noncortical gray matter',
-    '2_2_2' : 'Layers 5 and 6, hippocampus, nuclei, granular layer of the cerebellum',
-}
-manual_naming_lipizones_level_4 = {
-    '1_1_1_1' : 'Core of fiber tracts, arbor vitae and nerves/1',
-    '1_1_1_2' : 'Core of fiber tracts, arbor vitae and nerves/2',
-    '1_1_2_1' : 'Bundle and boundary white matter-rich',
-    '1_1_2_2' : 'Thalamus, midbrain, hindbrain white matter regions',
-    '1_2_1_1' : 'Ventricular system',
-    '1_2_1_2' : 'Gray-white matter boundary',
-    '1_2_2_1' : 'Mostly thalamus, midbrain, hindbrain mixed types',
-    '1_2_2_2' : 'Myelin-rich deep cortex, striatum, hindbrain and more',
-    '2_1_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
-    '2_1_1_2' : 'HPF, AMY, CTXSP, HY and more',
-    '2_1_2_1' : 'Purkinje layer, L2/3 and boundary with L4',
-    '2_1_2_2' : 'Layer 1, 2/3, piriform and enthorinal cortex, CA1',
-    '2_2_1_1' : 'Layer 5, retrosplenial, hippocampus',
-    '2_2_1_2' : 'Noncortical gray matter',
-    '2_2_2_1' : 'Layer 5-6, nuclei, granule cells layer',
-    '2_2_2_2' : 'Layer 6, mixed complex GM, granule cells layer',
-}
+# manual_naming_lipizones_level_1 = {
+#     '1' : 'White matter-rich',
+#     '2' : 'Gray matter-rich',
+# }
+# manual_naming_lipizones_level_2 = {
+#     '1_1' : 'Core white matter',
+#     '1_2' : 'Mixed gray and white matter, ventricles',
+#     '2_1' : 'Outer cortex, cerebellar molecular layer, amygdala, part of hippocampus',
+#     '2_2' : 'Deep cortex, part of hippocampus, striatum, cerebellar granule cells',
+# }
+# manual_naming_lipizones_level_3 = {
+#     '1_1_1' : 'Oligodendroglia-rich regions',
+#     '1_1_2' : 'Mixed white matter with neurons',
+#     '1_2_1' : 'Ventricular system, gray-white boundary, hypothalamus',
+#     '1_2_2' : 'Thalamus and midbrain',
+#     '2_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
+#     '2_1_2' : 'Layer 1 to border between 2/3 and 4, piriform, Purkinje cells, enthorinal, mixed',
+#     '2_2_1' : 'Layer 5, hippocampus and noncortical gray matter',
+#     '2_2_2' : 'Layers 5 and 6, hippocampus, nuclei, granular layer of the cerebellum',
+# }
+# manual_naming_lipizones_level_4 = {
+#     '1_1_1_1' : 'Core of fiber tracts, arbor vitae and nerves/1',
+#     '1_1_1_2' : 'Core of fiber tracts, arbor vitae and nerves/2',
+#     '1_1_2_1' : 'Bundle and boundary white matter-rich',
+#     '1_1_2_2' : 'Thalamus, midbrain, hindbrain white matter regions',
+#     '1_2_1_1' : 'Ventricular system',
+#     '1_2_1_2' : 'Gray-white matter boundary',
+#     '1_2_2_1' : 'Mostly thalamus, midbrain, hindbrain mixed types',
+#     '1_2_2_2' : 'Myelin-rich deep cortex, striatum, hindbrain and more',
+#     '2_1_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
+#     '2_1_1_2' : 'HPF, AMY, CTXSP, HY and more',
+#     '2_1_2_1' : 'Purkinje layer, L2/3 and boundary with L4',
+#     '2_1_2_2' : 'Layer 1, 2/3, piriform and enthorinal cortex, CA1',
+#     '2_2_1_1' : 'Layer 5, retrosplenial, hippocampus',
+#     '2_2_1_2' : 'Noncortical gray matter',
+#     '2_2_2_1' : 'Layer 5-6, nuclei, granule cells layer',
+#     '2_2_2_2' : 'Layer 6, mixed complex GM, granule cells layer',
+# }
 
-lipizones = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0) # HEX
-lipizone_to_color = {name: color for name, color in zip(lipizones["lipizone_names"], lipizones["lipizone_color"])}
-df_hierarchy_lipizones = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
+# lipizones = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0) # HEX
+# lipizone_to_color = {name: color for name, color in zip(lipizones["lipizone_names"], lipizones["lipizone_color"])}
+# df_hierarchy_lipizones = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
 
-# lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)['lipizone_names'].values
-df_hierarchy_lipizones['level_1_name'] = df_hierarchy_lipizones['level_1'].astype(str).map(manual_naming_lipizones_level_1)
-df_hierarchy_lipizones['level_2_name'] = df_hierarchy_lipizones['level_2'].astype(str).map(manual_naming_lipizones_level_2)
-df_hierarchy_lipizones['level_3_name'] = df_hierarchy_lipizones['level_3'].astype(str).map(manual_naming_lipizones_level_3)
-df_hierarchy_lipizones['level_4_name'] = df_hierarchy_lipizones['level_4'].astype(str).map(manual_naming_lipizones_level_4)
+# # lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)['lipizone_names'].values
+# df_hierarchy_lipizones['level_1_name'] = df_hierarchy_lipizones['level_1'].astype(str).map(manual_naming_lipizones_level_1)
+# df_hierarchy_lipizones['level_2_name'] = df_hierarchy_lipizones['level_2'].astype(str).map(manual_naming_lipizones_level_2)
+# df_hierarchy_lipizones['level_3_name'] = df_hierarchy_lipizones['level_3'].astype(str).map(manual_naming_lipizones_level_3)
+# df_hierarchy_lipizones['level_4_name'] = df_hierarchy_lipizones['level_4'].astype(str).map(manual_naming_lipizones_level_4)
 
-celltypes = pd.read_csv('/data/LBA_DATA/lbae/assets/hierarchy_celltypes_colors.csv')[["cell_type", "color"]]
-celltype_to_color = {name: color for name, color in zip(celltypes["cell_type"], celltypes["color"])}
-df_hierarchy_celltypes = pd.read_csv('/data/LBA_DATA/lbae/assets/hierarchy_celltypes_colors.csv')
-# Keep hierarchy_code and reorder columns
-df_hierarchy_celltypes = df_hierarchy_celltypes.iloc[:, 1:]
+df_hierarchy_lipizones = pd.read_csv("./new_data_lbae/lipizone_data/lipizones_hierarchy.csv")
+lipizone_to_color = pickle.load(open("./new_data_lbae/lipizone_data/lipizone_to_color.pkl", "rb"))
 
-union_celltypes = set()
-for slice_index in data.get_slice_list("ReferenceAtlas"):
-    try:
-        celltype_in_section = list(celltype_data.retrieve_section_data(int(slice_index))['color_masks'].keys())
-        filtered_df = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(celltype_in_section)]
-        union_celltypes.update(filtered_df["cell_type"].values)
-    except:
-        continue
+# celltypes = pd.read_csv('/data/LBA_DATA/lbae/assets/hierarchy_celltypes_colors.csv')[["cell_type", "color"]]
+# celltype_to_color = {name: color for name, color in zip(celltypes["cell_type"], celltypes["color"])}
+# df_hierarchy_celltypes = pd.read_csv('/data/LBA_DATA/lbae/assets/hierarchy_celltypes_colors.csv')
+# # Keep hierarchy_code and reorder columns
+# df_hierarchy_celltypes = df_hierarchy_celltypes.iloc[:, 1:]
 
-# filter the  df_hierarchy_celltypes to only keep the celltypes in union_celltypes
-df_hierarchy_celltypes = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(union_celltypes)]
-df_hierarchy_celltypes = df_hierarchy_celltypes.drop(columns=['level_11', 'level_12', 'level_13', 'level_14', 'level_15', 
-                                                                'level_16', 'level_17', 'level_18', 'level_19', 'level_20', 
-                                                                'level_21', 'level_22', 'level_23', 'level_24', 'level_25', 
-                                                                'level_26'])
+# union_celltypes = set()
+# for slice_index in data.get_slice_list("ReferenceAtlas"):
+#     try:
+#         celltype_in_section = list(celltype_data.retrieve_section_data(int(slice_index))['color_masks'].keys())
+#         filtered_df = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(celltype_in_section)]
+#         union_celltypes.update(filtered_df["cell_type"].values)
+#     except:
+#         continue
 
+# # filter the  df_hierarchy_celltypes to only keep the celltypes in union_celltypes
+# df_hierarchy_celltypes = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(union_celltypes)]
+# df_hierarchy_celltypes = df_hierarchy_celltypes.drop(columns=['level_11', 'level_12', 'level_13', 'level_14', 'level_15', 
+#                                                                 'level_16', 'level_17', 'level_18', 'level_19', 'level_20', 
+#                                                                 'level_21', 'level_22', 'level_23', 'level_24', 'level_25', 
+#                                                                 'level_26'])
+df_hierarchy_celltypes = pd.read_csv("./new_data_lbae/celltype_data/celltypes_hierarchy.csv")
+celltype_to_color = pickle.load(open("./new_data_lbae/celltype_data/celltype_to_color.pkl", "rb"))
 # ==================================================================================================
 # --- Layout
 # ==================================================================================================
@@ -971,8 +975,8 @@ def handle_lipizone_selection_changes(
     if triggered_id == "page-6bis-select-all-lipizones-button":
         all_lipizones = {"names": [], "indices": []}
         for lipizone_name in df_hierarchy_lipizones["lipizone_names"].unique():
-            lipizone_indices = lipizones.index[
-                lipizones["lipizone_names"] == lipizone_name
+            lipizone_indices = df_hierarchy_lipizones.index[
+                df_hierarchy_lipizones["lipizone_names"] == lipizone_name
             ].tolist()
             if lipizone_indices:
                 all_lipizones["names"].append(lipizone_name)
@@ -995,8 +999,8 @@ def handle_lipizone_selection_changes(
         for lipizone_name in current_selection:
             if lipizone_name not in all_selected_lipizones["names"]:
                 # Find the indices for this lipizone
-                lipizone_indices = lipizones.index[
-                    lipizones["lipizone_names"] == lipizone_name
+                lipizone_indices = df_hierarchy_lipizones.index[
+                    df_hierarchy_lipizones["lipizone_names"] == lipizone_name
                 ].tolist()
                 
                 if lipizone_indices:
@@ -1071,8 +1075,8 @@ def handle_celltype_selection_changes(
         # Create the all_celltypes dictionary with only celltypes from the current slice
         all_celltypes = {"names": [], "indices": []}
         for celltype_name in filtered_df["cell_type"].unique():
-            celltype_indices = celltypes.index[
-                celltypes["cell_type"] == celltype_name
+            celltype_indices = df_hierarchy_celltypes.index[
+                df_hierarchy_celltypes["cell_type"] == celltype_name
             ].tolist()
             if celltype_indices:
                 all_celltypes["names"].append(celltype_name)
@@ -1087,8 +1091,8 @@ def handle_celltype_selection_changes(
         # Create the all_celltypes dictionary with only celltypes that meet the pixel threshold
         all_celltypes = {"names": [], "indices": []}
         for celltype_name in filtered_df["cell_type"].unique():
-            celltype_indices = celltypes.index[
-                celltypes["cell_type"] == celltype_name
+            celltype_indices = df_hierarchy_celltypes.index[
+                df_hierarchy_celltypes["cell_type"] == celltype_name
             ].tolist()
             if celltype_indices:
                 all_celltypes["names"].append(celltype_name)
@@ -1103,8 +1107,8 @@ def handle_celltype_selection_changes(
         # Create the all_celltypes dictionary with only celltypes that meet the pixel threshold
         all_celltypes = {"names": [], "indices": []}
         for celltype_name in filtered_df["cell_type"].unique():
-            celltype_indices = celltypes.index[
-                celltypes["cell_type"] == celltype_name
+            celltype_indices = df_hierarchy_celltypes.index[
+                df_hierarchy_celltypes["cell_type"] == celltype_name
             ].tolist()
             if celltype_indices:
                 all_celltypes["names"].append(celltype_name)
@@ -1127,8 +1131,8 @@ def handle_celltype_selection_changes(
         for celltype_name in current_selection:
             if celltype_name not in all_selected_celltypes["names"] and celltype_name in available_celltypes:
                 # Find the indices for this celltype
-                celltype_indices = celltypes.index[
-                    celltypes["cell_type"] == celltype_name
+                celltype_indices = df_hierarchy_celltypes.index[
+                    df_hierarchy_celltypes["cell_type"] == celltype_name
                 ].tolist()
                 
                 if celltype_indices:

@@ -972,7 +972,6 @@ class Figures:
             lipid_name=lipid_name,
             cache_flask=cache_flask,
         )
-        print("\nimage.shape:", image.shape)
 
         # Compute corresponding figure
         fig = self.build_lipid_heatmap_from_image(

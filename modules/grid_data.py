@@ -35,7 +35,7 @@ class GridImageShelve:
             os.makedirs(self.path_data)
         # Shelve uses the given filename as the base for its files
         self.shelf_path = os.path.join(self.path_data, self.filename)
-        self.lookup_brainid = pd.read_csv("/data/francesca/lbae/new_data_mm/lookup_brainid.csv", index_col=0)
+        self.lookup_brainid = pd.read_csv("./new_data_lbae/annotations/lookup_brainid.csv", index_col=0)
 
     def create_grid_image(self, maindata, lipid, sample):
         """

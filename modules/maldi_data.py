@@ -16,9 +16,9 @@ import pickle
 logging.basicConfig(level=logging.INFO)
 
 ABA_DIM = (528, 320, 456)
-ABA_CONTOURS = np.load("/data/francesca/lbae/data/atlas/eroded_annot.npy")
-ACRONYM_MASKS = pickle.load(open("/data/francesca/lbae/data/atlas/acronyms_masks.pkl", "rb"))
-ACRONYMS_PIXELS = pickle.load(open("/data/francesca/lbae/data/atlas/acronyms.pkl", "rb"))
+ABA_CONTOURS = np.load("./new_data_lbae/atlas/eroded_annot.npy")
+ACRONYM_MASKS = pickle.load(open("./new_data_lbae/atlas/acronyms_masks.pkl", "rb"))
+ACRONYMS_PIXELS = pickle.load(open("./new_data_lbae/atlas/acronyms.pkl", "rb"))
 
 # MAINDATA = pd.read_parquet("/data/LBA_DATA/Explorer2Paper/maindata_2.parquet")
 # DATA = MAINDATA.iloc[:, :173]
@@ -65,7 +65,6 @@ class LipidImage:
     slice_index: int
     is_scatter: bool = False
 
-
 class MaldiData:
     """Class to handle the storage of the new MALDI data format with direct lipid images.
 
@@ -111,7 +110,7 @@ class MaldiData:
         return self._df_annotations
 
     def get_AP_avg_coordinates(self, indices="ReferenceAtlas"):
-        coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_new.csv")
+        coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
         slices = self.get_slice_list(indices=indices)
         return coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), :]
 
@@ -206,7 +205,7 @@ class MaldiData:
             if brain_id not in brain_info:
                 return []
             slices = list(brain_info[brain_id].keys())
-            coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+            coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
             slices = coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), 'SectionID'].values
             return slices
 
@@ -532,7 +531,7 @@ class MaldiData:
             (list): The list of requested slice indices.
         """
         # sort slices based on the xccf column in the coordinates_csv
-        coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+        coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
         
         if indices == "all":
             slices = []
@@ -603,7 +602,7 @@ class MaldiData:
         
         return pixels
 
-    # pixel_masks_path = "/data/francesca/lbae/data/atlas/pixel_masks" # os.path.join(data.path_db, "pixel_masks")
+    # pixel_masks_path = "./new_data_lbae/atlas/pixel_masks" # os.path.join(data.path_db, "pixel_masks")
     # if not os.path.exists(pixel_masks_path):
     #         os.makedirs(pixel_masks_path)
 

@@ -1522,7 +1522,7 @@ class Figures:
             The 3D volume figure
         """
         # Load lipid data
-        lipid_path = f"/data/luca/lipidatlas/ManuscriptAnalysisRound3/3d_interpolated_native/{lipid_name}interpolation_log.npy"
+        lipid_path = f"./new_data_lbae/3d_interpolated_native/{lipid_name}interpolation_log.npy"
         np3d = np.load(lipid_path)
 
         # print(downsample_factor)

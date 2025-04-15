@@ -32,7 +32,7 @@ from pages import (
     lp_selection,
     id_cards,
     threeD_lipizones,
-    # peak_selection,
+    peak_selection,
 )
 from in_app_documentation.documentation import return_documentation
 from config import basic_config
@@ -86,6 +86,10 @@ def return_main_content():
             dcc.Store(id="page-6-all-selected-lipizones", data={}),
             dcc.Store(id="page-6-current-treemap-selection", data=None),
 
+            # Record the lipizones selected in page id-cards
+            dcc.Store(id="id-cards-current-treemap-selection", data=None),
+            dcc.Store(id="id-cards-all-selected-lipizones", data={"names": [], "indices": []}),
+
             # Record the lipizones and celltypes selected in page 6bis
             dcc.Store(id="page-6bis-all-selected-lipizones", data={}),
             dcc.Store(id="page-6bis-all-selected-celltypes", data={}),
@@ -130,6 +134,11 @@ def return_main_content():
             dcc.Store(id="dcc-store-list-volcano-B", data=[]),
             # Record the lipids expressed in the region in page 3
             dcc.Store(id="page-3-dcc-store-lipids-region", data=[]),
+
+            # Store to track view state
+            dcc.Store(id="all-lipizones-view-state", data=False),
+            dcc.Store(id="3d-lipizones-current-treemap-selection", data=None),
+            dcc.Store(id="3d-lipizones-all-selected-lipizones", data={"names": [], "indices": []}),
             
             # Actual app layout
             html.Div(

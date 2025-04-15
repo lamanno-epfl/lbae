@@ -81,7 +81,7 @@ logging.info("Memory use before any global variable declaration" + logmem())
 SAMPLE_DATA = False
 
 # Path to the ID cards
-ID_CARDS_PATH = "/data/luca/lipidatlas/ManuscriptAnalysisRound3/ID_cards"
+ID_CARDS_PATH = "./new_data_lbae/ID_cards"
 
 # # Define paths for the sample/not sample data
 # if SAMPLE_DATA:

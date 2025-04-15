@@ -74,7 +74,7 @@ class StreamData:
         return self._df_annotations
 
     def get_AP_avg_coordinates(self, indices="ReferenceAtlas"):
-        coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+        coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
         slices = self.get_slice_list(indices=indices)
         return coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), :]
 
@@ -155,7 +155,7 @@ class StreamData:
             if brain_id not in brain_info:
                 return []
             slices = list(brain_info[brain_id].keys())
-            coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+            coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
             slices = coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), 'SectionID'].values
             return slices
 

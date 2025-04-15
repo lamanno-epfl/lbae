@@ -70,7 +70,7 @@ class PeakData:
         return self._df_annotations
 
     def get_coordinates(self, indices="ReferenceAtlas"):
-        coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+        coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
         slices = self.get_slice_list(indices=indices)
         return coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), :]
 
@@ -87,7 +87,7 @@ class PeakData:
 
     def _init_metadata(self):
         """Initialize or load the metadata about stored brains and peaks."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db_metadata:
             if "brain_info" not in db_metadata:
                 db_metadata["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[peak_names]]]
 
@@ -99,7 +99,7 @@ class PeakData:
             force_update: If True, overwrite existing data
         """
         # Update metadata
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db_metadata:
             brain_info = db_metadata["brain_info"]
 
             if peak_data.brain_id not in brain_info:
@@ -141,24 +141,25 @@ class PeakData:
 
     def get_available_brains(self) -> List[str]:
         """Get list of available brain IDs in the database."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db:
             return list(db["brain_info"].keys())
 
     def get_available_slices(self, brain_id: str) -> List[int]:
         """Get list of available slice indices for a given brain."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db:
             brain_info = db["brain_info"]
             if brain_id not in brain_info:
                 return []
             slices = list(brain_info[brain_id].keys())
-            coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+            coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
             slices = coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), 'SectionID'].values
             return slices
 
     def get_available_peaks(self, slice_index: int) -> List[str]:
         """Get list of available peaks for a given brain and slice."""
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db:
+
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db:
             brain_info = db["brain_info"]
             if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
                 return []
@@ -188,6 +189,7 @@ class PeakData:
         try:
             # Use the parameters passed to the function
             peak_data = self.get_peak_image(slice_index, peak_name)
+            print(peak_data)
 
             if peak_data is None:
                 print(f"{peak_name} in slice {slice_index} was not found.")
@@ -354,7 +356,7 @@ class PeakData:
             (list): The list of requested slice indices.
         """
         # sort slices based on the xccf column in the coordinates_csv
-        coordinates_csv = pd.read_csv("/data/francesca/lbae/assets/sectionid_to_rostrocaudal_slider_sorted.csv")
+        coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
 
         if indices == "all":
             slices = []

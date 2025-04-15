@@ -19,6 +19,7 @@ from dash.dependencies import Input, Output, State, ALL
 import dash_mantine_components as dmc
 import numpy as np
 from scipy.ndimage import gaussian_filter
+import pickle
 # threadpoolctl import threadpool_limits, threadpool_info
 #threadpool_limits(limits=8)
 import os
@@ -32,7 +33,7 @@ import plotly.express as px
 # --- Helper functions
 # ==================================================================================================
 
-def compute_hybrid_image(hex_colors_to_highlight, brain_id="ReferenceAtlas"):
+def all_lipizones_default_image(brain_id="ReferenceAtlas"):
     def hex_to_rgb(hex_color):
         """Convert hexadecimal color to RGB values (0-1 range)"""
         hex_color = hex_color.lstrip('#')
@@ -65,7 +66,7 @@ def compute_hybrid_image(hex_colors_to_highlight, brain_id="ReferenceAtlas"):
     # grayscale_image = np.power(grayscale_image, 2) * 0.3
     grayscale_image *= ~color_masks[list(color_masks.keys())[0]]
     
-    rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight]
+    rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in lipizone_to_color.values()]
     
     hybrid_image = np.zeros_like(rgb_image)
     for i in range(3):
@@ -109,6 +110,14 @@ def compute_hybrid_image(hex_colors_to_highlight, brain_id="ReferenceAtlas"):
     )
 
     return padded_image
+
+def is_light_color(hex_color):
+    """Determine if a color is light or dark based on its RGB values."""
+    # Convert hex to RGB
+    rgb = hex_to_rgb(hex_color)
+    # Calculate luminance using the formula: L = 0.299*R + 0.587*G + 0.114*B
+    luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255
+    return luminance > 0.5
 
 def black_aba_contours(overlay):
     black_overlay = overlay.copy()
@@ -229,54 +238,54 @@ def create_treemap_figure(df_treemap, node_colors):
 # --- Data
 # ==================================================================================================
 
-manual_naming_lipizones_level_1 = {
-    '1' : 'White matter-rich',
-    '2' : 'Gray matter-rich',
-}
-manual_naming_lipizones_level_2 = {
-    '1_1' : 'Core white matter',
-    '1_2' : 'Mixed gray and white matter, ventricles',
-    '2_1' : 'Outer cortex, cerebellar molecular layer, amygdala, part of hippocampus',
-    '2_2' : 'Deep cortex, part of hippocampus, striatum, cerebellar granule cells',
-}
-manual_naming_lipizones_level_3 = {
-    '1_1_1' : 'Oligodendroglia-rich regions',
-    '1_1_2' : 'Mixed white matter with neurons',
-    '1_2_1' : 'Ventricular system, gray-white boundary, hypothalamus',
-    '1_2_2' : 'Thalamus and midbrain',
-    '2_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
-    '2_1_2' : 'Layer 1 to border between 2/3 and 4, piriform, Purkinje cells, enthorinal, mixed',
-    '2_2_1' : 'Layer 5, hippocampus and noncortical gray matter',
-    '2_2_2' : 'Layers 5 and 6, hippocampus, nuclei, granular layer of the cerebellum',
-}
-manual_naming_lipizones_level_4 = {
-    '1_1_1_1' : 'Core of fiber tracts, arbor vitae and nerves/1',
-    '1_1_1_2' : 'Core of fiber tracts, arbor vitae and nerves/2',
-    '1_1_2_1' : 'Bundle and boundary white matter-rich',
-    '1_1_2_2' : 'Thalamus, midbrain, hindbrain white matter regions',
-    '1_2_1_1' : 'Ventricular system',
-    '1_2_1_2' : 'Gray-white matter boundary',
-    '1_2_2_1' : 'Mostly thalamus, midbrain, hindbrain mixed types',
-    '1_2_2_2' : 'Myelin-rich deep cortex, striatum, hindbrain and more',
-    '2_1_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
-    '2_1_1_2' : 'HPF, AMY, CTXSP, HY and more',
-    '2_1_2_1' : 'Purkinje layer, L2/3 and boundary with L4',
-    '2_1_2_2' : 'Layer 1, 2/3, piriform and enthorinal cortex, CA1',
-    '2_2_1_1' : 'Layer 5, retrosplenial, hippocampus',
-    '2_2_1_2' : 'Noncortical gray matter',
-    '2_2_2_1' : 'Layer 5-6, nuclei, granule cells layer',
-    '2_2_2_2' : 'Layer 6, mixed complex GM, granule cells layer',
-}
+# manual_naming_lipizones_level_1 = {
+#     '1' : 'White matter-rich',
+#     '2' : 'Gray matter-rich',
+# }
+# manual_naming_lipizones_level_2 = {
+#     '1_1' : 'Core white matter',
+#     '1_2' : 'Mixed gray and white matter, ventricles',
+#     '2_1' : 'Outer cortex, cerebellar molecular layer, amygdala, part of hippocampus',
+#     '2_2' : 'Deep cortex, part of hippocampus, striatum, cerebellar granule cells',
+# }
+# manual_naming_lipizones_level_3 = {
+#     '1_1_1' : 'Oligodendroglia-rich regions',
+#     '1_1_2' : 'Mixed white matter with neurons',
+#     '1_2_1' : 'Ventricular system, gray-white boundary, hypothalamus',
+#     '1_2_2' : 'Thalamus and midbrain',
+#     '2_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
+#     '2_1_2' : 'Layer 1 to border between 2/3 and 4, piriform, Purkinje cells, enthorinal, mixed',
+#     '2_2_1' : 'Layer 5, hippocampus and noncortical gray matter',
+#     '2_2_2' : 'Layers 5 and 6, hippocampus, nuclei, granular layer of the cerebellum',
+# }
+# manual_naming_lipizones_level_4 = {
+#     '1_1_1_1' : 'Core of fiber tracts, arbor vitae and nerves/1',
+#     '1_1_1_2' : 'Core of fiber tracts, arbor vitae and nerves/2',
+#     '1_1_2_1' : 'Bundle and boundary white matter-rich',
+#     '1_1_2_2' : 'Thalamus, midbrain, hindbrain white matter regions',
+#     '1_2_1_1' : 'Ventricular system',
+#     '1_2_1_2' : 'Gray-white matter boundary',
+#     '1_2_2_1' : 'Mostly thalamus, midbrain, hindbrain mixed types',
+#     '1_2_2_2' : 'Myelin-rich deep cortex, striatum, hindbrain and more',
+#     '2_1_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
+#     '2_1_1_2' : 'HPF, AMY, CTXSP, HY and more',
+#     '2_1_2_1' : 'Purkinje layer, L2/3 and boundary with L4',
+#     '2_1_2_2' : 'Layer 1, 2/3, piriform and enthorinal cortex, CA1',
+#     '2_2_1_1' : 'Layer 5, retrosplenial, hippocampus',
+#     '2_2_1_2' : 'Noncortical gray matter',
+#     '2_2_2_1' : 'Layer 5-6, nuclei, granule cells layer',
+#     '2_2_2_2' : 'Layer 6, mixed complex GM, granule cells layer',
+# }
 
-lipizones = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0) # HEX
-lipizone_to_color = {name: color for name, color in zip(lipizones["lipizone_names"], lipizones["lipizone_color"])}
-df_hierarchy_lipizones = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
+# lipizones = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0) # HEX
+# lipizone_to_color = {name: color for name, color in zip(lipizones["lipizone_names"], lipizones["lipizone_color"])}
+# df_hierarchy_lipizones = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
 
-# lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)['lipizone_names'].values
-df_hierarchy_lipizones['level_1_name'] = df_hierarchy_lipizones['level_1'].astype(str).map(manual_naming_lipizones_level_1)
-df_hierarchy_lipizones['level_2_name'] = df_hierarchy_lipizones['level_2'].astype(str).map(manual_naming_lipizones_level_2)
-df_hierarchy_lipizones['level_3_name'] = df_hierarchy_lipizones['level_3'].astype(str).map(manual_naming_lipizones_level_3)
-df_hierarchy_lipizones['level_4_name'] = df_hierarchy_lipizones['level_4'].astype(str).map(manual_naming_lipizones_level_4)
+# # lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)['lipizone_names'].values
+# df_hierarchy_lipizones['level_1_name'] = df_hierarchy_lipizones['level_1'].astype(str).map(manual_naming_lipizones_level_1)
+# df_hierarchy_lipizones['level_2_name'] = df_hierarchy_lipizones['level_2'].astype(str).map(manual_naming_lipizones_level_2)
+# df_hierarchy_lipizones['level_3_name'] = df_hierarchy_lipizones['level_3'].astype(str).map(manual_naming_lipizones_level_3)
+# df_hierarchy_lipizones['level_4_name'] = df_hierarchy_lipizones['level_4'].astype(str).map(manual_naming_lipizones_level_4)
 
 # def build_tree_from_csv(csv_path):
 #     df = pd.read_csv(csv_path)
@@ -307,6 +316,8 @@ df_hierarchy_lipizones['level_4_name'] = df_hierarchy_lipizones['level_4'].astyp
 # hierarchy_data = build_tree_from_csv("./data/annotations/lipizones_hierarchy.csv")
 
 # df_hierarchy = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
+df_hierarchy_lipizones = pd.read_csv("./new_data_lbae/lipizone_data/lipizones_hierarchy.csv")
+lipizone_to_color = pickle.load(open("./new_data_lbae/lipizone_data/lipizone_to_color.pkl", "rb"))
 
 # ==================================================================================================
 # --- Layout
@@ -351,7 +362,8 @@ def return_layout(basic_config, slice_index):
                             "background-color": "#1d1c1f",
                         },
                         figure=figures.build_lipid_heatmap_from_image(
-                            compute_hybrid_image(['#f75400'], brain_id="ReferenceAtlas"),
+                            # compute_hybrid_image(['#f75400'], brain_id="ReferenceAtlas"),
+                            all_lipizones_default_image(brain_id="ReferenceAtlas"),
                             return_base64_string=False,
                             draw=False,
                             type_image="RGB",
@@ -612,8 +624,9 @@ def return_layout(basic_config, slice_index):
 def update_current_selection(click_data):
     """Store the current treemap selection."""
     input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    print("input_id", input_id)
     value = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    
+    print("value", value)
     if not click_data:
         return None, "Click on a node in the tree to select all lipizones under it"
     
@@ -622,19 +635,20 @@ def update_current_selection(click_data):
     
     # Filter hierarchy based on the clicked node's path
     filtered = df_hierarchy_lipizones.copy()
-    
+    print("filtered", filtered.shape)
     # Get the level of the clicked node
     path_columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
     
     # Apply filters based on the entire path up to the clicked node
     for i, value in enumerate(current_path.split("/")):
+        print(i, "value", value)
         if i < len(path_columns):
             column = path_columns[i]
             filtered = filtered[filtered[column].astype(str) == str(value)]
     
     # Get all lipizones under this node
     lipizones = sorted(filtered["lipizone_names"].unique())
-    
+    print("lipizones", len(lipizones))
     if lipizones:
         return lipizones, f"Selected: {clicked_label} ({len(lipizones)} lipizones)"
     
@@ -668,8 +682,8 @@ def handle_selection_changes(
     if triggered_id == "page-6-select-all-lipizones-button":
         all_lipizones = {"names": [], "indices": []}
         for lipizone_name in df_hierarchy_lipizones["lipizone_names"].unique():
-            lipizone_indices = lipizones.index[
-                lipizones["lipizone_names"] == lipizone_name
+            lipizone_indices = df_hierarchy_lipizones.index[
+                df_hierarchy_lipizones["lipizone_names"] == lipizone_name
             ].tolist()
             if lipizone_indices:
                 all_lipizones["names"].append(lipizone_name)
@@ -692,8 +706,8 @@ def handle_selection_changes(
         for lipizone_name in current_selection:
             if lipizone_name not in all_selected_lipizones["names"]:
                 # Find the indices for this lipizone
-                lipizone_indices = lipizones.index[
-                    lipizones["lipizone_names"] == lipizone_name
+                lipizone_indices = df_hierarchy_lipizones.index[
+                    df_hierarchy_lipizones["lipizone_names"] == lipizone_name
                 ].tolist()
                 
                 if lipizone_indices:
@@ -829,7 +843,8 @@ def page_6_plot_graph_heatmap_mz_selection(
                 # If section data not found, fall back to the hybrid image
                 logging.warning(f"Section data not found: {e}. Using hybrid image instead.")
                 return figures.build_lipid_heatmap_from_image(
-                    compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                    # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                    all_lipizones_default_image(brain_id),
                     return_base64_string=False,
                     draw=False,
                     type_image="RGB",
@@ -929,7 +944,8 @@ def page_6_plot_graph_heatmap_mz_selection(
                     # If section data not found, fall back to the hybrid image
                     logging.warning(f"Section data not found: {e}. Using hybrid image instead.")
                     return figures.build_lipid_heatmap_from_image(
-                        compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                        # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                        all_lipizones_default_image(brain_id),
                         return_base64_string=False,
                         draw=False,
                         type_image="RGB",
@@ -965,7 +981,8 @@ def page_6_plot_graph_heatmap_mz_selection(
                         # If that fails, fall back to the hybrid image
                         logging.warning(f"Failed to retrieve grid image: {e}. Using hybrid image instead.")
                         return figures.build_lipid_heatmap_from_image(
-                            compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                            # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                            all_lipizones_default_image(brain_id),
                             return_base64_string=False,
                             draw=False,
                             type_image="RGB",
@@ -975,7 +992,8 @@ def page_6_plot_graph_heatmap_mz_selection(
                     logging.info("Trying to display all sections for more than one lipid, not possible. Using first selected lipid.")
                     first_lipid = selected_lipizone_names[0] if selected_lipizone_names else "choroid plexus"
                     return figures.build_lipid_heatmap_from_image(
-                        compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                        # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                        all_lipizones_default_image(brain_id),
                         return_base64_string=False,
                         draw=False,
                         type_image="RGB",
@@ -986,7 +1004,8 @@ def page_6_plot_graph_heatmap_mz_selection(
             else:
                 logging.info("Right before calling the graphing function")
                 return figures.build_lipid_heatmap_from_image(
-                    compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                    # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                    all_lipizones_default_image(brain_id),
                     return_base64_string=False,
                     draw=False,
                     type_image="RGB",
@@ -999,7 +1018,8 @@ def page_6_plot_graph_heatmap_mz_selection(
             # Use default color for choroid plexus
             hex_colors_to_highlight = ['#f75400']  # Default color for choroid plexus
             return figures.build_lipid_heatmap_from_image(
-                    compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                    # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                    all_lipizones_default_image(brain_id),
                     return_base64_string=False,
                     draw=False,
                     type_image="RGB",
@@ -1010,7 +1030,8 @@ def page_6_plot_graph_heatmap_mz_selection(
             # No lipid has been selected, return image from boundaries using RGB
             hex_colors_to_highlight = ['#f75400']  # Default color for choroid plexus
             return figures.build_lipid_heatmap_from_image(
-                    compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                    # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                    all_lipizones_default_image(brain_id),
                     return_base64_string=False,
                     draw=False,
                     type_image="RGB",
@@ -1054,12 +1075,16 @@ def update_selected_lipizones_badges(all_selected_lipizones):
         for name in all_selected_lipizones["names"]:
             # Get the color for this lipizone, default to cyan if not found
             lipizone_color = lipizone_to_color.get(name, "#00FFFF")
+
+            # Determine if the background color is light or dark
+            is_light = is_light_color(lipizone_color)
+            text_color = "black" if is_light else "white"
             
             # Create a style that uses the lipizone's color
             badge_style = {
                 "margin": "2px",
                 "backgroundColor": lipizone_color,
-                "color": "black",  # Use black text for better contrast
+                "color": text_color,  # Use black text for better contrast
                 "border": "none",
             }
             

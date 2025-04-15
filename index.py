@@ -30,7 +30,7 @@ from pages import (
     region_analysis,
     threeD_exploration,
     lp_selection,
-    id_cards,
+    lipizones_id_cards,
     threeD_lipizones,
     peak_selection,
 )
@@ -447,7 +447,7 @@ def return_validation_layout(main_content, initial_slice=12):
             lipizones_selection.return_layout(basic_config, initial_slice),
             lipizones_vs_celltypes.return_layout(basic_config, initial_slice),
             lipids_vs_genes.return_layout(basic_config, initial_slice),
-            id_cards.return_layout(basic_config, initial_slice),
+            lipizones_id_cards.return_layout(basic_config, initial_slice),
             region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
             threeD_lipizones.return_layout(basic_config, initial_slice),
@@ -494,8 +494,8 @@ def render_page_content(pathname, slice_index, brain):
     elif pathname == "/lipids-vs-genes":
         page = lipids_vs_genes.return_layout(basic_config, slice_index)
 
-    elif pathname == "/id-cards":
-        page = id_cards.return_layout(basic_config, slice_index)
+    elif pathname == "/lipizones-id-cards":
+        page = lipizones_id_cards.return_layout(basic_config, slice_index)
 
     elif pathname == "/region-analysis":
         page = region_analysis.return_layout(basic_config, slice_index)

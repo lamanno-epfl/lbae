@@ -209,7 +209,7 @@ layout = html.Div(
                         ),
                         # Link to ID Cards
                         dbc.NavLink(
-                            href="/id-cards",
+                            href="/lipizones-id-cards",
                             active="exact",
                             children=[
                                 html.I(

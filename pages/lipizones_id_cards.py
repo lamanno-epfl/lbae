@@ -41,6 +41,14 @@ lipizone_to_color = pickle.load(open("./new_data_lbae/lipizone_data/lipizone_to_
 # --- Helper functions
 # ==================================================================================================
 
+def is_light_color(hex_color):
+    """Determine if a color is light or dark based on its RGB values."""
+    # Convert hex to RGB
+    rgb = hex_to_rgb(hex_color)
+    # Calculate luminance using the formula: L = 0.299*R + 0.587*G + 0.114*B
+    luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255
+    return luminance > 0.5
+
 def hex_to_rgb(hex_color):
     """Convert hexadecimal color to RGB values."""
     hex_color = hex_color.lstrip('#')
@@ -436,12 +444,16 @@ def update_selected_lipizones_badges(all_selected_lipizones):
         for name in all_selected_lipizones["names"]:
             # Get the color for this lipizone, default to cyan if not found
             lipizone_color = lipizone_to_color.get(name, "#00FFFF")
+
+            # Determine if the background color is light or dark
+            is_light = is_light_color(lipizone_color)
+            text_color = "black" if is_light else "white"
             
             # Create a style that uses the lipizone's color
             badge_style = {
                 "margin": "2px",
                 "backgroundColor": lipizone_color,
-                "color": "black",  # Use black text for better contrast
+                "color": text_color,  # Use black text for better contrast
                 "border": "none",
             }
             

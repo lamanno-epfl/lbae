@@ -21,19 +21,6 @@ from uuid import uuid4
 import diskcache
 import os
 
-# from pages import (
-#     home, 
-#     lipid_selection, 
-#     lipizones_selection, 
-#     lp_selection, 
-#     peak_selection, 
-#     region_analysis, 
-#     threeD_exploration, 
-#     threeD_lipizones, id_cards
-# )
-
-# from config import basic_config
-
 # LBAE modules
 from modules.tools.misc import logmem
 logging.info("Memory use before any LBAE import" + logmem())
@@ -276,36 +263,11 @@ cache_flask.set("locked-reading", False)
 #################################################################################################### ????
 
 # Add the route to serve PDF files
-@app.server.route('/id-cards-pdf/<lipizone_name>')
+@app.server.route('/lipizone-id-cards-pdf/<lipizone_name>')
 def serve_pdf(lipizone_name):
     """Serve PDF files from the ID cards directory."""
     pdf_filename = f"lipizone_ID_card_{lipizone_name}.pdf"
     return flask.send_from_directory(ID_CARDS_PATH, pdf_filename)
-
-# @app.callback(
-#     Output("page-content", "children"), 
-#     Input("url", "pathname"))
-# def display_page(pathname):
-#     if pathname == "/":
-#         return home.return_layout(basic_config, slice_index)
-#     elif pathname == "/lipid-selection":
-#         return lipid_selection.return_layout(basic_config, slice_index)
-#     elif pathname == "/lipizones-selection":
-#         return lipizones_selection.return_layout(basic_config, slice_index)
-#     elif pathname == "/lp-selection":
-#         return lp_selection.return_layout(basic_config, slice_index)
-#     elif pathname == "/peak-selection":
-#         return peak_selection.return_layout(basic_config, slice_index)
-#     elif pathname == "/region-analysis":
-#         return region_analysis.return_layout(basic_config, slice_index)
-#     elif pathname == "/3D-exploration":
-#         return threeD_exploration.return_layout(basic_config, slice_index)
-#     elif pathname == "/id-cards":
-#         return id_cards.return_layout(basic_config, slice_index)
-#     elif pathname == "/3D-lipizones":
-#         return threeD_lipizones.return_layout(basic_config, slice_index)
-#     else:
-#         return home.return_layout(basic_config, slice_index)
 
 # Make grid_data available for import
 __all__ = [

@@ -7,30 +7,30 @@ from dataclasses import dataclass
 from time import time
 from typing import Dict, List, Optional, Tuple
 
+from modules.maldi_data import SliceData, ABA_CONTOURS, majority_vote_9x9, ACRONYM_MASKS, ACRONYMS_PIXELS, ABA_DIM
+# from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
+from scipy.ndimage import generic_filter
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-ABA_DIM = (528, 320, 456)
+# @dataclass
+# class PeakImage:
+#     """Class to store peak image data and metadata.
 
-@dataclass
-class PeakImage:
-    """Class to store peak image data and metadata.
+#     Attributes:
+#         name: Name of the peak (without cation)
+#         image: 2D numpy array containing the peak distribution
+#         brain_id: ID of the brain this image is from
+#         slice_index: Index of the slice in the brain
+#         is_scatter: Whether this is a scatterplot (True) or image (False)
+#     """
 
-    Attributes:
-        name: Name of the peak (without cation)
-        image: 2D numpy array containing the peak distribution
-        brain_id: ID of the brain this image is from
-        slice_index: Index of the slice in the brain
-        is_scatter: Whether this is a scatterplot (True) or image (False)
-    """
-
-    name: str
-    image: np.ndarray   ########## peak_expression (dim: num_pixels, 1)
-    indices: np.ndarray ########## x_index, y_index, z_index (dim: num_pixels, 3)
-    brain_id: str
-    slice_index: int
-    is_scatter: bool = False
-
+#     name: str
+#     image: np.ndarray   ########## peak_expression (dim: num_pixels, 1)
+#     indices: np.ndarray ########## x_index, y_index, z_index (dim: num_pixels, 3)
+#     brain_id: str
+#     slice_index: int
 
 class PeakData:
     """Class to handle the storage of the new PEAK data format with direct peak images.
@@ -58,160 +58,345 @@ class PeakData:
 
         if not os.path.exists(self.path_data):
             os.makedirs(self.path_data)
+        
         self._df_annotations = pd.read_csv(os.path.join(self.path_annotations, "peak_annotation.csv"))
-        self.lookup_brainid = pd.read_csv(os.path.join(self.path_annotations, "lookup_brainid.csv"), index_col=0)
         
         # Initialize the metadata file if it doesn't exist
         self._init_metadata()
 
         self.image_shape = (ABA_DIM[1], ABA_DIM[2])
 
+        self.acronyms_masks = ACRONYM_MASKS
+        # for slice_idx in self.get_slice_list():
+        #     # append get_acronym_mask to the list
+        #     self.acronyms_masks[slice_idx] = self.get_acronym_mask(slice_idx)
+        # self.acronyms_masks_with_holes = ACRONYM_MASKS_WITH_HOLES
+
     def get_annotations(self) -> pd.DataFrame:
         return self._df_annotations
 
-    def get_coordinates(self, indices="ReferenceAtlas"):
-        coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
-        slices = self.get_slice_list(indices=indices)
-        return coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), :]
+    # def get_AP_avg_coordinates(self, indices="ReferenceAtlas"):
+    #     coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
+    #     slices = self.get_slice_list(indices=indices)
+    #     return coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), :]
 
     def get_brain_id_from_sliceindex(self, slice_index):
         try:
-            sample = self.lookup_brainid.loc[
-                self.lookup_brainid["SectionID"] == slice_index, "Sample"
-            ].values[0]
-            return sample
-
+            with shelve.open(os.path.join(self.path_metadata, "metadata_peaks")) as db_metadata:
+                brain_info = db_metadata["brain_info"]
+                for brain_id in self.get_available_brains():
+                    if slice_index in brain_info[brain_id]["slice_indices"]:
+                        return brain_id
         except:
             print("Missing sample")
             return np.nan
 
     def _init_metadata(self):
         """Initialize or load the metadata about stored brains and peaks."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peaks")) as db_metadata:
             if "brain_info" not in db_metadata:
-                db_metadata["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[peak_names]]]
+                db_metadata["brain_info"] = {}
 
-    def add_peak_image(self, peak_data: PeakImage, force_update: bool = False):
-        """Add a peak image to the database.
+    def add_peaks_image(
+        self, 
+        slice_data: SliceData, 
+        force_update: bool = False
+        ):
+        """Add a slice data to the database.
 
         Args:
-            peak_data: PeakImage object containing the image and metadata
+            slice_data: SliceData object containing the image and metadata
             force_update: If True, overwrite existing data
         """
         # Update metadata
-        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peaks")) as db_metadata:
+            # if "brain_info" not in db_metadata:
+            #     db_metadata["brain_info"] = {}
             brain_info = db_metadata["brain_info"]
 
-            if peak_data.brain_id not in brain_info:
-                brain_info[peak_data.brain_id] = {}
+            if slice_data.brain_id not in brain_info:
+                brain_info[slice_data.brain_id] = {}
+                brain_info[slice_data.brain_id]['slice_indices'] = []
+                brain_info[slice_data.brain_id]['peak_names'] = slice_data.content_names
 
-            if peak_data.slice_index not in brain_info[peak_data.brain_id]:
-                brain_info[peak_data.brain_id][peak_data.slice_index] = []
+            if slice_data.slice_index not in brain_info[slice_data.brain_id]['slice_indices']:
+                brain_info[slice_data.brain_id]['slice_indices'].append(slice_data.slice_index)
 
-            if peak_data.name not in brain_info[peak_data.brain_id][peak_data.slice_index]:
-                brain_info[peak_data.brain_id][peak_data.slice_index].append(peak_data.name)
+            # if slice_data.name not in brain_info[slice_data.brain_id][slice_data.slice_index]:
+            #     brain_info[slice_data.brain_id][slice_data.slice_index].append(slice_data.name)
 
-            db["brain_info"] = brain_info
+            db_metadata["brain_info"] = brain_info
 
         # Store the actual image data
-        key = f"{peak_data.brain_id}/slice_{peak_data.slice_index}/{peak_data.name}"
+        key = f"{slice_data.brain_id}/slice_{slice_data.slice_index}"
         with shelve.open(os.path.join(self.path_data, "peak_images")) as db:
             if key in db and not force_update:
                 logging.warning(
-                    f"Peak image {key} already exists. Use force_update=True to overwrite."
+                    f"Slice data {key} already exists. Use force_update=True to overwrite."
                 )
                 return
-            db[key] = peak_data
+            db[key] = slice_data
 
-    def get_peak_image(self, slice_index: int, peak_name: str) -> Optional[PeakImage]:
-        """Retrieve a peak image from the database.
+    # def get_peak_image(self, slice_index: int, peak_name: str) -> Optional[PeakImage]:
+    #     """Retrieve a peak image from the database.
+
+    #     Args:
+    #         brain_id: ID of the brain
+    #         slice_index: Index of the slice
+    #         peak_name: Name of the peak
+
+    #     Returns:
+    #         PeakImage object if found, None otherwise
+    #     """
+    #     brain_id = self.get_brain_id_from_sliceindex(slice_index)
+    #     key = f"{brain_id}/slice_{float(slice_index)}/{peak_name}"
+    #     with shelve.open(os.path.join(self.path_data, "peak_images")) as db:
+    #         return db.get(key)
+
+    def get_peaks_image(self, slice_index: int):
+        """Retrieve a program image from the database.
 
         Args:
             brain_id: ID of the brain
             slice_index: Index of the slice
-            peak_name: Name of the peak
 
         Returns:
-            PeakImage object if found, None otherwise
+            SliceData object if found, None otherwise
         """
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
-        key = f"{brain_id}/slice_{float(slice_index)}/{peak_name}"
+        key = f"{brain_id}/slice_{float(slice_index)}"
         with shelve.open(os.path.join(self.path_data, "peak_images")) as db:
             return db.get(key)
 
     def get_available_brains(self) -> List[str]:
         """Get list of available brain IDs in the database."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db:
-            return list(db["brain_info"].keys())
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peaks")) as db_metadata:
+            return list(db_metadata["brain_info"].keys())
 
     def get_available_slices(self, brain_id: str) -> List[int]:
         """Get list of available slice indices for a given brain."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db:
-            brain_info = db["brain_info"]
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peaks")) as db_metadata:
+            brain_info = db_metadata["brain_info"]
             if brain_id not in brain_info:
                 return []
-            slices = list(brain_info[brain_id].keys())
+            # slices = list(brain_info[brain_id].keys())
+            slices = brain_info[brain_id]['slice_indices']
             coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
             slices = coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), 'SectionID'].values
             return slices
 
-    def get_available_peaks(self, slice_index: int) -> List[str]:
-        """Get list of available peaks for a given brain and slice."""
-        brain_id = self.get_brain_id_from_sliceindex(slice_index)
+    def get_available_brains(self) -> List[str]:
+        """Get list of available brain IDs in the database."""
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peaks")) as db_metadata:
+            return list(db_metadata["brain_info"].keys())
 
-        with shelve.open(os.path.join(self.path_metadata, "metadata_peak")) as db:
-            brain_info = db["brain_info"]
-            if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
+    def get_available_slices(self, brain_id: str) -> List[int]:
+        """Get list of available slice indices for a given brain."""
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peaks")) as db_metadata:
+            brain_info = db_metadata["brain_info"]
+            if brain_id not in brain_info:
                 return []
-            return brain_info[brain_id][slice_index]
+            # slices = list(brain_info[brain_id].keys())
+            slices = brain_info[brain_id]['slice_indices']
+            coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
+            slices = coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), 'SectionID'].values
+            return slices
+
+    def get_available_peaks(self, slice_index: Optional[int] = None) -> List[str]:
+        """Get list of available programs for a given brain and slice."""
+        if slice_index is None:
+            slice_index = self.get_slice_list()[0]
+        brain_id = self.get_brain_id_from_sliceindex(slice_index)
+        with shelve.open(os.path.join(self.path_metadata, "metadata_peaks")) as db_metadata:
+            brain_info = db_metadata["brain_info"]
+            if brain_id not in brain_info or slice_index not in brain_info[brain_id]['slice_indices']:
+                return []
+            return brain_info[brain_id]['peak_names']
             # Use the parameters passed to the function
 
-    def extract_peak_image(self, slice_index, peak_name, fill_holes=True):
-        """Extract a peak image from scatter data with optional hole filling.
+    def get_image_indices(self, slice_index):
+        """Get the indices of a lipid image from the database.
 
         Args:
             slice_index: Index of the slice
-            peak_name: Name of the peak
-            fill_holes: Whether to fill holes using nearest neighbor interpolation
-
-        Returns:
-            2D numpy array with the peak distribution or None if not found
+            lipid_name: Name of the lipid
         """
+        return self.get_peaks_image(slice_index).indices #, self.get_available_programs(slice_index)[0]).indices
 
-        df_percentiles = pd.read_csv('peak_percentiles.csv')
-        df_percentiles = df_percentiles.loc[df_percentiles["peak"].astype(str) == str(peak_name), :]
-        vmin = df_percentiles["vmin"].values[0] if not df_percentiles.empty else 0
-        vmax = df_percentiles["vmax"].values[0] if not df_percentiles.empty else 1
+    # def get_acronym_mask(self, slice_index, fill_holes=True):
+    #     """
+    #     Retrieves the acronyms mask for a given slice index.
+    #     """
+    #     # print(f"slice_index: {slice_index}")
+    #     # z_coord = METADATA[METADATA["SectionID"] == slice_index]["x_index"].values
+    #     # take the acronyms of the rows of metadata that have SectionID == slice_index
+    #     acronym_points = ACRONYMS_PIXELS[slice_index]
+    #     coordinates = self.get_image_indices(slice_index)
+        
+    #     # Create DataFrame with proper column alignment
+    #     acronym_scatter = pd.DataFrame({
+    #         'x_index': coordinates[:, 0],
+    #         'x': coordinates[:, 2],
+    #         'y': coordinates[:, 1],
+    #         'acronym': acronym_points
+    #     })
 
-        print(f"vmin: {vmin}")
-        print(f"vmax: {vmax}")
+    #     # print unique values of the third column
+    #     # if the elements of acronym_scatter["acronym"].values are None, replace them with "undefined"
+    #     if slice_index in [33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0]:
+    #         return np.full(self.image_shape, 'Undefined')
+    #     max_len = max(len(s) for s in acronym_scatter["acronym"].values)
+    #     arr = np.full(self.image_shape, 'Undefined', dtype=f'U{max(max_len, len("Undefined"))}')  # Adjust dimensions if needed
 
+    #     # Convert coordinates to integers for indexing
+    #     x_indices = acronym_scatter["x"].astype(int).values
+    #     y_indices = acronym_scatter["y"].astype(int).values
+    #     # Ensure indices are within bounds
+    #     valid_indices = (
+    #         (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
+    #     )
+
+    #     # Fill the array with values at the specified coordinates
+    #     arr[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["acronym"].values[
+    #         valid_indices
+    #     ]
+    #     arr_z = np.full(self.image_shape, np.nan)
+    #     arr_z[y_indices[valid_indices], x_indices[valid_indices]] = acronym_scatter["x_index"].values[
+    #         valid_indices
+    #     ]
+    #     arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
+
+    #     mcc = MouseConnectivityCache(manifest_file='mouse_connectivity_manifest.json')
+    #     structure_tree = mcc.get_structure_tree()
+
+    #     # pixels = pixels
+    #     annotation, _ = mcc.get_annotation_volume()
+
+    #     # Check if we need to fill holes
+    #     if fill_holes:
+    #         # Count how many NaN values we have
+    #         # nan_count_before = (arr == 'Undefined').sum()
+    #         # print(f"Found {nan_count_before} NaN values (holes) in the image")
+
+    #         for i in range(arr.shape[0]):
+    #             for j in range(arr.shape[1]):
+    #                 if arr[i,j] == 'Undefined':
+    #                     x_index = arr_z[i,j]
+    #                     # x_index = z_coord[0]
+    #                     y_index = i
+    #                     z_index = j
+
+    #                 try:
+    #                     index = annotation[int(x_index), int(y_index), int(z_index)]
+    #                     brain_region = structure_tree.get_structures_by_id([index])[0]
+                    
+    #                     if brain_region is not None:
+    #                         arr[y_index, z_index] = brain_region['acronym']
+    #                 except:
+    #                     continue
+    #                     # print error message
+    #                     # print(f"Error at {i}, {j}")
+
+    #     return arr
+
+    def get_aba_contours(self, slice_index):
+        """
+        Retrieves the contours of the ABA brain for a given slice.
+        
+        Args:
+            slice_index: Index of the slice to retrieve
+            
+        Returns:
+            array_image_atlas: RGBA image array of shape (320, 456, 4) containing the contours
+                            in orange (255, 165, 0) with transparency 243 for lines and 255
+                            for background
+        """
+        # acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "x_index"]].values
+        coordinates = self.get_image_indices(slice_index)
+        coordinates_scatter = pd.DataFrame(coordinates, columns=["x_index", "y", "x"])
+        
+        # Convert coordinates to integers for indexing
+        x_indices = coordinates_scatter["x"].astype(int).values
+        y_indices = coordinates_scatter["y"].astype(int).values
+        # Ensure indices are within bounds
+        valid_indices = (
+            (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
+        )
+
+        arr_z = np.full(self.image_shape, np.nan)
+        arr_z[y_indices[valid_indices], x_indices[valid_indices]] = coordinates_scatter["x_index"].values[
+            valid_indices
+        ]
+        arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
+
+        # define array_image_atlas as all values to be (255, 255, 255, 0)
+        array_image_atlas = np.ones((arr_z.shape[0], arr_z.shape[1], 4), dtype=np.uint8)
+        array_image_atlas[:, :, :3] = 255
+        array_image_atlas[:, :, 3] = 0
+
+        for i in range(arr_z.shape[0]):
+            for j in range(arr_z.shape[1]):
+                k = arr_z[i,j]
+                try:
+                    is_contour = ABA_CONTOURS[int(k), i, j] == 1
+                    if is_contour:
+                        array_image_atlas[i, j] = [255, 165, 0, 200]
+                except:
+                    continue
+        
+        return array_image_atlas
+
+    def extract_lipid_image(
+        self, 
+        slice_index, 
+        peak_name, 
+        fill_holes=True):
+        """Extract a program image from scatter data with optional hole filling.
+        
+        Args:
+            slice_index: Index of the slice
+            program_name: Name of the program
+            fill_holes: Whether to fill holes using nearest neighbor interpolation
+            
+        Returns:
+            2D numpy array with the program distribution or None if not found
+        """
         try:
             # Use the parameters passed to the function
-            peak_data = self.get_peak_image(slice_index, peak_name)
-            print(peak_data)
-
-            if peak_data is None:
-                print(f"{peak_name} in slice {slice_index} was not found.")
+            # peak_data = self.get_program_image(slice_index, program_name)
+            # peak_data.indices --> x_index, y_index, z_index (dim: num_pixels, 3)
+            # peak_data.image --> program_expression (dim: num_pixels, 1)
+            slice_data = self.get_peaks_image(slice_index)
+            # slice_data.indices --> x_index, y_index, z_index (dim: num_pixels, 3)
+            # slice_data.images --> program_expression (dim: num_pixels, num_programs)
+            
+            if slice_data is None:
+                print(f"Slice {slice_index} was not found.")
                 return None
 
-            # Check if it's scatter data
-            if not peak_data.is_scatter:
-                # If it's already an image, just return it
-                return peak_data.image
+            # # Check if it's scatter data
+            # if not lipid_data.is_scatter:
+            #     # If it's already an image, just return it
+            #     return lipid_data.image
 
             # Convert scatter data to image
-            scatter_points = peak_data.image  # This is a numpy array with shape (N, 3)
+            # scatter_points = lipid_data.image  # This is a numpy array with shape (N, 1)
 
             # Create a DataFrame from the scatter points
-            scatter = pd.DataFrame(scatter_points, columns=["y", "x", "value"])
+            peak_data = slice_data.images[:, slice_data.content_names.index(peak_name)]
+            # print("slice_data.indices", slice_data.indices)
+            scatter = pd.DataFrame({
+                            "x": slice_data.indices[:, 2],
+                            "y": slice_data.indices[:, 1],
+                            "value": peak_data # ensure it's 1D
+                        })
 
             # Create an empty array to hold the image
             arr = np.full(self.image_shape, np.nan)  # Adjust dimensions if needed
 
             # Convert coordinates to integers for indexing
-            x_indices = scatter["x"].astype(int).values
-            y_indices = scatter["y"].astype(int).values
+            x_indices = scatter["x"].astype(int).values # z_index
+            y_indices = scatter["y"].astype(int).values # y_index
 
             # Ensure indices are within bounds
             valid_indices = (
@@ -219,7 +404,7 @@ class PeakData:
             )
 
             # Fill the array with values at the specified coordinates
-            arr[x_indices[valid_indices], y_indices[valid_indices]] = scatter["value"].values[
+            arr[y_indices[valid_indices], x_indices[valid_indices]] = scatter["value"].values[
                 valid_indices
             ]
 
@@ -227,30 +412,25 @@ class PeakData:
             if fill_holes:
                 # Count how many NaN values we have
                 nan_count_before = np.isnan(arr).sum()
-                print(f"Found {nan_count_before} NaN values (holes) in the image")
+                # print(f"Found {nan_count_before} NaN values (holes) in the image")
 
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
-                    filled_arr = self._fill_holes_nearest_neighbor(arr)
+                    filled_arr = self._fill_holes_nearest_neighbor(arr, slice_index)
 
                     # Count remaining NaN values after filling
-                    nan_count_after = np.isnan(filled_arr).sum()
-                    print(f"After filling: {nan_count_after} NaN values remain")
+                    # nan_count_after = np.isnan(filled_arr).sum()
+                    # print(f"After filling: {nan_count_after} NaN values remain")
 
-                    arr = filled_arr
+                    return filled_arr
 
-            # Normalize the image
-            arr = (arr - vmin) / (vmax - vmin)  
-            # Clip the values below 0 or above 1
-            arr = np.clip(arr, 0, 1)
-            
             return arr
 
         except Exception as e:
             print(f"Error extracting {peak_name} in slice {slice_index}: {str(e)}")
             return None
 
-    def _fill_holes_nearest_neighbor(self, arr, max_distance=5):
+    def _fill_holes_nearest_neighbor(self, arr, slice_index, max_distance=5):
         """Fill holes (NaN values) using nearest neighbor interpolation.
 
         Args:
@@ -304,45 +484,40 @@ class PeakData:
                 # Use the mean of nearby non-NaN values
                 filled[x, y] = np.mean(non_nan_values)
 
-        """
-        # Optional: For remaining NaN values, use a more aggressive approach
-        # This is a simple approach - for any remaining NaNs, find the nearest
-        # valid point in the entire array (could be slow for large arrays)
-        remaining_nans = np.where(np.isnan(filled))
-        if len(remaining_nans[0]) > 0:
-            print(f"Using global search for {len(remaining_nans[0])} remaining holes")
-            
-            from scipy.spatial import cKDTree
-            
-            # Build a KD-tree of valid points
-            valid_points = np.array(valid_indices).T
-            tree = cKDTree(valid_points)
-            
-            # For each remaining NaN, find the nearest valid point
-            for i in range(len(remaining_nans[0])):
-                x, y = remaining_nans[0][i], remaining_nans[1][i]
-                
-                # Find the index of the nearest valid point
-                _, nearest_idx = tree.query([x, y], k=1)
-                
-                # Get the coordinates of the nearest valid point
-                nearest_x, nearest_y = valid_points[nearest_idx]
-                
-                # Use the value from the nearest valid point
-                filled[x, y] = arr[nearest_x, nearest_y]
-        """
+        binary_mask = np.where(self.acronyms_masks[slice_index] == 'Undefined', np.nan, 1)
+        filled = filled * binary_mask
 
         return filled
 
-    def get_slice_number(self):
-        """Getter for the number of slice present in the dataset.
+        # """
+        # # Optional: For remaining NaN values, use a more aggressive approach
+        # # This is a simple approach - for any remaining NaNs, find the nearest
+        # # valid point in the entire array (could be slow for large arrays)
+        # remaining_nans = np.where(np.isnan(filled))
+        # if len(remaining_nans[0]) > 0:
+        #     print(f"Using global search for {len(remaining_nans[0])} remaining holes")
+            
+        #     from scipy.spatial import cKDTree
+            
+        #     # Build a KD-tree of valid points
+        #     valid_points = np.array(valid_indices).T
+        #     tree = cKDTree(valid_points)
+            
+        #     # For each remaining NaN, find the nearest valid point
+        #     for i in range(len(remaining_nans[0])):
+        #         x, y = remaining_nans[0][i], remaining_nans[1][i]
+                
+        #         # Find the index of the nearest valid point
+        #         _, nearest_idx = tree.query([x, y], k=1)
+                
+        #         # Get the coordinates of the nearest valid point
+        #         nearest_x, nearest_y = valid_points[nearest_idx]
+                
+        #         # Use the value from the nearest valid point
+        #         filled[x, y] = arr[nearest_x, nearest_y]
+        # return filled
+        # """
 
-        Returns:
-            (int): The number of slices in the dataset.
-        """
-        return np.array(
-            [len(self.get_available_slices(b_id)) for b_id in self.get_available_brains()]
-        ).sum()
 
     def get_slice_list(self, indices="all"):
         """Getter for the list of slice indices.
@@ -357,37 +532,19 @@ class PeakData:
         """
         # sort slices based on the xccf column in the coordinates_csv
         coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
-
+        
         if indices == "all":
             slices = []
             brains = self.get_available_brains()
             for brain in brains:
                 slices.extend(self.get_available_slices(brain))
             slices = sorted(slices, key=lambda x: coordinates_csv.loc[coordinates_csv["SectionID"] == x, "xccf"].values[0])
-            
             return slices
-        elif indices == "ReferenceAtlas":
-            return self.get_available_slices(brain_id="ReferenceAtlas")
-        elif indices == "SecondAtlas":
-            return self.get_available_slices(brain_id="SecondAtlas")
-        elif indices == "Female1":
-            return self.get_available_slices(brain_id="Female1")
-        elif indices == "Female2":
-            return self.get_available_slices(brain_id="Female2")
-        elif indices == "Female3":
-            return self.get_available_slices(brain_id="Female3")
-        elif indices == "Male1":
-            return self.get_available_slices(brain_id="Male1")
-        elif indices == "Male2":
-            return self.get_available_slices(brain_id="Male2")
-        elif indices == "Male3":
-            return self.get_available_slices(brain_id="Male3")
-        elif indices == "Pregnant1":
-            return self.get_available_slices(brain_id="Pregnant1")
-        elif indices == "Pregnant2":
-            return self.get_available_slices(brain_id="Pregnant2")
-        elif indices == "Pregnant4":
-            return self.get_available_slices(brain_id="Pregnant4")
+        elif indices in ["ReferenceAtlas", "SecondAtlas", "Female1", "Female2", "Female3", 
+                        "Male1", "Male2", "Male3", "Pregnant1", "Pregnant2", "Pregnant4"]:
+            slices = self.get_available_slices(brain_id=indices)
+            # Sort by xccf coordinate
+            return sorted(slices, key=lambda x: coordinates_csv.loc[coordinates_csv["SectionID"] == x, "xccf"].values[0])
         else:
             raise ValueError("Invalid string for indices")
 
@@ -401,26 +558,10 @@ class PeakData:
             {
                 "label": ln,
                 "value": ln,
-                "group": "Multiple matches" if len([ln.split(" ")[i] for i in range(0, len(ln.split(" ")), 2)]) > 1 else ln.split(" ")[0],
+                "group": ln.split(".")[0],
             }
-            for ln in self.get_available_peaks(1)
+            for ln in self.get_available_peaks()
         ]
-
-    def extract_lipid_image(self, slice_index, lipid_name, fill_holes=True):
-        """Extract a lipid image from peak data with optional hole filling.
-        
-        This method is a wrapper around extract_peak_image to make it compatible
-        with the Figures class interface.
-        
-        Args:
-            slice_index: Index of the slice
-            lipid_name: Name of the lipid (peak)
-            fill_holes: Whether to fill holes using nearest neighbor interpolation
-            
-        Returns:
-            2D numpy array with the lipid distribution or None if not found
-        """
-        return self.extract_peak_image(slice_index, lipid_name, fill_holes)
 
     """
     def empty_database(self):

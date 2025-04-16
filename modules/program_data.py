@@ -399,7 +399,7 @@ class ProgramData:
 
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
-                    filled_arr = self._fill_holes_nearest_neighbor(arr)
+                    filled_arr = self._fill_holes_nearest_neighbor(arr, slice_index)
 
                     # Count remaining NaN values after filling
                     # nan_count_after = np.isnan(filled_arr).sum()
@@ -418,7 +418,7 @@ class ProgramData:
             print(f"Error extracting {program_name} in slice {slice_index}: {str(e)}")
             return None
             
-    def _fill_holes_nearest_neighbor(self, arr, max_distance=5):
+    def _fill_holes_nearest_neighbor(self, arr, slice_index, max_distance=5):
         """Fill holes (NaN values) using nearest neighbor interpolation.
         
         Args:
@@ -464,36 +464,41 @@ class ProgramData:
             if len(non_nan_values) > 0:
                 # Use the mean of nearby non-NaN values
                 filled[x, y] = np.mean(non_nan_values)
-    
-        """
-        # Optional: For remaining NaN values, use a more aggressive approach
-        # This is a simple approach - for any remaining NaNs, find the nearest
-        # valid point in the entire array (could be slow for large arrays)
-        remaining_nans = np.where(np.isnan(filled))
-        if len(remaining_nans[0]) > 0:
-            print(f"Using global search for {len(remaining_nans[0])} remaining holes")
-            
-            from scipy.spatial import cKDTree
-            
-            # Build a KD-tree of valid points
-            valid_points = np.array(valid_indices).T
-            tree = cKDTree(valid_points)
-            
-            # For each remaining NaN, find the nearest valid point
-            for i in range(len(remaining_nans[0])):
-                x, y = remaining_nans[0][i], remaining_nans[1][i]
-                
-                # Find the index of the nearest valid point
-                _, nearest_idx = tree.query([x, y], k=1)
-                
-                # Get the coordinates of the nearest valid point
-                nearest_x, nearest_y = valid_points[nearest_idx]
-                
-                # Use the value from the nearest valid point
-                filled[x, y] = arr[nearest_x, nearest_y]
-        """
-        
+
+        binary_mask = np.where(self.acronyms_masks[slice_index] == 'Undefined', np.nan, 1)
+        filled = filled * binary_mask
+
         return filled
+    
+        # """
+        # # Optional: For remaining NaN values, use a more aggressive approach
+        # # This is a simple approach - for any remaining NaNs, find the nearest
+        # # valid point in the entire array (could be slow for large arrays)
+        # remaining_nans = np.where(np.isnan(filled))
+        # if len(remaining_nans[0]) > 0:
+        #     print(f"Using global search for {len(remaining_nans[0])} remaining holes")
+            
+        #     from scipy.spatial import cKDTree
+            
+        #     # Build a KD-tree of valid points
+        #     valid_points = np.array(valid_indices).T
+        #     tree = cKDTree(valid_points)
+            
+        #     # For each remaining NaN, find the nearest valid point
+        #     for i in range(len(remaining_nans[0])):
+        #         x, y = remaining_nans[0][i], remaining_nans[1][i]
+                
+        #         # Find the index of the nearest valid point
+        #         _, nearest_idx = tree.query([x, y], k=1)
+                
+        #         # Get the coordinates of the nearest valid point
+        #         nearest_x, nearest_y = valid_points[nearest_idx]
+                
+        #         # Use the value from the nearest valid point
+        #         filled[x, y] = arr[nearest_x, nearest_y]
+        # return filled
+        # """
+        
 
     def get_slice_list(self, indices="all"):
         """Getter for the list of slice indices.

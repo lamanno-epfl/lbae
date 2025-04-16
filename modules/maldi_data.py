@@ -458,7 +458,7 @@ class MaldiData:
 
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
-                    filled_arr = self._fill_holes_nearest_neighbor(arr)
+                    filled_arr = self._fill_holes_nearest_neighbor(arr, slice_index)
 
                     # Count remaining NaN values after filling
                     # nan_count_after = np.isnan(filled_arr).sum()
@@ -472,7 +472,7 @@ class MaldiData:
             print(f"Error extracting {lipid_name} in slice {slice_index}: {str(e)}")
             return None
 
-    def _fill_holes_nearest_neighbor(self, arr, max_distance=5):
+    def _fill_holes_nearest_neighbor(self, arr, slice_index, max_distance=5):
         """Fill holes (NaN values) using nearest neighbor interpolation.
 
         Args:
@@ -525,6 +525,10 @@ class MaldiData:
             if len(non_nan_values) > 0:
                 # Use the mean of nearby non-NaN values
                 filled[x, y] = np.mean(non_nan_values)
+
+        binary_mask = np.where(self.acronyms_masks[slice_index] == 'Undefined', np.nan, 1)
+        filled = filled * binary_mask
+
         return filled
 
         # """

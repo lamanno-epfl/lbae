@@ -1106,7 +1106,7 @@ class Figures:
 
         # Build a list of empty images and add selected lipids for each channel
         l_images = []
-
+        
         # Loop over channels
         # TYPE: possible inconsistency, for us lipid_names would be a list of strings, not a list of lists
         for lipid_name in ll_lipid_names:
@@ -1141,10 +1141,6 @@ class Figures:
             l_images.append(image_temp)  #####
 
         # Reoder axis to match plotly go.image requirementss
-        # print("np.array(l_images).shape", np.array(l_images).shape)
-        # print("np.array(l_images)[0].shape", np.array(l_images)[0].shape)
-        # print("np.array(l_images)[1].shape", np.array(l_images)[1].shape)
-        # print("np.array(l_images)[2].shape", np.array(l_images)[2].shape)
         array_image = np.moveaxis(np.array(l_images), 0, 2)
         # count the nan values in the array_image
         # print("nan values in array_image", np.isnan(array_image).sum())

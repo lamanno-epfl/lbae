@@ -378,12 +378,12 @@ def page_peak_plot_graph_heatmap_mz_selection(
     ):
         if peak_1_index >= 0 or peak_2_index >= 0 or peak_3_index >= 0:
             ll_peak_names = [
-                peak_data.get_annotations().iloc[index]["name"]
+                peak_data.get_annotations().iloc[index]["name"].astype(str)
                 if index != -1
                 else None
                 for index in [peak_1_index, peak_2_index, peak_3_index]
             ]
-        
+            print("ll_peak_names", ll_peak_names)
             if (
                 id_input == "page-2tris-colormap-button"
                 or (

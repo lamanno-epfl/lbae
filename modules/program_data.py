@@ -7,36 +7,32 @@ from dataclasses import dataclass
 from time import time
 from typing import Dict, List, Optional, Tuple
 
-from modules.maldi_data import ABA_CONTOURS, majority_vote_9x9, ACRONYM_MASKS, ACRONYMS_PIXELS
+from modules.maldi_data import SliceData, ABA_CONTOURS, majority_vote_9x9, ACRONYM_MASKS, ACRONYMS_PIXELS, ABA_DIM
 # from allensdk.core.mouse_connectivity_cache import MouseConnectivityCache
 from scipy.ndimage import generic_filter
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-ABA_DIM = (528, 320, 456)
+# @dataclass
+# class programImage:
+#     """Class to store program image data and metadata.
 
-@dataclass
-class programImage:
-    """Class to store program image data and metadata.
+#     Attributes:
+#         name: Name of the program
+#         image: 2D numpy array containing the program distribution
+#         brain_id: ID of the brain this image is from
+#         slice_index: Index of the slice in the brain
+#         is_scatter: Whether this is a scatterplot (True) or image (False)
+#     """
 
-    Attributes:
-        name: Name of the program
-        image: 2D numpy array containing the program distribution
-        brain_id: ID of the brain this image is from
-        slice_index: Index of the slice in the brain
-        is_scatter: Whether this is a scatterplot (True) or image (False)
-    """
+#     name: str
+#     image: np.ndarray   ########## lipid_expression (dim: num_pixels, 1) --> change this!!
+#     indices: np.ndarray ########## x_index, y_index, z_index (dim: num_pixels, 3)
+#     brain_id: str
+#     slice_index: int
 
-    name: str
-    image: np.ndarray   ########## lipid_expression (dim: num_pixels, 1) --> change this!!
-    indices: np.ndarray ########## x_index, y_index, z_index (dim: num_pixels, 3)
-    brain_id: str
-    slice_index: int
-    is_scatter: bool = False
-
-
-class LipiMapData:
+class ProgramData:
     """Class to handle the storage of the program data format with direct program images.
 
     This class provides methods to:
@@ -59,28 +55,38 @@ class LipiMapData:
         self.path_data = path_data
         self.path_metadata = path_metadata
         self.path_annotations = path_annotations
+
         if not os.path.exists(self.path_data):
             os.makedirs(self.path_data)
-        self._df_annotations = pd.read_csv(os.path.join(self.path_annotations, "lp_annotation.csv"))
-        self.lookup_brainid = pd.read_csv(os.path.join(self.path_annotations, "lookup_brainid.csv"), index_col=0)
 
+        self._df_annotations = pd.read_csv(os.path.join(self.path_annotations, "lp_annotation.csv"))
+        
         # Initialize the metadata file if it doesn't exist
         self._init_metadata()
 
         self.image_shape = (ABA_DIM[1], ABA_DIM[2])
 
         self.acronyms_masks = ACRONYM_MASKS
+        # for slice_idx in self.get_slice_list():
+        #     # append get_acronym_mask to the list
+        #     self.acronyms_masks[slice_idx] = self.get_acronym_mask(slice_idx)
+        # self.acronyms_masks_with_holes = ACRONYM_MASKS_WITH_HOLES
 
     def get_annotations(self) -> pd.DataFrame:
         return self._df_annotations
+    
+    # def get_AP_avg_coordinates(self, indices="ReferenceAtlas"):
+    #     coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
+    #     slices = self.get_slice_list(indices=indices)
+    #     return coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), :]
 
     def get_brain_id_from_sliceindex(self, slice_index):
         try:
-            sample = self.lookup_brainid.loc[
-                self.lookup_brainid["SectionID"] == slice_index, "Sample"
-            ].values[0]
-            return sample
-
+            with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+                brain_info = db_metadata["brain_info"]
+                for brain_id in self.get_available_brains():
+                    if slice_index in brain_info[brain_id]["slice_indices"]:
+                        return brain_id
         except:
             print("Missing sample")
             return np.nan
@@ -89,53 +95,76 @@ class LipiMapData:
         """Initialize or load the metadata about stored brains and lipids."""
         with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
             if "brain_info" not in db_metadata:
-                db_metadata["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[lipid_names]]]
+                db_metadata["brain_info"] = {}
 
-    def add_program_image(self, program_data: programImage, force_update: bool = False):
-        """Add a lipid program image to the database.
+    def add_programs_image(
+        self, 
+        slice_data: SliceData, 
+        force_update: bool = False
+        ):
+        """Add a slice data to the database.
 
         Args:
-            program_data: LipidImage object containing the image and metadata
+            slice_data: SliceData object containing the image and metadata
             force_update: If True, overwrite existing data
         """
         # Update metadata
         with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+            # if "brain_info" not in db_metadata:
+            #     db_metadata["brain_info"] = {}
             brain_info = db_metadata["brain_info"]
 
-            if program_data.brain_id not in brain_info:
-                brain_info[program_data.brain_id] = {}
+            if slice_data.brain_id not in brain_info:
+                brain_info[slice_data.brain_id] = {}
+                brain_info[slice_data.brain_id]['slice_indices'] = []
+                brain_info[slice_data.brain_id]['program_names'] = slice_data.content_names
 
-            if program_data.slice_index not in brain_info[program_data.brain_id]:
-                brain_info[program_data.brain_id][program_data.slice_index] = []
+            if slice_data.slice_index not in brain_info[slice_data.brain_id]['slice_indices']:
+                brain_info[slice_data.brain_id]['slice_indices'].append(slice_data.slice_index)
 
-            if program_data.name not in brain_info[program_data.brain_id][program_data.slice_index]:
-                brain_info[program_data.brain_id][program_data.slice_index].append(program_data.name)
+            # if slice_data.name not in brain_info[slice_data.brain_id][slice_data.slice_index]:
+            #     brain_info[slice_data.brain_id][slice_data.slice_index].append(slice_data.name)
 
-            db["brain_info"] = brain_info
+            db_metadata["brain_info"] = brain_info
 
         # Store the actual image data
-        key = f"{program_data.brain_id}/slice_{program_data.slice_index}/{program_data.name}"
-        with shelve.open(os.path.join(self.path_data, "lipid_images")) as db:
+        key = f"{slice_data.brain_id}/slice_{slice_data.slice_index}"
+        with shelve.open(os.path.join(self.path_data, "program_images")) as db:
             if key in db and not force_update:
                 logging.warning(
-                    f"Lipid image {key} already exists. Use force_update=True to overwrite."
+                    f"Slice data {key} already exists. Use force_update=True to overwrite."
                 )
                 return
-            db[key] = program_data
+            db[key] = slice_data
 
-    def get_program_image(self, slice_index: int, program_name: str) -> Optional[programImage]:
+    # def get_programs_image(self, slice_index: int, program_name: str) -> Optional[programImage]:
+    #     """Retrieve a program image from the database.
+
+    #     Args:
+    #         brain_id: ID of the brain
+    #         slice_index: Index of the slice
+    #         program_name: Name of the program
+
+    #     Returns:
+    #         programImage object if found, None otherwise
+    #     """
+    #     brain_id = self.get_brain_id_from_sliceindex(slice_index)
+    #     key = f"{brain_id}/slice_{float(slice_index)}/{program_name}"
+    #     with shelve.open(os.path.join(self.path_data, "program_images")) as db:
+    #         return db.get(key)
+
+    def get_programs_image(self, slice_index: int):
         """Retrieve a program image from the database.
 
         Args:
             brain_id: ID of the brain
             slice_index: Index of the slice
-            program_name: Name of the program
 
         Returns:
-            programImage object if found, None otherwise
+            SliceData object if found, None otherwise
         """
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
-        key = f"{brain_id}/slice_{float(slice_index)}/{program_name}"
+        key = f"{brain_id}/slice_{float(slice_index)}"
         with shelve.open(os.path.join(self.path_data, "program_images")) as db:
             return db.get(key)
 
@@ -150,16 +179,23 @@ class LipiMapData:
             brain_info = db_metadata["brain_info"]
             if brain_id not in brain_info:
                 return []
-            return list(brain_info[brain_id].keys())
+            # slices = list(brain_info[brain_id].keys())
+            slices = brain_info[brain_id]['slice_indices']
+            coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
+            slices = coordinates_csv.loc[coordinates_csv["SectionID"].isin(slices), 'SectionID'].values
+            return slices
 
-    def get_available_programs(self, slice_index: int) -> List[str]:
+    def get_available_programs(self, slice_index: Optional[int] = None) -> List[str]:
         """Get list of available programs for a given brain and slice."""
+        if slice_index is None:
+            slice_index = self.get_slice_list()[0]
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
         with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
             brain_info = db_metadata["brain_info"]
-            if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
+            if brain_id not in brain_info or slice_index not in brain_info[brain_id]['slice_indices']:
                 return []
-            return brain_info[brain_id][slice_index]
+            return brain_info[brain_id]['program_names']
+            # Use the parameters passed to the function
 
     def get_image_indices(self, slice_index):
         """Get the indices of a lipid image from the database.
@@ -168,7 +204,7 @@ class LipiMapData:
             slice_index: Index of the slice
             lipid_name: Name of the lipid
         """
-        return self.get_program_image(slice_index, self.get_available_programs(slice_index)[0]).indices
+        return self.get_programs_image(slice_index).indices #, self.get_available_programs(slice_index)[0]).indices
 
     # def get_acronym_mask(self, slice_index, fill_holes=True):
     #     """
@@ -293,7 +329,11 @@ class LipiMapData:
         
         return array_image_atlas
 
-    def extract_lipid_image(self, slice_index, program_name, fill_holes=True):
+    def extract_lipid_image(
+        self, 
+        slice_index, 
+        program_name, 
+        fill_holes=True):
         """Extract a program image from scatter data with optional hole filling.
         
         Args:
@@ -306,64 +346,74 @@ class LipiMapData:
         """
         try:
             # Use the parameters passed to the function
-            program_data = self.get_program_image(slice_index, program_name)
+            # program_data = self.get_program_image(slice_index, program_name)
             # program_data.indices --> x_index, y_index, z_index (dim: num_pixels, 3)
-            # program_data.image --> lipid_expression (dim: num_pixels, 1)
+            # program_data.image --> program_expression (dim: num_pixels, 1)
+            slice_data = self.get_programs_image(slice_index)
+            # slice_data.indices --> x_index, y_index, z_index (dim: num_pixels, 3)
+            # slice_data.images --> program_expression (dim: num_pixels, num_programs)
             
-            if program_data is None:
-                print(f"{program_name} in slice {slice_index} was not found.")
+            if slice_data is None:
+                print(f"Slice {slice_index} was not found.")
                 return None
-                
+
             # # Check if it's scatter data
-            # if not program_data.is_scatter:
+            # if not lipid_data.is_scatter:
             #     # If it's already an image, just return it
-            #     return program_data.image
-                
+            #     return lipid_data.image
+
             # Convert scatter data to image
-            # scatter_points = program_data.image  # This is a numpy array with shape (N, 3)
-            
+            # scatter_points = lipid_data.image  # This is a numpy array with shape (N, 1)
+
             # Create a DataFrame from the scatter points
+            program_data = slice_data.images[:, slice_data.content_names.index(program_name)]
+            # print("slice_data.indices", slice_data.indices)
             scatter = pd.DataFrame({
-                            "x": program_data.indices[:, 2],
-                            "y": program_data.indices[:, 1],
-                            "value": program_data.image.flatten()  # ensure it's 1D
+                            "x": slice_data.indices[:, 2],
+                            "y": slice_data.indices[:, 1],
+                            "value": program_data # ensure it's 1D
                         })
-            
+
             # Create an empty array to hold the image
             arr = np.full(self.image_shape, np.nan)  # Adjust dimensions if needed
-            
+
             # Convert coordinates to integers for indexing
-            x_indices = scatter["x"].astype(int).values
-            y_indices = scatter["y"].astype(int).values
-            
+            x_indices = scatter["x"].astype(int).values # z_index
+            y_indices = scatter["y"].astype(int).values # y_index
+
             # Ensure indices are within bounds
-            valid_indices = (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
-            
+            valid_indices = (
+                (0 <= x_indices) & (x_indices < 1000) & (0 <= y_indices) & (y_indices < 1000)
+            )
+
             # Fill the array with values at the specified coordinates
-            arr[y_indices[valid_indices],x_indices[valid_indices]] = scatter["value"].values[valid_indices]
-            
+            arr[y_indices[valid_indices], x_indices[valid_indices]] = scatter["value"].values[
+                valid_indices
+            ]
+
             # Check if we need to fill holes
             if fill_holes:
                 # Count how many NaN values we have
                 nan_count_before = np.isnan(arr).sum()
                 # print(f"Found {nan_count_before} NaN values (holes) in the image")
-                
+
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
                     filled_arr = self._fill_holes_nearest_neighbor(arr)
-                    
+
                     # Count remaining NaN values after filling
                     # nan_count_after = np.isnan(filled_arr).sum()
                     # print(f"After filling: {nan_count_after} NaN values remain")
+
+                    return filled_arr
                     
-                    arr = filled_arr
-            
+################################################################################################################
             p02, p98 = np.nanpercentile(arr, [2, 98])
             arr = np.clip(arr, p02, p98)
             arr = (arr - p02) / (p98 - p02)
+################################################################################################################
 
             return arr
-            
         except Exception as e:
             print(f"Error extracting {program_name} in slice {slice_index}: {str(e)}")
             return None
@@ -445,16 +495,6 @@ class LipiMapData:
         
         return filled
 
-    def get_slice_number(self):
-        """Getter for the number of slice present in the dataset.
-
-        Returns:
-            (int): The number of slices in the dataset.
-        """
-        return np.array(
-            [len(self.get_available_slices(b_id)) for b_id in self.get_available_brains()]
-        ).sum()
-
     def get_slice_list(self, indices="all"):
         """Getter for the list of slice indices.
 
@@ -466,38 +506,25 @@ class LipiMapData:
         Returns:
             (list): The list of requested slice indices.
         """
+        # sort slices based on the xccf column in the coordinates_csv
+        coordinates_csv = pd.read_csv(os.path.join(self.path_annotations, "sectionid_to_rostrocaudal_slider_new.csv"))
+        
         if indices == "all":
             slices = []
             brains = self.get_available_brains()
             for brain in brains:
                 slices.extend(self.get_available_slices(brain))
+            slices = sorted(slices, key=lambda x: coordinates_csv.loc[coordinates_csv["SectionID"] == x, "xccf"].values[0])
             return slices
-        elif indices == "ReferenceAtlas":
-            return self.get_available_slices(brain_id="ReferenceAtlas")
-        elif indices == "SecondAtlas":
-            return self.get_available_slices(brain_id="SecondAtlas")
-        elif indices == "Female1":
-            return self.get_available_slices(brain_id="Female1")
-        elif indices == "Female2":
-            return self.get_available_slices(brain_id="Female2")
-        elif indices == "Female3":
-            return self.get_available_slices(brain_id="Female3")
-        elif indices == "Male1":
-            return self.get_available_slices(brain_id="Male1")
-        elif indices == "Male2":
-            return self.get_available_slices(brain_id="Male2")
-        elif indices == "Male3":
-            return self.get_available_slices(brain_id="Male3")
-        elif indices == "Pregnant1":
-            return self.get_available_slices(brain_id="Pregnant1")
-        elif indices == "Pregnant2":
-            return self.get_available_slices(brain_id="Pregnant2")
-        elif indices == "Pregnant4":
-            return self.get_available_slices(brain_id="Pregnant4")
+        elif indices in ["ReferenceAtlas", "SecondAtlas", "Female1", "Female2", "Female3", 
+                        "Male1", "Male2", "Male3", "Pregnant1", "Pregnant2", "Pregnant4"]:
+            slices = self.get_available_slices(brain_id=indices)
+            # Sort by xccf coordinate
+            return sorted(slices, key=lambda x: coordinates_csv.loc[coordinates_csv["SectionID"] == x, "xccf"].values[0])
         else:
             raise ValueError("Invalid string for indices")
 
-    def return_lipid_options(self):
+    def return_program_options(self):
         """Computes and returns the list of program names, structures and cation.
 
         Returns:
@@ -510,7 +537,7 @@ class LipiMapData:
                 "value": lp,
                 "group": "NMF Embeddings" if lp.startswith("globalembedding") else "Lipid Programs"
             }
-            for lp in self.get_available_programs(1)
+            for lp in self.get_available_programs()
         ]
 
     """

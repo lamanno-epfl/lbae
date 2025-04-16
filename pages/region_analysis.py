@@ -64,11 +64,13 @@ def global_store(
     l_expressions = []
 
     # Loop over all user-draw regions and pre-existing masks
+    print("l_shapes_and_masks = ", l_shapes_and_masks)
     for shape in l_shapes_and_masks:
         grah_scattergl_data = None
         # Compute lipid expressions from mask
         if shape[0] == "mask":
             mask_name = shape[1]
+            print("mask_name = ", mask_name)
             
             id_name = atlas.dic_name_acronym[mask_name]
             if id_name in atlas.dic_existing_masks[slice_index]:
@@ -1542,7 +1544,7 @@ def page_3_plot_volcano(
             # Compute differential lipids
             difflips = differential_lipids(l_expressions_A, l_expressions_B)
 
-            colors = pd.read_hdf("/data/francesca/lbae/data/lipidclasscolors.h5ad", key="table")
+            colors = pd.read_hdf("./new_data_lbae/annotations/lipidclasscolors.h5ad", key="table")
             colors.loc['PA'] = {'count': 0, 'classcolors': '#D3D3D3'}
             colors.loc['LPA'] = {'count': 0, 'classcolors': '#D3D3D3'}
 

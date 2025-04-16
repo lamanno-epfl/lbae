@@ -153,7 +153,7 @@ def return_layout(basic_config, slice_index):
                                     children=[
                                         dmc.MultiSelect(
                                             id="page-2bis-dropdown-programs",
-                                            data=program_data.return_lipid_options(),
+                                            data=program_data.return_program_options(),
                                             value=['mitochondrion'],
                                             searchable=True,
                                             nothingFound="No lipid program found",

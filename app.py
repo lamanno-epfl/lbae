@@ -28,8 +28,8 @@ logging.info("Memory use before any LBAE import" + logmem())
 from modules.maldi_data import MaldiData
 logging.info("Memory use after MaldiData import" + logmem())
 
-from modules.program_data import LipiMapData
-logging.info("Memory use after LipiMapData import" + logmem())
+from modules.program_data import ProgramData
+logging.info("Memory use after ProgramData import" + logmem())
 
 from modules.peak_data import PeakData
 logging.info("Memory use after PeakData import" + logmem())
@@ -121,7 +121,7 @@ peak_data = PeakData(
 
 # Load program data
 logging.info("Loading program data..." + logmem())
-program_data = LipiMapData(
+program_data = ProgramData(
     path_data=path_program_data,
     path_metadata=path_metadata,
     path_annotations=path_annotations,

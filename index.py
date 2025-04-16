@@ -443,7 +443,7 @@ def return_validation_layout(main_content, initial_slice=12):
             home.layout,
             lipid_selection.return_layout(basic_config, initial_slice),
             lp_selection.return_layout(basic_config, initial_slice),
-            # peak_selection.return_layout(basic_config, initial_slice),
+            peak_selection.return_layout(basic_config, initial_slice),
             lipizones_selection.return_layout(basic_config, initial_slice),
             lipizones_vs_celltypes.return_layout(basic_config, initial_slice),
             lipids_vs_genes.return_layout(basic_config, initial_slice),
@@ -482,8 +482,8 @@ def render_page_content(pathname, slice_index, brain):
     elif pathname == "/lp-selection":
         page = lp_selection.return_layout(basic_config, slice_index)
     
-    # elif pathname == "/peak-selection":
-    #     page = peak_selection.return_layout(basic_config, slice_index)
+    elif pathname == "/peak-selection":
+        page = peak_selection.return_layout(basic_config, slice_index)
     
     elif pathname == "/lipizones-selection":
         page = lipizones_selection.return_layout(basic_config, slice_index)

@@ -1214,8 +1214,7 @@ def plot_section_mass_spectrum(slice_index, is_open):
         return dash.no_update
         
     # Check if mzsectionaverages.csv exists, if not create a placeholder
-    # TODO: what is this file? absolute path?
-    df = pd.read_csv('mzsectionaverages.csv', index_col=0)
+    df = pd.read_csv(os.path.join(peak_data.path_data, "mzsectionaverages.csv"), index_col=0)
     df.index = df.index.astype(int)
     
     # Get the spectrum data for the current slice

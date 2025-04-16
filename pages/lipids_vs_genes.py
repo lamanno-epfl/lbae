@@ -30,11 +30,10 @@ from app import app, figures, data, storage, cache_flask, atlas, lipizone_sectio
 # --- Data
 # ==================================================================================================
 
-df_hierarchy_lipizones = pd.read_csv("./new_data_lbae/lipizone_data/lipizones_hierarchy.csv")
-df_hierarchy_celltypes = pd.read_csv("./new_data_lbae/celltype_data/celltypes_hierarchy.csv")
+df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
+df_hierarchy_celltypes = pd.read_csv("./data/celltype_data/celltypes_hierarchy.csv")
 
-df_genes = pd.read_csv('./new_data_lbae/gene_data/Single_Nuc_Cluster_Avg_Expression.csv.gz', index_col=0)
-df_genes = df_genes[df_genes.index.isin(df_hierarchy_celltypes['cell_type'])]
+df_genes = pd.read_csv('./data/gene_data/Single_Nuc_Cluster_Avg_Expression.csv.gz', index_col=0)
 df_genes.index = df_genes.index.str.split('=').str[1]
 df_genes = df_genes[df_genes.index.isin(df_hierarchy_celltypes['cell_type'])]
 
@@ -290,26 +289,26 @@ def return_layout(basic_config, slice_index):
                                 ),
                             ],
                         ),
-                        # Sections mode control
-                        dmc.SegmentedControl(
-                            id="page-6tris-sections-mode",
-                            value="one",
-                            data=[
-                                {"value": "one", "label": "One section"},
-                                {"value": "all", "label": "All sections"},
-                            ],
-                            color="cyan",
-                            disabled=True,
-                            size="xs",
-                            style={
-                                "position": "absolute",
-                                "left": "1%",
-                                "top": "9em",
-                                "width": "20em",
-                                "border": "1px solid rgba(255, 255, 255, 0.1)",
-                                "borderRadius": "4px",
-                            }
-                        ),
+                        # # Sections mode control
+                        # dmc.SegmentedControl(
+                        #     id="page-6tris-sections-mode",
+                        #     value="one",
+                        #     data=[
+                        #         {"value": "one", "label": "One section"},
+                        #         {"value": "all", "label": "All sections"},
+                        #     ],
+                        #     color="cyan",
+                        #     disabled=True,
+                        #     size="xs",
+                        #     style={
+                        #         "position": "absolute",
+                        #         "left": "1%",
+                        #         "top": "9em",
+                        #         "width": "20em",
+                        #         "border": "1px solid rgba(255, 255, 255, 0.1)",
+                        #         "borderRadius": "4px",
+                        #     }
+                        # ),
                         # Title and badges group on the left side
                         dmc.Group(
                             direction="column",
@@ -453,7 +452,7 @@ def page_6tris_hover(hoverData, slice_index):
     Input("page-6tris-selected-lipid-2", "data"),
     Input("page-6tris-selected-lipid-3", "data"),
     Input("page-6tris-rgb-switch", "checked"),
-    Input("page-6tris-sections-mode", "value"),
+    # Input("page-6tris-sections-mode", "value"),
     Input("main-brain", "value"),
     Input("page-6tris-toggle-annotations", "checked"),
 
@@ -465,7 +464,7 @@ def page_6tris_plot_graph_heatmap_mz_selection(
     lipid_2_index,
     lipid_3_index,
     rgb_mode,
-    sections_mode,
+    # sections_mode,
     brain_id,
     annotations_checked,
     graph_input,
@@ -493,21 +492,21 @@ def page_6tris_plot_graph_heatmap_mz_selection(
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
         
-            # If all sections view is requested, only use first lipid
-            if sections_mode == "all":
-                active_lipids = [name for name in ll_lipid_names if name is not None]
-                first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                image = grid_data.retrieve_grid_image(
-                    lipid=first_lipid,
-                    sample=brain_id
-                )
-                return(figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay),
-                        "Now displaying:")
+            # # If all sections view is requested, only use first lipid
+            # if sections_mode == "all":
+            #     active_lipids = [name for name in ll_lipid_names if name is not None]
+            #     first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+            #     image = grid_data.retrieve_grid_image(
+            #         lipid=first_lipid,
+            #         sample=brain_id
+            #     )
+            #     return(figures.build_lipid_heatmap_from_image(
+            #                 image, 
+            #                 return_base64_string=False,
+            #                 overlay=overlay),
+            #             "Now displaying:")
             
-            if rgb_mode and sections_mode != "all":
+            if rgb_mode:# and sections_mode != "all":
                 return (
                     figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
@@ -537,28 +536,28 @@ def page_6tris_plot_graph_heatmap_mz_selection(
                     )
                 else:
                     # If multiple lipids and not in RGB mode, force RGB mode (except in all sections mode)
-                    if sections_mode != "all":
-                        return (
-                            figures.compute_rgb_image_per_lipid_selection(
-                                slice_index,
-                                ll_lipid_names=ll_lipid_names,
-                                cache_flask=cache_flask,
-                                overlay=overlay,
-                            ),
-                            "Now displaying:",
-                        )
-                    else:
-                        # In all sections mode, use only first lipid
-                        first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                        image = grid_data.retrieve_grid_image(
-                            lipid=first_lipid,
-                            sample=brain_id
-                        )
-                        return(figures.build_lipid_heatmap_from_image(
-                                    image, 
-                                    return_base64_string=False,
-                                    overlay=overlay),
-                                "Now displaying:")
+                    # if sections_mode != "all":
+                    return (
+                        figures.compute_rgb_image_per_lipid_selection(
+                            slice_index,
+                            ll_lipid_names=ll_lipid_names,
+                            cache_flask=cache_flask,
+                            overlay=overlay,
+                        ),
+                        "Now displaying:",
+                    )
+                    # else:
+                    #     # In all sections mode, use only first lipid
+                    #     first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+                    #     image = grid_data.retrieve_grid_image(
+                    #         lipid=first_lipid,
+                    #         sample=brain_id
+                    #     )
+                    #     return(figures.build_lipid_heatmap_from_image(
+                    #                 image, 
+                    #                 return_base64_string=False,
+                    #                 overlay=overlay),
+                    #             "Now displaying:")
 
         return dash.no_update
 
@@ -568,7 +567,7 @@ def page_6tris_plot_graph_heatmap_mz_selection(
         or id_input == "page-6tris-selected-lipid-2"
         or id_input == "page-6tris-selected-lipid-3"
         or id_input == "page-6tris-rgb-switch"
-        or id_input == "page-6tris-sections-mode"
+        # or id_input == "page-6tris-sections-mode"
         or id_input == "main-brain"
         or id_input == "main-slider"
     ):
@@ -584,52 +583,52 @@ def page_6tris_plot_graph_heatmap_mz_selection(
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
 
-            # If all sections view is requested
-            if sections_mode == "all":
-                active_lipids = [name for name in ll_lipid_names if name is not None]
-                # Use first available lipid for all sections view
-                first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                image = grid_data.retrieve_grid_image(
-                    lipid=first_lipid,
-                    sample=brain_id
-                )
+            # # If all sections view is requested
+            # if sections_mode == "all":
+            #     active_lipids = [name for name in ll_lipid_names if name is not None]
+            #     # Use first available lipid for all sections view
+            #     first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+            #     image = grid_data.retrieve_grid_image(
+            #         lipid=first_lipid,
+            #         sample=brain_id
+            #     )
                 
-                return(figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay),
-                        "Now displaying:")
+            #     return(figures.build_lipid_heatmap_from_image(
+            #                 image, 
+            #                 return_base64_string=False,
+            #                 overlay=overlay),
+            #             "Now displaying:")
             
             # Handle normal display mode (RGB or colormap)
-            else:
-                active_lipids = [name for name in ll_lipid_names if name is not None]
-                if rgb_mode:
-                    return (
-                        figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_lipid_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                else:
-                    # If not in RGB mode, use first lipid only
-                    first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                    image = figures.compute_image_per_lipid(
+            # else:
+            active_lipids = [name for name in ll_lipid_names if name is not None]
+            if rgb_mode:
+                return (
+                    figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
-                        RGB_format=False,
-                        lipid_name=first_lipid,
+                        ll_lipid_names=ll_lipid_names,
                         cache_flask=cache_flask,
-                    )
-                    return (
-                        figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
+                        overlay=overlay,
+                    ),
+                    "Now displaying:",
+                )
+            else:
+                # If not in RGB mode, use first lipid only
+                first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+                image = figures.compute_image_per_lipid(
+                    slice_index,
+                    RGB_format=False,
+                    lipid_name=first_lipid,
+                    cache_flask=cache_flask,
+                )
+                return (
+                    figures.build_lipid_heatmap_from_image(
+                        image, 
+                        return_base64_string=False,
+                        overlay=overlay,
+                    ),
+                    "Now displaying:",
+                )
         elif (
             id_input == "main-slider" and graph_input == "Now displaying:"
         ):
@@ -678,7 +677,6 @@ def page_6tris_plot_graph_heatmap_mz_selection(
     Input("page-6tris-badge-lipid-2", "class_name"),
     Input("page-6tris-badge-lipid-3", "class_name"),
     Input("main-slider", "data"),
-    Input("page-6tris-sections-mode", "value"),
     Input("page-6tris-rgb-switch", "checked"),
     State("page-6tris-selected-lipid-1", "data"),
     State("page-6tris-selected-lipid-2", "data"),
@@ -694,7 +692,6 @@ def page_6tris_add_toast_selection(
     class_name_badge_2,
     class_name_badge_3,
     slice_index,
-    sections_mode,
     rgb_switch,
     lipid_1_index,
     lipid_2_index,
@@ -735,26 +732,9 @@ def page_6tris_add_toast_selection(
         if len(l_lipid_loc) > 0:
             lipid_1_index = l_lipid_loc[0]
             header_1 = default_lipid
-            class_name_badge_1 = "position-absolute"
-            return header_1, "", "", lipid_1_index, -1, -1, class_name_badge_1, "d-none", "d-none", [default_lipid]
+            return header_1, "", "", lipid_1_index, -1, -1, "mt-2", "d-none mt-2", "d-none mt-2", [default_lipid]
         else:
-            return "", "", "", -1, -1, -1, "d-none", "d-none", "d-none", []
-
-    # If RGB is turned off or sections mode is "all", keep only the first lipid
-    if (id_input == "page-6tris-rgb-switch" and not rgb_switch) or (id_input == "page-6tris-sections-mode" and sections_mode == "all"):
-        active_lipids = []
-        if header_1 and lipid_1_index != -1:
-            active_lipids.append((header_1, lipid_1_index))
-        elif header_2 and lipid_2_index != -1:
-            active_lipids.append((header_2, lipid_2_index))
-        elif header_3 and lipid_3_index != -1:
-            active_lipids.append((header_3, lipid_3_index))
-            
-        if active_lipids:
-            first_lipid, first_index = active_lipids[0]
-            return (first_lipid, "", "", first_index, -1, -1, 
-                    "position-absolute", "d-none", "d-none", [first_lipid])
-        return dash.no_update
+            return "", "", "", -1, -1, -1, "d-none mt-2", "d-none mt-2", "d-none mt-2", []
 
     # Handle lipid deletion
     if l_lipid_names is not None and len(l_lipid_names) < len([x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]):
@@ -795,53 +775,35 @@ def page_6tris_add_toast_selection(
         # Reset all slots
         header_1, header_2, header_3 = "", "", ""
         lipid_1_index, lipid_2_index, lipid_3_index = -1, -1, -1
-        class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none", "d-none", "d-none"
+        class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none mt-2", "d-none mt-2", "d-none mt-2"
         
         # Fill slots in order with remaining lipids
-        # If in all sections mode, only fill the first slot
-        if sections_mode == "all" and remaining_lipids:
-            header_1 = remaining_lipids[0][0]
-            lipid_1_index = remaining_lipids[0][1]
-            class_name_badge_1 = "position-absolute"
-            return (
-                header_1,
-                "",
-                "",
-                lipid_1_index,
-                -1,
-                -1,
-                class_name_badge_1,
-                "d-none",
-                "d-none",
-                [header_1]
-            )
-        else:
-            for idx, (lipid_name, lipid_idx) in enumerate(remaining_lipids):
-                if idx == 0:
-                    header_1 = lipid_name
-                    lipid_1_index = lipid_idx
-                    class_name_badge_1 = "position-absolute"
-                elif idx == 1:
-                    header_2 = lipid_name
-                    lipid_2_index = lipid_idx
-                    class_name_badge_2 = "position-absolute"
-                elif idx == 2:
-                    header_3 = lipid_name
-                    lipid_3_index = lipid_idx
-                    class_name_badge_3 = "position-absolute"
-                
-            return (
-                header_1,
-                header_2,
-                header_3,
-                lipid_1_index,
-                lipid_2_index,
-                lipid_3_index,
-                class_name_badge_1,
-                class_name_badge_2,
-                class_name_badge_3,
-                l_lipid_names
-            )
+        for idx, (lipid_name, lipid_idx) in enumerate(remaining_lipids):
+            if idx == 0:
+                header_1 = lipid_name
+                lipid_1_index = lipid_idx
+                class_name_badge_1 = "mt-2"
+            elif idx == 1:
+                header_2 = lipid_name
+                lipid_2_index = lipid_idx
+                class_name_badge_2 = "mt-2"
+            elif idx == 2:
+                header_3 = lipid_name
+                lipid_3_index = lipid_idx
+                class_name_badge_3 = "mt-2"
+            
+        return (
+            header_1,
+            header_2,
+            header_3,
+            lipid_1_index,
+            lipid_2_index,
+            lipid_3_index,
+            class_name_badge_1,
+            class_name_badge_2,
+            class_name_badge_3,
+            l_lipid_names
+        )
 
     # Handle new lipid addition or slice change
     if (id_input == "page-6tris-dropdown-lipids" and l_lipid_names is not None) or id_input == "main-slider":
@@ -882,30 +844,6 @@ def page_6tris_add_toast_selection(
                 elif header_3 == header:
                     lipid_3_index = lipid_index
 
-            # If in all sections mode, keep only first lipid
-            if sections_mode == "all":
-                current_lipids = []
-                if header_1:
-                    current_lipids.append(header_1)
-                elif header_2:
-                    current_lipids.append(header_2)
-                elif header_3:
-                    current_lipids.append(header_3)
-                    
-                if current_lipids:
-                    return (
-                        current_lipids[0],
-                        "",
-                        "",
-                        lipid_1_index if header_1 else (lipid_2_index if header_2 else lipid_3_index),
-                        -1,
-                        -1,
-                        "position-absolute",
-                        "d-none",
-                        "d-none",
-                        current_lipids[:1]
-                    )
-
             return (
                 header_1,
                 header_2,
@@ -913,9 +851,9 @@ def page_6tris_add_toast_selection(
                 lipid_1_index,
                 lipid_2_index,
                 lipid_3_index,
-                class_name_badge_1,
-                class_name_badge_2,
-                class_name_badge_3,
+                "mt-2" if header_1 else "d-none mt-2",
+                "mt-2" if header_2 else "d-none mt-2",
+                "mt-2" if header_3 else "d-none mt-2",
                 [h for h in [header_1, header_2, header_3] if h]
             )
 
@@ -953,24 +891,6 @@ def page_6tris_add_toast_selection(
                 lipid_index = l_lipid_loc[0]
                 lipid_string = l_lipid_names[-1]
 
-                # If in all sections mode, only allow one lipid
-                if sections_mode == "all":
-                    header_1 = lipid_string
-                    lipid_1_index = lipid_index
-                    class_name_badge_1 = "position-absolute"
-                    return (
-                        header_1,
-                        "",
-                        "",
-                        lipid_1_index,
-                        -1,
-                        -1,
-                        class_name_badge_1,
-                        "d-none",
-                        "d-none",
-                        [header_1]
-                    )
-
                 # If lipid already exists, update its index
                 if header_1 == lipid_string:
                     lipid_1_index = lipid_index
@@ -980,18 +900,18 @@ def page_6tris_add_toast_selection(
                     lipid_3_index = lipid_index
                 # If it's a new lipid, fill the first available slot
                 else:
-                    if class_name_badge_1 == "d-none":
+                    if class_name_badge_1 == "d-none mt-2":
                         header_1 = lipid_string
                         lipid_1_index = lipid_index
-                        class_name_badge_1 = "position-absolute"
-                    elif class_name_badge_2 == "d-none":
+                        class_name_badge_1 = "mt-2"
+                    elif class_name_badge_2 == "d-none mt-2":
                         header_2 = lipid_string
                         lipid_2_index = lipid_index
-                        class_name_badge_2 = "position-absolute"
-                    elif class_name_badge_3 == "d-none":
+                        class_name_badge_2 = "mt-2"
+                    elif class_name_badge_3 == "d-none mt-2":
                         header_3 = lipid_string
                         lipid_3_index = lipid_index
-                        class_name_badge_3 = "position-absolute"
+                        class_name_badge_3 = "mt-2"
                     else:
                         logging.warning("More than 3 lipids have been selected")
                         return dash.no_update
@@ -1079,14 +999,20 @@ def page_6tris_add_toast_selection(
     Input("page-6tris-selected-lipid-1", "data"),
     Input("page-6tris-selected-lipid-2", "data"),
     Input("page-6tris-selected-lipid-3", "data"),
-    Input("page-6tris-sections-mode", "value"),
+    # Input("page-6tris-sections-mode", "value"),
     State("page-6tris-rgb-switch", "checked"),
 )
-def page_6tris_auto_toggle_rgb(lipid_1_index, lipid_2_index, lipid_3_index, sections_mode, current_rgb_state):
+def page_6tris_auto_toggle_rgb(
+    lipid_1_index, 
+    lipid_2_index, 
+    lipid_3_index, 
+    # sections_mode,
+    current_rgb_state
+):
     """This callback automatically toggles the RGB switch when multiple lipids are selected."""
     # Force RGB off when in all sections mode
-    if sections_mode == "all":
-        return False
+    # if sections_mode == "all":
+    #     return False
         
     active_lipids = [x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]
     # Only turn on RGB automatically when going from 1 to multiple lipids
@@ -1095,18 +1021,18 @@ def page_6tris_auto_toggle_rgb(lipid_1_index, lipid_2_index, lipid_3_index, sect
         return True
     return current_rgb_state  # Keep current state otherwise
 
-@app.callback(
-    Output("page-6tris-sections-mode", "disabled"),
-    Input("page-6tris-selected-lipid-1", "data"),
-    Input("page-6tris-selected-lipid-2", "data"),
-    Input("page-6tris-selected-lipid-3", "data"),
-)
-def page_6tris_active_sections_control(lipid_1_index, lipid_2_index, lipid_3_index):
-    """This callback enables/disables the sections mode control based on lipid selection."""
-    # Get the current lipid selection
-    active_lipids = [x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]
-    # Enable control if at least one lipid is selected
-    return len(active_lipids) == 0
+# @app.callback(
+#     Output("page-6tris-sections-mode", "disabled"),
+#     Input("page-6tris-selected-lipid-1", "data"),
+#     Input("page-6tris-selected-lipid-2", "data"),
+#     Input("page-6tris-selected-lipid-3", "data"),
+# )
+# def page_6tris_active_sections_control(lipid_1_index, lipid_2_index, lipid_3_index):
+#     """This callback enables/disables the sections mode control based on lipid selection."""
+#     # Get the current lipid selection
+#     active_lipids = [x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]
+#     # Enable control if at least one lipid is selected
+#     return len(active_lipids) == 0
 
 clientside_callback(
     """
@@ -1125,57 +1051,57 @@ clientside_callback(
 )
 """This clientside callback is used to download the current heatmap."""
 
-@app.callback(
-    Output("page-6tris-main-slider-style", "data"),
-    Output("page-6tris-graph-hover-text", "style"),
-    Output("page-6tris-annotations-container", "style"),
-    Input("page-6tris-sections-mode", "value"),
-)
-def page_6tris_toggle_elements_visibility(sections_mode):
-    """This callback toggles the visibility of elements based on sections mode."""
-    if sections_mode == "all":
-        # Hide elements
-        return {"display": "none"}, {"display": "none"}, {"display": "none"}
-    else:
-        # Show elements
-        return (
-            {"display": "block"}, 
-            {
-                "width": "auto",
-                "position": "absolute",
-                "left": "50%",
-                "transform": "translateX(-50%)",
-                "top": "1em",
-                "fontSize": "1.5em",
-                "textAlign": "center",
-                "zIndex": 1000,
-                "backgroundColor": "rgba(0, 0, 0, 0.7)",
-                "padding": "0.5em 2em",
-                "borderRadius": "8px",
-                "minWidth": "200px",
-            },
-            {
-                "position": "absolute",
-                "left": "50%",
-                "transform": "translateX(-50%)",
-                "top": "0.5em",
-                "z-index": 1000,
-                "display": "flex",
-                "flexDirection": "row",
-                "alignItems": "center",
-                "justifyContent": "center",
-                "padding": "0.5em 2em",
-            }
-        )
+# @app.callback(
+#     Output("page-6tris-main-slider-style", "data"),
+#     Output("page-6tris-graph-hover-text", "style"),
+#     Output("page-6tris-annotations-container", "style"),
+#     Input("page-6tris-sections-mode", "value"),
+# )
+# def page_6tris_toggle_elements_visibility(sections_mode):
+#     """This callback toggles the visibility of elements based on sections mode."""
+#     if sections_mode == "all":
+#         # Hide elements
+#         return {"display": "none"}, {"display": "none"}, {"display": "none"}
+#     else:
+#         # Show elements
+#         return (
+#             {"display": "block"}, 
+#             {
+#                 "width": "auto",
+#                 "position": "absolute",
+#                 "left": "50%",
+#                 "transform": "translateX(-50%)",
+#                 "top": "1em",
+#                 "fontSize": "1.5em",
+#                 "textAlign": "center",
+#                 "zIndex": 1000,
+#                 "backgroundColor": "rgba(0, 0, 0, 0.7)",
+#                 "padding": "0.5em 2em",
+#                 "borderRadius": "8px",
+#                 "minWidth": "200px",
+#             },
+#             {
+#                 "position": "absolute",
+#                 "left": "50%",
+#                 "transform": "translateX(-50%)",
+#                 "top": "0.5em",
+#                 "z-index": 1000,
+#                 "display": "flex",
+#                 "flexDirection": "row",
+#                 "alignItems": "center",
+#                 "justifyContent": "center",
+#                 "padding": "0.5em 2em",
+#             }
+#         )
 
-# Add a separate callback just for the RGB group visibility
-@app.callback(
-    Output("page-6tris-rgb-group", "style"),
-    Input("page-6tris-sections-mode", "value"),
-)
-def page_6tris_toggle_rgb_group_visibility(sections_mode):
-    """Controls the visibility of the RGB group."""
-    if sections_mode == "all":
-        return {"display": "none"}
-    else:
-        return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}
+# # Add a separate callback just for the RGB group visibility
+# @app.callback(
+#     Output("page-6tris-rgb-group", "style"),
+#     Input("page-6tris-sections-mode", "value"),
+# )
+# def page_6tris_toggle_rgb_group_visibility(sections_mode):
+#     """Controls the visibility of the RGB group."""
+#     if sections_mode == "all":
+#         return {"display": "none"}
+#     else:
+#         return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}

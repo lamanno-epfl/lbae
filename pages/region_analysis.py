@@ -1544,7 +1544,7 @@ def page_3_plot_volcano(
             # Compute differential lipids
             difflips = differential_lipids(l_expressions_A, l_expressions_B)
 
-            colors = pd.read_hdf("./new_data_lbae/annotations/lipidclasscolors.h5ad", key="table")
+            colors = pd.read_hdf("./data/annotations/lipidclasscolors.h5ad", key="table")
             colors.loc['PA'] = {'count': 0, 'classcolors': '#D3D3D3'}
             colors.loc['LPA'] = {'count': 0, 'classcolors': '#D3D3D3'}
 

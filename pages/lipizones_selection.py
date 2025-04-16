@@ -55,9 +55,9 @@ def all_lipizones_default_image(brain_id="ReferenceAtlas"):
             logging.info(f"Loaded {len(color_masks)} color masks from {filename}")
             return color_masks
         
-        color_masks = load_color_masks_pickle('my_image_masks.pkl')
-        grayscale_image = np.load("grayscale_image.npy")
-        rgb_image = np.load("grid_image_lipizones.npy")[:, :, :3]
+        color_masks = load_color_masks_pickle(os.path.join(lipizone_sample_data.path_data, 'color_masks.pkl'))
+        grayscale_image = np.load(os.path.join(lipizone_sample_data.path_data, 'grayscale_image.npy'))
+        rgb_image = np.load(os.path.join(lipizone_sample_data.path_data, 'grid_image_lipizones.npy'))[:, :, :3]
     
     # Apply square root transformation to enhance contrast
     # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
@@ -316,8 +316,8 @@ def create_treemap_figure(df_treemap, node_colors):
 # hierarchy_data = build_tree_from_csv("./data/annotations/lipizones_hierarchy.csv")
 
 # df_hierarchy = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
-df_hierarchy_lipizones = pd.read_csv("./new_data_lbae/lipizone_data/lipizones_hierarchy.csv")
-lipizone_to_color = pickle.load(open("./new_data_lbae/lipizone_data/lipizone_to_color.pkl", "rb"))
+df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
+lipizone_to_color = pickle.load(open("./data/lipizone_data/lipizone_to_color.pkl", "rb"))
 
 # ==================================================================================================
 # --- Layout

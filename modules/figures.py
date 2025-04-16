@@ -1516,7 +1516,7 @@ class Figures:
             The 3D volume figure
         """
         # Load lipid data
-        lipid_path = f"./new_data_lbae/3d_interpolated_native/{lipid_name}interpolation_log.npy"
+        lipid_path = f"./data/3d_interpolated_native/{lipid_name}interpolation_log.npy"
         np3d = np.load(lipid_path)
 
         # print(downsample_factor)
@@ -3339,55 +3339,3 @@ class Figures:
             if set_progress is not None:
                 set_progress((90, "Returning figure"))
             return fig
-
-    def compute_lipizones_figure(self):
-        """This function computes and returns a figure representing the lipizones visualization.
-        The function loads a pre-computed grid image, converts its RGB values, and creates a Plotly
-        figure with specific layout settings.
-
-        Returns:
-            (go.Figure): A Plotly figure representing the lipizones visualization.
-        """
-        # Load the pre-computed grid image
-        grid_image = np.load("./new_data/grid_image_lipizones.npy")
-        rgb_image = grid_image[:, :, :3]
-
-        # Convert RGB values from 1,1,1 (white) to 0,0,0 (black)
-        converted_array = rgb_image.copy()
-        white_pixels = np.all(converted_array == 1, axis=2)
-        for i in range(3):
-            converted_array[white_pixels, i] = 0
-
-        rgb_image = converted_array
-
-        # Create figure using Plotly Express with a black background
-        fig = px.imshow(rgb_image, binary_string=True, binary_backend="auto")
-
-        # Update layout with improved settings and dark theme
-        fig.update_layout(
-            width=3648,
-            height=1280,
-            margin=dict(l=0, r=0, b=0, t=30),
-            dragmode="pan",  # Set default drag mode to pan instead of zoom
-            paper_bgcolor="black",  # Set paper background to black
-            plot_bgcolor="black",  # Set plot background to black
-        )
-
-        # Update axes to remove tick labels and grid
-        fig.update_xaxes(
-            showticklabels=False,
-            showgrid=False,  # Remove grid lines
-            zeroline=False,  # Remove zero line
-            showline=False,  # Remove axis line
-            constrain="domain",  # Constrains axes to the domain to prevent artificial borders
-        )
-        fig.update_yaxes(
-            showticklabels=False,
-            showgrid=False,  # Remove grid lines
-            zeroline=False,  # Remove zero line
-            showline=False,  # Remove axis line
-            scaleanchor="x",  # Forces y-axis to scale with x-axis to maintain aspect ratio
-            constrain="domain",  # Constrains axes to the domain to prevent artificial borders
-        )
-
-        return fig

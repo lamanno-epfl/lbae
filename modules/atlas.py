@@ -199,7 +199,7 @@ class Atlas:
         # print("self.array_coordinates_warped_data:\n", self.array_coordinates_warped_data.shape)
         # print(self.array_coordinates_warped_data[0])
         # deve avere dimensione num_slices x ABA_DIM[2] x ABA_DIM[1] x 3
-        self.array_coordinates = np.load("./new_data_lbae/atlas/coords_array.npy")
+        self.array_coordinates = np.load("./data/atlas/coords_array.npy")
         
         # Record shape of the warped data
         # self.image_shape = list(self.array_coordinates_warped_data.shape[1:-1])
@@ -264,7 +264,7 @@ class Atlas:
         #     )
         #     # Since this function is called at startup, no data locking is needed
         #     self.save_all_projected_masks_and_spectra(cache_flask=None, sample=sample)
-        self.dic_existing_masks = pickle.load(open('./new_data_lbae/atlas/dic_existing_masks.pkl', 'rb'))
+        self.dic_existing_masks = pickle.load(open('./data/atlas/dic_existing_masks.pkl', 'rb'))
         # print("self.dic_existing_masks:\n", self.dic_existing_masks)
         # # These attributes are defined later as properties as they are only used during
         # # precomputations

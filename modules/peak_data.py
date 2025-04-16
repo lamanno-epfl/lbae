@@ -43,9 +43,9 @@ class PeakData:
 
     def __init__(
         self,
-        path_data: str = "../new_data_lbae/peak_data/",
-        path_metadata: str = "../new_data_lbae/metadata/",
-        path_annotations: str = "../new_data_lbae/annotations/"
+        path_data: str = "../data/peak_data/",
+        path_metadata: str = "../data/metadata/",
+        path_annotations: str = "../data/annotations/"
     ):
         """Initialize the storage system.
 
@@ -266,7 +266,7 @@ class PeakData:
     #     ]
     #     arr_z = generic_filter(arr_z, function=majority_vote_9x9, size=(9, 9), mode='constant', cval=np.nan)
 
-    #     mcc = MouseConnectivityCache(manifest_file='mouse_connectivity_manifest.json')
+    #     mcc = MouseConnectivityCache(manifest_file='./data/atlas/mouse_connectivity_manifest.json')
     #     structure_tree = mcc.get_structure_tree()
 
     #     # pixels = pixels

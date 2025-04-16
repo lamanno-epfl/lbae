@@ -401,8 +401,8 @@ def create_treemap_figure(df_treemap, node_colors, is_celltypes=False):
 # df_hierarchy_lipizones['level_3_name'] = df_hierarchy_lipizones['level_3'].astype(str).map(manual_naming_lipizones_level_3)
 # df_hierarchy_lipizones['level_4_name'] = df_hierarchy_lipizones['level_4'].astype(str).map(manual_naming_lipizones_level_4)
 
-df_hierarchy_lipizones = pd.read_csv("./new_data_lbae/lipizone_data/lipizones_hierarchy.csv")
-lipizone_to_color = pickle.load(open("./new_data_lbae/lipizone_data/lipizone_to_color.pkl", "rb"))
+df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
+lipizone_to_color = pickle.load(open("./data/lipizone_data/lipizone_to_color.pkl", "rb"))
 
 # celltypes = pd.read_csv('/data/LBA_DATA/lbae/assets/hierarchy_celltypes_colors.csv')[["cell_type", "color"]]
 # celltype_to_color = {name: color for name, color in zip(celltypes["cell_type"], celltypes["color"])}
@@ -425,8 +425,8 @@ lipizone_to_color = pickle.load(open("./new_data_lbae/lipizone_data/lipizone_to_
 #                                                                 'level_16', 'level_17', 'level_18', 'level_19', 'level_20', 
 #                                                                 'level_21', 'level_22', 'level_23', 'level_24', 'level_25', 
 #                                                                 'level_26'])
-df_hierarchy_celltypes = pd.read_csv("./new_data_lbae/celltype_data/celltypes_hierarchy.csv")
-celltype_to_color = pickle.load(open("./new_data_lbae/celltype_data/celltype_to_color.pkl", "rb"))
+df_hierarchy_celltypes = pd.read_csv("./data/celltype_data/celltypes_hierarchy.csv")
+celltype_to_color = pickle.load(open("./data/celltype_data/celltype_to_color.pkl", "rb"))
 # ==================================================================================================
 # --- Layout
 # ==================================================================================================

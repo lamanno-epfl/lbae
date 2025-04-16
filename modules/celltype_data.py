@@ -20,7 +20,7 @@ class CelltypeData:
 
     def __init__(
         self, 
-        path_data: str = "./new_data_lbae/celltype_data/"
+        path_data: str = "./data/celltype_data/"
     ):
         """
         Initializes the shelve database.

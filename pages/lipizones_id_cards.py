@@ -33,9 +33,9 @@ from app import app
 # ==================================================================================================
 
 # Path to the ID cards
-ID_CARDS_PATH = "./new_data_lbae/ID_cards"
-df_hierarchy_lipizones = pd.read_csv("./new_data_lbae/lipizone_data/lipizones_hierarchy.csv")
-lipizone_to_color = pickle.load(open("./new_data_lbae/lipizone_data/lipizone_to_color.pkl", "rb"))
+ID_CARDS_PATH = "./data/ID_cards"
+df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
+lipizone_to_color = pickle.load(open("./data/lipizone_data/lipizone_to_color.pkl", "rb"))
 
 # ==================================================================================================
 # --- Helper functions

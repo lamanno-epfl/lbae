@@ -24,7 +24,7 @@ class LipizoneSampleData:
     """
     def __init__(
         self, 
-        path_data: str = "./new_data_lbae/lipizone_data/",
+        path_data: str = "./data/lipizone_data/",
     ):
         """
         Initializes the shelve database.
@@ -93,7 +93,7 @@ class LipizoneSectionData:
     """
     def __init__(
         self, 
-        path_data: str = "./new_data_lbae/lipizone_data/"
+        path_data: str = "./data/lipizone_data/"
     ):
         """
         Initializes the shelve database.

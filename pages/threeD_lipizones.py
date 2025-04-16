@@ -46,10 +46,10 @@ import logging
 # from functools import lru_cache
 
 # New constant for the Zarr store location
-LIPIZONES_ZARR_PATH = "./new_data_lbae/lipizone_data/3d_lipizones_all.zarr"
+LIPIZONES_ZARR_PATH = "./data/lipizone_data/3d_lipizones_all.zarr"
 
 # New constant for the color array file
-COLOR_ARRAY_PATH = "./new_data_lbae/lipizone_data/color_array_fullres.npy"
+COLOR_ARRAY_PATH = "./data/lipizone_data/color_array_fullres.npy"
 
 # @lru_cache(maxsize=50)
 # def load_lipizone_array(
@@ -83,8 +83,8 @@ COLOR_ARRAY_PATH = "./new_data_lbae/lipizone_data/color_array_fullres.npy"
 #         return None
 
 # Load hierarchy data
-df_hierarchy_lipizones = pd.read_csv("./new_data_lbae/lipizone_data/lipizones_hierarchy.csv")
-lipizone_to_color = pickle.load(open("./new_data_lbae/lipizone_data/lipizone_to_color.pkl", "rb"))
+df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
+lipizone_to_color = pickle.load(open("./data/lipizone_data/lipizone_to_color.pkl", "rb"))
 
 # ==================================================================================================
 # --- Helper functions

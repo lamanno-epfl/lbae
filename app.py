@@ -68,7 +68,7 @@ logging.info("Memory use before any global variable declaration" + logmem())
 SAMPLE_DATA = False
 
 # Path to the ID cards
-ID_CARDS_PATH = "./new_data_lbae/ID_cards"
+ID_CARDS_PATH = "./data/ID_cards"
 
 # # Define paths for the sample/not sample data
 # if SAMPLE_DATA:
@@ -82,22 +82,22 @@ ID_CARDS_PATH = "./new_data_lbae/ID_cards"
 #     # path_annotations = "data/annotations/"
 #     # path_db = "data/app_data/data.db"
 
-cache_dir = "./new_data_lbae/cache/"
+cache_dir = "./data/cache/"
 
-# path_data = "./new_data_lbae"
-path_metadata = "./new_data_lbae/metadata"
+# path_data = "./data"
+path_metadata = "./data/metadata"
 
-path_grid_data = "./new_data_lbae/grid_data"
-path_celltype_data = "./new_data_lbae/celltype_data"
-path_lipid_data = "./new_data_lbae/lipid_data"
-path_peak_data = "./new_data_lbae/peak_data"
-path_program_data = "./new_data_lbae/program_data"
-path_lipizone_data = "./new_data_lbae/lipizone_data"
-path_stream_data = "./new_data_lbae/stream_data"
+path_grid_data = "./data/grid_data"
+path_celltype_data = "./data/celltype_data"
+path_lipid_data = "./data/lipid_data"
+path_peak_data = "./data/peak_data"
+path_program_data = "./data/program_data"
+path_lipizone_data = "./data/lipizone_data"
+path_stream_data = "./data/stream_data"
 
-path_annotations = "./new_data_lbae/annotations/"
+path_annotations = "./data/annotations/"
 
-path_db = "./new_data_lbae/app_data/data.db"
+path_db = "./data/app_data/data.db"
 
 # Load shelve database
 logging.info("Loading storage..." + logmem())

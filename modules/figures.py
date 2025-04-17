@@ -461,7 +461,6 @@ class Figures:
         """
 
         logging.info("Converting image to string")
-        print(image.shape)
         # Set optimize to False to gain computation time
         base64_string = convert_image_to_base64(
             image, 
@@ -1164,7 +1163,16 @@ class Figures:
         slice_index,
         df_genes,
         rgb_mode_lipids=True,
-        celltype_radius=1):
+        celltype_radius=1,
+        gene_thresholds=None):
+
+        # Default gene thresholds if not provided
+        if gene_thresholds is None:
+            gene_thresholds = [0] * len(all_selected_genes)
+        
+        # Ensure we have a threshold for each gene
+        while len(gene_thresholds) < len(all_selected_genes):
+            gene_thresholds.append(0)
 
         # Get section data for both lipizones and celltypes
         section_data_lipizones = self._lipizone_data.section_data.retrieve_section_data(float(slice_index))
@@ -1220,13 +1228,16 @@ class Figures:
             # Get the appropriate colorscale for this gene
             colorscale = gene_colorscales[gene_idx]
             
+            # Get the threshold for this gene
+            threshold = gene_thresholds[gene_idx] if gene_idx < len(gene_thresholds) else 0
+            
             # Calculate min and max expression for this specific gene
             # This ensures each gene gets its full colorscale range
             gene_values = df_genes_filtered[gene].values
             gene_values = gene_values[~np.isnan(gene_values)]  # Remove NaN values
             if len(gene_values) > 0:
-                min_val = gene_values.min()
-                max_val = gene_values.max()
+                min_val = np.min(gene_values)
+                max_val = np.max(gene_values)
                 # Create a normalization specific to this gene
                 gene_norm = mcolors.Normalize(vmin=min_val, vmax=max_val)
             else:
@@ -1237,6 +1248,16 @@ class Figures:
             for celltype in color_masks_celltypes.keys():
                 cell_mask = color_masks_celltypes[celltype].T.copy()
                 
+                # Get gene expression value for this celltype
+                try:
+                    genexpr_value = df_genes_filtered.loc[celltype, gene]
+                except:
+                    genexpr_value = 0
+                
+                # Apply threshold filtering - skip cells with expression below the threshold
+                if np.isnan(genexpr_value) or genexpr_value < threshold:
+                    continue
+                
                 # Expand the mask to include neighboring pixels for better visibility
                 y_coords, x_coords = np.where(cell_mask)
                 for y, x in zip(y_coords, x_coords):
@@ -1246,12 +1267,6 @@ class Figures:
                     x_max = min(cell_mask.shape[1], x + celltype_radius + 1)
                     
                     cell_mask[y_min:y_max, x_min:x_max] = True
-                
-                # Get gene expression value for this celltype
-                try:
-                    genexpr_value = df_genes_filtered.loc[celltype, gene]
-                except:
-                    genexpr_value = 0
                 
                 # Apply the colorscale to this cell mask using the gene-specific normalization
                 if not np.isnan(genexpr_value) and genexpr_value > min_val:

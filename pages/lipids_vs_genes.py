@@ -74,6 +74,10 @@ def return_layout(basic_config, slice_index):
                 dcc.Store(id="page-6tris-selected-gene-1", data=-1),
                 dcc.Store(id="page-6tris-selected-gene-2", data=-1),
                 dcc.Store(id="page-6tris-selected-gene-3", data=-1),
+                # Add stores for gene expression thresholds
+                dcc.Store(id="page-6tris-gene-threshold-1", data=0),
+                dcc.Store(id="page-6tris-gene-threshold-2", data=0),
+                dcc.Store(id="page-6tris-gene-threshold-3", data=0),
                 html.Div(
                     className="fixed-aspect-ratio",
                     style={
@@ -309,7 +313,7 @@ def return_layout(basic_config, slice_index):
                             children=[
                                 dmc.Text(
                                     id="page-6tris-badge-input",
-                                    children="Now displaying:",
+                                    children="Lipids selected",
                                     size="lg",
                                 ),
                                 dmc.Badge(
@@ -350,26 +354,86 @@ def return_layout(basic_config, slice_index):
                                     children="Genes selected:",
                                     size="lg",
                                 ),
-                                dmc.Badge(
-                                    id="page-6tris-badge-gene-1",
-                                    children="name-gene-1",
-                                    color="orange",
-                                    variant="filled",
-                                    class_name="d-none mt-2",
+                                # First gene badge and slider
+                                html.Div(
+                                    style={"display": "flex", "flexDirection": "column", "alignItems": "center"},
+                                    children=[
+                                        dmc.Badge(
+                                            id="page-6tris-badge-gene-1",
+                                            children="name-gene-1",
+                                            color="orange",
+                                            variant="filled",
+                                            class_name="d-none mt-2",
+                                            style={"textAlign": "center"},
+                                        ),
+                                        dmc.Slider(
+                                            id="page-6tris-gene-slider-1",
+                                            min=0,
+                                            max=1,
+                                            step=0.1,
+                                            value=0,
+                                            marks=[{"value": 0, "label": "Min"}, {"value": 1, "label": "Max"}],
+                                            labelAlwaysOn=False,
+                                            size="sm",
+                                            color="orange",
+                                            class_name="d-none mt-2",
+                                            style={"width": "220px"}
+                                        ),
+                                    ]
                                 ),
-                                dmc.Badge(
-                                    id="page-6tris-badge-gene-2",
-                                    children="name-gene-2",
-                                    color="green",
-                                    variant="filled",
-                                    class_name="d-none mt-2",
+                                # Second gene badge and slider with more space
+                                html.Div(
+                                    style={"display": "flex", "flexDirection": "column", "alignItems": "center"},
+                                    children=[
+                                        dmc.Badge(
+                                            id="page-6tris-badge-gene-2",
+                                            children="name-gene-2",
+                                            color="green",
+                                            variant="filled",
+                                            class_name="d-none mt-4",
+                                            style={"textAlign": "center"},
+                                        ),
+                                        dmc.Slider(
+                                            id="page-6tris-gene-slider-2",
+                                            min=0,
+                                            max=1,
+                                            step=0.1,
+                                            value=0,
+                                            marks=[{"value": 0, "label": "Min"}, {"value": 1, "label": "Max"}],
+                                            labelAlwaysOn=False,
+                                            size="sm",
+                                            color="green",
+                                            class_name="d-none mt-2",
+                                            style={"width": "220px"}
+                                        ),
+                                    ]
                                 ),
-                                dmc.Badge(
-                                    id="page-6tris-badge-gene-3",
-                                    children="name-gene-3",
-                                    color="blue",
-                                    variant="filled",
-                                    class_name="d-none mt-2",
+                                # Third gene badge and slider with more space
+                                html.Div(
+                                    style={"display": "flex", "flexDirection": "column", "alignItems": "center"},
+                                    children=[
+                                        dmc.Badge(
+                                            id="page-6tris-badge-gene-3",
+                                            children="name-gene-3",
+                                            color="blue",
+                                            variant="filled",
+                                            class_name="d-none mt-4",
+                                            style={"textAlign": "center"},
+                                        ),
+                                        dmc.Slider(
+                                            id="page-6tris-gene-slider-3",
+                                            min=0,
+                                            max=1,
+                                            step=0.1,
+                                            value=0,
+                                            marks=[{"value": 0, "label": "Min"}, {"value": 1, "label": "Max"}],
+                                            labelAlwaysOn=False,
+                                            size="sm",
+                                            color="blue",
+                                            class_name="d-none mt-2",
+                                            style={"width": "220px"}
+                                        ),
+                                    ]
                                 ),
                             ],
                         ),
@@ -483,6 +547,9 @@ def page_6tris_hover(hoverData, slice_index):
     Input("page-6tris-selected-gene-1", "data"),
     Input("page-6tris-selected-gene-2", "data"),
     Input("page-6tris-selected-gene-3", "data"),
+    Input("page-6tris-gene-threshold-1", "data"),
+    Input("page-6tris-gene-threshold-2", "data"),
+    Input("page-6tris-gene-threshold-3", "data"),
 
     State("page-6tris-badge-input", "children"),
     State("page-6tris-badge-input-genes", "children"),
@@ -497,13 +564,14 @@ def page_6tris_plot_graph_heatmap_mz_selection(
     gene_1_index,
     gene_2_index,
     gene_3_index,
+    gene_threshold_1,
+    gene_threshold_2,
+    gene_threshold_3,
     graph_input,
     genes_input,
 ):
     """This callback plots the heatmap of the selected lipid(s) and gene(s)."""
     logging.info("Entering function to plot heatmap or RGB depending on lipid/gene selection")
-    print("\n========= plot graph heatmap mz selection callback =========")
-
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
@@ -512,17 +580,20 @@ def page_6tris_plot_graph_heatmap_mz_selection(
 
     # Get selected genes
     active_genes = []
+    gene_thresholds = []
     if gene_1_index != -1 or gene_2_index != -1 or gene_3_index != -1:
         available_genes = get_gene_options(slice_index)
         gene_names = []
         if gene_1_index != -1 and gene_1_index < len(available_genes):
             gene_names.append(available_genes[gene_1_index])
+            gene_thresholds.append(gene_threshold_1)
         if gene_2_index != -1 and gene_2_index < len(available_genes):
             gene_names.append(available_genes[gene_2_index])
+            gene_thresholds.append(gene_threshold_2)
         if gene_3_index != -1 and gene_3_index < len(available_genes):
             gene_names.append(available_genes[gene_3_index])
+            gene_thresholds.append(gene_threshold_3)
         active_genes = gene_names
-    print("active_genes:", active_genes)
     
     # Get selected lipids
     ll_lipid_names = [
@@ -536,11 +607,9 @@ def page_6tris_plot_graph_heatmap_mz_selection(
         for index in [lipid_1_index, lipid_2_index, lipid_3_index]
     ]
     active_lipids = [name for name in ll_lipid_names if name is not None]
-    print("active_lipids:", active_lipids)
     
     # Auto-set RGB mode when multiple lipids are selected
     rgb_mode_lipids = len(active_lipids) > 1 or dash.callback_context.inputs.get('page-6tris-rgb-switch.checked', False)
-    print("rgb_mode_lipids:", rgb_mode_lipids)
     
     # Handle annotations toggle separately to preserve figure state
     if id_input == "page-6tris-toggle-annotations":
@@ -548,6 +617,7 @@ def page_6tris_plot_graph_heatmap_mz_selection(
         lipid_gene_image = figures.compute_image_lipids_genes(
                 all_selected_lipids=active_lipids,
                 all_selected_genes=active_genes,
+                gene_thresholds=gene_thresholds,
                 slice_index=slice_index,
                 df_genes=df_genes,
                 rgb_mode_lipids=rgb_mode_lipids,
@@ -559,18 +629,20 @@ def page_6tris_plot_graph_heatmap_mz_selection(
             type_image="RGB",
             return_go_image=False,
         )
-        return fig, "Now displaying:", "Genes selected:"
+        return fig, "Lipids selected", "Genes selected:"
 
     # If a gene selection or lipid selection has been modified
     if (
         id_input in ["page-6tris-selected-lipid-1", "page-6tris-selected-lipid-2", "page-6tris-selected-lipid-3", 
                      "page-6tris-selected-gene-1", "page-6tris-selected-gene-2", "page-6tris-selected-gene-3",
-                     "page-6tris-rgb-switch"]
+                     "page-6tris-rgb-switch", "page-6tris-gene-threshold-1", "page-6tris-gene-threshold-2", 
+                     "page-6tris-gene-threshold-3"]
     ):
         # If both lipids and genes are selected, use the new function
         lipid_gene_image = figures.compute_image_lipids_genes(
             all_selected_lipids=active_lipids,
             all_selected_genes=active_genes,
+            gene_thresholds=gene_thresholds,
             slice_index=slice_index,
             df_genes=df_genes,
             rgb_mode_lipids=rgb_mode_lipids,
@@ -582,13 +654,14 @@ def page_6tris_plot_graph_heatmap_mz_selection(
             type_image="RGB",
             return_go_image=False,
         )
-        return fig, "Now displaying:", "Genes selected:"
+        return fig, "Lipids selected", "Genes selected:"
         
     # If no trigger, the page has just been loaded, so load new figure with default parameters
     else:
         lipid_gene_image = figures.compute_image_lipids_genes(
             all_selected_lipids=["HexCer 42:2;O2"],
             all_selected_genes=["Xkr4=ENSMUSG00000051951"],
+            gene_thresholds=[0],
             slice_index=slice_index,
             df_genes=df_genes,
             rgb_mode_lipids=False,
@@ -600,7 +673,7 @@ def page_6tris_plot_graph_heatmap_mz_selection(
             type_image="RGB",
             return_go_image=False,
         )
-        return fig, "Now displaying:", "Genes selected:"
+        return fig, "Lipids selected", "Genes selected:"
 
 @app.callback(
     Output("page-6tris-badge-lipid-1", "children"),
@@ -923,8 +996,8 @@ def page_6tris_add_toast_selection_lipids(
 
 #     # Now displaying is lipid selection
 #     if (
-#         graph_input == "Now displaying:"
-#         or graph_input == "Now displaying:"
+#         graph_input == "Lipids selected"
+#         or graph_input == "Lipids selected"
 #     ):
 #         l_lipids_indexes = [
 #             x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x is not None and x != -1
@@ -1013,6 +1086,21 @@ def page_6tris_auto_toggle_rgb(
     Output("page-6tris-badge-gene-1", "class_name"),
     Output("page-6tris-badge-gene-2", "class_name"),
     Output("page-6tris-badge-gene-3", "class_name"),
+    Output("page-6tris-gene-slider-1", "class_name"),
+    Output("page-6tris-gene-slider-2", "class_name"),
+    Output("page-6tris-gene-slider-3", "class_name"),
+    Output("page-6tris-gene-slider-1", "min"),
+    Output("page-6tris-gene-slider-1", "max"),
+    Output("page-6tris-gene-slider-1", "value"),
+    Output("page-6tris-gene-slider-1", "marks"),
+    Output("page-6tris-gene-slider-2", "min"),
+    Output("page-6tris-gene-slider-2", "max"),
+    Output("page-6tris-gene-slider-2", "value"),
+    Output("page-6tris-gene-slider-2", "marks"),
+    Output("page-6tris-gene-slider-3", "min"),
+    Output("page-6tris-gene-slider-3", "max"),
+    Output("page-6tris-gene-slider-3", "value"),
+    Output("page-6tris-gene-slider-3", "marks"),
     Output("page-6tris-dropdown-genes", "value"),
     Input("page-6tris-dropdown-genes", "value"),
     Input("page-6tris-badge-gene-1", "class_name"),
@@ -1050,9 +1138,55 @@ def page_6tris_add_toast_selection_genes(
     # Get available genes for this slice
     available_genes = get_gene_options(slice_index)
     
+    # Initialize default slider configurations
+    default_slider_props = {
+        "min": 0,
+        "max": 1,
+        "value": 0,
+        "marks": [{"value": 0, "label": "Min"}, {"value": 1, "label": "Max"}]
+    }
+    
+    # Calculate gene range functions for sliders
+    def get_gene_slider_props(gene_name):
+        if not gene_name or gene_name not in available_genes:
+            return default_slider_props
+        
+        gene_values = df_genes[gene_name].values
+        gene_values = gene_values[~np.isnan(gene_values)]
+        
+        if len(gene_values) == 0:
+            return default_slider_props
+        
+        min_val = np.min(gene_values)
+        # max_val = np.max(gene_values)
+        p01 = np.percentile(gene_values, 1)
+        p99 = np.percentile(gene_values, 99)
+        
+        # Create 10 steps
+        steps = np.round(np.linspace(p01, p99, 10), 2)
+        
+        marks = [
+            {"value": p01, "label": f"{p01:.2f}"},
+            {"value": p99, "label": f"{p99:.2f}"}
+        ]
+        
+        return {
+            "min": p01,
+            "max": p99,
+            "value": p01,  # start with minimum value (no filtering)
+            "marks": marks
+        }
+    
     # Initialize with no genes if no selection exists
     if len(id_input) == 0 or (id_input == "page-6tris-dropdown-genes" and l_gene_names is None):
-        return "", "", "", -1, -1, -1, "d-none mt-2", "d-none mt-2", "d-none mt-2", []
+        return (
+            "", "", "",  # badge texts
+            -1, -1, -1,  # gene indices
+            "d-none mt-2", "d-none mt-4", "d-none mt-4",  # badge classes
+            "d-none mt-2", "d-none mt-2", "d-none mt-2",  # slider classes
+            *[prop for _ in range(3) for prop in default_slider_props.values()],  # slider props x3
+            []  # dropdown value
+        )
 
     # Handle gene deletion
     if l_gene_names is not None and len(l_gene_names) < len([x for x in [gene_1_index, gene_2_index, gene_3_index] if x != -1]):
@@ -1061,7 +1195,13 @@ def page_6tris_add_toast_selection_genes(
         # Reset all slots
         header_1, header_2, header_3 = "", "", ""
         gene_1_index, gene_2_index, gene_3_index = -1, -1, -1
-        class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none mt-2", "d-none mt-2", "d-none mt-2"
+        class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none mt-2", "d-none mt-4", "d-none mt-4"
+        class_name_slider_1, class_name_slider_2, class_name_slider_3 = "d-none mt-2", "d-none mt-2", "d-none mt-2"
+        
+        # Get slider props for remaining genes
+        slider_props = []
+        for i in range(3):
+            slider_props.append(default_slider_props)
         
         # Fill slots in order with remaining genes
         for idx, gene_name in enumerate(l_gene_names):
@@ -1071,25 +1211,29 @@ def page_6tris_add_toast_selection_genes(
                 header_1 = gene_name
                 gene_1_index = gene_idx
                 class_name_badge_1 = "mt-2"
+                class_name_slider_1 = "mt-2"
+                slider_props[0] = get_gene_slider_props(gene_name)
             elif idx == 1 and gene_idx != -1:
                 header_2 = gene_name
                 gene_2_index = gene_idx
-                class_name_badge_2 = "mt-2"
+                class_name_badge_2 = "mt-4"
+                class_name_slider_2 = "mt-2"
+                slider_props[1] = get_gene_slider_props(gene_name)
             elif idx == 2 and gene_idx != -1:
                 header_3 = gene_name
                 gene_3_index = gene_idx
-                class_name_badge_3 = "mt-2"
+                class_name_badge_3 = "mt-4"
+                class_name_slider_3 = "mt-2"
+                slider_props[2] = get_gene_slider_props(gene_name)
             
         return (
-            header_1,
-            header_2,
-            header_3,
-            gene_1_index,
-            gene_2_index,
-            gene_3_index,
-            class_name_badge_1,
-            class_name_badge_2,
-            class_name_badge_3,
+            header_1, header_2, header_3,
+            gene_1_index, gene_2_index, gene_3_index,
+            class_name_badge_1, class_name_badge_2, class_name_badge_3,
+            class_name_slider_1, class_name_slider_2, class_name_slider_3,
+            slider_props[0]["min"], slider_props[0]["max"], slider_props[0]["value"], slider_props[0]["marks"],
+            slider_props[1]["min"], slider_props[1]["max"], slider_props[1]["value"], slider_props[1]["marks"],
+            slider_props[2]["min"], slider_props[2]["max"], slider_props[2]["value"], slider_props[2]["marks"],
             l_gene_names
         )
 
@@ -1103,29 +1247,37 @@ def page_6tris_add_toast_selection_genes(
             # Update existing gene selections based on new available genes
             updated_headers = []
             updated_indices = []
-            updated_classes = []
+            updated_badge_classes = []
+            updated_slider_classes = []
+            updated_slider_props = []
             
-            for header in [header_1, header_2, header_3]:
+            for i, header in enumerate([header_1, header_2, header_3]):
                 if header and header in available_genes:
                     gene_idx = available_genes.index(header)
                     updated_headers.append(header)
                     updated_indices.append(gene_idx)
-                    updated_classes.append("mt-2")
+                    updated_badge_classes.append("mt-2" if i == 0 else "mt-4")
+                    updated_slider_classes.append("mt-2")
+                    updated_slider_props.append(get_gene_slider_props(header))
                 else:
                     updated_headers.append("")
                     updated_indices.append(-1)
-                    updated_classes.append("d-none mt-2")
+                    updated_badge_classes.append("d-none mt-2" if i == 0 else "d-none mt-4")
+                    updated_slider_classes.append("d-none mt-2")
+                    updated_slider_props.append(default_slider_props)
+            
+            # Fill in any missing slider props with defaults
+            while len(updated_slider_props) < 3:
+                updated_slider_props.append(default_slider_props)
             
             return (
-                updated_headers[0],
-                updated_headers[1], 
-                updated_headers[2],
-                updated_indices[0], 
-                updated_indices[1], 
-                updated_indices[2],
-                updated_classes[0], 
-                updated_classes[1], 
-                updated_classes[2],
+                updated_headers[0], updated_headers[1], updated_headers[2],
+                updated_indices[0], updated_indices[1], updated_indices[2],
+                updated_badge_classes[0], updated_badge_classes[1], updated_badge_classes[2],
+                updated_slider_classes[0], updated_slider_classes[1], updated_slider_classes[2],
+                updated_slider_props[0]["min"], updated_slider_props[0]["max"], updated_slider_props[0]["value"], updated_slider_props[0]["marks"],
+                updated_slider_props[1]["min"], updated_slider_props[1]["max"], updated_slider_props[1]["value"], updated_slider_props[1]["marks"],
+                updated_slider_props[2]["min"], updated_slider_props[2]["max"], updated_slider_props[2]["value"], updated_slider_props[2]["marks"],
                 [h for h in updated_headers if h]
             )
 
@@ -1139,45 +1291,88 @@ def page_6tris_add_toast_selection_genes(
                 if new_gene in available_genes:
                     gene_idx = available_genes.index(new_gene)
                     
+                    # Get slider properties for the new gene
+                    new_gene_slider_props = get_gene_slider_props(new_gene)
+                    
+                    # Initialize with existing slider props
+                    slider_props = [
+                        default_slider_props,
+                        default_slider_props,
+                        default_slider_props
+                    ]
+                    
                     # If gene already exists, update its index
                     if header_1 == new_gene:
                         gene_1_index = gene_idx
+                        slider_props[0] = new_gene_slider_props
                     elif header_2 == new_gene:
                         gene_2_index = gene_idx
+                        slider_props[1] = new_gene_slider_props
                     elif header_3 == new_gene:
                         gene_3_index = gene_idx
+                        slider_props[2] = new_gene_slider_props
                     # If it's a new gene, fill the first available slot
                     else:
                         if class_name_badge_1 == "d-none mt-2":
                             header_1 = new_gene
                             gene_1_index = gene_idx
                             class_name_badge_1 = "mt-2"
-                        elif class_name_badge_2 == "d-none mt-2":
+                            class_name_slider_1 = "mt-2"
+                            slider_props[0] = new_gene_slider_props
+                        elif class_name_badge_2 == "d-none mt-4":
                             header_2 = new_gene
                             gene_2_index = gene_idx
-                            class_name_badge_2 = "mt-2"
-                        elif class_name_badge_3 == "d-none mt-2":
+                            class_name_badge_2 = "mt-4"
+                            class_name_slider_2 = "mt-2"
+                            slider_props[1] = new_gene_slider_props
+                        elif class_name_badge_3 == "d-none mt-4":
                             header_3 = new_gene
                             gene_3_index = gene_idx
-                            class_name_badge_3 = "mt-2"
+                            class_name_badge_3 = "mt-4"
+                            class_name_slider_3 = "mt-2"
+                            slider_props[2] = new_gene_slider_props
                         else:
                             logging.warning("More than 3 genes have been selected")
                             return dash.no_update
+                            
+                    # Update slider classes based on badge classes
+                    class_name_slider_1 = "mt-2" if class_name_badge_1 in ["mt-2", "mt-4"] else "d-none mt-2"
+                    class_name_slider_2 = "mt-2" if class_name_badge_2 in ["mt-2", "mt-4"] else "d-none mt-2"
+                    class_name_slider_3 = "mt-2" if class_name_badge_3 in ["mt-2", "mt-4"] else "d-none mt-2"
+                    
+                    # Get slider properties for existing genes
+                    if header_1 and header_1 in available_genes and class_name_badge_1 in ["mt-2", "mt-4"]:
+                        slider_props[0] = get_gene_slider_props(header_1)
+                    if header_2 and header_2 in available_genes and class_name_badge_2 in ["mt-2", "mt-4"]:
+                        slider_props[1] = get_gene_slider_props(header_2) 
+                    if header_3 and header_3 in available_genes and class_name_badge_3 in ["mt-2", "mt-4"]:
+                        slider_props[2] = get_gene_slider_props(header_3)
 
                     return (
-                        header_1,
-                        header_2,
-                        header_3,
-                        gene_1_index,
-                        gene_2_index,
-                        gene_3_index,
-                        class_name_badge_1,
-                        class_name_badge_2,
-                        class_name_badge_3,
+                        header_1, header_2, header_3,
+                        gene_1_index, gene_2_index, gene_3_index,
+                        class_name_badge_1, class_name_badge_2, class_name_badge_3,
+                        class_name_slider_1, class_name_slider_2, class_name_slider_3,
+                        slider_props[0]["min"], slider_props[0]["max"], slider_props[0]["value"], slider_props[0]["marks"],
+                        slider_props[1]["min"], slider_props[1]["max"], slider_props[1]["value"], slider_props[1]["marks"],
+                        slider_props[2]["min"], slider_props[2]["max"], slider_props[2]["value"], slider_props[2]["marks"],
                         l_gene_names
                     )
 
     return dash.no_update
+
+# Add a callback to update the gene threshold values
+@app.callback(
+    Output("page-6tris-gene-threshold-1", "data"),
+    Output("page-6tris-gene-threshold-2", "data"),
+    Output("page-6tris-gene-threshold-3", "data"),
+    Input("page-6tris-gene-slider-1", "value"),
+    Input("page-6tris-gene-slider-2", "value"),
+    Input("page-6tris-gene-slider-3", "value"),
+)
+def update_gene_thresholds(threshold_1, threshold_2, threshold_3):
+    """Updates the gene threshold store values when sliders change."""
+    return threshold_1, threshold_2, threshold_3
 
 clientside_callback(
     """

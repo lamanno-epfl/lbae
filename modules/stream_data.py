@@ -10,7 +10,8 @@ from typing import Dict, List, Optional, Tuple
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-from modules.maldi_data import ABA_DIM, ABA_DIM, ACRONYM_MASKS,  ACRONYMS_PIXELS, majority_vote_9x9
+from modules.maldi_data import SliceData, majority_vote_9x9
+from modules.atlas import ABA_DIM, ABA_CONTOURS, ACRONYM_MASKS, ACRONYMS_PIXELS
 
 @dataclass
 class StreamImage:

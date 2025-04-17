@@ -24,7 +24,7 @@ import os
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
-from app import app, figures, data, storage, cache_flask, atlas, grid_data
+from app import app, figures, data, cache_flask, atlas, grid_data
 
 # ==================================================================================================
 # --- Layout

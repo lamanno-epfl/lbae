@@ -26,298 +26,14 @@ import os
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
-from app import app, figures, data, atlas, lipizone_sample_data, lipizone_section_data, grid_data
+from app import app, figures, data, atlas, grid_data, lipizone_data
 import plotly.express as px
 
 # ==================================================================================================
 # --- Helper functions
 # ==================================================================================================
 
-def all_lipizones_default_image(brain_id="ReferenceAtlas"):
-    def hex_to_rgb(hex_color):
-        """Convert hexadecimal color to RGB values (0-1 range)"""
-        hex_color = hex_color.lstrip('#')
-        return np.array([int(hex_color[i:i+2], 16) for i in (0, 2, 4)]) / 255.0
-    
-    try:
-        # Retrieve sample data from shelve database
-        sample_data = lipizone_sample_data.retrieve_sample_data(brain_id)
-        color_masks = sample_data["color_masks"]
-        grayscale_image = sample_data["grayscale_image"]
-        rgb_image = sample_data["grid_image"][:, :, :3]  # remove transparency channel for now
-    except KeyError:
-        # Fallback to default files if sample not found
-        logging.warning(f"Sample data for {brain_id} not found, using default files")
-        def load_color_masks_pickle(filename):
-            import pickle
-            with open(filename, 'rb') as f:
-                color_masks = pickle.load(f)
-            logging.info(f"Loaded {len(color_masks)} color masks from {filename}")
-            return color_masks
-        
-        color_masks = load_color_masks_pickle(os.path.join(lipizone_sample_data.path_data, 'color_masks.pkl'))
-        grayscale_image = np.load(os.path.join(lipizone_sample_data.path_data, 'grayscale_image.npy'))
-        rgb_image = np.load(os.path.join(lipizone_sample_data.path_data, 'grid_image_lipizones.npy'))[:, :, :3]
-    
-    # Apply square root transformation to enhance contrast
-    # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
-    grayscale_image = np.power(grayscale_image, float(1/6))
-    grayscale_image = gaussian_filter(grayscale_image, sigma=3)
-    # grayscale_image = np.power(grayscale_image, 2) * 0.3
-    grayscale_image *= ~color_masks[list(color_masks.keys())[0]]
-    
-    rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in lipizone_to_color.values()]
-    
-    hybrid_image = np.zeros_like(rgb_image)
-    for i in range(3):
-        hybrid_image[:, :, i] = grayscale_image
-    combined_mask = np.zeros((rgb_image.shape[0], rgb_image.shape[1]), dtype=bool)
-    for target_rgb in rgb_colors_to_highlight:
-        target_tuple = tuple(target_rgb)
-        
-        # If the exact color exists in our image
-        if target_tuple in color_masks:
-            combined_mask |= color_masks[target_tuple]
-        else:
-            # Find closest color
-            distances = np.array([np.sum((np.array(color) - target_rgb) ** 2) for color in color_masks.keys()])
-            closest_color_idx = np.argmin(distances)
-            closest_color = list(color_masks.keys())[closest_color_idx]
-            
-            # If close enough to our target color, add its mask
-            if distances[closest_color_idx] < 0.05:  # Threshold for color similarity
-                combined_mask |= color_masks[closest_color]
-    
-    for i in range(3):
-        hybrid_image[:, :, i][combined_mask] = rgb_image[:, :, i][combined_mask]
-    hybrid_image = (hybrid_image*255) + 1
-    mask = np.all(hybrid_image == 1, axis=-1)
-    hybrid_image[mask] = np.nan
-
-    height, width, _ = hybrid_image.shape
-
-    # Compute pad sizes
-    pad_top = height // 2
-    pad_bottom = height // 2
-    pad_left = 0
-
-    # Pad the image: note that no padding is added on the right.
-    padded_image = np.pad(
-        hybrid_image,
-        pad_width=((pad_top, pad_bottom), (pad_left, 0), (0, 0)),
-        mode='constant',
-        constant_values=np.nan
-    )
-
-    return padded_image
-
-def is_light_color(hex_color):
-    """Determine if a color is light or dark based on its RGB values."""
-    # Convert hex to RGB
-    rgb = hex_to_rgb(hex_color)
-    # Calculate luminance using the formula: L = 0.299*R + 0.587*G + 0.114*B
-    luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255
-    return luminance > 0.5
-
-def black_aba_contours(overlay):
-    black_overlay = overlay.copy()
-    contour_mask = overlay[:, :, 3] > 0
-    black_overlay[contour_mask] = [0, 0, 0, 200]  # RGB black with alpha=200
-    
-    return black_overlay
-
-def hex_to_rgb(hex_color):
-    """Convert hexadecimal color to RGB values."""
-    hex_color = hex_color.lstrip('#')
-    return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
-
-def rgb_to_hex(rgb):
-    """Convert RGB values to hexadecimal color."""
-    return f'#{int(rgb[0]):02x}{int(rgb[1]):02x}{int(rgb[2]):02x}'
-
-def calculate_mean_color(hex_colors):
-    """Calculate the mean color from a list of hex colors."""
-    if not hex_colors:
-        return '#808080'  # Default gray if no colors
-    
-    # Convert hex to RGB
-    rgb_colors = [hex_to_rgb(color) for color in hex_colors]
-    
-    # Calculate mean for each channel
-    mean_r = sum(color[0] for color in rgb_colors) / len(rgb_colors)
-    mean_g = sum(color[1] for color in rgb_colors) / len(rgb_colors)
-    mean_b = sum(color[2] for color in rgb_colors) / len(rgb_colors)
-    
-    return rgb_to_hex([mean_r, mean_g, mean_b])
-
-def create_treemap_data(df_hierarchy):
-    """Create data structure for treemap visualization with color information."""
-    # Create a copy to avoid modifying the original
-    df = df_hierarchy.copy()
-    
-    # Add a constant value column for equal-sized end nodes
-    df['value'] = 1
-    
-    # Create a dictionary to store colors for each node
-    node_colors = {}
-    
-    # First, assign colors to leaf nodes (lipizones)
-    for _, row in df.iterrows():
-        lipizone = row['lipizone_names']
-        if lipizone in lipizone_to_color:
-            path = '/'.join([str(row[col]) for col in ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']])
-            node_colors[path] = lipizone_to_color[lipizone]
-    
-    # Function to get all leaf colors under a node
-    def get_leaf_colors(path_prefix):
-        colors = []
-        for full_path, color in node_colors.items():
-            if full_path.startswith(path_prefix):
-                colors.append(color)
-        return colors
-    
-    # Calculate colors for each level, from bottom to top
-    columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
-    for i in range(len(columns)-1):  # Don't process the last level (lipizones)
-        level_paths = set()
-        # Build paths up to current level
-        for _, row in df.iterrows():
-            path = '/'.join([str(row[col]) for col in columns[:i+1]])
-            level_paths.add(path)
-        
-        # Calculate mean colors for each path
-        for path in level_paths:
-            leaf_colors = get_leaf_colors(path + '/')
-            if leaf_colors:
-                node_colors[path] = calculate_mean_color(leaf_colors)
-    
-    return df, node_colors
-
-def create_treemap_figure(df_treemap, node_colors):
-    """Create treemap figure using plotly with custom colors."""
-    fig = px.treemap(
-        df_treemap,
-        path=[
-            'level_1_name',
-            'level_2_name',
-            'level_3_name',
-            'level_4_name',
-            'subclass_name',
-            'lipizone_names'
-        ],
-        values='value'
-    )
-    
-    # Update traces with custom colors
-    def get_node_color(node_path):
-        # Convert node path to string format matching our dictionary
-        path_str = '/'.join(str(x) for x in node_path if x)
-        return node_colors.get(path_str, '#808080')
-    
-    # Apply colors to each node based on its path
-    colors = [get_node_color(node_path.split('/')) for node_path in fig.data[0].ids]
-    
-    fig.update_traces(
-        marker=dict(colors=colors),
-        hovertemplate='%{label}<extra></extra>',  # Only show the label
-        textposition='middle center',
-        root_color="rgba(0,0,0,0)",  # Make root node transparent
-    )
-    
-    # Update layout for better visibility
-    fig.update_layout(
-        margin=dict(t=0, l=0, r=0, b=0),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
-    )
-    
-    return fig
-
-# ==================================================================================================
-# --- Data
-# ==================================================================================================
-
-# manual_naming_lipizones_level_1 = {
-#     '1' : 'White matter-rich',
-#     '2' : 'Gray matter-rich',
-# }
-# manual_naming_lipizones_level_2 = {
-#     '1_1' : 'Core white matter',
-#     '1_2' : 'Mixed gray and white matter, ventricles',
-#     '2_1' : 'Outer cortex, cerebellar molecular layer, amygdala, part of hippocampus',
-#     '2_2' : 'Deep cortex, part of hippocampus, striatum, cerebellar granule cells',
-# }
-# manual_naming_lipizones_level_3 = {
-#     '1_1_1' : 'Oligodendroglia-rich regions',
-#     '1_1_2' : 'Mixed white matter with neurons',
-#     '1_2_1' : 'Ventricular system, gray-white boundary, hypothalamus',
-#     '1_2_2' : 'Thalamus and midbrain',
-#     '2_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
-#     '2_1_2' : 'Layer 1 to border between 2/3 and 4, piriform, Purkinje cells, enthorinal, mixed',
-#     '2_2_1' : 'Layer 5, hippocampus and noncortical gray matter',
-#     '2_2_2' : 'Layers 5 and 6, hippocampus, nuclei, granular layer of the cerebellum',
-# }
-# manual_naming_lipizones_level_4 = {
-#     '1_1_1_1' : 'Core of fiber tracts, arbor vitae and nerves/1',
-#     '1_1_1_2' : 'Core of fiber tracts, arbor vitae and nerves/2',
-#     '1_1_2_1' : 'Bundle and boundary white matter-rich',
-#     '1_1_2_2' : 'Thalamus, midbrain, hindbrain white matter regions',
-#     '1_2_1_1' : 'Ventricular system',
-#     '1_2_1_2' : 'Gray-white matter boundary',
-#     '1_2_2_1' : 'Mostly thalamus, midbrain, hindbrain mixed types',
-#     '1_2_2_2' : 'Myelin-rich deep cortex, striatum, hindbrain and more',
-#     '2_1_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
-#     '2_1_1_2' : 'HPF, AMY, CTXSP, HY and more',
-#     '2_1_2_1' : 'Purkinje layer, L2/3 and boundary with L4',
-#     '2_1_2_2' : 'Layer 1, 2/3, piriform and enthorinal cortex, CA1',
-#     '2_2_1_1' : 'Layer 5, retrosplenial, hippocampus',
-#     '2_2_1_2' : 'Noncortical gray matter',
-#     '2_2_2_1' : 'Layer 5-6, nuclei, granule cells layer',
-#     '2_2_2_2' : 'Layer 6, mixed complex GM, granule cells layer',
-# }
-
-# lipizones = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0) # HEX
-# lipizone_to_color = {name: color for name, color in zip(lipizones["lipizone_names"], lipizones["lipizone_color"])}
-# df_hierarchy_lipizones = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
-
-# # lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)['lipizone_names'].values
-# df_hierarchy_lipizones['level_1_name'] = df_hierarchy_lipizones['level_1'].astype(str).map(manual_naming_lipizones_level_1)
-# df_hierarchy_lipizones['level_2_name'] = df_hierarchy_lipizones['level_2'].astype(str).map(manual_naming_lipizones_level_2)
-# df_hierarchy_lipizones['level_3_name'] = df_hierarchy_lipizones['level_3'].astype(str).map(manual_naming_lipizones_level_3)
-# df_hierarchy_lipizones['level_4_name'] = df_hierarchy_lipizones['level_4'].astype(str).map(manual_naming_lipizones_level_4)
-
-# def build_tree_from_csv(csv_path):
-#     df = pd.read_csv(csv_path)
-#     tree = []
-    
-#     def add_to_tree(tree, levels, leaf_label, leaf_value):
-#         if not levels:
-#             tree.append({"label": leaf_label, "value": leaf_value})
-#         else:
-#             current_level = str(levels[0])
-#             # See if this node already exists in the tree
-#             node = next((item for item in tree if item["label"] == current_level), None)
-#             if node is None:
-#                 node = {"label": current_level, "value": current_level, "children": []}
-#                 tree.append(node)
-#             add_to_tree(node["children"], levels[1:], leaf_label, leaf_value)
-    
-#     for _, row in df.iterrows():
-#         # Build the path from the level columns
-#         levels = [row["level_1_name"], row["level_2_name"], row["level_3_name"], row["level_4_name"], row["subclass_name"]]
-#         leaf_label = row["lipizone_names"]
-#         leaf_value = row["lipizone_names"]
-#         add_to_tree(tree, levels, leaf_label, leaf_value)
-    
-#     return tree
-
-# # Build the hierarchical data from your CSV file
-# hierarchy_data = build_tree_from_csv("./data/annotations/lipizones_hierarchy.csv")
-
-# df_hierarchy = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
-df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
-lipizone_to_color = pickle.load(open("./data/lipizone_data/lipizone_to_color.pkl", "rb"))
+from modules.figures import black_aba_contours, is_light_color
 
 # ==================================================================================================
 # --- Layout
@@ -326,7 +42,7 @@ lipizone_to_color = pickle.load(open("./data/lipizone_data/lipizone_to_color.pkl
 def return_layout(basic_config, slice_index):
     """Return the layout for the page."""
     # Create treemap data
-    df_treemap, node_colors = create_treemap_data(df_hierarchy_lipizones)
+    df_treemap, node_colors = lipizone_data.create_treemap_data_lipizones()
     
     page = html.Div(
         style={
@@ -363,7 +79,8 @@ def return_layout(basic_config, slice_index):
                         },
                         figure=figures.build_lipid_heatmap_from_image(
                             # compute_hybrid_image(['#f75400'], brain_id="ReferenceAtlas"),
-                            all_lipizones_default_image(brain_id="ReferenceAtlas"),
+                            figures.all_lipizones_default_image(
+                                brain_id="ReferenceAtlas"),
                             return_base64_string=False,
                             draw=False,
                             type_image="RGB",
@@ -433,7 +150,7 @@ def return_layout(basic_config, slice_index):
                             # Treemap visualization
                             dcc.Graph(
                                 id="page-6-lipizones-treemap",
-                                figure=create_treemap_figure(df_treemap, node_colors),
+                                figure=lipizone_data.create_treemap_figure_lipizones(df_treemap, node_colors),
                                 style={
                                     "height": "40%",
                                     "background-color": "#1d1c1f",
@@ -634,7 +351,7 @@ def update_current_selection(click_data):
     current_path = click_data["points"][0]["id"] # /1/
     
     # Filter hierarchy based on the clicked node's path
-    filtered = df_hierarchy_lipizones.copy()
+    filtered = lipizone_data.df_hierarchy_lipizones.copy()
     print("filtered", filtered.shape)
     # Get the level of the clicked node
     path_columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
@@ -681,9 +398,9 @@ def handle_selection_changes(
     # Handle select all button
     if triggered_id == "page-6-select-all-lipizones-button":
         all_lipizones = {"names": [], "indices": []}
-        for lipizone_name in df_hierarchy_lipizones["lipizone_names"].unique():
-            lipizone_indices = df_hierarchy_lipizones.index[
-                df_hierarchy_lipizones["lipizone_names"] == lipizone_name
+        for lipizone_name in lipizone_data.df_hierarchy_lipizones["lipizone_names"].unique():
+            lipizone_indices = lipizone_data.df_hierarchy_lipizones.index[
+                lipizone_data.df_hierarchy_lipizones["lipizone_names"] == lipizone_name
             ].tolist()
             if lipizone_indices:
                 all_lipizones["names"].append(lipizone_name)
@@ -706,8 +423,8 @@ def handle_selection_changes(
         for lipizone_name in current_selection:
             if lipizone_name not in all_selected_lipizones["names"]:
                 # Find the indices for this lipizone
-                lipizone_indices = df_hierarchy_lipizones.index[
-                    df_hierarchy_lipizones["lipizone_names"] == lipizone_name
+                lipizone_indices = lipizone_data.df_hierarchy_lipizones.index[
+                    lipizone_data.df_hierarchy_lipizones["lipizone_names"] == lipizone_name
                 ].tolist()
                 
                 if lipizone_indices:
@@ -770,12 +487,12 @@ def page_6_plot_graph_heatmap_mz_selection(
             selected_lipizone_names = all_selected_lipizones.get("names", [])
             
             # Define hex_colors_to_highlight using all selected lipizones
-            hex_colors_to_highlight = [lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_to_color]
+            hex_colors_to_highlight = [lipizone_data.lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_data.lipizone_to_color]
         
             # Try to get the section data for the current slice and brain
             try:
                 # Create a section key based on brain_id and slice_index
-                section_data = lipizone_section_data.retrieve_section_data(float(slice_index))
+                section_data = lipizone_data.section_data.retrieve_section_data(float(slice_index))
             
                 # Use the section data to create a hybrid image
                 grayscale_image = section_data["grayscale_image"]
@@ -844,7 +561,7 @@ def page_6_plot_graph_heatmap_mz_selection(
                 logging.warning(f"Section data not found: {e}. Using hybrid image instead.")
                 return figures.build_lipid_heatmap_from_image(
                     # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                    all_lipizones_default_image(brain_id),
+                    figures.all_lipizones_default_image(brain_id),
                     return_base64_string=False,
                     draw=False,
                     type_image="RGB",
@@ -868,7 +585,7 @@ def page_6_plot_graph_heatmap_mz_selection(
             selected_lipizone_names = all_selected_lipizones.get("names", [])
             
             # Define hex_colors_to_highlight using all selected lipizones
-            hex_colors_to_highlight = [lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_to_color]
+            hex_colors_to_highlight = [lipizone_data.lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_data.lipizone_to_color]
     
             # Or if the current plot must be an RGB image
             if (
@@ -881,7 +598,7 @@ def page_6_plot_graph_heatmap_mz_selection(
                 # Try to get the section data for the current slice and brain
                 try:
                     # Create a section key based on brain_id and slice_index
-                    section_data = lipizone_section_data.retrieve_section_data(float(slice_index))
+                    section_data = lipizone_data.section_data.retrieve_section_data(float(slice_index))
                 
                     # Use the section data to create a hybrid image
                     grayscale_image = section_data["grayscale_image"]
@@ -945,7 +662,7 @@ def page_6_plot_graph_heatmap_mz_selection(
                     logging.warning(f"Section data not found: {e}. Using hybrid image instead.")
                     return figures.build_lipid_heatmap_from_image(
                         # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                        all_lipizones_default_image(brain_id),
+                        figures.all_lipizones_default_image(brain_id),
                         return_base64_string=False,
                         draw=False,
                         type_image="RGB",
@@ -982,7 +699,7 @@ def page_6_plot_graph_heatmap_mz_selection(
                         logging.warning(f"Failed to retrieve grid image: {e}. Using hybrid image instead.")
                         return figures.build_lipid_heatmap_from_image(
                             # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                            all_lipizones_default_image(brain_id),
+                            figures.all_lipizones_default_image(brain_id),
                             return_base64_string=False,
                             draw=False,
                             type_image="RGB",
@@ -993,7 +710,7 @@ def page_6_plot_graph_heatmap_mz_selection(
                     first_lipid = selected_lipizone_names[0] if selected_lipizone_names else "choroid plexus"
                     return figures.build_lipid_heatmap_from_image(
                         # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                        all_lipizones_default_image(brain_id),
+                        figures.all_lipizones_default_image(brain_id),
                         return_base64_string=False,
                         draw=False,
                         type_image="RGB",
@@ -1005,7 +722,7 @@ def page_6_plot_graph_heatmap_mz_selection(
                 logging.info("Right before calling the graphing function")
                 return figures.build_lipid_heatmap_from_image(
                     # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                    all_lipizones_default_image(brain_id),
+                    figures.all_lipizones_default_image(brain_id),
                     return_base64_string=False,
                     draw=False,
                     type_image="RGB",
@@ -1019,7 +736,7 @@ def page_6_plot_graph_heatmap_mz_selection(
             hex_colors_to_highlight = ['#f75400']  # Default color for choroid plexus
             return figures.build_lipid_heatmap_from_image(
                     # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                    all_lipizones_default_image(brain_id),
+                    figures.all_lipizones_default_image(brain_id),
                     return_base64_string=False,
                     draw=False,
                     type_image="RGB",
@@ -1031,7 +748,7 @@ def page_6_plot_graph_heatmap_mz_selection(
             hex_colors_to_highlight = ['#f75400']  # Default color for choroid plexus
             return figures.build_lipid_heatmap_from_image(
                     # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                    all_lipizones_default_image(brain_id),
+                    figures.all_lipizones_default_image(brain_id),
                     return_base64_string=False,
                     draw=False,
                     type_image="RGB",
@@ -1074,7 +791,7 @@ def update_selected_lipizones_badges(all_selected_lipizones):
     if all_selected_lipizones and "names" in all_selected_lipizones:
         for name in all_selected_lipizones["names"]:
             # Get the color for this lipizone, default to cyan if not found
-            lipizone_color = lipizone_to_color.get(name, "#00FFFF")
+            lipizone_color = lipizone_data.lipizone_to_color.get(name, "#00FFFF")
 
             # Determine if the background color is light or dark
             is_light = is_light_color(lipizone_color)

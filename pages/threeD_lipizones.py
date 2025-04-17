@@ -30,7 +30,7 @@ import gc
 from tqdm import tqdm
 
 # LBAE imports
-from app import app, figures, data, storage, cache_flask
+from app import app, figures, lipizone_data
 
 # ==================================================================================================
 # --- Constants
@@ -44,179 +44,13 @@ import zarr
 import numpy as np
 import logging
 # from functools import lru_cache
-
-# New constant for the Zarr store location
-LIPIZONES_ZARR_PATH = "./data/lipizone_data/3d_lipizones_all.zarr"
-
-# New constant for the color array file
-COLOR_ARRAY_PATH = "./data/lipizone_data/color_array_fullres.npy"
-
-# @lru_cache(maxsize=50)
-# def load_lipizone_array(
-#     safe_name, 
-#     downsample_factor
-#     ):
-#     """
-#     Load the lipizone array from the Zarr store using the given downsample factor.
-#     This function is cached to avoid re-loading data that was recently requested.
-#     """
-#     try:
-#         store = zarr.DirectoryStore(LIPIZONES_ZARR_PATH)
-#         root = zarr.group(store=store)
-#         if safe_name not in root:
-#             logging.warning(f"No data found for {safe_name} in the Zarr store.")
-#             return None
-#         group = root[safe_name]
-#         key = f"downsampled_{downsample_factor}"
-#         if key in group:
-#             # This array is loaded lazily; slicing will read only needed chunks.
-#             return group[key][:]
-#         elif "full" in group:
-#             # If the precomputed downsampled version isn't available, fall back to downsampling on the fly.
-#             arr = group["full"][:]
-#             return arr[::downsample_factor, ::downsample_factor, ::downsample_factor]
-#         else:
-#             logging.warning(f"Neither full nor downsampled array found for {safe_name}.")
-#             return None
-#     except Exception as e:
-#         logging.error(f"Error loading lipizone {safe_name}: {str(e)}")
-#         return None
-
-# Load hierarchy data
-df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
-lipizone_to_color = pickle.load(open("./data/lipizone_data/lipizone_to_color.pkl", "rb"))
+from app import figures, lipizone_data
 
 # ==================================================================================================
 # --- Helper functions
 # ==================================================================================================
 
-def hex_to_rgb(hex_color):
-    """Convert hexadecimal color to RGB values."""
-    hex_color = hex_color.lstrip('#')
-    return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
-
-def rgb_to_hex(rgb):
-    """Convert RGB values to hexadecimal color."""
-    return f'#{int(rgb[0]):02x}{int(rgb[1]):02x}{int(rgb[2]):02x}'
-
-def is_light_color(hex_color):
-    """Determine if a color is light or dark based on its RGB values."""
-    # Convert hex to RGB
-    rgb = hex_to_rgb(hex_color)
-    # Calculate luminance using the formula: L = 0.299*R + 0.587*G + 0.114*B
-    luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255
-    return luminance > 0.5
-
-def calculate_mean_color(hex_colors):
-    """Calculate the mean color from a list of hex colors."""
-    if not hex_colors:
-        return '#808080'  # Default gray if no colors
-    
-    # Convert hex to RGB
-    rgb_colors = [hex_to_rgb(color) for color in hex_colors]
-    
-    # Calculate mean for each channel
-    mean_r = sum(color[0] for color in rgb_colors) / len(rgb_colors)
-    mean_g = sum(color[1] for color in rgb_colors) / len(rgb_colors)
-    mean_b = sum(color[2] for color in rgb_colors) / len(rgb_colors)
-    
-    return rgb_to_hex([mean_r, mean_g, mean_b])
-
-def create_treemap_data(df_hierarchy):
-    """Create data structure for treemap visualization with color information."""
-    # Create a copy to avoid modifying the original
-    df = df_hierarchy.copy()
-    
-    # Add a constant value column for equal-sized end nodes
-    df['value'] = 1
-    
-    # Create a dictionary to store colors for each node
-    node_colors = {}
-    
-    # First, assign colors to leaf nodes (lipizones)
-    for _, row in df.iterrows():
-        lipizone = row['lipizone_names']
-        if lipizone in lipizone_to_color:
-            path = '/'.join([str(row[col]) for col in ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']])
-            node_colors[path] = lipizone_to_color[lipizone]
-    
-    # Function to get all leaf colors under a node
-    def get_leaf_colors(path_prefix):
-        colors = []
-        for full_path, color in node_colors.items():
-            if full_path.startswith(path_prefix):
-                colors.append(color)
-        return colors
-    
-    # Calculate colors for each level, from bottom to top
-    columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
-    for i in range(len(columns)-1):  # Don't process the last level (lipizones)
-        level_paths = set()
-        # Build paths up to current level
-        for _, row in df.iterrows():
-            path = '/'.join([str(row[col]) for col in columns[:i+1]])
-            level_paths.add(path)
-        
-        # Calculate mean colors for each path
-        for path in level_paths:
-            leaf_colors = get_leaf_colors(path + '/')
-            if leaf_colors:
-                node_colors[path] = calculate_mean_color(leaf_colors)
-    
-    return df, node_colors
-
-def create_treemap_figure(df_treemap, node_colors):
-    """Create treemap figure using plotly with custom colors."""
-    fig = px.treemap(
-        df_treemap,
-        path=[
-            'level_1_name',
-            'level_2_name',
-            'level_3_name',
-            'level_4_name',
-            'subclass_name',
-            'lipizone_names'
-        ],
-        values='value'
-    )
-    
-    # Update traces with custom colors
-    def get_node_color(node_path):
-        # Convert node path to string format matching our dictionary
-        path_str = '/'.join(str(x) for x in node_path if x)
-        return node_colors.get(path_str, '#808080')
-    
-    # Apply colors to each node based on its path
-    colors = [get_node_color(node_path.split('/')) for node_path in fig.data[0].ids]
-    
-    fig.update_traces(
-        marker=dict(colors=colors),
-        hovertemplate='%{label}<extra></extra>',  # Only show the label
-        textposition='middle center',
-        root_color="rgba(0,0,0,0)",  # Make root node transparent
-    )
-    
-    # Update layout for better visibility
-    fig.update_layout(
-        margin=dict(t=0, l=0, r=0, b=0),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
-    )
-    
-    return fig
-
-def clean_filenamePD(name):
-    # Replace / and other problematic characters with an underscore
-    return re.sub(r'[^\w\s-]', '_', name)
-
-def get_memory_usage():
-    """Get current memory usage in MB"""
-    try:
-        import psutil
-        return psutil.Process().memory_info().rss / (1024 * 1024)
-    except ImportError:
-        return "psutil not available"
+from modules.figures import is_light_color, clean_filenamePD
 
 def get_background_brain(downsample_factor=12):
     """
@@ -245,195 +79,13 @@ def get_background_brain(downsample_factor=12):
     except Exception as e:
         return None
 
-def create_lipizone_3d_figure(array, color, downsample_factor=12):
-    """
-    Create a 3D visualization of a lipizone array
-    
-    Parameters:
-    -----------
-    array : numpy.ndarray
-        3D array with the lipizone data
-    color : str
-        HTML color code for the lipizone
-    downsample_factor : int
-        Factor by which to downsample the array to reduce memory usage
-        
-    Returns:
-    --------
-    go.Volume
-        The 3D volume for the lipizone
-    """
-    try:
-        # Downsample the array to make visualization more manageable
-        if downsample_factor > 1:
-            array = array[::downsample_factor, ::downsample_factor, ::downsample_factor]
-        
-        # Create coordinate grid based on array shape
-        z, y, x = np.indices(array.shape)
-        
-        # Replace NaN values with 0 for visualization
-        array_viz = np.copy(array)
-        array_viz = np.nan_to_num(array_viz)
-        
-        # Create the 3D volume
-        lipizone_data = go.Volume(
-            x=x.flatten(),
-            y=y.flatten(),
-            z=z.flatten(),
-            value=array_viz.flatten(),
-            isomin=0.01,  # Only show values above this threshold
-            isomax=1.0,
-            opacity=0.7,  # Increase opacity for better visibility
-            surface_count=10,  # Reduce surface count for performance
-            colorscale=[[0, 'rgba(0,0,0,0)'], [1, color]],
-            caps=dict(x_show=False, y_show=False, z_show=False),
-            showscale=False,  # Added this line to hide the colorbar
-        )
-        
-        # Clean up to free memory
-        del array_viz, x, y, z
-        gc.collect()
-        
-        return lipizone_data
-        
-    except Exception as e:
-        logging.error(f"Error creating 3D figure: {str(e)}")
-        logging.error(traceback.format_exc())
-        raise e
-
-def create_all_lipizones_figure(downsample_factor=1):
-    """
-    Create a 3D visualization of all lipizones together using the color array
-    
-    Parameters:
-    -----------
-    downsample_factor : int
-        Factor by which to downsample the array to reduce memory usage
-        
-    Returns:
-    --------
-    go.Figure
-        The 3D figure with the volume rendering
-    """
-    try:
-        start_time = time.time()
-        # logging.info("Loading all lipizones color array")
-        
-        # Load the color array
-        color_array = np.load(COLOR_ARRAY_PATH)
-        
-        # Downsample the array
-        if downsample_factor > 1:
-            color_array = color_array[::downsample_factor, ::downsample_factor, ::downsample_factor, :]
-            # logging.info(f"Downsampled color array to shape: {color_array.shape}")
-        
-        # Create coordinate grid based on array shape
-        z, y, x = np.indices(color_array.shape[:3])
-        
-        # Create a mask for voxels with non-zero values
-        # Convert RGB to a single intensity value based on average brightness
-        intensity = np.mean(color_array, axis=-1)
-        mask = intensity > 0
-        
-        if not np.any(mask):
-            logging.warning("No non-zero values found in the color array!")
-            return go.Figure().update_layout(
-                title="No data found in color array",
-                template="plotly_dark",
-                plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)",
-            )
-        
-        # Normalize RGB values to 0-1 range if they're not already
-        if color_array.max() > 1:
-            color_array = color_array / 255.0
-        
-        # Get the coordinates and colors of non-zero voxels
-        x_points = x[mask]
-        y_points = y[mask]
-        z_points = z[mask]
-        colors = color_array[mask]
-        
-        
-        # Create a figure with a scatter3d trace using the actual RGB colors
-        fig = go.Figure()
-        
-        # Add a scatter3d trace for the point cloud with RGB colors
-        color_strings = [f'rgb({r*255},{g*255},{b*255})' for r, g, b in colors]
-        # Reduce points if there are too many (for performance)
-
-        max_points = 400000 # Limit the number of points for performance
-        if len(x_points) > max_points:
-            indices = np.random.choice(len(x_points), max_points, replace=False)
-            x_points = x_points[indices]
-            y_points = y_points[indices]
-            z_points = z_points[indices]
-            color_strings = [color_strings[i] for i in indices]
-        
-        # Add the scatter3d trace
-        fig.add_trace(go.Scatter3d(
-            x=x_points, 
-            y=y_points, 
-            z=z_points,
-            mode='markers',
-            marker=dict(
-                size=downsample_factor,  # Increased size from 2 to 10 (5x larger)
-                color=color_strings,
-                opacity=1.0
-            ),
-            hoverinfo='none'
-        ))
-        
-        # Improve layout
-        fig.update_layout(
-            margin=dict(t=0, r=0, b=0, l=0),
-            scene=dict(
-                xaxis=dict(
-                    showticklabels=False,
-                    showgrid=False,
-                    zeroline=False,
-                    backgroundcolor="rgba(0,0,0,0)",
-                ),
-                yaxis=dict(
-                    showticklabels=False,
-                    showgrid=False,
-                    zeroline=False,
-                    backgroundcolor="rgba(0,0,0,0)",
-                ),
-                zaxis=dict(
-                    showticklabels=False,
-                    showgrid=False,
-                    zeroline=False,
-                    backgroundcolor="rgba(0,0,0,0)",
-                ),
-                aspectmode="data",
-            ),
-            template="plotly_dark",
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
-        )
-        
-        # Clean up to free memory
-        del color_array, x, y, z, x_points, y_points, z_points, colors, color_strings
-        gc.collect()
-        
-        end_time = time.time()
-        logging.info(f"All lipizones figure creation completed in {end_time - start_time:.2f} seconds")
-        
-        return fig
-        
-    except Exception as e:
-        logging.error(f"Error creating all lipizones figure: {str(e)}")
-        logging.error(traceback.format_exc())
-        raise e
-
 # ==================================================================================================
 # --- Layout
 # ==================================================================================================
 
 def return_layout(basic_config, slice_index):
     # Create treemap data
-    df_treemap, node_colors = create_treemap_data(df_hierarchy_lipizones)
+    df_treemap, node_colors = lipizone_data.create_treemap_data_lipizones()
     
     page = html.Div(
         style={
@@ -472,7 +124,7 @@ def return_layout(basic_config, slice_index):
                     # Treemap visualization
                     dcc.Graph(
                         id="3d-lipizones-treemap",
-                        figure=create_treemap_figure(df_treemap, node_colors),
+                        figure=lipizone_data.create_treemap_figure_lipizones(df_treemap, node_colors),
                         style={
                             "height": "40%",
                             "background-color": "#1d1c1f",
@@ -598,7 +250,7 @@ def update_current_selection(click_data):
     current_path = click_data["points"][0]["id"]
     
     # Filter hierarchy based on the clicked node's path
-    filtered = df_hierarchy_lipizones.copy()
+    filtered = lipizone_data.df_hierarchy_lipizones.copy()
     
     # Get the level of the clicked node
     path_columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
@@ -655,8 +307,8 @@ def handle_selection_changes(
         for lipizone_name in current_selection:
             if lipizone_name not in all_selected_lipizones["names"]:
                 # Find the indices for this lipizone
-                lipizone_indices = df_hierarchy_lipizones.index[
-                    df_hierarchy_lipizones["lipizone_names"] == lipizone_name
+                lipizone_indices = lipizone_data.df_hierarchy_lipizones.index[
+                    lipizone_data.df_hierarchy_lipizones["lipizone_names"] == lipizone_name
                 ].tolist()
                 
                 if lipizone_indices:
@@ -678,7 +330,7 @@ def update_selected_lipizones_badges(all_selected_lipizones):
     if all_selected_lipizones and "names" in all_selected_lipizones:
         for name in all_selected_lipizones["names"]:
             # Get the color for this lipizone, default to cyan if not found
-            lipizone_color = lipizone_to_color.get(name, "#00FFFF")
+            lipizone_color = lipizone_data.lipizone_to_color.get(name, "#00FFFF")
             
             # Determine if the background color is light or dark
             is_light = is_light_color(lipizone_color)
@@ -754,7 +406,7 @@ def update_3d_visualization(
             logging.info("Displaying all lipizones view")
             try:
                 # Create figure with all lipizones
-                fig = create_all_lipizones_figure(downsample_factor=1)
+                fig = figures.create_all_lipizones_figure(downsample_factor=1)
                 # save fig to file
                 fig.write_html("all_lipizones.html")
                 
@@ -809,7 +461,7 @@ def update_3d_visualization(
         if background_brain is not None:
             data_list.append(background_brain)
         
-        store = zarr.DirectoryStore(LIPIZONES_ZARR_PATH)
+        store = zarr.DirectoryStore(lipizone_data.LIPIZONES_ZARR_PATH)
         root = zarr.group(store=store)
         all_lipizones = root['all_lipizones'] # this is the array of lipizone ids (528, 320, 456)
         
@@ -827,11 +479,11 @@ def update_3d_visualization(
                 continue
             
             # Get the color for this lipizone
-            color = lipizone_to_color.get(lipizone_name, "#1f77b4")  # default blue
+            color = lipizone_data.lipizone_to_color.get(lipizone_name, "#1f77b4")  # default blue
             
             # Create the 3D visualization
             try:
-                lipizone_volume = create_lipizone_3d_figure(array, color, downsample_factor)
+                lipizone_volume = figures.create_lipizone_3d_figure(array, color, downsample_factor)
                 data_list.append(lipizone_volume)
                 
             except Exception as e:

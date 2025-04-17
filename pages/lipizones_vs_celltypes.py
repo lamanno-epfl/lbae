@@ -25,408 +25,17 @@ from scipy.ndimage import gaussian_filter
 import os
 os.environ['OMP_NUM_THREADS'] = '6'
 import pickle
+import plotly.express as px
 
 # LBAE imports
-from app import app, figures, data, atlas, lipizone_section_data, celltype_data
-import plotly.express as px
+from app import app, figures, data, atlas, lipizone_data, celltype_data
 
 # ==================================================================================================
 # --- Helper functions
 # ==================================================================================================
 
-def compute_image_lipizones_celltypes(
-    all_selected_lipizones, 
-    all_selected_celltypes, 
-    slice_index,
-    celltype_radius=1):  # New parameter for tunable square radius
-    
-    # Get the names of all selected lipizones and celltypes
-    selected_lipizone_names = all_selected_lipizones.get("names", [])
-    selected_celltype_names = all_selected_celltypes.get("names", [])
-    
-    # Define colors for both lipizones and celltypes
-    hex_colors_to_highlight_lipizones = [lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_to_color]
-    rgb_colors_to_highlight_celltypes = [celltype_to_color[name] for name in selected_celltype_names if name in celltype_to_color]
-    
-    # Get section data for both lipizones and celltypes
-    section_data_lipizones = lipizone_section_data.retrieve_section_data(float(slice_index))
-    section_data_celltypes = celltype_data.retrieve_section_data(int(slice_index))
-    
-    # Use the grayscale image from lipizones data (same for both)
-    grayscale_image = section_data_lipizones["grayscale_image"]
-    # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
-    grayscale_image = np.power(grayscale_image, float(1/6))
-    
-    # Apply Gaussian blur to smooth the grayscale image
-    grayscale_image = gaussian_filter(grayscale_image, sigma=3)
-    
-    # Get color masks for both
-    color_masks_lipizones = section_data_lipizones["color_masks"]
-    color_masks_celltypes = section_data_celltypes["color_masks"]
+from modules.figures import is_light_color, black_aba_contours
 
-    # mask the grayscale image with the color mask of the lipizones
-    grayscale_image *= ~color_masks_lipizones[list(color_masks_lipizones.keys())[0]]
-
-    # Grid image
-    grid_image = section_data_lipizones["grid_image"]
-    rgb_image = grid_image[:, :, :3]
-    
-    # Convert hex colors to RGB for lipizones
-    def hex_to_rgb(hex_color):
-        """Convert hexadecimal color to RGB values (0-1 range)"""
-        hex_color = hex_color.lstrip('#')
-        return np.array([int(hex_color[i:i+2], 16) for i in (0, 2, 4)]) / 255.0
-    
-    rgb_colors_to_highlight_lipizones = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight_lipizones]
-    
-    # Create the hybrid image with the same shape as the original
-    lipizones_celltypes_image = np.zeros_like(rgb_image)
-    
-    # Split the image into left (lipizones) and right (celltypes) halves
-    mid_point = lipizones_celltypes_image.shape[1] // 2
-    
-    # Process left side (lipizones)
-    combined_mask_lipizones = np.zeros((rgb_image.shape[0], mid_point), dtype=bool)
-    for target_rgb in tqdm(rgb_colors_to_highlight_lipizones):
-        target_tuple = tuple(target_rgb)
-        if target_tuple in color_masks_lipizones:
-            combined_mask_lipizones |= color_masks_lipizones[target_tuple][:, :mid_point]
-        else:
-            try:
-                distances = np.array([np.sum((np.array(color) - target_rgb) ** 2) for color in color_masks_lipizones.keys()])
-                closest_color_idx = np.argmin(distances)
-                closest_color = list(color_masks_lipizones.keys())[closest_color_idx]
-                if distances[closest_color_idx] < 0.05:
-                    combined_mask_lipizones |= color_masks_lipizones[closest_color][:, :mid_point]
-            except:
-                print(f"{target_rgb} not found in color_masks_lipizones")
-                continue
-    
-    # Process right side (celltypes) with pixel enlargement
-    # Initialize arrays for the right side
-    celltype_colors = np.zeros((rgb_image.shape[0], lipizones_celltypes_image.shape[1] - mid_point, 3))
-    celltype_mask = np.zeros((rgb_image.shape[0], lipizones_celltypes_image.shape[1] - mid_point), dtype=bool)
-    
-    # Process each celltype
-    for target_rgb in tqdm(rgb_colors_to_highlight_celltypes):
-        # Convert target_rgb to numpy array if it's a string
-        target_rgb_float = np.array([float(x) for x in target_rgb.strip('()').split(',')])
-        target_tuple = tuple(target_rgb_float)
-        # find the corresponding name of the celltype from the celltype_to_color dictionary
-        celltype_name = list(celltype_to_color.keys())[list(celltype_to_color.values()).index(target_rgb)]
-        
-        if celltype_name in color_masks_celltypes:
-            current_mask = color_masks_celltypes[celltype_name].T[:, mid_point:]
-            
-            # For each center point, create a square around it
-            y_coords, x_coords = np.where(current_mask)
-            
-            for y, x in zip(y_coords, x_coords):
-                # # Get the original RGB color from the center point
-                # center_color = rgb_image[y, x + mid_point]
-                # Use the celltype's RGB color directly from celltype_to_color
-                center_color = target_rgb_float[:3]
-                
-                # Define the square bounds
-                y_min = max(0, y - celltype_radius)
-                y_max = min(current_mask.shape[0], y + celltype_radius + 1)
-                x_min = max(0, x - celltype_radius)
-                x_max = min(current_mask.shape[1], x + celltype_radius + 1)
-                
-                # Only fill pixels that haven't been filled yet
-                square_mask = np.zeros_like(celltype_mask)
-                square_mask[y_min:y_max, x_min:x_max] = True
-                unfilled_pixels = square_mask & ~celltype_mask
-                
-                if np.any(unfilled_pixels):
-                    # Use broadcasting to assign the center color to all unfilled pixels in the square
-                    for i in range(3):
-                        celltype_colors[..., i][unfilled_pixels] = center_color[i]
-                    celltype_mask[unfilled_pixels] = True
-        
-        # else:
-        #     # Convert color mask keys to numpy arrays for comparison
-        #     try:
-        #         mask_rgb_str = [celltype_to_color[celltype_name] for celltype_name in color_masks_celltypes.keys()]
-        #         color_keys = [np.array([float(x) for x in color.strip('()').split(',')]) 
-        #         for color in mask_rgb_str]
-
-        #         distances = np.array([np.sum((color - target_tuple) ** 2) for color in color_keys])
-        #         closest_color_idx = np.argmin(distances)
-        #         closest_color = list(color_masks_celltypes.keys())[closest_color_idx]
-        #         if distances[closest_color_idx] < 0.05:
-        #             current_mask = color_masks_celltypes[closest_color].T
-        #             combined_mask_celltypes |= current_mask[:, mid_point:]
-        #     except:
-        #         print(f"{celltype_name} not found in color_masks_celltypes")
-        #         continue
-    
-    # Apply grayscale background to both sides
-    for i in range(3):
-        lipizones_celltypes_image[:, :mid_point, i] = grayscale_image[:, :mid_point]
-        lipizones_celltypes_image[:, mid_point:, i] = grayscale_image[:, mid_point:]
-    
-    # Apply color masks to respective sides
-    for i in range(3):
-        # Left side (lipizones)
-        lipizones_celltypes_image[:, :mid_point, i][combined_mask_lipizones] = rgb_image[:, :mid_point, i][combined_mask_lipizones]
-        # Right side (celltypes)
-        lipizones_celltypes_image[:, mid_point:, i][celltype_mask] = celltype_colors[..., i][celltype_mask]
-    
-    # Final processing
-    lipizones_celltypes_image = (lipizones_celltypes_image*255) + 1
-    mask = np.all(lipizones_celltypes_image == 1, axis=-1)
-    lipizones_celltypes_image[mask] = np.nan
-
-    return lipizones_celltypes_image
-
-def is_light_color(hex_color):
-    """Determine if a color is light or dark based on its RGB values."""
-    # Convert hex to RGB
-    rgb = hex_to_rgb(hex_color)
-    # Calculate luminance using the formula: L = 0.299*R + 0.587*G + 0.114*B
-    luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255
-    return luminance > 0.5
-
-def black_aba_contours(overlay):
-    black_overlay = overlay.copy()
-    contour_mask = overlay[:, :, 3] > 0
-    black_overlay[contour_mask] = [0, 0, 0, 200]  # RGB black with alpha=200
-    
-    return black_overlay
-
-def hex_to_rgb(hex_color):
-    """Convert hexadecimal color to RGB values."""
-    hex_color = hex_color.lstrip('#')
-    return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
-
-def rgb_to_hex(rgb):
-    """Convert RGB values to hexadecimal color."""
-    return f'#{int(rgb[0]):02x}{int(rgb[1]):02x}{int(rgb[2]):02x}'
-
-def calculate_mean_color(colors, is_celltypes=False):
-    """Calculate the mean color from a list of colors.
-    
-    Args:
-        colors: List of colors (either hex strings or RGBA strings)
-        is_celltypes: Boolean indicating if we're dealing with celltypes (RGBA format) or lipizones (hex format)
-    """
-    if not colors:
-        return '#808080' if not is_celltypes else "(0.5, 0.5, 0.5, 1.0)"  # Default gray
-    
-    if is_celltypes:
-        # For celltypes, colors are in RGBA string format
-        rgb_colors = []
-        for color in colors:
-            if isinstance(color, str) and color.startswith('('):
-                # Extract RGB values from string format "(r,g,b,a)"
-                rgb_values = [float(x) for x in color.strip('()').split(',')[:3]]
-                rgb_colors.append(rgb_values)
-            else:
-                # If somehow not in string format, convert from hex
-                rgb_colors.append(hex_to_rgb(color))
-    else:
-        # For lipizones, colors are in hex format
-        rgb_colors = [hex_to_rgb(color) for color in colors]
-    
-    # Calculate mean for each channel
-    mean_r = sum(color[0] for color in rgb_colors) / len(rgb_colors)
-    mean_g = sum(color[1] for color in rgb_colors) / len(rgb_colors)
-    mean_b = sum(color[2] for color in rgb_colors) / len(rgb_colors)
-    if is_celltypes:
-        return rgb_to_hex([mean_r*255, mean_g*255, mean_b*255])
-    else:
-        return rgb_to_hex([mean_r, mean_g, mean_b])
-    
-def create_treemap_data(
-    df_hierarchy, 
-    is_celltypes=False,
-    slice_index=1.0,):
-
-    """Create data structure for treemap visualization with color information."""
-    # Create a copy to avoid modifying the original
-    if not is_celltypes:
-        df = df_hierarchy.copy()
-    else:
-        # in the case of celltypes, extract only the celltypes that are available in the slice
-        celltype_in_section = list(celltype_data.retrieve_section_data(int(slice_index))['color_masks'].keys())
-        # Filter the DataFrame
-        df = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(celltype_in_section)]
-    
-    # Add a constant value column for equal-sized end nodes
-    df['value'] = 1
-    
-    # Create a dictionary to store colors for each node
-    node_colors = {}
-    
-    # First, assign colors to leaf nodes
-    for _, row in df.iterrows():
-        if is_celltypes:
-            celltype = row['cell_type']
-            if celltype in celltype_to_color:
-                # Use only the first 10 levels for celltypes
-                path = '/'.join([str(row[col]) for col in ['level_1', 'level_2', 'level_3', 'level_4', 'level_5', 
-                                                          'level_6', 'level_7', 'level_8', 'level_9', 'level_10', 
-                                                          'cell_type']])
-                
-                node_colors[path] = celltype_to_color[celltype]
-        else:
-            lipizone = row['lipizone_names']
-            if lipizone in lipizone_to_color:
-                path = '/'.join([str(row[col]) for col in ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']])
-                node_colors[path] = lipizone_to_color[lipizone]
-    
-    # Function to get all leaf colors under a node
-    def get_leaf_colors(path_prefix):
-        colors = []
-        for full_path, color in node_colors.items():
-            if full_path.startswith(path_prefix):
-                colors.append(color)
-        return colors
-    
-    # Calculate colors for each level, from bottom to top
-    if is_celltypes:
-        columns = ['level_1', 'level_2', 'level_3', 'level_4', 'level_5', 
-                   'level_6', 'level_7', 'level_8', 'level_9', 'level_10', 
-                   'cell_type']
-    else:
-        columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
-    
-    for i in range(len(columns)-1):  # Don't process the last level
-        level_paths = set()
-        # Build paths up to current level
-        for _, row in df.iterrows():
-            path = '/'.join([str(row[col]) for col in columns[:i+1]])
-            level_paths.add(path)
-        
-        # Calculate mean colors for each path
-        for path in level_paths:
-            leaf_colors = get_leaf_colors(path + '/')
-            if leaf_colors:
-                node_colors[path] = calculate_mean_color(leaf_colors, is_celltypes)
-    
-    return df, node_colors
-
-def create_treemap_figure(df_treemap, node_colors, is_celltypes=False):
-    """Create treemap figure using plotly with custom colors."""
-    if is_celltypes:
-        path_columns = ['level_1', 'level_2', 'level_3', 'level_4', 'level_5', 
-                        'level_6', 'level_7', 'level_8', 'level_9', 'level_10', 
-                        'cell_type']
-    else:
-        path_columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
-    
-    fig = px.treemap(
-        df_treemap,
-        path=path_columns,
-        values='value'
-    )
-    
-    # Update traces with custom colors
-    def get_node_color(node_path):
-        # Convert node path to string format matching our dictionary
-        path_str = '/'.join(str(x) for x in node_path if x)
-        return node_colors.get(path_str, '#808080')
-    
-    # Apply colors to each node based on its path
-    colors = [get_node_color(node_path.split('/')) for node_path in fig.data[0].ids]
-    
-    fig.update_traces(
-        marker=dict(colors=colors),
-        hovertemplate='%{label}<extra></extra>',  # Only show the label
-        textposition='middle center',
-        root_color="rgba(0,0,0,0)",  # Make root node transparent
-    )
-    
-    # Update layout for better visibility
-    fig.update_layout(
-        margin=dict(t=0, l=0, r=0, b=0),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
-    )
-    
-    return fig
-
-# ==================================================================================================
-# --- Data
-# ==================================================================================================
-
-# manual_naming_lipizones_level_1 = {
-#     '1' : 'White matter-rich',
-#     '2' : 'Gray matter-rich',
-# }
-# manual_naming_lipizones_level_2 = {
-#     '1_1' : 'Core white matter',
-#     '1_2' : 'Mixed gray and white matter, ventricles',
-#     '2_1' : 'Outer cortex, cerebellar molecular layer, amygdala, part of hippocampus',
-#     '2_2' : 'Deep cortex, part of hippocampus, striatum, cerebellar granule cells',
-# }
-# manual_naming_lipizones_level_3 = {
-#     '1_1_1' : 'Oligodendroglia-rich regions',
-#     '1_1_2' : 'Mixed white matter with neurons',
-#     '1_2_1' : 'Ventricular system, gray-white boundary, hypothalamus',
-#     '1_2_2' : 'Thalamus and midbrain',
-#     '2_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
-#     '2_1_2' : 'Layer 1 to border between 2/3 and 4, piriform, Purkinje cells, enthorinal, mixed',
-#     '2_2_1' : 'Layer 5, hippocampus and noncortical gray matter',
-#     '2_2_2' : 'Layers 5 and 6, hippocampus, nuclei, granular layer of the cerebellum',
-# }
-# manual_naming_lipizones_level_4 = {
-#     '1_1_1_1' : 'Core of fiber tracts, arbor vitae and nerves/1',
-#     '1_1_1_2' : 'Core of fiber tracts, arbor vitae and nerves/2',
-#     '1_1_2_1' : 'Bundle and boundary white matter-rich',
-#     '1_1_2_2' : 'Thalamus, midbrain, hindbrain white matter regions',
-#     '1_2_1_1' : 'Ventricular system',
-#     '1_2_1_2' : 'Gray-white matter boundary',
-#     '1_2_2_1' : 'Mostly thalamus, midbrain, hindbrain mixed types',
-#     '1_2_2_2' : 'Myelin-rich deep cortex, striatum, hindbrain and more',
-#     '2_1_1_1' : 'Layer 2/3 and 4, cingulate, striatum, hippocampus, subcortical plate regions',
-#     '2_1_1_2' : 'HPF, AMY, CTXSP, HY and more',
-#     '2_1_2_1' : 'Purkinje layer, L2/3 and boundary with L4',
-#     '2_1_2_2' : 'Layer 1, 2/3, piriform and enthorinal cortex, CA1',
-#     '2_2_1_1' : 'Layer 5, retrosplenial, hippocampus',
-#     '2_2_1_2' : 'Noncortical gray matter',
-#     '2_2_2_1' : 'Layer 5-6, nuclei, granule cells layer',
-#     '2_2_2_2' : 'Layer 6, mixed complex GM, granule cells layer',
-# }
-
-# lipizones = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0) # HEX
-# lipizone_to_color = {name: color for name, color in zip(lipizones["lipizone_names"], lipizones["lipizone_color"])}
-# df_hierarchy_lipizones = pd.read_csv("/data/LBA_DATA/lbae/data/annotations/lipizones_hierarchy.csv")
-
-# # lipizonenames = pd.read_csv("/data/LBA_DATA/lbae/lipizonename2color.csv", index_col=0)['lipizone_names'].values
-# df_hierarchy_lipizones['level_1_name'] = df_hierarchy_lipizones['level_1'].astype(str).map(manual_naming_lipizones_level_1)
-# df_hierarchy_lipizones['level_2_name'] = df_hierarchy_lipizones['level_2'].astype(str).map(manual_naming_lipizones_level_2)
-# df_hierarchy_lipizones['level_3_name'] = df_hierarchy_lipizones['level_3'].astype(str).map(manual_naming_lipizones_level_3)
-# df_hierarchy_lipizones['level_4_name'] = df_hierarchy_lipizones['level_4'].astype(str).map(manual_naming_lipizones_level_4)
-
-df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
-lipizone_to_color = pickle.load(open("./data/lipizone_data/lipizone_to_color.pkl", "rb"))
-
-# celltypes = pd.read_csv('/data/LBA_DATA/lbae/assets/hierarchy_celltypes_colors.csv')[["cell_type", "color"]]
-# celltype_to_color = {name: color for name, color in zip(celltypes["cell_type"], celltypes["color"])}
-# df_hierarchy_celltypes = pd.read_csv('/data/LBA_DATA/lbae/assets/hierarchy_celltypes_colors.csv')
-# # Keep hierarchy_code and reorder columns
-# df_hierarchy_celltypes = df_hierarchy_celltypes.iloc[:, 1:]
-
-# union_celltypes = set()
-# for slice_index in data.get_slice_list("ReferenceAtlas"):
-#     try:
-#         celltype_in_section = list(celltype_data.retrieve_section_data(int(slice_index))['color_masks'].keys())
-#         filtered_df = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(celltype_in_section)]
-#         union_celltypes.update(filtered_df["cell_type"].values)
-#     except:
-#         continue
-
-# # filter the  df_hierarchy_celltypes to only keep the celltypes in union_celltypes
-# df_hierarchy_celltypes = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(union_celltypes)]
-# df_hierarchy_celltypes = df_hierarchy_celltypes.drop(columns=['level_11', 'level_12', 'level_13', 'level_14', 'level_15', 
-#                                                                 'level_16', 'level_17', 'level_18', 'level_19', 'level_20', 
-#                                                                 'level_21', 'level_22', 'level_23', 'level_24', 'level_25', 
-#                                                                 'level_26'])
-df_hierarchy_celltypes = pd.read_csv("./data/celltype_data/celltypes_hierarchy.csv")
-celltype_to_color = pickle.load(open("./data/celltype_data/celltype_to_color.pkl", "rb"))
 # ==================================================================================================
 # --- Layout
 # ==================================================================================================
@@ -434,11 +43,8 @@ celltype_to_color = pickle.load(open("./data/celltype_data/celltype_to_color.pkl
 def return_layout(basic_config, slice_index):
     """Return the layout for the page."""
     # Create treemap data
-    df_treemap_lipizones, node_colors_lipizones = create_treemap_data(df_hierarchy_lipizones)
-    df_treemap_celltypes, node_colors_celltypes = create_treemap_data(
-        df_hierarchy_celltypes, 
-        is_celltypes=True, 
-        slice_index=slice_index)
+    df_treemap_lipizones, node_colors_lipizones = lipizone_data.create_treemap_data_lipizones()
+    df_treemap_celltypes, node_colors_celltypes = celltype_data.create_treemap_data_celltypes(slice_index=slice_index)
 
     # Get celltype pixel counts for the current slice
     section_data_celltypes = celltype_data.retrieve_section_data(int(slice_index))
@@ -483,9 +89,9 @@ def return_layout(basic_config, slice_index):
                             "background-color": "#1d1c1f",
                         },
                         figure=figures.build_lipid_heatmap_from_image(
-                            compute_image_lipizones_celltypes(
-                                {"names": list(lipizone_to_color.keys()), "indices": []}, 
-                                {"names": list(celltype_to_color.keys()), "indices": []}, 
+                            figures.compute_image_lipizones_celltypes(
+                                {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []}, 
+                                {"names": list(celltype_data.celltype_to_color.keys()), "indices": []}, 
                                 slice_index
                             ),
                             return_base64_string=False,
@@ -589,7 +195,7 @@ def return_layout(basic_config, slice_index):
                             # Lipizones treemap visualization
                             dcc.Graph(
                                 id="page-6bis-lipizones-treemap",
-                                figure=create_treemap_figure(
+                                figure=lipizone_data.create_treemap_figure_lipizones(
                                     df_treemap_lipizones, 
                                     node_colors_lipizones
                                     ),
@@ -705,10 +311,9 @@ def return_layout(basic_config, slice_index):
                             # Celltypes treemap visualization
                             dcc.Graph(
                                 id="page-6bis-celltypes-treemap",
-                                figure=create_treemap_figure(
+                                figure=celltype_data.create_treemap_figure_celltypes(
                                     df_treemap_celltypes, 
-                                    node_colors_celltypes,
-                                    is_celltypes=True
+                                    node_colors_celltypes
                                     ),
                                 style={
                                     "height": "40%",
@@ -861,19 +466,11 @@ def update_celltype_treemap(slice_index):
     """Update the celltype treemap when the slice changes."""
     print("\n======== update_celltype_treemap =========")
     # Create new treemap data for celltypes with the current slice
-    df_treemap_celltypes, node_colors_celltypes = create_treemap_data(
-        df_hierarchy_celltypes, 
-        is_celltypes=True,
-        slice_index=slice_index
-    )
-    print("slice_index: ", slice_index)
-    print("shape of df_treemap_celltypes: ", df_treemap_celltypes.shape)
-    print("len of node_colors_celltypes: ", len(node_colors_celltypes))
+    df_treemap_celltypes, node_colors_celltypes = celltype_data.create_treemap_data_celltypes(slice_index=slice_index)
     # Create and return the new figure
-    return create_treemap_figure(
+    return celltype_data.create_treemap_figure_celltypes(
         df_treemap_celltypes, 
-        node_colors_celltypes,
-        is_celltypes=True
+        node_colors_celltypes
     )
 
 @app.callback(
@@ -895,7 +492,7 @@ def update_current_lipizone_selection(click_data):
     current_path = click_data["points"][0]["id"]
     
     # Filter hierarchy based on the clicked node's path
-    filtered = df_hierarchy_lipizones.copy()
+    filtered = lipizone_data.df_hierarchy_lipizones.copy()
     
     # Get the level of the clicked node
     path_columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
@@ -935,7 +532,7 @@ def update_current_celltype_selection(click_data, slice_index):
     
     celltype_in_section = list(celltype_data.retrieve_section_data(int(slice_index))['color_masks'].keys())
     # Filter the DataFrame
-    filtered = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(celltype_in_section)]
+    filtered = celltype_data.df_hierarchy_celltypes[celltype_data.df_hierarchy_celltypes["cell_type"].isin(celltype_in_section)]
     
     # Get the level of the clicked node
     path_columns = ['level_1', 'level_2', 'level_3', 'level_4', 'level_5', 
@@ -982,9 +579,9 @@ def handle_lipizone_selection_changes(
     # Handle select all button
     if triggered_id == "page-6bis-select-all-lipizones-button":
         all_lipizones = {"names": [], "indices": []}
-        for lipizone_name in df_hierarchy_lipizones["lipizone_names"].unique():
-            lipizone_indices = df_hierarchy_lipizones.index[
-                df_hierarchy_lipizones["lipizone_names"] == lipizone_name
+        for lipizone_name in lipizone_data.df_hierarchy_lipizones["lipizone_names"].unique():
+            lipizone_indices = lipizone_data.df_hierarchy_lipizones.index[
+                lipizone_data.df_hierarchy_lipizones["lipizone_names"] == lipizone_name
             ].tolist()
             if lipizone_indices:
                 all_lipizones["names"].append(lipizone_name)
@@ -1007,8 +604,8 @@ def handle_lipizone_selection_changes(
         for lipizone_name in current_selection:
             if lipizone_name not in all_selected_lipizones["names"]:
                 # Find the indices for this lipizone
-                lipizone_indices = df_hierarchy_lipizones.index[
-                    df_hierarchy_lipizones["lipizone_names"] == lipizone_name
+                lipizone_indices = lipizone_data.df_hierarchy_lipizones.index[
+                    lipizone_data.df_hierarchy_lipizones["lipizone_names"] == lipizone_name
                 ].tolist()
                 
                 if lipizone_indices:
@@ -1078,13 +675,13 @@ def handle_celltype_selection_changes(
     # If slice changed, reset slider to 0 and show all celltypes
     if triggered_id == "main-slider":
         # Filter the DataFrame
-        filtered_df = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(available_celltypes)]
+        filtered_df = celltype_data.df_hierarchy_celltypes[celltype_data.df_hierarchy_celltypes["cell_type"].isin(available_celltypes)]
         
         # Create the all_celltypes dictionary with only celltypes from the current slice
         all_celltypes = {"names": [], "indices": []}
         for celltype_name in filtered_df["cell_type"].unique():
-            celltype_indices = df_hierarchy_celltypes.index[
-                df_hierarchy_celltypes["cell_type"] == celltype_name
+            celltype_indices = celltype_data.df_hierarchy_celltypes.index[
+                celltype_data.df_hierarchy_celltypes["cell_type"] == celltype_name
             ].tolist()
             if celltype_indices:
                 all_celltypes["names"].append(celltype_name)
@@ -1094,13 +691,13 @@ def handle_celltype_selection_changes(
     # If slider value changed, filter current selection
     elif triggered_id == "page-6bis-celltype-pixel-filter":
         # Filter the DataFrame
-        filtered_df = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(available_celltypes)]
+        filtered_df = celltype_data.df_hierarchy_celltypes[celltype_data.df_hierarchy_celltypes["cell_type"].isin(available_celltypes)]
         
         # Create the all_celltypes dictionary with only celltypes that meet the pixel threshold
         all_celltypes = {"names": [], "indices": []}
         for celltype_name in filtered_df["cell_type"].unique():
-            celltype_indices = df_hierarchy_celltypes.index[
-                df_hierarchy_celltypes["cell_type"] == celltype_name
+            celltype_indices = celltype_data.df_hierarchy_celltypes.index[
+                celltype_data.df_hierarchy_celltypes["cell_type"] == celltype_name
             ].tolist()
             if celltype_indices:
                 all_celltypes["names"].append(celltype_name)
@@ -1110,13 +707,13 @@ def handle_celltype_selection_changes(
     # Handle select all button
     elif triggered_id == "page-6bis-select-all-celltypes-button":
         # Filter the DataFrame
-        filtered_df = df_hierarchy_celltypes[df_hierarchy_celltypes["cell_type"].isin(available_celltypes)]
+        filtered_df = celltype_data.df_hierarchy_celltypes[celltype_data.df_hierarchy_celltypes["cell_type"].isin(available_celltypes)]
         
         # Create the all_celltypes dictionary with only celltypes that meet the pixel threshold
         all_celltypes = {"names": [], "indices": []}
         for celltype_name in filtered_df["cell_type"].unique():
-            celltype_indices = df_hierarchy_celltypes.index[
-                df_hierarchy_celltypes["cell_type"] == celltype_name
+            celltype_indices = celltype_data.df_hierarchy_celltypes.index[
+                celltype_data.df_hierarchy_celltypes["cell_type"] == celltype_name
             ].tolist()
             if celltype_indices:
                 all_celltypes["names"].append(celltype_name)
@@ -1139,8 +736,8 @@ def handle_celltype_selection_changes(
         for celltype_name in current_selection:
             if celltype_name not in all_selected_celltypes["names"] and celltype_name in available_celltypes:
                 # Find the indices for this celltype
-                celltype_indices = df_hierarchy_celltypes.index[
-                    df_hierarchy_celltypes["cell_type"] == celltype_name
+                celltype_indices = celltype_data.df_hierarchy_celltypes.index[
+                    celltype_data.df_hierarchy_celltypes["cell_type"] == celltype_name
                 ].tolist()
                 
                 if celltype_indices:
@@ -1198,10 +795,10 @@ def page_6_plot_graph_heatmap_mz_selection(
     
     # If annotations toggle was triggered, preserve current selections
     if triggered_id == "page-6bis-toggle-annotations":
-        lipizones_celltypes_image = compute_image_lipizones_celltypes(
-                    all_selected_lipizones, 
-                    all_selected_celltypes, 
-                    slice_index)
+        lipizones_celltypes_image = figures.compute_image_lipizones_celltypes(  
+            all_selected_lipizones, 
+            all_selected_celltypes, 
+            slice_index)
         
         fig = figures.build_lipid_heatmap_from_image(
             lipizones_celltypes_image,
@@ -1219,7 +816,7 @@ def page_6_plot_graph_heatmap_mz_selection(
         (all_selected_lipizones and len(all_selected_lipizones.get("names", [])) > 0)
         or (all_selected_celltypes and len(all_selected_celltypes.get("names", [])) > 0)
     ):
-        lipizones_celltypes_image = compute_image_lipizones_celltypes(
+        lipizones_celltypes_image = figures.compute_image_lipizones_celltypes(
             all_selected_lipizones, 
             all_selected_celltypes, 
             slice_index)
@@ -1239,9 +836,9 @@ def page_6_plot_graph_heatmap_mz_selection(
         # No selections, use default color for choroid plexus
         hex_colors_to_highlight = ['#f75400']
         fig = figures.build_lipid_heatmap_from_image(
-            compute_image_lipizones_celltypes(
-                {"names": list(lipizone_to_color.keys()), "indices": []}, 
-                {"names": list(celltype_to_color.keys()), "indices": []}, 
+            figures.compute_image_lipizones_celltypes(
+                {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []}, 
+                {"names": list(celltype_data.celltype_to_color.keys()), "indices": []}, 
                 slice_index
             ),
             return_base64_string=False,
@@ -1273,7 +870,7 @@ def update_selected_lipizones_badges(all_selected_lipizones):
     if all_selected_lipizones and "names" in all_selected_lipizones:
         for name in all_selected_lipizones["names"]:
             # Get the color for this lipizone, default to cyan if not found
-            lipizone_color = lipizone_to_color.get(name, "#00FFFF")
+            lipizone_color = lipizone_data.lipizone_to_color.get(name, "#00FFFF")
 
             # Determine if the background color is light or dark
             is_light = is_light_color(lipizone_color)
@@ -1317,7 +914,7 @@ def update_selected_celltypes_badges(all_selected_celltypes):
     if all_selected_celltypes and "names" in all_selected_celltypes:
         for name in all_selected_celltypes["names"]:
             # Get the color for this celltype, default to cyan if not found
-            celltype_color = celltype_to_color.get(name, "#00FFFF")
+            celltype_color = celltype_data.celltype_to_color.get(name, "#00FFFF")
             
             # Convert RGB tuple string to CSS color
             if isinstance(celltype_color, str) and celltype_color.startswith('('):

@@ -78,7 +78,8 @@ def convert_image_to_base64(
         (str): The base 64 image encoded in a string.
     """
     logging.info("Entering string conversion function")
-    # print("image_array.shape:", image_array.shape)
+    print("image_array.shape:", image_array.shape)
+    print("type:", type)
     
     # Select the appropriate colormap based on colormap_type
     if colormap_type == "PuOr":
@@ -101,8 +102,11 @@ def convert_image_to_base64(
         
     # Convert 3D or 4D array into a PIL image
     elif type == "RGB" or type == "RGBA":
+        print("image_array.shape:", image_array.shape)
         uint8_image_array = np.asarray(image_array, dtype=np.uint8).copy()
+        print("uint8_image_array.shape:", uint8_image_array.shape)
         pil_img = Image.fromarray(uint8_image_array, mode=type) # image_array_post
+        print("pil_img", pil_img)
         
     logging.info("Image has been converted from array to PIL image")
 

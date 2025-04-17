@@ -35,6 +35,9 @@ from modules.atlas_labels import Labels
 from modules.tools.misc import logmem
 
 ABA_DIM = (528, 320, 456)
+ABA_CONTOURS = np.load("./data/atlas/eroded_annot.npy")
+ACRONYM_MASKS = pickle.load(open("./data/atlas/acronyms_masks.pkl", "rb"))
+ACRONYMS_PIXELS = pickle.load(open("./data/atlas/acronyms.pkl", "rb"))
 
 
 # ==================================================================================================

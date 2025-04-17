@@ -26,7 +26,7 @@ import base64
 from flask import send_file
 
 # LBAE imports
-from app import app
+from app import app, lipizone_data
 
 # ==================================================================================================
 # --- Constants
@@ -34,170 +34,12 @@ from app import app
 
 # Path to the ID cards
 ID_CARDS_PATH = "./data/ID_cards"
-df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
-lipizone_to_color = pickle.load(open("./data/lipizone_data/lipizone_to_color.pkl", "rb"))
 
 # ==================================================================================================
 # --- Helper functions
 # ==================================================================================================
 
-def is_light_color(hex_color):
-    """Determine if a color is light or dark based on its RGB values."""
-    # Convert hex to RGB
-    rgb = hex_to_rgb(hex_color)
-    # Calculate luminance using the formula: L = 0.299*R + 0.587*G + 0.114*B
-    luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255
-    return luminance > 0.5
-
-def hex_to_rgb(hex_color):
-    """Convert hexadecimal color to RGB values."""
-    hex_color = hex_color.lstrip('#')
-    return [int(hex_color[i:i+2], 16) for i in (0, 2, 4)]
-
-def rgb_to_hex(rgb):
-    """Convert RGB values to hexadecimal color."""
-    return f'#{int(rgb[0]):02x}{int(rgb[1]):02x}{int(rgb[2]):02x}'
-
-def calculate_mean_color(hex_colors):
-    """Calculate the mean color from a list of hex colors."""
-    if not hex_colors:
-        return '#808080'  # Default gray if no colors
-    
-    # Convert hex to RGB
-    rgb_colors = [hex_to_rgb(color) for color in hex_colors]
-    
-    # Calculate mean for each channel
-    mean_r = sum(color[0] for color in rgb_colors) / len(rgb_colors)
-    mean_g = sum(color[1] for color in rgb_colors) / len(rgb_colors)
-    mean_b = sum(color[2] for color in rgb_colors) / len(rgb_colors)
-    
-    return rgb_to_hex([mean_r, mean_g, mean_b])
-
-def create_treemap_data(df_hierarchy):
-    """Create data structure for treemap visualization with color information."""
-    # Create a copy to avoid modifying the original
-    df = df_hierarchy.copy()
-    
-    # Add a constant value column for equal-sized end nodes
-    df['value'] = 1
-    
-    # Create a dictionary to store colors for each node
-    node_colors = {}
-    
-    # First, assign colors to leaf nodes (lipizones)
-    for _, row in df.iterrows():
-        lipizone = row['lipizone_names']
-        if lipizone in lipizone_to_color:
-            path = '/'.join([str(row[col]) for col in ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']])
-            node_colors[path] = lipizone_to_color[lipizone]
-    
-    # Function to get all leaf colors under a node
-    def get_leaf_colors(path_prefix):
-        colors = []
-        for full_path, color in node_colors.items():
-            if full_path.startswith(path_prefix):
-                colors.append(color)
-        return colors
-    
-    # Calculate colors for each level, from bottom to top
-    columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
-    for i in range(len(columns)-1):  # Don't process the last level (lipizones)
-        level_paths = set()
-        # Build paths up to current level
-        for _, row in df.iterrows():
-            path = '/'.join([str(row[col]) for col in columns[:i+1]])
-            level_paths.add(path)
-        
-        # Calculate mean colors for each path
-        for path in level_paths:
-            leaf_colors = get_leaf_colors(path + '/')
-            if leaf_colors:
-                node_colors[path] = calculate_mean_color(leaf_colors)
-    
-    return df, node_colors
-
-def create_treemap_figure(df_treemap, node_colors):
-    """Create treemap figure using plotly with custom colors."""
-    fig = px.treemap(
-        df_treemap,
-        path=[
-            'level_1_name',
-            'level_2_name',
-            'level_3_name',
-            'level_4_name',
-            'subclass_name',
-            'lipizone_names'
-        ],
-        values='value'
-    )
-    
-    # Update traces with custom colors
-    def get_node_color(node_path):
-        # Convert node path to string format matching our dictionary
-        path_str = '/'.join(str(x) for x in node_path if x)
-        return node_colors.get(path_str, '#808080')
-    
-    # Apply colors to each node based on its path
-    colors = [get_node_color(node_path.split('/')) for node_path in fig.data[0].ids]
-    
-    fig.update_traces(
-        marker=dict(colors=colors),
-        hovertemplate='%{label}<extra></extra>',  # Only show the label
-        textposition='middle center',
-        root_color="rgba(0,0,0,0)",  # Make root node transparent
-    )
-    
-    # Update layout for better visibility
-    fig.update_layout(
-        margin=dict(t=0, l=0, r=0, b=0),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
-    )
-    
-    return fig
-
-def clean_filenamePD(name):
-    # Replace / and other problematic characters with an underscore
-    return re.sub(r'[\\/:"<>|?]', '_', str(name))
-
-def merge_pdfs(pdf_paths):
-    """Merge multiple PDFs into a single PDF."""
-    try:
-        merger = PyPDF2.PdfMerger()
-        
-        # Keep track of successfully merged PDFs
-        merged_count = 0
-        for pdf_path in pdf_paths:
-            try:
-                with open(pdf_path, 'rb') as pdf_file:
-                    merger.append(pdf_file)
-                    merged_count += 1
-            except Exception as e:
-                logging.error(f"Error adding PDF {pdf_path}: {str(e)}")
-                continue
-        
-        if merged_count == 0:
-            raise Exception("No PDFs were successfully merged")
-        
-        # Create a BytesIO object to store the merged PDF
-        output = io.BytesIO()
-        merger.write(output)
-        
-        # Important: Get the value before closing
-        pdf_content = output.getvalue()
-        
-        # Clean up resources
-        merger.close()
-        output.close()
-        
-        # Convert to base64
-        encoded_pdf = base64.b64encode(pdf_content).decode('utf-8')
-        
-        return encoded_pdf
-    except Exception as e:
-        logging.error(f"Error in merge_pdfs: {str(e)}")
-        raise
+from modules.figures import is_light_color, clean_filenamePD
 
 # ==================================================================================================
 # --- Layout
@@ -205,7 +47,7 @@ def merge_pdfs(pdf_paths):
 
 def return_layout(basic_config, slice_index):
     # Create treemap data
-    df_treemap, node_colors = create_treemap_data(df_hierarchy_lipizones)
+    df_treemap, node_colors = lipizone_data.create_treemap_data_lipizones()
     
     page = html.Div(
         style={
@@ -244,7 +86,7 @@ def return_layout(basic_config, slice_index):
                     # Treemap visualization
                     dcc.Graph(
                         id="id-cards-lipizones-treemap",
-                        figure=create_treemap_figure(df_treemap, node_colors),
+                        figure=lipizone_data.create_treemap_figure_lipizones(df_treemap, node_colors),
                         style={
                             "height": "40%",
                             "background-color": "#1d1c1f",
@@ -363,7 +205,7 @@ def update_current_selection(click_data):
     current_path = click_data["points"][0]["id"]
     
     # Filter hierarchy based on the clicked node's path
-    filtered = df_hierarchy_lipizones.copy()
+    filtered = lipizone_data.df_hierarchy_lipizones.copy()
     
     # Get the level of the clicked node
     path_columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
@@ -420,8 +262,8 @@ def handle_selection_changes(
         for lipizone_name in current_selection:
             if lipizone_name not in all_selected_lipizones["names"]:
                 # Find the indices for this lipizone
-                lipizone_indices = df_hierarchy_lipizones.index[
-                    df_hierarchy_lipizones["lipizone_names"] == lipizone_name
+                lipizone_indices = lipizone_data.df_hierarchy_lipizones.index[
+                    lipizone_data.df_hierarchy_lipizones["lipizone_names"] == lipizone_name
                 ].tolist()
                 
                 if lipizone_indices:
@@ -443,7 +285,7 @@ def update_selected_lipizones_badges(all_selected_lipizones):
     if all_selected_lipizones and "names" in all_selected_lipizones:
         for name in all_selected_lipizones["names"]:
             # Get the color for this lipizone, default to cyan if not found
-            lipizone_color = lipizone_to_color.get(name, "#00FFFF")
+            lipizone_color = lipizone_data.lipizone_to_color.get(name, "#00FFFF")
 
             # Determine if the background color is light or dark
             is_light = is_light_color(lipizone_color)

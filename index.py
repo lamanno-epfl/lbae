@@ -552,6 +552,7 @@ def hide_slider(pathname):
         "/3D-exploration",
         "/3D-lipizones",
         "/lipizones-vs-celltypes",
+        "/lipids-vs-genes",
     ]
 
     # Set the content according to the current pathname

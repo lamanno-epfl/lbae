@@ -29,7 +29,7 @@ from skimage.draw import polygon
 from statsmodels.stats.multitest import multipletests
 from scipy.stats import mannwhitneyu, ttest_ind
 # LBAE imports
-from app import app, figures, data, storage, atlas, cache_flask
+from app import app, figures, data, atlas, cache_flask
 import config
 from modules.tools.image import convert_image_to_base64
 from config import l_colors

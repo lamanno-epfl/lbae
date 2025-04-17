@@ -24,18 +24,20 @@ import os
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
-from app import app, figures, data, storage, cache_flask, atlas, lipizone_section_data, celltype_data
+from app import app, figures, data, cache_flask, atlas, lipizone_data, celltype_data
 
 # ==================================================================================================
 # --- Data
 # ==================================================================================================
 
-df_hierarchy_lipizones = pd.read_csv("./data/lipizone_data/lipizones_hierarchy.csv")
-df_hierarchy_celltypes = pd.read_csv("./data/celltype_data/celltypes_hierarchy.csv")
+# sample_data = lipizone_data.sample_data.retrieve_sample_data(brain_id)
+# color_masks = sample_data["color_masks"]
+# grayscale_image = sample_data["grayscale_image"]
+# rgb_image = sample_data["grid_image"][:, :, :3]  # remove transparency channel for now
 
 df_genes = pd.read_csv('./data/gene_data/Single_Nuc_Cluster_Avg_Expression.csv.gz', index_col=0)
 df_genes.index = df_genes.index.str.split('=').str[1]
-df_genes = df_genes[df_genes.index.isin(df_hierarchy_celltypes['cell_type'])]
+df_genes = df_genes[df_genes.index.isin(celltype_data.df_hierarchy_celltypes['cell_type'])]
 
 # ==================================================================================================
 # --- Helper functions
@@ -68,6 +70,10 @@ def return_layout(basic_config, slice_index):
             children=[
                 # Add a store component to hold the slider style
                 dcc.Store(id="page-6tris-main-slider-style", data={"display": "block"}),
+                # Add store components for genes
+                dcc.Store(id="page-6tris-selected-gene-1", data=-1),
+                dcc.Store(id="page-6tris-selected-gene-2", data=-1),
+                dcc.Store(id="page-6tris-selected-gene-3", data=-1),
                 html.Div(
                     className="fixed-aspect-ratio",
                     style={
@@ -99,10 +105,18 @@ def return_layout(basic_config, slice_index):
                                 "top": "0",
                                 "background-color": "#1d1c1f",
                             },
-                            figure=figures.compute_heatmap_per_lipid(
-                                slice_index,
-                                "HexCer 42:2;O2",
-                                cache_flask=cache_flask,
+                            figure=figures.build_lipid_heatmap_from_image(
+                                figures.compute_image_lipids_genes(
+                                    all_selected_lipids=["HexCer 42:2;O2"],
+                                    all_selected_genes=["Xkr4=ENSMUSG00000051951"],
+                                    slice_index=slice_index,
+                                    df_genes=df_genes,
+                                    rgb_mode_lipids=False,
+                                    ),
+                                return_base64_string=False,
+                                draw=False,
+                                type_image="RGB",
+                                return_go_image=False,
                             ),
                         ),
                         # Allen Brain Atlas switch (independent)
@@ -259,32 +273,6 @@ def return_layout(basic_config, slice_index):
                                                 "width": "20em",
                                             },
                                         ),
-                                        html.Div(
-                                            id="page-6tris-rgb-group-genes",
-                                            style={
-                                                "display": "flex", 
-                                                "alignItems": "center", 
-                                                "marginLeft": "15px"
-                                            },
-                                            children=[
-                                                dmc.Switch(
-                                                    id="page-6tris-rgb-switch-genes",
-                                                    checked=False,
-                                                    color="cyan",
-                                                    radius="xl",
-                                                    size="sm",
-                                                ),
-                                                html.Span(
-                                                    "Display as RGB",
-                                                    style={
-                                                        "color": "white",
-                                                        "marginLeft": "8px",
-                                                        "fontWeight": "500",
-                                                        "fontSize": "14px",
-                                                    },
-                                                ),
-                                            ],
-                                        ),
                                     ],
                                 ),
                             ],
@@ -341,6 +329,44 @@ def return_layout(basic_config, slice_index):
                                 dmc.Badge(
                                     id="page-6tris-badge-lipid-3",
                                     children="name-lipid-3",
+                                    color="blue",
+                                    variant="filled",
+                                    class_name="d-none mt-2",
+                                ),
+                            ],
+                        ),
+                        # Title and badges group for genes on the right side
+                        dmc.Group(
+                            direction="column",
+                            spacing=0,
+                            style={
+                                "right": "1%",
+                                "top": "12em",  # Adjusted to be below the gene selection
+                                "position": "absolute",
+                            },
+                            children=[
+                                dmc.Text(
+                                    id="page-6tris-badge-input-genes",
+                                    children="Genes selected:",
+                                    size="lg",
+                                ),
+                                dmc.Badge(
+                                    id="page-6tris-badge-gene-1",
+                                    children="name-gene-1",
+                                    color="orange",
+                                    variant="filled",
+                                    class_name="d-none mt-2",
+                                ),
+                                dmc.Badge(
+                                    id="page-6tris-badge-gene-2",
+                                    children="name-gene-2",
+                                    color="green",
+                                    variant="filled",
+                                    class_name="d-none mt-2",
+                                ),
+                                dmc.Badge(
+                                    id="page-6tris-badge-gene-3",
+                                    children="name-gene-3",
                                     color="blue",
                                     variant="filled",
                                     class_name="d-none mt-2",
@@ -446,31 +472,37 @@ def page_6tris_hover(hoverData, slice_index):
 @app.callback(
     Output("page-6tris-graph-heatmap-mz-selection", "figure"),
     Output("page-6tris-badge-input", "children"),
+    Output("page-6tris-badge-input-genes", "children"),
 
     Input("main-slider", "data"),
     Input("page-6tris-selected-lipid-1", "data"),
     Input("page-6tris-selected-lipid-2", "data"),
     Input("page-6tris-selected-lipid-3", "data"),
-    Input("page-6tris-rgb-switch", "checked"),
-    # Input("page-6tris-sections-mode", "value"),
-    Input("main-brain", "value"),
     Input("page-6tris-toggle-annotations", "checked"),
+    Input("main-brain", "value"),
+    Input("page-6tris-selected-gene-1", "data"),
+    Input("page-6tris-selected-gene-2", "data"),
+    Input("page-6tris-selected-gene-3", "data"),
 
     State("page-6tris-badge-input", "children"),
+    State("page-6tris-badge-input-genes", "children"),
 )
 def page_6tris_plot_graph_heatmap_mz_selection(
     slice_index,
     lipid_1_index,
     lipid_2_index,
     lipid_3_index,
-    rgb_mode,
-    # sections_mode,
-    brain_id,
     annotations_checked,
+    brain_id,
+    gene_1_index,
+    gene_2_index,
+    gene_3_index,
     graph_input,
+    genes_input,
 ):
-    """This callback plots the heatmap of the selected lipid(s)."""
-    logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
+    """This callback plots the heatmap of the selected lipid(s) and gene(s)."""
+    logging.info("Entering function to plot heatmap or RGB depending on lipid/gene selection")
+    print("\n========= plot graph heatmap mz selection callback =========")
 
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
@@ -478,188 +510,97 @@ def page_6tris_plot_graph_heatmap_mz_selection(
     
     overlay = data.get_aba_contours(slice_index) if annotations_checked else None
 
+    # Get selected genes
+    active_genes = []
+    if gene_1_index != -1 or gene_2_index != -1 or gene_3_index != -1:
+        available_genes = get_gene_options(slice_index)
+        gene_names = []
+        if gene_1_index != -1 and gene_1_index < len(available_genes):
+            gene_names.append(available_genes[gene_1_index])
+        if gene_2_index != -1 and gene_2_index < len(available_genes):
+            gene_names.append(available_genes[gene_2_index])
+        if gene_3_index != -1 and gene_3_index < len(available_genes):
+            gene_names.append(available_genes[gene_3_index])
+        active_genes = gene_names
+    print("active_genes:", active_genes)
+    
+    # Get selected lipids
+    ll_lipid_names = [
+            ' '.join([
+                data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
+                + data.get_annotations().iloc[index]["structure"].split('_')[i] 
+                for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
+            ])
+        if index != -1
+        else None
+        for index in [lipid_1_index, lipid_2_index, lipid_3_index]
+    ]
+    active_lipids = [name for name in ll_lipid_names if name is not None]
+    print("active_lipids:", active_lipids)
+    
+    # Auto-set RGB mode when multiple lipids are selected
+    rgb_mode_lipids = len(active_lipids) > 1 or dash.callback_context.inputs.get('page-6tris-rgb-switch.checked', False)
+    print("rgb_mode_lipids:", rgb_mode_lipids)
+    
     # Handle annotations toggle separately to preserve figure state
     if id_input == "page-6tris-toggle-annotations":
-        if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-            ll_lipid_names = [
-                    ' '.join([
-                        data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
-                        + data.get_annotations().iloc[index]["structure"].split('_')[i] 
-                        for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
-                    ])
-                if index != -1
-                else None
-                for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-            ]
         
-            # # If all sections view is requested, only use first lipid
-            # if sections_mode == "all":
-            #     active_lipids = [name for name in ll_lipid_names if name is not None]
-            #     first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-            #     image = grid_data.retrieve_grid_image(
-            #         lipid=first_lipid,
-            #         sample=brain_id
-            #     )
-            #     return(figures.build_lipid_heatmap_from_image(
-            #                 image, 
-            #                 return_base64_string=False,
-            #                 overlay=overlay),
-            #             "Now displaying:")
-            
-            if rgb_mode:# and sections_mode != "all":
-                return (
-                    figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=ll_lipid_names,
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    ),
-                    "Now displaying:",
-                )
-            else:
-                # Check that only one lipid is selected for colormap mode
-                active_lipids = [name for name in ll_lipid_names if name is not None]
-                if len(active_lipids) == 1:
-                    image = figures.compute_image_per_lipid(
-                        slice_index,
-                        RGB_format=False,
-                        lipid_name=active_lipids[0],
-                        cache_flask=cache_flask,
-                    )
-                    return (
-                        figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                else:
-                    # If multiple lipids and not in RGB mode, force RGB mode (except in all sections mode)
-                    # if sections_mode != "all":
-                    return (
-                        figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_lipid_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                    # else:
-                    #     # In all sections mode, use only first lipid
-                    #     first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                    #     image = grid_data.retrieve_grid_image(
-                    #         lipid=first_lipid,
-                    #         sample=brain_id
-                    #     )
-                    #     return(figures.build_lipid_heatmap_from_image(
-                    #                 image, 
-                    #                 return_base64_string=False,
-                    #                 overlay=overlay),
-                    #             "Now displaying:")
+        lipid_gene_image = figures.compute_image_lipids_genes(
+                all_selected_lipids=active_lipids,
+                all_selected_genes=active_genes,
+                slice_index=slice_index,
+                df_genes=df_genes,
+                rgb_mode_lipids=rgb_mode_lipids,
+            )
+        fig = figures.build_lipid_heatmap_from_image(
+            lipid_gene_image,
+            return_base64_string=False,
+            draw=False,
+            type_image="RGB",
+            return_go_image=False,
+        )
+        return fig, "Now displaying:", "Genes selected:"
 
-        return dash.no_update
-
-    # If a lipid selection has been done
+    # If a gene selection or lipid selection has been modified
     if (
-        id_input == "page-6tris-selected-lipid-1"
-        or id_input == "page-6tris-selected-lipid-2"
-        or id_input == "page-6tris-selected-lipid-3"
-        or id_input == "page-6tris-rgb-switch"
-        # or id_input == "page-6tris-sections-mode"
-        or id_input == "main-brain"
-        or id_input == "main-slider"
+        id_input in ["page-6tris-selected-lipid-1", "page-6tris-selected-lipid-2", "page-6tris-selected-lipid-3", 
+                     "page-6tris-selected-gene-1", "page-6tris-selected-gene-2", "page-6tris-selected-gene-3",
+                     "page-6tris-rgb-switch"]
     ):
-        if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-            ll_lipid_names = [
-                    ' '.join([
-                        data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
-                        + data.get_annotations().iloc[index]["structure"].split('_')[i] 
-                        for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
-                    ])
-                if index != -1
-                else None
-                for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-            ]
-
-            # # If all sections view is requested
-            # if sections_mode == "all":
-            #     active_lipids = [name for name in ll_lipid_names if name is not None]
-            #     # Use first available lipid for all sections view
-            #     first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-            #     image = grid_data.retrieve_grid_image(
-            #         lipid=first_lipid,
-            #         sample=brain_id
-            #     )
-                
-            #     return(figures.build_lipid_heatmap_from_image(
-            #                 image, 
-            #                 return_base64_string=False,
-            #                 overlay=overlay),
-            #             "Now displaying:")
-            
-            # Handle normal display mode (RGB or colormap)
-            # else:
-            active_lipids = [name for name in ll_lipid_names if name is not None]
-            if rgb_mode:
-                return (
-                    figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=ll_lipid_names,
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    ),
-                    "Now displaying:",
-                )
-            else:
-                # If not in RGB mode, use first lipid only
-                first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                image = figures.compute_image_per_lipid(
-                    slice_index,
-                    RGB_format=False,
-                    lipid_name=first_lipid,
-                    cache_flask=cache_flask,
-                )
-                return (
-                    figures.build_lipid_heatmap_from_image(
-                        image, 
-                        return_base64_string=False,
-                        overlay=overlay,
-                    ),
-                    "Now displaying:",
-                )
-        elif (
-            id_input == "main-slider" and graph_input == "Now displaying:"
-        ):
-            logging.info(f"No lipid has been selected, the current lipid is HexCer 42:2;O2 and the slice is {slice_index}")
-            return (
-                figures.compute_heatmap_per_lipid(slice_index, 
-                                                "HexCer 42:2;O2",
-                                                cache_flask=cache_flask,
-                                                overlay=overlay),
-                "Now displaying:",
-            )
-        else:
-            # No lipid has been selected
-            logging.info(f"No lipid has been selected, the current lipid is HexCer 42:2;O2 and the slice is {slice_index}")
-            return (
-                figures.compute_heatmap_per_lipid(slice_index, 
-                                                "HexCer 42:2;O2",
-                                                cache_flask=cache_flask,
-                                                overlay=overlay),
-                "Now displaying:",
-            )
-
+        # If both lipids and genes are selected, use the new function
+        lipid_gene_image = figures.compute_image_lipids_genes(
+            all_selected_lipids=active_lipids,
+            all_selected_genes=active_genes,
+            slice_index=slice_index,
+            df_genes=df_genes,
+            rgb_mode_lipids=rgb_mode_lipids,
+        )
+        fig = figures.build_lipid_heatmap_from_image(
+            lipid_gene_image,
+            return_base64_string=False,
+            draw=False,
+            type_image="RGB",
+            return_go_image=False,
+        )
+        return fig, "Now displaying:", "Genes selected:"
+        
     # If no trigger, the page has just been loaded, so load new figure with default parameters
     else:
-        return (
-            figures.compute_heatmap_per_lipid(slice_index, 
-                                            "HexCer 42:2;O2",
-                                            cache_flask=cache_flask,
-                                            overlay=overlay),
-            "Now displaying:",
+        lipid_gene_image = figures.compute_image_lipids_genes(
+            all_selected_lipids=["HexCer 42:2;O2"],
+            all_selected_genes=["Xkr4=ENSMUSG00000051951"],
+            slice_index=slice_index,
+            df_genes=df_genes,
+            rgb_mode_lipids=False,
         )
+        fig = figures.build_lipid_heatmap_from_image(
+            lipid_gene_image,
+            return_base64_string=False,
+            draw=False,
+            type_image="RGB",
+            return_go_image=False,
+        )
+        return fig, "Now displaying:", "Genes selected:"
 
 @app.callback(
     Output("page-6tris-badge-lipid-1", "children"),
@@ -686,7 +627,7 @@ def page_6tris_plot_graph_heatmap_mz_selection(
     State("page-6tris-badge-lipid-3", "children"),
     State("main-brain", "value"),
 )
-def page_6tris_add_toast_selection(
+def page_6tris_add_toast_selection_lipids(
     l_lipid_names,
     class_name_badge_1,
     class_name_badge_2,
@@ -809,41 +750,69 @@ def page_6tris_add_toast_selection(
     if (id_input == "page-6tris-dropdown-lipids" and l_lipid_names is not None) or id_input == "main-slider":
         # If a new slice has been selected
         if id_input == "main-slider":
-            # Update indices for existing lipids
-            for header in [header_1, header_2, header_3]:
-                if header and len(header.split(" ")) == 2:
-                    name, structure = header.split(" ")
-                else:   
-                    name = "_".join(header.split(" ")[::2])
-                    structure = "_".join(header.split(" ")[1::2])
-
-                # Find lipid location
-                l_lipid_loc_temp = (
-                    data.get_annotations()
-                    .index[
-                        (data.get_annotations()["name"] == name)
-                        & (data.get_annotations()["structure"] == structure)
-                    ]
-                    .tolist()
-                )
+            # Collect the selected lipids that need to be updated
+            selected_lipids = []
+            for i, header in enumerate([header_1, header_2, header_3]):
+                if not header:
+                    continue
+                    
+                try:
+                    # Handle different formats of lipid names
+                    if len(header.split(" ")) == 2:
+                        name, structure = header.split(" ")
+                    else:   
+                        name = "_".join(header.split(" ")[::2])
+                        structure = "_".join(header.split(" ")[1::2])
                 
-                l_lipid_loc = [
-                    l_lipid_loc_temp[i]
-                    for i, x in enumerate(
-                        data.get_annotations().iloc[l_lipid_loc_temp]["slice"] == slice_index
+                    # Find lipid location
+                    l_lipid_loc_temp = (
+                        data.get_annotations()
+                        .index[
+                            (data.get_annotations()["name"] == name)
+                            & (data.get_annotations()["structure"] == structure)
+                        ]
+                        .tolist()
                     )
-                    if x
-                ]
-                
-                lipid_index = l_lipid_loc[0] if len(l_lipid_loc) > 0 else -1
-
-                if header_1 == header:
-                    lipid_1_index = lipid_index
-                elif header_2 == header:
-                    lipid_2_index = lipid_index
-                elif header_3 == header:
-                    lipid_3_index = lipid_index
-
+                    
+                    # Filter to only include lipids from the current slice
+                    l_lipid_loc = [
+                        l_lipid_loc_temp[i]
+                        for i, x in enumerate(
+                            data.get_annotations().iloc[l_lipid_loc_temp]["slice"] == slice_index
+                        )
+                        if x
+                    ]
+                    
+                    lipid_index = l_lipid_loc[0] if len(l_lipid_loc) > 0 else -1
+                    selected_lipids.append((header, lipid_index, i))
+                except Exception as e:
+                    logging.error(f"Error updating lipid index for {header}: {e}")
+                    selected_lipids.append((header, -1, i))
+            
+            # Reset all values
+            header_1, header_2, header_3 = "", "", ""
+            lipid_1_index, lipid_2_index, lipid_3_index = -1, -1, -1
+            class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none mt-2", "d-none mt-2", "d-none mt-2"
+            
+            # Apply the found lipids to their original positions
+            for lipid_name, lipid_idx, position in selected_lipids:
+                if lipid_idx == -1:
+                    continue  # Skip lipids not found in this slice
+                    
+                if position == 0:
+                    header_1 = lipid_name
+                    lipid_1_index = lipid_idx
+                    class_name_badge_1 = "mt-2"
+                elif position == 1:
+                    header_2 = lipid_name
+                    lipid_2_index = lipid_idx
+                    class_name_badge_2 = "mt-2"
+                elif position == 2:
+                    header_3 = lipid_name
+                    lipid_3_index = lipid_idx
+                    class_name_badge_3 = "mt-2"
+            
+            # Return the updated values
             return (
                 header_1,
                 header_2,
@@ -851,9 +820,9 @@ def page_6tris_add_toast_selection(
                 lipid_1_index,
                 lipid_2_index,
                 lipid_3_index,
-                "mt-2" if header_1 else "d-none mt-2",
-                "mt-2" if header_2 else "d-none mt-2",
-                "mt-2" if header_3 else "d-none mt-2",
+                class_name_badge_1,
+                class_name_badge_2,
+                class_name_badge_3,
                 [h for h in [header_1, header_2, header_3] if h]
             )
 
@@ -1033,6 +1002,182 @@ def page_6tris_auto_toggle_rgb(
 #     active_lipids = [x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]
 #     # Enable control if at least one lipid is selected
 #     return len(active_lipids) == 0
+
+@app.callback(
+    Output("page-6tris-badge-gene-1", "children"),
+    Output("page-6tris-badge-gene-2", "children"),
+    Output("page-6tris-badge-gene-3", "children"),
+    Output("page-6tris-selected-gene-1", "data"),
+    Output("page-6tris-selected-gene-2", "data"),
+    Output("page-6tris-selected-gene-3", "data"),
+    Output("page-6tris-badge-gene-1", "class_name"),
+    Output("page-6tris-badge-gene-2", "class_name"),
+    Output("page-6tris-badge-gene-3", "class_name"),
+    Output("page-6tris-dropdown-genes", "value"),
+    Input("page-6tris-dropdown-genes", "value"),
+    Input("page-6tris-badge-gene-1", "class_name"),
+    Input("page-6tris-badge-gene-2", "class_name"),
+    Input("page-6tris-badge-gene-3", "class_name"),
+    Input("main-slider", "data"),
+    Input("page-6tris-rgb-switch", "checked"),
+    State("page-6tris-selected-gene-1", "data"),
+    State("page-6tris-selected-gene-2", "data"),
+    State("page-6tris-selected-gene-3", "data"),
+    State("page-6tris-badge-gene-1", "children"),
+    State("page-6tris-badge-gene-2", "children"),
+    State("page-6tris-badge-gene-3", "children"),
+    State("main-brain", "value"),
+)
+def page_6tris_add_toast_selection_genes(
+    l_gene_names,
+    class_name_badge_1,
+    class_name_badge_2,
+    class_name_badge_3,
+    slice_index,
+    rgb_switch,
+    gene_1_index,
+    gene_2_index,
+    gene_3_index,
+    header_1,
+    header_2,
+    header_3,
+    brain_id,
+):
+    """This callback adds the selected gene to the selection."""
+    logging.info("Entering function to update gene data")
+    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    
+    # Get available genes for this slice
+    available_genes = get_gene_options(slice_index)
+    
+    # Initialize with no genes if no selection exists
+    if len(id_input) == 0 or (id_input == "page-6tris-dropdown-genes" and l_gene_names is None):
+        return "", "", "", -1, -1, -1, "d-none mt-2", "d-none mt-2", "d-none mt-2", []
+
+    # Handle gene deletion
+    if l_gene_names is not None and len(l_gene_names) < len([x for x in [gene_1_index, gene_2_index, gene_3_index] if x != -1]):
+        logging.info("One or several genes have been deleted. Reorganizing gene badges.")
+        
+        # Reset all slots
+        header_1, header_2, header_3 = "", "", ""
+        gene_1_index, gene_2_index, gene_3_index = -1, -1, -1
+        class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none mt-2", "d-none mt-2", "d-none mt-2"
+        
+        # Fill slots in order with remaining genes
+        for idx, gene_name in enumerate(l_gene_names):
+            gene_idx = available_genes.index(gene_name) if gene_name in available_genes else -1
+            
+            if idx == 0 and gene_idx != -1:
+                header_1 = gene_name
+                gene_1_index = gene_idx
+                class_name_badge_1 = "mt-2"
+            elif idx == 1 and gene_idx != -1:
+                header_2 = gene_name
+                gene_2_index = gene_idx
+                class_name_badge_2 = "mt-2"
+            elif idx == 2 and gene_idx != -1:
+                header_3 = gene_name
+                gene_3_index = gene_idx
+                class_name_badge_3 = "mt-2"
+            
+        return (
+            header_1,
+            header_2,
+            header_3,
+            gene_1_index,
+            gene_2_index,
+            gene_3_index,
+            class_name_badge_1,
+            class_name_badge_2,
+            class_name_badge_3,
+            l_gene_names
+        )
+
+    # Handle new gene addition or slice change
+    if (id_input == "page-6tris-dropdown-genes" and l_gene_names is not None) or id_input == "main-slider":
+        # If a new slice has been selected
+        if id_input == "main-slider":
+            # Get new available genes for this slice
+            available_genes = get_gene_options(slice_index)
+            
+            # Update existing gene selections based on new available genes
+            updated_headers = []
+            updated_indices = []
+            updated_classes = []
+            
+            for header in [header_1, header_2, header_3]:
+                if header and header in available_genes:
+                    gene_idx = available_genes.index(header)
+                    updated_headers.append(header)
+                    updated_indices.append(gene_idx)
+                    updated_classes.append("mt-2")
+                else:
+                    updated_headers.append("")
+                    updated_indices.append(-1)
+                    updated_classes.append("d-none mt-2")
+            
+            return (
+                updated_headers[0],
+                updated_headers[1], 
+                updated_headers[2],
+                updated_indices[0], 
+                updated_indices[1], 
+                updated_indices[2],
+                updated_classes[0], 
+                updated_classes[1], 
+                updated_classes[2],
+                [h for h in updated_headers if h]
+            )
+
+        # If genes have been added from dropdown menu
+        elif id_input == "page-6tris-dropdown-genes":
+            # Get the latest selected gene from dropdown
+            if l_gene_names and len(l_gene_names) > 0:
+                new_gene = l_gene_names[-1]
+                
+                # Check if gene exists in available genes for this slice
+                if new_gene in available_genes:
+                    gene_idx = available_genes.index(new_gene)
+                    
+                    # If gene already exists, update its index
+                    if header_1 == new_gene:
+                        gene_1_index = gene_idx
+                    elif header_2 == new_gene:
+                        gene_2_index = gene_idx
+                    elif header_3 == new_gene:
+                        gene_3_index = gene_idx
+                    # If it's a new gene, fill the first available slot
+                    else:
+                        if class_name_badge_1 == "d-none mt-2":
+                            header_1 = new_gene
+                            gene_1_index = gene_idx
+                            class_name_badge_1 = "mt-2"
+                        elif class_name_badge_2 == "d-none mt-2":
+                            header_2 = new_gene
+                            gene_2_index = gene_idx
+                            class_name_badge_2 = "mt-2"
+                        elif class_name_badge_3 == "d-none mt-2":
+                            header_3 = new_gene
+                            gene_3_index = gene_idx
+                            class_name_badge_3 = "mt-2"
+                        else:
+                            logging.warning("More than 3 genes have been selected")
+                            return dash.no_update
+
+                    return (
+                        header_1,
+                        header_2,
+                        header_3,
+                        gene_1_index,
+                        gene_2_index,
+                        gene_3_index,
+                        class_name_badge_1,
+                        class_name_badge_2,
+                        class_name_badge_3,
+                        l_gene_names
+                    )
+
+    return dash.no_update
 
 clientside_callback(
     """

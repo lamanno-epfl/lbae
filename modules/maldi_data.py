@@ -15,10 +15,7 @@ import pickle
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-ABA_DIM = (528, 320, 456)
-ABA_CONTOURS = np.load("./data/atlas/eroded_annot.npy")
-ACRONYM_MASKS = pickle.load(open("./data/atlas/acronyms_masks.pkl", "rb"))
-ACRONYMS_PIXELS = pickle.load(open("./data/atlas/acronyms.pkl", "rb"))
+from modules.atlas import ABA_DIM, ABA_CONTOURS, ACRONYM_MASKS, ACRONYMS_PIXELS
 
 # MAINDATA = pd.read_parquet("/data/LBA_DATA/Explorer2Paper/maindata_2.parquet")
 # DATA = MAINDATA.iloc[:, :173]

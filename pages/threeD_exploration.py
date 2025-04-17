@@ -20,7 +20,7 @@ import dash_mantine_components as dmc
 import copy
 
 # LBAE imports
-from app import app, data, figures, storage, atlas, cache_flask
+from app import app, data, figures, atlas, cache_flask
 
 # ==================================================================================================
 # --- Layout

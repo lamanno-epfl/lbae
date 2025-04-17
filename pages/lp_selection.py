@@ -24,7 +24,7 @@ import os
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
-from app import app, program_figures, program_data, storage, cache_flask, atlas, grid_data
+from app import app, program_figures, program_data, cache_flask, atlas, grid_data
 
 def cyan_aba_contours(overlay):
     cyan_overlay = overlay.copy()

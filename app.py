@@ -34,8 +34,8 @@ logging.info("Memory use after ProgramData import" + logmem())
 from modules.peak_data import PeakData
 logging.info("Memory use after PeakData import" + logmem())
 
-from modules.lipizone_data import LipizoneSampleData, LipizoneSectionData
-logging.info("Memory use after LipizoneSampleData, LipizoneSectionData import" + logmem())
+from modules.lipizone_data import LipizoneSampleData, LipizoneSectionData, LipizoneData
+logging.info("Memory use after LipizoneSampleData, LipizoneSectionData, LipizoneData import" + logmem())
 
 from modules.celltype_data import CelltypeData
 logging.info("Memory use after CelltypeData import" + logmem())
@@ -136,12 +136,16 @@ stream_data = StreamData(
 )
 
 # Load lipizone data
-logging.info("Loading lipizone sample data..." + logmem())
-lipizone_sample_data = LipizoneSampleData(
-    path_data=path_lipizone_data,
-)
-logging.info("Loading lipizone section data..." + logmem())
-lipizone_section_data = LipizoneSectionData(
+# logging.info("Loading lipizone sample data..." + logmem())
+# lipizone_sample_data = LipizoneSampleData(
+#     path_data=path_lipizone_data,
+# )
+# logging.info("Loading lipizone section data..." + logmem())
+# lipizone_section_data = LipizoneSectionData(
+#     path_data=path_lipizone_data,
+# )
+logging.info("Loading lipizone data..." + logmem())
+lipizone_data = LipizoneData(
     path_data=path_lipizone_data,
 )
 
@@ -170,6 +174,9 @@ figures = Figures(
     maldi_data=data,
     storage=storage,
     atlas=atlas,
+    celltype_data=celltype_data,
+    lipizone_data=lipizone_data,
+    # gene_data=gene_data,
 )
 program_figures = Figures(
     maldi_data=program_data,
@@ -181,11 +188,14 @@ peak_figures = Figures(
     storage=storage,
     atlas=atlas,
 )
-stream_figures = Figures(
-    maldi_data=stream_data,
-    storage=storage,
-    atlas=atlas,
-)
+# stream_figures = Figures(
+#     maldi_data=stream_data,
+#     celltype_data=celltype_data,
+#     lipizone_data=lipizone_data,
+#     # gene_data=gene_data,
+#     storage=storage,
+#     atlas=atlas,
+# )
 
 logging.info("Memory use after three main object have been instantiated" + logmem())
 
@@ -283,7 +293,7 @@ __all__ = [
     'figures', 
     'program_figures',
     'peak_figures',
-    'stream_figures',
+    # 'stream_figures',
     ]
 
 # Add a callback to combine the styles from both pages and apply them to the main-slider

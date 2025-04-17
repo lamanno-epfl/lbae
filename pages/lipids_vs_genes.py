@@ -1157,7 +1157,7 @@ def page_6tris_add_toast_selection_genes(
         if len(gene_values) == 0:
             return default_slider_props
         
-        min_val = np.min(gene_values)
+        # min_val = np.min(gene_values)
         # max_val = np.max(gene_values)
         p01 = np.percentile(gene_values, 1)
         p99 = np.percentile(gene_values, 99)

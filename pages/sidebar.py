@@ -19,8 +19,6 @@ import dash_mantine_components as dmc
 layout = html.Div(
     className="sidebar",
     children=[
-        # dmc.Group(
-        #    children=[
         # Header with logo
         dbc.Nav(
             className="sidebar-header",
@@ -42,7 +40,7 @@ layout = html.Div(
             target="sidebar-title",
             placement="right",
         ),
-        # Navebar to different pages
+        # Navigation to different pages
         dmc.Center(
             style={"height": "75%"},
             children=[
@@ -50,200 +48,223 @@ layout = html.Div(
                     vertical=True,
                     pills=True,
                     children=[
-                        # Link to page 2
-                        dbc.NavLink(
-                            href="/lipid-selection",
-                            active="exact",
+                        # SUPER-TAB: MOLECULES
+                        html.Div(
+                            className="super-tab my-4",
                             children=[
-                                html.I(
-                                    id="sidebar-page-2",
-                                    className="icon-lipid fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
+                                dbc.NavLink(
+                                    href="#",
+                                    active="exact",
+                                    children=[
+                                        html.I(
+                                            id="sidebar-molecules",
+                                            className="icon-lipid fs-5 has-submenu",
+                                            style={"margin-left": "0.7em"},
+                                        )
+                                    ],
+                                ),
+                                # Sub-menu for MOLECULES
+                                html.Div(
+                                    className="sub-menu",
+                                    children=[
+                                        html.Div(
+                                            className="sub-menu-header",
+                                            children=[html.H6("MOLECULES", className="mb-2 px-3")]
+                                        ),
+                                        dbc.NavLink(
+                                            "Lipids",
+                                            href="/lipid-selection",
+                                            active="exact",
+                                        ),
+                                        dbc.NavLink(
+                                            "M/Z Peaks",
+                                            href="/peak-selection",
+                                            active="exact",
+                                        ),
+                                    ],
+                                ),
                             ],
-                            className="my-4",
+                            id="super-tab-molecules",
                         ),
-                        dbc.Tooltip(
-                            children=(
-                                "LIPIDS"
-                            ),
-                            target="sidebar-page-2",
-                            placement="right",
-                        ),
-                        # Link to page for peak-selection
-                        dbc.NavLink(
-                            href="/peak-selection",
-                            active="exact",
+                        
+                        # PROGRAMS (as a 1-option dropdown)
+                        html.Div(
+                            className="super-tab my-4",
                             children=[
-                                html.I(
-                                    id="sidebar-page-peak",
-                                    className="icon-lipid fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
+                                dbc.NavLink(
+                                    href="#",
+                                    active="exact",
+                                    children=[
+                                        html.I(
+                                            id="sidebar-programs",
+                                            className="icon-lipid fs-5 has-submenu",
+                                            style={"margin-left": "0.7em"},
+                                        )
+                                    ],
+                                ),
+                                # Sub-menu for PROGRAMS
+                                html.Div(
+                                    className="sub-menu",
+                                    children=[
+                                        dbc.NavLink(
+                                            "Lipid Programs",
+                                            href="/lp-selection",
+                                            active="exact",
+                                        ),
+                                    ],
+                                ),
                             ],
-                            className="my-4",
+                            id="super-tab-programs",
                         ),
-                        dbc.Tooltip(
-                            children=(
-                                "M/Z PEAKS"
-                            ),
-                            target="sidebar-page-peak",
-                            placement="right",
-                        ),
-                        # Link to page 5 (lp-selection)
-                        dbc.NavLink(
-                            href="/lp-selection",
-                            active="exact",
+                        
+                        # REGION ANALYSIS (as a 1-option dropdown)
+                        html.Div(
+                            className="super-tab my-4",
                             children=[
-                                html.I(
-                                    id="sidebar-page-2bis",
-                                    className="icon-lipid fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
+                                dbc.NavLink(
+                                    href="#",
+                                    active="exact",
+                                    children=[
+                                        html.I(
+                                            id="sidebar-region-analysis",
+                                            className="icon-chart-bar fs-5 has-submenu",
+                                            style={"margin-left": "0.7em"},
+                                        )
+                                    ],
+                                ),
+                                # Sub-menu for REGION ANALYSIS
+                                html.Div(
+                                    className="sub-menu",
+                                    children=[
+                                        dbc.NavLink(
+                                            "Differential Analysis",
+                                            href="/region-analysis",
+                                            active="exact",
+                                        ),
+                                    ],
+                                ),
                             ],
-                            className="my-4",
+                            id="super-tab-region-analysis",
                         ),
-                        dbc.Tooltip(
-                            children=(
-                                "PROGRAMS"
-                            ),
-                            target="sidebar-page-2bis",
-                            placement="right",
-                        ),
-                        # Link to page 6
-                        dbc.NavLink(
-                            href="/lipizones-selection",
-                            active="exact",
+                        
+                        # SUPER-TAB: LIPIZONES
+                        html.Div(
+                            className="super-tab my-4",
                             children=[
-                                html.I(
-                                    id="sidebar-page-6",
-                                    className="icon-lipid fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
+                                dbc.NavLink(
+                                    href="#",
+                                    active="exact",
+                                    children=[
+                                        html.I(
+                                            id="sidebar-lipizones",
+                                            className="icon-lipid fs-5 has-submenu",
+                                            style={"margin-left": "0.7em"},
+                                        )
+                                    ],
+                                ),
+                                # Sub-menu for LIPIZONES
+                                html.Div(
+                                    className="sub-menu",
+                                    children=[
+                                        html.Div(
+                                            className="sub-menu-header",
+                                            children=[html.H6("LIPIZONES", className="mb-2 px-3")]
+                                        ),
+                                        dbc.NavLink(
+                                            "Lipizones",
+                                            href="/lipizones-selection",
+                                            active="exact",
+                                        ),
+                                        dbc.NavLink(
+                                            "ID Cards",
+                                            href="/lipizones-id-cards",
+                                            active="exact",
+                                        ),
+                                    ],
+                                ),
                             ],
-                            className="my-4",
+                            id="super-tab-lipizones",
                         ),
-                        dbc.Tooltip(
-                            children=(
-                                "LIPIZONES"
-                            ),
-                            target="sidebar-page-6",
-                            placement="right",
-                        ),
-                        # Link to page 6bis
-                        dbc.NavLink(
-                            href="/lipizones-vs-celltypes",
-                            active="exact",
+                        
+                        # SUPER-TAB: COMPARISONS
+                        html.Div(
+                            className="super-tab my-4",
                             children=[
-                                html.I(
-                                    id="sidebar-page-6bis",
-                                    className="icon-lipid fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
+                                dbc.NavLink(
+                                    href="#",
+                                    active="exact",
+                                    children=[
+                                        html.I(
+                                            id="sidebar-comparisons",
+                                            className="icon-chart-bar fs-5 has-submenu",
+                                            style={"margin-left": "0.7em"},
+                                        )
+                                    ],
+                                ),
+                                # Sub-menu for COMPARISONS
+                                html.Div(
+                                    className="sub-menu",
+                                    children=[
+                                        html.Div(
+                                            className="sub-menu-header",
+                                            children=[html.H6("COMPARISONS", className="mb-2 px-3")]
+                                        ),
+                                        dbc.NavLink(
+                                            "Lipizones vs Cell Types",
+                                            href="/lipizones-vs-celltypes",
+                                            active="exact",
+                                        ),
+                                        dbc.NavLink(
+                                            "Lipids vs Genes",
+                                            href="/lipids-vs-genes",
+                                            active="exact",
+                                        ),
+                                    ],
+                                ),
                             ],
-                            className="my-4",
+                            id="super-tab-comparisons",
                         ),
-                        dbc.Tooltip(
-                            children=(
-                                "LIPIZONES VS CELL TYPES"
-                            ),
-                            target="sidebar-page-6bis",
-                            placement="right",
-                        ),
-                        # Link to page 6tris
-                        dbc.NavLink(
-                            href="/lipids-vs-genes",
-                            active="exact",
+                        
+                        # SUPER-TAB: 3D EXPLORATION
+                        html.Div(
+                            className="super-tab my-4",
                             children=[
-                                html.I(
-                                    id="sidebar-page-6tris",
-                                    className="icon-lipid fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
+                                dbc.NavLink(
+                                    href="#",
+                                    active="exact",
+                                    children=[
+                                        html.I(
+                                            id="sidebar-3d",
+                                            className="icon-3d fs-5 has-submenu",
+                                            style={"margin-left": "0.7em"},
+                                        )
+                                    ],
+                                ),
+                                # Sub-menu for 3D EXPLORATION
+                                html.Div(
+                                    className="sub-menu",
+                                    children=[
+                                        html.Div(
+                                            className="sub-menu-header",
+                                            children=[html.H6("3D EXPLORATION", className="mb-2 px-3")]
+                                        ),
+                                        dbc.NavLink(
+                                            "3D Lipids",
+                                            href="/3D-exploration",
+                                            active="exact",
+                                        ),
+                                        dbc.NavLink(
+                                            "3D Lipizones",
+                                            href="/3D-lipizones",
+                                            active="exact",
+                                        ),
+                                    ],
+                                ),
                             ],
-                            className="my-4",
+                            id="super-tab-3d",
                         ),
-                        dbc.Tooltip(
-                            children=(
-                                "LIPIDS VS GENES"
-                            ),
-                            target="sidebar-page-6tris",
-                            placement="right",
-                        ),
-                        # Link to page 3
-                        dbc.NavLink(
-                            href="/region-analysis",
-                            active="exact",
-                            children=[
-                                html.I(
-                                    id="sidebar-page-3",
-                                    className="icon-chart-bar fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
-                            ],
-                            className="my-4",
-                        ),
-                        dbc.Tooltip(
-                            children="DIFFERENTIAL ANALYSIS",
-                            target="sidebar-page-3",
-                            placement="right",
-                        ),
-                        # Link to page 4
-                        dbc.NavLink(
-                            href="/3D-exploration",
-                            active="exact",
-                            # disabled=True,
-                            children=[
-                                html.I(
-                                    id="sidebar-page-4",
-                                    className="icon-3d fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
-                            ],
-                            className="my-4",
-                        ),
-                        dbc.Tooltip(
-                            children="3D LIPIDS",
-                            target="sidebar-page-4",
-                            placement="right",
-                        ),
-                        # Link to ID Cards
-                        dbc.NavLink(
-                            href="/lipizones-id-cards",
-                            active="exact",
-                            children=[
-                                html.I(
-                                    id="sidebar-page-id-cards",
-                                    className="icon-chart-bar fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
-                            ],
-                            className="my-4",
-                        ),
-                        dbc.Tooltip(
-                            children="ID CARDS",
-                            target="sidebar-page-id-cards",
-                            placement="right",
-                        ),
-                        # Link to 3D Lipizones
-                        dbc.NavLink(
-                            href="/3D-lipizones",
-                            active="exact",
-                            children=[
-                                html.I(
-                                    id="sidebar-page-3d-lipizones",
-                                    className="icon-3d fs-5",
-                                    style={"margin-left": "0.7em"},
-                                )
-                            ],
-                            className="my-4",
-                        ),
-                        dbc.Tooltip(
-                            children="3D LIPIZONES",
-                            target="sidebar-page-3d-lipizones",
-                            placement="right",
-                        ),
-                        # Link to documentation
+                        
+                        # Documentation and Copyright at the bottom
                         html.Div(
                             className="sidebar-bottom",
                             children=[
@@ -279,8 +300,6 @@ layout = html.Div(
                     ],
                 ),
             ],
-            #    ),
-            # ],
         ),
     ],
 )

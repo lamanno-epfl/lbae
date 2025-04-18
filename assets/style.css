@@ -12,29 +12,29 @@ body {
 /*===== TYPOGRAPHY =====*/
 
 /* Highlight text in white for documentation */
-em{
+em {
   color: white;
-  font-style: normal;   
+  font-style: normal;
 }
 
 /* Unvisited link */
 a:link {
   color: #1fafc8;
-  font-style: italic;   
+  font-style: italic;
 }
 
 /* Visited link */
 a:visited {
   color: #1fafc8;
-  font-style: italic;   
+  font-style: italic;
 }
 
 /* Hover link */
 a:hover {
   color: #1fafc8;
   font-style: italic;
-  text-decoration: underline;    
-} 
+  text-decoration: underline;
+}
 
 /* Title in white for documentation and main page */
 h1 {
@@ -43,16 +43,18 @@ h1 {
 }
 
 /* Subtitles in blue */
-h2, h3 {
+h2,
+h3 {
   color: #1fafc8;
 }
 
 /* Text and lists in dimmed white  */
-p, li {
+p,
+li {
   color: rgb(221, 221, 221);
   text-align: justify;
   font-size: larger;
-} 
+}
 
 
 /*===== APP SIDEBAR =====*/
@@ -66,12 +68,13 @@ p, li {
   width: 6rem;
   /* padding: 2rem 1.5rem 1rem 1rem; */
   background-color: #1d3d5c;
+  z-index: 1030;
 }
 
 
 /* Change color of selected pills */
 .nav-pills .nav-link.active,
-.nav-pills .show > .nav-link {
+.nav-pills .show>.nav-link {
   background-color: #1fafc8;
 }
 
@@ -79,6 +82,7 @@ p, li {
 .nav-link:hover {
   color: #1fafc8;
 }
+
 .nav-link:focus {
   color: #dee2e6;
 }
@@ -86,10 +90,10 @@ p, li {
 /* Adjust main logo position */
 .sidebar-header .nav-link {
   padding-left: 0.1rem;
-} 
+}
 
 /* Adjust other icon position */
-#sidebar-page-3{
+#sidebar-page-3 {
   padding-right: 1.2rem;
 }
 
@@ -104,6 +108,143 @@ p, li {
   position: fixed;
   bottom: 0;
   padding-left: 0rem;
+}
+
+/* Super-tab styles */
+.super-tab {
+  position: relative;
+}
+
+.super-tab>.nav-link {
+  position: relative;
+  z-index: 1028;
+}
+
+/* Expanded hover area to create bridge to submenu */
+.super-tab::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -20px;
+  /* Extend beyond sidebar */
+  height: 100%;
+  width: 26px;
+  background-color: transparent;
+  z-index: 1025;
+}
+
+/* Submenu positioning */
+.sub-menu {
+  position: absolute;
+  left: 6rem;
+  top: -0.75rem;
+  /* Move it up slightly to overlap with hover area */
+  background-color: #1d3d5c;
+  width: 14rem;
+  border-radius: 0 0.25rem 0.25rem 0;
+  padding: 0;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.15s ease-in;
+  z-index: 1030;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+/* Make submenu border overlap with tunnel for continuous hover */
+.sub-menu::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -20px;
+  /* Extend to the left */
+  height: 100%;
+  width: 20px;
+  background-color: transparent;
+  z-index: 1025;
+}
+
+/* Show submenu on hover */
+.super-tab:hover .sub-menu,
+.sub-menu:hover {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Style for sub-menu headers */
+.sub-menu-header {
+  background-color: rgba(31, 175, 200, 0.2);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(31, 175, 200, 0.3);
+}
+
+.sub-menu-header h6 {
+  color: #1fafc8;
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.sub-menu .nav-link {
+  padding: 0.7rem 1rem;
+  display: block;
+  color: #dee2e6;
+  white-space: nowrap;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: background-color 0.2s, border-left-color 0.2s;
+}
+
+.sub-menu .nav-link:hover {
+  background-color: rgba(31, 175, 200, 0.1);
+  border-left-color: rgba(31, 175, 200, 0.5);
+}
+
+.sub-menu .nav-link.active {
+  background-color: #1fafc8;
+  color: #fff;
+  border-left-color: #dee2e6;
+}
+
+/* Indicate super-tabs with dropdown */
+.super-tab>.nav-link::after {
+  content: "";
+  /* Remove the arrow indicator */
+}
+
+.super-tab:hover>.nav-link::after {
+  color: #1fafc8;
+}
+
+/* Add a subtle background highlight to indicate super-tabs */
+.super-tab>.nav-link {
+  position: relative;
+}
+
+.super-tab>.nav-link::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  background-color: rgba(31, 175, 200, 0.3);
+  border-radius: 2px 0 0 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.super-tab:hover>.nav-link::before {
+  opacity: 1;
+}
+
+/* Active super-tab styling */
+.super-tab>.nav-link.active::before {
+  opacity: 1;
+  background-color: #dee2e6;
+  width: 5px;
+  height: 70%;
 }
 
 /*===== APP MAIN CONTENT =====*/
@@ -133,23 +274,22 @@ p, li {
 .fixed-aspect-ratio {
   position: relative;
   width: 100%;
-  padding-bottom: min(
-    72%,
-    100vh
-  ); /* when max-height = 100vh is reached, need to block stretching*/
+  padding-bottom: min(72%,
+      100vh);
+  /* when max-height = 100vh is reached, need to block stretching*/
   float: left;
   height: 0;
 }
 
 /* Used to wrap dcc.Loading component with transparent background */
-.loading-wrapper > div {
+.loading-wrapper>div {
   visibility: visible !important;
 }
 
 /*===== MANTINE CORRECTIONS =====*/
 
 /* Correct label position for Mantine Switch */
-div.mantine-Switch-root.mantine-16ttirm > label {
+div.mantine-Switch-root.mantine-16ttirm>label {
   margin-top: 0.16rem;
 }
 
@@ -171,7 +311,7 @@ div.mantine-Switch-root.mantine-16ttirm > label {
   color: #ced4da;
 }
 
-#page-3-dropdown-red > div > div {
+#page-3-dropdown-red>div>div {
   background-color: #2b2e33;
 }
 
@@ -189,7 +329,7 @@ div.mantine-Switch-root.mantine-16ttirm > label {
   color: #ced4da;
 }
 
-#page-3-dropdown-green > div > div {
+#page-3-dropdown-green>div>div {
   background-color: #2b2e33;
 }
 
@@ -207,7 +347,7 @@ div.mantine-Switch-root.mantine-16ttirm > label {
   color: #ced4da;
 }
 
-#page-3-dropdown-blue > div > div {
+#page-3-dropdown-blue>div>div {
   background-color: #2b2e33;
 }
 
@@ -227,7 +367,7 @@ div.mantine-Switch-root.mantine-16ttirm > label {
   color: #ced4da;
 }
 
-#page-5-dropdown-red > div > div {
+#page-5-dropdown-red>div>div {
   background-color: #2b2e33;
 }
 
@@ -245,7 +385,7 @@ div.mantine-Switch-root.mantine-16ttirm > label {
   color: #ced4da;
 }
 
-#page-5-dropdown-green > div > div {
+#page-5-dropdown-green>div>div {
   background-color: #2b2e33;
 }
 
@@ -263,7 +403,7 @@ div.mantine-Switch-root.mantine-16ttirm > label {
   color: #ced4da;
 }
 
-#page-5-dropdown-blue > div > div {
+#page-5-dropdown-blue>div>div {
   background-color: #2b2e33;
 }
 
@@ -281,7 +421,7 @@ div.mantine-Switch-root.mantine-16ttirm > label {
   color: #ced4da;
 }
 
-#page-5-dropdown-lipid > div > div {
+#page-5-dropdown-lipid>div>div {
   background-color: #2b2e33;
 }
 
@@ -299,8 +439,9 @@ div.mantine-Switch-root.mantine-16ttirm > label {
   color:antiquewhite;
 } */
 
-.has-value.Select--single>.Select-control .Select-value .Select-value-label, .has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label{
-  color:antiquewhite;
+.has-value.Select--single>.Select-control .Select-value .Select-value-label,
+.has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label {
+  color: antiquewhite;
 }
 
 
@@ -310,7 +451,8 @@ div.mantine-Switch-root.mantine-16ttirm > label {
 .VirtualizedSelectFocusedOption {
   background-color: rgba(80, 189, 218, 0.5);
 }
-.is-focused:not(.is-open) > .Select-control {
+
+.is-focused:not(.is-open)>.Select-control {
   border-color: rgba(80, 189, 218, 0.5);
 }
 
@@ -328,7 +470,7 @@ div.mantine-Switch-root.mantine-16ttirm > label {
 }
 
 /* Better centering */
-div.toast-header > strong {
+div.toast-header>strong {
   margin-left: 3rem;
   margin-right: 3rem;
 }
@@ -342,22 +484,22 @@ div.toast-header > strong {
 }
 
 /* Invisible backdrop for drawer */
-body > div.fade.offcanvas-backdrop.show {
+body>div.fade.offcanvas-backdrop.show {
   opacity: 0;
 }
 
 /* Remove drawer header */
-#page-2-drawer-high-res-spectra > div.offcanvas-header {
+#page-2-drawer-high-res-spectra>div.offcanvas-header {
   display: none;
 }
 
 /* Same */
-#page-2-drawer-low-res-spectra > div.offcanvas-header {
+#page-2-drawer-low-res-spectra>div.offcanvas-header {
   display: none;
 }
 
 /* Same */
-#page-4-drawer-region-selection > div.offcanvas-header {
+#page-4-drawer-region-selection>div.offcanvas-header {
   display: none;
 }
 
@@ -392,6 +534,7 @@ body > div.fade.offcanvas-backdrop.show {
 div.item-top {
   transform: translate(0, 10px);
 }
+
 div.item-top {
   visibility: hidden;
 }
@@ -443,80 +586,154 @@ div.item:focus:active {
     box-shadow: 0 -0.83em 0 -0.4em, 0 -0.83em 0 -0.42em, 0 -0.83em 0 -0.44em,
       0 -0.83em 0 -0.46em, 0 -0.83em 0 -0.477em;
   }
+
   5%,
   95% {
     box-shadow: 0 -0.83em 0 -0.4em, 0 -0.83em 0 -0.42em, 0 -0.83em 0 -0.44em,
       0 -0.83em 0 -0.46em, 0 -0.83em 0 -0.477em;
   }
+
   10%,
   59% {
     box-shadow: 0 -0.83em 0 -0.4em, -0.087em -0.825em 0 -0.42em,
       -0.173em -0.812em 0 -0.44em, -0.256em -0.789em 0 -0.46em,
       -0.297em -0.775em 0 -0.477em;
   }
+
   20% {
     box-shadow: 0 -0.83em 0 -0.4em, -0.338em -0.758em 0 -0.42em,
       -0.555em -0.617em 0 -0.44em, -0.671em -0.488em 0 -0.46em,
       -0.749em -0.34em 0 -0.477em;
   }
+
   38% {
     box-shadow: 0 -0.83em 0 -0.4em, -0.377em -0.74em 0 -0.42em,
       -0.645em -0.522em 0 -0.44em, -0.775em -0.297em 0 -0.46em,
       -0.82em -0.09em 0 -0.477em;
   }
+
   100% {
     box-shadow: 0 -0.83em 0 -0.4em, 0 -0.83em 0 -0.42em, 0 -0.83em 0 -0.44em,
       0 -0.83em 0 -0.46em, 0 -0.83em 0 -0.477em;
   }
 }
+
 @keyframes load6 {
   0% {
     box-shadow: 0 -0.83em 0 -0.4em, 0 -0.83em 0 -0.42em, 0 -0.83em 0 -0.44em,
       0 -0.83em 0 -0.46em, 0 -0.83em 0 -0.477em;
   }
+
   5%,
   95% {
     box-shadow: 0 -0.83em 0 -0.4em, 0 -0.83em 0 -0.42em, 0 -0.83em 0 -0.44em,
       0 -0.83em 0 -0.46em, 0 -0.83em 0 -0.477em;
   }
+
   10%,
   59% {
     box-shadow: 0 -0.83em 0 -0.4em, -0.087em -0.825em 0 -0.42em,
       -0.173em -0.812em 0 -0.44em, -0.256em -0.789em 0 -0.46em,
       -0.297em -0.775em 0 -0.477em;
   }
+
   20% {
     box-shadow: 0 -0.83em 0 -0.4em, -0.338em -0.758em 0 -0.42em,
       -0.555em -0.617em 0 -0.44em, -0.671em -0.488em 0 -0.46em,
       -0.749em -0.34em 0 -0.477em;
   }
+
   38% {
     box-shadow: 0 -0.83em 0 -0.4em, -0.377em -0.74em 0 -0.42em,
       -0.645em -0.522em 0 -0.44em, -0.775em -0.297em 0 -0.46em,
       -0.82em -0.09em 0 -0.477em;
   }
+
   100% {
     box-shadow: 0 -0.83em 0 -0.4em, 0 -0.83em 0 -0.42em, 0 -0.83em 0 -0.44em,
       0 -0.83em 0 -0.46em, 0 -0.83em 0 -0.477em;
   }
 }
+
 @-webkit-keyframes round {
   0% {
     -webkit-transform: rotate(0deg);
     transform: rotate(0deg);
   }
+
   100% {
     -webkit-transform: rotate(360deg);
     transform: rotate(360deg);
   }
 }
+
 @keyframes round {
   0% {
     -webkit-transform: rotate(0deg);
     transform: rotate(0deg);
   }
+
   100% {
     -webkit-transform: rotate(360deg);
     transform: rotate(360deg);
   }
+}
+
+/* Hide tooltips when hovering over super-tabs (since submenu will show) */
+.super-tab:hover .tooltip,
+.super-tab:focus-within .tooltip {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Also hide the tooltip when the actual submenu is being displayed */
+div.sub-menu:hover+.tooltip,
+div.sub-menu:focus-within+.tooltip {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Hide default bootstrap tooltips when showing submenu */
+body .tooltip {
+  pointer-events: none;
+}
+
+/* Super-tab hover states */
+.super-tab:hover .tooltip {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* When submenu is open, prevent default tooltip behavior */
+.super-tab:hover .sub-menu~.tooltip,
+.super-tab:focus-within .sub-menu~.tooltip {
+  display: none !important;
+}
+
+/* Completely remove tooltips for elements with submenus */
+.has-submenu+.tooltip {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Special styling for sub-menus with only one option - need to ensure consistent appearance */
+.sub-menu:has(.nav-link:only-child) {
+  min-height: 3.1rem;
+  /* Set a minimum height */
+  top: -0.25rem;
+  /* Adjust vertical positioning */
+}
+
+/* Single-item submenu (without header) needs different padding and styling */
+.sub-menu .nav-link:only-child {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+  font-weight: 500;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }

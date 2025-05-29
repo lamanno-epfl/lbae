@@ -746,31 +746,21 @@ class Figures:
     # --- Methods used mainly in lipizones-related pages
     # ==============================================================================================
     
-    def all_lipizones_default_image(self, brain_id="ReferenceAtlas"):
+    def all_sections_lipizones_image(self, hex_colors_to_highlight=None, brain_id="ReferenceAtlas"):
         def hex_to_rgb(hex_color):
             """Convert hexadecimal color to RGB values (0-1 range)"""
             hex_color = hex_color.lstrip('#')
             return np.array([int(hex_color[i:i+2], 16) for i in (0, 2, 4)]) / 255.0
-        
+        if hex_colors_to_highlight is None:
+            hex_colors_to_highlight = self._lipizone_data.lipizone_to_color.values()
+        rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight]
+
         # try:
         # Retrieve sample data from shelve database
         sample_data = self._lipizone_data.sample_data.retrieve_sample_data(brain_id)
         color_masks = sample_data["color_masks"]
         grayscale_image = sample_data["grayscale_image"]
         rgb_image = sample_data["grid_image"][:, :, :3]  # remove transparency channel for now
-        # except KeyError:
-        #     # Fallback to default files if sample not found
-        #     logging.warning(f"Sample data for {brain_id} not found, using default files")
-        #     def load_color_masks_pickle(filename):
-        #         import pickle
-        #         with open(filename, 'rb') as f:
-        #             color_masks = pickle.load(f)
-        #         logging.info(f"Loaded {len(color_masks)} color masks from {filename}")
-        #         return color_masks
-            
-        #     color_masks = load_color_masks_pickle(os.path.join(self._lipizone_data.sample_data.path_data, 'color_masks.pkl'))
-        #     grayscale_image = np.load(os.path.join(self._lipizone_data.sample_data.path_data, 'grayscale_image.npy'))
-        #     rgb_image = np.load(os.path.join(self._lipizone_data.sample_data.path_data, 'grid_image_lipizones.npy'))[:, :, :3]
         
         # Apply square root transformation to enhance contrast
         # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
@@ -778,8 +768,6 @@ class Figures:
         grayscale_image = gaussian_filter(grayscale_image, sigma=3)
         # grayscale_image = np.power(grayscale_image, 2) * 0.3
         grayscale_image *= ~color_masks[list(color_masks.keys())[0]]
-        
-        rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in self._lipizone_data.lipizone_to_color.values()]
         
         hybrid_image = np.zeros_like(rgb_image)
         for i in range(3):
@@ -821,9 +809,67 @@ class Figures:
             mode='constant',
             constant_values=np.nan
         )
-
         return padded_image
 
+    def one_section_lipizones_image(
+        self, 
+        slice_index,
+        hex_colors_to_highlight=None):
+
+        # Create a custom hybrid image for this specific section
+        def hex_to_rgb(hex_color):
+            """Convert hexadecimal color to RGB values (0-1 range)"""
+            hex_color = hex_color.lstrip('#')
+            return np.array([int(hex_color[i:i+2], 16) for i in (0, 2, 4)]) / 255.0
+        
+        if hex_colors_to_highlight is None:
+            hex_colors_to_highlight = self._lipizone_data.lipizone_to_color.values()
+        rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight]
+        
+        # Create a section key based on brain_id and slice_index
+        section_data = self._lipizone_data.section_data.retrieve_section_data(float(slice_index))
+        
+        # Use the section data to create a hybrid image
+        grayscale_image = section_data["grayscale_image"]
+        color_masks = section_data["color_masks"]
+        grid_image = section_data["grid_image"]
+        rgb_image = grid_image[:, :, :3]  # remove transparency channel
+        
+        # Apply square root transformation to enhance contrast
+        grayscale_image = np.power(grayscale_image, float(1/6)) 
+        grayscale_image = gaussian_filter(grayscale_image, sigma=3)
+        # grayscale_image = np.power(grayscale_image, 2) * 0.3
+        grayscale_image *= ~color_masks[list(color_masks.keys())[0]]        
+        
+        hybrid_image = np.zeros_like(rgb_image)
+        for i in range(3):
+            hybrid_image[:, :, i] = grayscale_image
+        
+        combined_mask = np.zeros((rgb_image.shape[0], rgb_image.shape[1]), dtype=bool)
+        for target_rgb in rgb_colors_to_highlight:
+            target_tuple = tuple(target_rgb)
+            
+            # If the exact color exists in our image
+            if target_tuple in color_masks:
+                combined_mask |= color_masks[target_tuple]
+            else:
+                # Find closest color
+                distances = np.array([np.sum((np.array(color) - target_rgb) ** 2) for color in color_masks.keys()])
+                closest_color_idx = np.argmin(distances)
+                closest_color = list(color_masks.keys())[closest_color_idx]
+                
+                # If close enough to our target color, add its mask
+                if distances[closest_color_idx] < 0.05:  # Threshold for color similarity
+                    combined_mask |= color_masks[closest_color]
+        
+        for i in range(3):
+            hybrid_image[:, :, i][combined_mask] = rgb_image[:, :, i][combined_mask]
+        
+        hybrid_image = (hybrid_image*255) + 1
+        mask = np.all(hybrid_image == 1, axis=-1)
+        hybrid_image[mask] = np.nan
+
+        return hybrid_image
 
     def compute_image_lipizones_celltypes(
         self,

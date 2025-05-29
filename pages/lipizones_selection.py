@@ -79,7 +79,8 @@ def return_layout(basic_config, slice_index):
                         },
                         figure=figures.build_lipid_heatmap_from_image(
                             # compute_hybrid_image(['#f75400'], brain_id="ReferenceAtlas"),
-                            figures.all_lipizones_default_image(
+                            figures.all_sections_lipizones_image(
+                                hex_colors_to_highlight=None, # all lipizones
                                 brain_id="ReferenceAtlas"),
                             return_base64_string=False,
                             draw=False,
@@ -109,6 +110,7 @@ def return_layout(basic_config, slice_index):
                             "padding": "0.5em 2em",
                             "borderRadius": "8px",
                             "minWidth": "200px",
+                            "display": "block",
                         },
                     ),
                     # Left panel with treemap and controls
@@ -223,67 +225,63 @@ def return_layout(basic_config, slice_index):
                             ),
                         ],
                     ),
-                    # Controls at the top right (display buttons)
+                    # Controls for section mode and aba annotations
                     html.Div(
                         style={
-                            "right": "1rem",
-                            "top": "1rem",
+                            "left": "25%",
+                            "top": "3rem",
                             "position": "fixed",
                             "z-index": 1000,
                             "display": "flex",
-                            "flexDirection": "row",
+                            "flexDirection": "column",
                             "gap": "0.5rem",
-                        },
-                        children=[
-                            dmc.Button(
-                                children="Display one section",
-                                id="page-6-one-section-button",
-                                variant="filled",
-                                color="cyan",
-                                radius="md",
-                                size="sm",
-                                disabled=True,
-                                style={"width": "180px"},
-                            ),
-                            dmc.Button(
-                                children="Display all sections",
-                                id="page-6-all-sections-button",
-                                variant="filled",
-                                color="cyan",
-                                radius="md",
-                                size="sm",
-                                disabled=True,
-                                style={"width": "180px"},
-                            ),
-                        ],
-                    ),
-                    # Allen Brain Atlas switch (independent)
-                    html.Div(
-                        style={
-                            "right": "1rem",
-                            "top": "4rem",  # Position it below the display buttons
-                            "position": "fixed",
-                            "z-index": 1000,
-                            "display": "flex",
-                            "flexDirection": "row",
                             "alignItems": "center",
-                            "justifyContent": "flex-end",
                         },
                         children=[
-                            html.Span(
-                                "Allen Brain Atlas Annotations",
-                                style={
-                                    "color": "white",
-                                    "marginRight": "10px",
-                                    "whiteSpace": "nowrap",
-                                },
-                            ),
-                            dmc.Switch(
-                                id="page-6-toggle-annotations",
-                                checked=False,
+                            # Sections mode control
+                            dmc.SegmentedControl(
+                                id="page-6-sections-mode",
+                                value="one",
+                                data=[
+                                    {"value": "one", "label": "One section"},
+                                    {"value": "all", "label": "All sections"},
+                                ],
                                 color="cyan",
-                                radius="xl",
-                                size="sm",
+                                disabled=True,
+                                size="xs",
+                                style={
+                                    "width": "20em",
+                                    "border": "1px solid rgba(255, 255, 255, 0.1)",
+                                    "borderRadius": "4px",
+                                }
+                            ),
+                            # Allen Brain Atlas switch
+                            html.Div(
+                                id="page-6-annotations-container",
+                                style={
+                                    "display": "flex",
+                                    "flexDirection": "row",
+                                    "alignItems": "left",
+                                    "justifyContent": "left",
+                                    "width": "20em",
+                                },
+                                children=[
+                                    dmc.Switch(
+                                        id="page-6-toggle-annotations",
+                                        checked=False,
+                                        color="cyan",
+                                        radius="xl",
+                                        size="sm",
+                                    ),
+                                    html.Span(
+                                        "Allen Brain Atlas Annotations",
+                                        style={
+                                            "color": "white",
+                                            "marginLeft": "10px",
+                                            "whiteSpace": "nowrap",
+                                        },
+                                    ),
+                                ],
                             ),
                         ],
                     ),
@@ -454,307 +452,130 @@ def page_6_hover(hoverData, slice_index):
     return dash.no_update
 
 @app.callback(
+    Output("page-6-sections-mode", "disabled"),
+    Input("page-6-all-selected-lipizones", "data"),
+)
+def page_6_active_sections_control(all_selected_lipizones):
+    """This callback enables/disables the sections mode control based on lipizone selection."""
+    # Enable control if at least one lipizone is selected
+    if all_selected_lipizones and len(all_selected_lipizones.get("names", [])) > 0:
+        return False
+    return True
+
+@app.callback(
     Output("page-6-graph-heatmap-mz-selection", "figure"),
-    
     Input("main-slider", "data"),
     Input("page-6-all-selected-lipizones", "data"),
-    Input("page-6-one-section-button", "n_clicks"),
-    Input("page-6-all-sections-button", "n_clicks"),
+    Input("page-6-sections-mode", "value"),
     Input("main-brain", "value"),
     Input("page-6-toggle-annotations", "checked"),
-    )
+)
 def page_6_plot_graph_heatmap_mz_selection(
     slice_index,
     all_selected_lipizones,
-    n_clicks_button_one_section,
-    n_clicks_button_all_sections,
+    sections_mode,
     brain_id,
     annotations_checked,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
-
+    print("============ page_6_plot_graph_heatmap_mz_selection ==========")
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
 
     overlay = black_aba_contours(data.get_aba_contours(slice_index)) if annotations_checked else None
 
+    # Get the names of all selected lipizones
+    selected_lipizone_names = all_selected_lipizones.get("names", [])
+    
+    # Define hex_colors_to_highlight using all selected lipizones
+    hex_colors_to_highlight = [lipizone_data.lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_data.lipizone_to_color]
+    
     # Handle annotations toggle separately to preserve figure state
+    # the annotations can only be displayed if one section is selected
     if id_input == "page-6-toggle-annotations":
         # Check if we have any selected lipizones
-        if all_selected_lipizones and len(all_selected_lipizones.get("names", [])) > 0:
-            # Get the names of all selected lipizones
-            selected_lipizone_names = all_selected_lipizones.get("names", [])
-            
-            # Define hex_colors_to_highlight using all selected lipizones
-            hex_colors_to_highlight = [lipizone_data.lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_data.lipizone_to_color]
         
-            # Try to get the section data for the current slice and brain
-            try:
-                # Create a section key based on brain_id and slice_index
-                section_data = lipizone_data.section_data.retrieve_section_data(float(slice_index))
+        # Try to get the section data for the current slice and brain
+        try:
+            hybrid_image = figures.one_section_lipizones_image(
+                slice_index,
+                hex_colors_to_highlight=hex_colors_to_highlight,
+            )
             
-                # Use the section data to create a hybrid image
-                grayscale_image = section_data["grayscale_image"]
-                # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
-                grayscale_image = np.power(grayscale_image, float(1/6))
-                grayscale_image = gaussian_filter(grayscale_image, sigma=3)
-                # grayscale_image = np.power(grayscale_image, 2) * 0.3
-
-                color_masks = section_data["color_masks"]
-                grid_image = section_data["grid_image"]
-                rgb_image = grid_image[:, :, :3]  # remove transparency channel
-                
-                # Create a custom hybrid image for this specific section
-                def hex_to_rgb(hex_color):
-                    """Convert hexadecimal color to RGB values (0-1 range)"""
-                    hex_color = hex_color.lstrip('#')
-                    return np.array([int(hex_color[i:i+2], 16) for i in (0, 2, 4)]) / 255.0
-                
-                # Apply square root transformation to enhance contrast
-                # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
-                grayscale_image = np.power(grayscale_image, float(1/6))
-                grayscale_image = gaussian_filter(grayscale_image, sigma=3)
-                # grayscale_image = np.power(grayscale_image, 2) * 0.3
-                grayscale_image *= ~color_masks[list(color_masks.keys())[0]]
-                
-                rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight]
-                
-                hybrid_image = np.zeros_like(rgb_image)
-                for i in range(3):
-                    hybrid_image[:, :, i] = grayscale_image
-                
-                combined_mask = np.zeros((rgb_image.shape[0], rgb_image.shape[1]), dtype=bool)
-                for target_rgb in rgb_colors_to_highlight:
-                    target_tuple = tuple(target_rgb)
-                    
-                    # If the exact color exists in our image
-                    if target_tuple in color_masks:
-                        combined_mask |= color_masks[target_tuple]
-                    else:
-                        # Find closest color
-                        distances = np.array([np.sum((np.array(color) - target_rgb) ** 2) for color in color_masks.keys()])
-                        closest_color_idx = np.argmin(distances)
-                        closest_color = list(color_masks.keys())[closest_color_idx]
-                        
-                        # If close enough to our target color, add its mask
-                        if distances[closest_color_idx] < 0.05:  # Threshold for color similarity
-                            combined_mask |= color_masks[closest_color]
-                
-                for i in range(3):
-                    hybrid_image[:, :, i][combined_mask] = rgb_image[:, :, i][combined_mask]
-                
-                hybrid_image = (hybrid_image*255) + 1
-                mask = np.all(hybrid_image == 1, axis=-1)
-                hybrid_image[mask] = np.nan
-                
-                return figures.build_lipid_heatmap_from_image(
-                    hybrid_image,
-                    return_base64_string=False,
-                    draw=False,
-                    type_image="RGB",
-                    return_go_image=False,
-                    overlay=overlay,
-                )
-            except KeyError as e:
-                # If section data not found, fall back to the hybrid image
-                logging.warning(f"Section data not found: {e}. Using hybrid image instead.")
-                return figures.build_lipid_heatmap_from_image(
-                    # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                    figures.all_lipizones_default_image(brain_id),
-                    return_base64_string=False,
-                    draw=False,
-                    type_image="RGB",
-                    return_go_image=False,
-                    overlay=overlay,
-                )
+            return figures.build_lipid_heatmap_from_image(
+                hybrid_image,
+                return_base64_string=False,
+                draw=False,
+                type_image="RGB",
+                return_go_image=False,
+                overlay=overlay,
+            )
+        except KeyError as e:
+            # If section data not found, fall back to the hybrid image
+            logging.warning(f"Section data not found: {e}. Displaying all lipizones.")
+            return figures.build_lipid_heatmap_from_image(
+                # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                figures.one_section_lipizones_image(
+                    slice_index,
+                    hex_colors_to_highlight=None, # all lipizones
+                ),
+                return_base64_string=False,
+                draw=False,
+                type_image="RGB",
+                return_go_image=False,
+                overlay=overlay,
+            )
     
     # If a lipid selection has been done
     if (
         id_input == "page-6-all-selected-lipizones"
-        or id_input == "page-6-one-section-button"
-        or id_input == "page-6-all-sections-button"
+        or id_input == "page-6-sections-mode"
         or id_input == "main-brain"
-        or (
-            (id_input == "main-slider")
-        )
+        or id_input == "main-slider"
     ):
-        # Check if we have any selected lipizones
-        if all_selected_lipizones and len(all_selected_lipizones.get("names", [])) > 0:
-            # Get the names of all selected lipizones
-            selected_lipizone_names = all_selected_lipizones.get("names", [])
+        
+        if sections_mode == "one":
+            # Try to get the section data for the current slice and brain
+            hybrid_image = figures.one_section_lipizones_image(
+                slice_index=slice_index,
+                hex_colors_to_highlight=hex_colors_to_highlight,
+            )
             
-            # Define hex_colors_to_highlight using all selected lipizones
-            hex_colors_to_highlight = [lipizone_data.lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_data.lipizone_to_color]
-    
-            # Or if the current plot must be an RGB image
-            if (
-                id_input == "page-6-one-section-button"
-                or (
-                    id_input == "main-slider"
-                    # and graph_input == "Current input: " + "Lipid selection RGB"
-                )
-            ):
-                # Try to get the section data for the current slice and brain
-                try:
-                    # Create a section key based on brain_id and slice_index
-                    section_data = lipizone_data.section_data.retrieve_section_data(float(slice_index))
-                
-                    # Use the section data to create a hybrid image
-                    grayscale_image = section_data["grayscale_image"]
-                    color_masks = section_data["color_masks"]
-                    grid_image = section_data["grid_image"]
-                    rgb_image = grid_image[:, :, :3]  # remove transparency channel
-                    
-                    # Create a custom hybrid image for this specific section
-                    def hex_to_rgb(hex_color):
-                        """Convert hexadecimal color to RGB values (0-1 range)"""
-                        hex_color = hex_color.lstrip('#')
-                        return np.array([int(hex_color[i:i+2], 16) for i in (0, 2, 4)]) / 255.0
-                    
-                    # Apply square root transformation to enhance contrast
-                    # grayscale_image = np.sqrt(np.sqrt(grayscale_image))
-                    grayscale_image = np.power(grayscale_image, float(1/6)) 
-                    grayscale_image = gaussian_filter(grayscale_image, sigma=3)
-                    # grayscale_image = np.power(grayscale_image, 2) * 0.3
-                    grayscale_image *= ~color_masks[list(color_masks.keys())[0]]
-                    
-                    rgb_colors_to_highlight = [hex_to_rgb(hex_color) for hex_color in hex_colors_to_highlight]
-                    
-                    hybrid_image = np.zeros_like(rgb_image)
-                    for i in range(3):
-                        hybrid_image[:, :, i] = grayscale_image
-                    
-                    combined_mask = np.zeros((rgb_image.shape[0], rgb_image.shape[1]), dtype=bool)
-                    for target_rgb in rgb_colors_to_highlight:
-                        target_tuple = tuple(target_rgb)
-                        
-                        # If the exact color exists in our image
-                        if target_tuple in color_masks:
-                            combined_mask |= color_masks[target_tuple]
-                        else:
-                            # Find closest color
-                            distances = np.array([np.sum((np.array(color) - target_rgb) ** 2) for color in color_masks.keys()])
-                            closest_color_idx = np.argmin(distances)
-                            closest_color = list(color_masks.keys())[closest_color_idx]
-                            
-                            # If close enough to our target color, add its mask
-                            if distances[closest_color_idx] < 0.05:  # Threshold for color similarity
-                                combined_mask |= color_masks[closest_color]
-                    
-                    for i in range(3):
-                        hybrid_image[:, :, i][combined_mask] = rgb_image[:, :, i][combined_mask]
-                    
-                    hybrid_image = (hybrid_image*255) + 1
-                    mask = np.all(hybrid_image == 1, axis=-1)
-                    hybrid_image[mask] = np.nan
-                    
-                    return figures.build_lipid_heatmap_from_image(
-                        hybrid_image,
-                        return_base64_string=False,
-                        draw=False,
-                        type_image="RGB",
-                        return_go_image=False,
-                        overlay=overlay,
-                    )
-                except KeyError as e:
-                    # If section data not found, fall back to the hybrid image
-                    logging.warning(f"Section data not found: {e}. Using hybrid image instead.")
-                    return figures.build_lipid_heatmap_from_image(
-                        # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                        figures.all_lipizones_default_image(brain_id),
-                        return_base64_string=False,
-                        draw=False,
-                        type_image="RGB",
-                        return_go_image=False,
-                        overlay=overlay,
-                    )
-
-            # Or if the current plot must be all sections
-            elif (
-                id_input == "page-6-all-sections-button"
-                or (
-                    id_input == "main-slider"
-                    # and graph_input == "Current input: " + "Lipid selection all sections"
-                )
-            ):
-                # Check that only one lipid is selected
-                if len(selected_lipizone_names) == 1:
-                    # Use the selected lipid
-                    try:
-                        # First try to get the grid image from GridImageShelve
-                        image = grid_data.retrieve_grid_image(
-                            lipid=selected_lipizone_names[0],
-                            sample=brain_id
-                        )
-                        return figures.build_lipid_heatmap_from_image(
-                            image,
-                            return_base64_string=False,
-                            draw=False,
-                            type_image="RGB",
-                            return_go_image=False,
-                        )
-                    except (KeyError, Exception) as e:
-                        # If that fails, fall back to the hybrid image
-                        logging.warning(f"Failed to retrieve grid image: {e}. Using hybrid image instead.")
-                        return figures.build_lipid_heatmap_from_image(
-                            # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                            figures.all_lipizones_default_image(brain_id),
-                            return_base64_string=False,
-                            draw=False,
-                            type_image="RGB",
-                            return_go_image=False,
-                        )
-                else:
-                    logging.info("Trying to display all sections for more than one lipid, not possible. Using first selected lipid.")
-                    first_lipid = selected_lipizone_names[0] if selected_lipizone_names else "choroid plexus"
-                    return figures.build_lipid_heatmap_from_image(
-                        # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                        figures.all_lipizones_default_image(brain_id),
-                        return_base64_string=False,
-                        draw=False,
-                        type_image="RGB",
-                        return_go_image=False,
-                    )
-
-            # Plot RGB by default
-            else:
-                logging.info("Right before calling the graphing function")
-                return figures.build_lipid_heatmap_from_image(
-                    # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                    figures.all_lipizones_default_image(brain_id),
-                    return_base64_string=False,
-                    draw=False,
-                    type_image="RGB",
-                    return_go_image=False,
-                    overlay=overlay,
-                )
-        elif (
-            id_input == "main-slider"#  and graph_input == "Current input: "
-        ):
-            # Use default color for choroid plexus
-            hex_colors_to_highlight = ['#f75400']  # Default color for choroid plexus
             return figures.build_lipid_heatmap_from_image(
-                    # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                    figures.all_lipizones_default_image(brain_id),
-                    return_base64_string=False,
-                    draw=False,
-                    type_image="RGB",
-                    return_go_image=False,
-                    overlay=overlay,
-                )
+                hybrid_image,
+                return_base64_string=False,
+                draw=False,
+                type_image="RGB",
+                return_go_image=False,
+                overlay=overlay,
+            )
+
+        # Or if the current plot must be all sections
+        elif sections_mode == "all":
+            return figures.build_lipid_heatmap_from_image(
+                figures.all_sections_lipizones_image(
+                    hex_colors_to_highlight=hex_colors_to_highlight,
+                    brain_id=brain_id),
+                return_base64_string=False,
+                draw=False,
+                type_image="RGB",
+                return_go_image=False,
+            )
         else:
-            # No lipid has been selected, return image from boundaries using RGB
-            hex_colors_to_highlight = ['#f75400']  # Default color for choroid plexus
+            # it should never happen
+            logging.info("Section mode is neither 'one-section' nor 'all-sections'. Displaying default all lipizones and all sections")
             return figures.build_lipid_heatmap_from_image(
-                    # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                    figures.all_lipizones_default_image(brain_id),
-                    return_base64_string=False,
-                    draw=False,
-                    type_image="RGB",
-                    return_go_image=False,
-                    overlay=overlay,
-                )
+                # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+                figures.all_sections_lipizones_image(
+                    hex_colors_to_highlight=None, # all lipizones
+                    brain_id=brain_id),
+                return_base64_string=False,
+                draw=False,
+                type_image="RGB",
+                return_go_image=False,
+                overlay=overlay,
+            )
 
     # If no trigger, the page has just been loaded, so load new figure with default parameters
     else:
@@ -815,3 +636,12 @@ def update_selected_lipizones_badges(all_selected_lipizones):
             )
     
     return children
+
+@app.callback(
+    Output("page-6-toggle-annotations", "disabled"),
+    Input("page-6-sections-mode", "value"),
+)
+def page_6_toggle_annotations_visibility(sections_mode):
+    """This callback enables/disables the annotations toggle based on sections mode."""
+    # Only enable annotations toggle when in "one" section mode
+    return sections_mode != "one"

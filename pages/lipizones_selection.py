@@ -452,6 +452,31 @@ def page_6_hover(hoverData, slice_index):
     return dash.no_update
 
 @app.callback(
+    Output("page-6-graph-hover-text", "style"),
+    Input("page-6-sections-mode", "value"),
+)
+def hide_hover_text(sections_mode):
+    """This callback hides the hover text when in all-sections mode."""
+    base_style = {
+        "width": "auto",
+        "position": "absolute",
+        "left": "50%",
+        "transform": "translateX(-50%)",
+        "top": "1em",
+        "fontSize": "1.5em",
+        "textAlign": "center",
+        "zIndex": 1000,
+        "backgroundColor": "rgba(0, 0, 0, 0.7)",
+        "padding": "0.5em 2em",
+        "borderRadius": "8px",
+        "minWidth": "200px",
+    }
+    
+    if sections_mode == "all":
+        return {**base_style, "display": "none"}
+    return {**base_style, "display": "block"}
+
+@app.callback(
     Output("page-6-sections-mode", "disabled"),
     Input("page-6-all-selected-lipizones", "data"),
 )
@@ -479,10 +504,9 @@ def page_6_plot_graph_heatmap_mz_selection(
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
-    print("============ page_6_plot_graph_heatmap_mz_selection ==========")
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-
+    
     overlay = black_aba_contours(data.get_aba_contours(slice_index)) if annotations_checked else None
 
     # Get the names of all selected lipizones

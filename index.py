@@ -145,6 +145,7 @@ def return_main_content():
                 children=[
                     sidebar.layout,
                     html.Div(id="content"),
+                    # Slider component
                     dmc.Center(
                         id="main-paper-slider",
                         style={
@@ -364,39 +365,40 @@ def return_main_content():
                                 color="cyan",
                                 class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
                             ),
-                            dmc.Chips(
-                                id="main-brain",
-                                data=[
-                                    {"value": "ReferenceAtlas", "label": "Brain 1"},
-                                    {"value": "SecondAtlas", "label": "Brain 2"},
-                                    {"value": "Male1", "label": "Male 1"},
-                                    {"value": "Male2", "label": "Male 2"},
-                                    {"value": "Male3", "label": "Male 3"},
-                                    {"value": "Female1", "label": "Female 1"},
-                                    {"value": "Female2", "label": "Female 2"},
-                                    {"value": "Female3", "label": "Female 3"},
-                                    {"value": "Pregnant1", "label": "Pregnant 1"},
-                                    {"value": "Pregnant2", "label": "Pregnant 2"},
-                                    {"value": "Pregnant4", "label": "Pregnant 3"},
-                                ],
-                                value="ReferenceAtlas",
-                                direction="column",
-                                spacing="sm",
-                                align="right",
-                                style={
-                                    "position": "fixed",
-                                    "right": "0.5rem",
-                                    "top": "50%",
-                                    "transform": "translateY(-50%)",
-                                    "zIndex": 1000,
-                                    "padding": "1rem",
-                                    "borderRadius": "8px",
-                                    "display": "flex",
-                                    "alignItems": "flex-end",
-                                },
-                                color="cyan",
-                            ),
                         ],
+                    ),
+                    # Brain chips component (separate from slider)
+                    dmc.Chips(
+                        id="main-brain",
+                        data=[
+                            {"value": "ReferenceAtlas", "label": "Brain 1"},
+                            {"value": "SecondAtlas", "label": "Brain 2"},
+                            {"value": "Male1", "label": "Male 1"},
+                            {"value": "Male2", "label": "Male 2"},
+                            {"value": "Male3", "label": "Male 3"},
+                            {"value": "Female1", "label": "Female 1"},
+                            {"value": "Female2", "label": "Female 2"},
+                            {"value": "Female3", "label": "Female 3"},
+                            {"value": "Pregnant1", "label": "Pregnant 1"},
+                            {"value": "Pregnant2", "label": "Pregnant 2"},
+                            {"value": "Pregnant4", "label": "Pregnant 3"},
+                        ],
+                        value="ReferenceAtlas",
+                        direction="column",
+                        spacing="sm",
+                        align="right",
+                        style={
+                            "position": "fixed",
+                            "right": "0.5rem",
+                            "top": "50%",
+                            "transform": "translateY(-50%)",
+                            "zIndex": 1000,
+                            "padding": "1rem",
+                            "borderRadius": "8px",
+                            "display": "flex",
+                            "alignItems": "flex-end",
+                        },
+                        color="cyan",
                     ),
                     # Documentation in a bottom drawer
                     dmc.Drawer(
@@ -536,11 +538,14 @@ def toggle_collapse(n1, is_open):
 
 
 @app.callback(
-    Output("main-paper-slider", "class_name"), Input("url", "pathname"), prevent_initial_call=False
+    Output("main-paper-slider", "class_name"), 
+    Input("url", "pathname"),
+    Input("page-6-sections-mode", "value"),
+    prevent_initial_call=False
 )
-def hide_slider(pathname):
-    """This callback is used to hide the slider div when the user is on a page that does not need it.
-    """
+def hide_slider(pathname, sections_mode):
+    """This callback is used to hide the slider div when the user is on a page that does not need it
+    or when in all sections mode."""
 
     # Pages in which the slider is displayed
     l_path_with_slider = [
@@ -555,6 +560,10 @@ def hide_slider(pathname):
         "/lipids-vs-genes",
     ]
 
+    # If we're in all sections mode, hide the slider
+    if sections_mode == "all":
+        return "d-none"
+
     # Set the content according to the current pathname
     if pathname in l_path_with_slider:
         return ""
@@ -568,16 +577,21 @@ def hide_slider(pathname):
     Output("main-slider-2", "style"),
     Output("main-text-slider", "style"),
     Input("url", "pathname"),
+    Input("page-6-sections-mode", "value"),
     prevent_initial_call=False,
 )
-def hide_slider_but_leave_brain(pathname):
-    """This callback is used to hide the slider but leave brain chips when needed."""
+def hide_slider_but_leave_brain(pathname, sections_mode):
+    """This callback is used to hide the slider elements but leave brain chips visible."""
 
     # Pages in which the slider is displayed
     l_path_without_slider_but_with_brain = [
         "/3D-exploration",
         "/3D-lipizones",
     ]
+
+    # If we're in all sections mode, hide the slider elements
+    if sections_mode == "all":
+        return {"visibility": "hidden"}, {"visibility": "hidden"}, {"visibility": "hidden"}
 
     # Set the content according to the current pathname
     if pathname in l_path_without_slider_but_with_brain:
@@ -586,6 +600,30 @@ def hide_slider_but_leave_brain(pathname):
     else:
         return {}, {}, {}
 
+
+@app.callback(
+    Output("main-brain", "style"),
+    Input("url", "pathname"),
+    prevent_initial_call=False,
+)
+def hide_brain_chips(pathname):
+    """This callback is used to hide the brain selection chips when they are not needed."""
+    if pathname == "/lipizones-vs-celltypes":
+        return {"display": "none"}
+    elif pathname == "/lipids-vs-genes":
+        return {"display": "none"}
+    else:
+        return {
+            "position": "fixed",
+            "right": "0.5rem",
+            "top": "50%",
+            "transform": "translateY(-50%)",
+            "zIndex": 1000,
+            "padding": "1rem",
+            "borderRadius": "8px",
+            "display": "flex",
+            "alignItems": "flex-end",
+        }
 
 @app.callback(
     [Output(f"main-slider-{slider_id}", "class_name") for slider_id in [
@@ -629,27 +667,7 @@ def update_slider_visibility(brain, *values):
     
     return classes + new_values
 
-app.clientside_callback(
-    """
-    function(value_1, value_2, value_male1, value_male2, value_male3, 
-             value_female1, value_female2, value_female3,
-             value_pregnant1, value_pregnant2, value_pregnant4, brain){
-        const values = {
-            'ReferenceAtlas': value_1,
-            'SecondAtlas': value_2,
-            'Male1': value_male1,
-            'Male2': value_male2,
-            'Male3': value_male3,
-            'Female1': value_female1,
-            'Female2': value_female2,
-            'Female3': value_female3,
-            'Pregnant1': value_pregnant1,
-            'Pregnant2': value_pregnant2,
-            'Pregnant4': value_pregnant4
-        };
-        return values[brain] || value_1;
-    }
-    """,
+@app.callback(
     Output("main-slider", "data"),
     [Input(f"main-slider-{slider_id}", "value") for slider_id in [
         "1", "2", "male1", "male2", "male3", "female1", "female2", "female3",
@@ -657,28 +675,20 @@ app.clientside_callback(
     ]],
     State("main-brain", "value"),
 )
-"""This clientside callback is used to update the slider indices with the selected brain."""
-
-@app.callback(
-    Output("main-brain", "style"),
-    Input("url", "pathname"),
-    prevent_initial_call=False,
-)
-def hide_brain_chips(pathname):
-    """This callback is used to hide the brain selection chips when they are not needed."""
-    if pathname == "/lipizones-vs-celltypes":
-        return {"display": "none"}
-    elif pathname == "/lipids-vs-genes":
-        return {"display": "none"}
-    else:
-        return {
-            "position": "fixed",
-            "right": "0.5rem",
-            "top": "50%",
-            "transform": "translateY(-50%)",
-            "zIndex": 1000,
-            "padding": "1rem",
-            "borderRadius": "8px",
-            "display": "flex",
-            "alignItems": "flex-end",
-        }
+def update_slider_value(*args):
+    """This callback updates the main slider value based on the selected brain's slider."""
+    values = args[:-1]  # All values except the last one (brain)
+    brain = args[-1]    # The last argument is the brain
+    
+    # Map brain names to slider indices
+    brain_to_index = {
+        "ReferenceAtlas": 0, "SecondAtlas": 1,
+        "Male1": 2, "Male2": 3, "Male3": 4,
+        "Female1": 5, "Female2": 6, "Female3": 7,
+        "Pregnant1": 8, "Pregnant2": 9, "Pregnant4": 10
+    }
+    
+    # Return the value from the active slider
+    if brain in brain_to_index:
+        return values[brain_to_index[brain]]
+    return values[0]  # Default to first slider value if brain not found

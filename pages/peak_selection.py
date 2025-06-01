@@ -1361,3 +1361,14 @@ def page_peak_auto_toggle_rgb(
 #         return {"display": "none"}
 #     else:
 #         return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}
+
+# @app.callback(
+#     Output("page-2tris-hide-store", "data"),
+#     Input("page-2tris-sections-mode", "value"),
+#     State("url", "pathname"),
+#     prevent_initial_call=True,
+# )
+# def compute_page2tris_hide(peak_sections_mode, pathname):
+#     if pathname == "/peak-selection":
+#         return "d-none" if (peak_sections_mode == "all") else ""
+#     return ""

@@ -1073,3 +1073,17 @@ def page_2_toggle_rgb_group_visibility(sections_mode):
         return {"display": "none"}
     else:
         return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}
+
+# A callback that writes the "hide" or "show" decision into page-2-hide-store:
+@app.callback(
+    Output("page-2-hide-store", "data"),
+    Input("page-2-sections-mode", "value"),
+    State("url", "pathname"),
+    prevent_initial_call=True,
+)
+def compute_page2_hide(lipid_sections_mode, pathname):
+    # Only take action if we’re really on /lipid-selection
+    if pathname == "/lipid-selection":
+        return "d-none" if (lipid_sections_mode == "all") else ""
+    # If we’re not on that page, leave the store unchanged (or send back "")
+    return ""

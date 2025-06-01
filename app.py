@@ -230,12 +230,11 @@ app = dash.Dash(
     ],
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
     server=server,
-    suppress_callback_exceptions=False,
+    suppress_callback_exceptions=True,
     long_callback_manager=long_callback_manager,
     compress=True,
     # use_pages=True  # Enable pages feature for Dash 3.0.1
 )
-
 
 # Add a class attribute to specify if redis is being used
 app.use_redis = False
@@ -295,26 +294,3 @@ __all__ = [
     'peak_figures',
     # 'stream_figures',
     ]
-
-# Add a callback to combine the styles from both pages and apply them to the main-slider
-@app.callback(
-    Output("main-slider", "style"),
-    Input("page-2-main-slider-style", "data"),
-    Input("page-2bis-main-slider-style", "data"),
-)
-def combine_slider_styles(style1, style2):
-    """Combines the styles from both pages and applies them to the main-slider."""
-    # If either style is None, use the other one
-    if style1 is None:
-        return style2
-    if style2 is None:
-        return style1
-    
-    # If both styles are present, use the one that has display: block
-    if style1.get("display") == "block":
-        return style1
-    if style2.get("display") == "block":
-        return style2
-    
-    # Default to the first style
-    return style1

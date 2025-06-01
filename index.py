@@ -139,6 +139,12 @@ def return_main_content():
             dcc.Store(id="all-lipizones-view-state", data=False),
             dcc.Store(id="3d-lipizones-current-treemap-selection", data=None),
             dcc.Store(id="3d-lipizones-all-selected-lipizones", data={"names": [], "indices": []}),
+
+            # Store to track hide state for main slider
+            dcc.Store(id="page-2-hide-store", data=""),
+            # dcc.Store(id="page-2bis-hide-store", data=""),
+            # dcc.Store(id="page-2tris-hide-store", data=""),
+            dcc.Store(id="page-6-hide-store", data=""),
             
             # Actual app layout
             html.Div(
@@ -538,78 +544,6 @@ def toggle_collapse(n1, is_open):
 
 
 @app.callback(
-    Output("main-paper-slider", "class_name"), 
-    Input("url", "pathname"),
-    Input("page-6-sections-mode", "value"),
-    prevent_initial_call=False
-)
-def hide_slider(pathname, lipizone_sections_mode):
-    """This callback is used to hide the slider div when the user is on a page that does not need it
-    or when in all sections mode."""
-    print("\n=== hide_slider callback ===")
-    print(f"pathname: {pathname}")
-    print(f"lipizone_sections_mode: {lipizone_sections_mode}")
-
-    # Pages in which the slider is displayed
-    l_path_with_slider = [
-        "/lipid-selection",
-        "/lp-selection",
-        "/peak-selection",
-        "/lipizones-selection",
-        "/region-analysis",
-        # "/3D-exploration",
-        # "/3D-lipizones",
-        "/lipizones-vs-celltypes",
-        "/lipids-vs-genes",
-    ]
-
-    # First check if we're in all sections mode for lipizones page
-    if pathname == "/lipizones-selection" and lipizone_sections_mode == "all":
-        print("Hiding slider: lipizones selection page in all sections mode")
-        return "d-none"
-
-    # Then check if we're on a page that should show the slider
-    if pathname in l_path_with_slider:
-        print("Showing slider: page is in l_path_with_slider")
-        return ""
-    else:
-        print("Hiding slider: page is not in l_path_with_slider")
-        return "d-none"
-
-@app.callback(
-    Output("main-slider-1", "style"),
-    Output("main-slider-2", "style"),
-    Output("main-text-slider", "style"),
-    Input("url", "pathname"),
-    Input("page-6-sections-mode", "value"),
-    prevent_initial_call=False,
-)
-def hide_slider_but_leave_brain(pathname, lipizone_sections_mode):
-    """This callback is used to hide the slider elements but leave brain chips visible."""
-    print("\n=== hide_slider_but_leave_brain callback ===")
-    print(f"pathname: {pathname}")
-    print(f"lipizone_sections_mode: {lipizone_sections_mode}")
-
-    # Pages in which the slider is not displayed but the brain chips are
-    l_path_without_slider_but_with_brain = [
-        "/3D-exploration",
-        "/3D-lipizones",
-    ]
-
-    # First check if we're in all sections mode for lipizones page
-    if pathname == "/lipizones-selection" and lipizone_sections_mode == "all":
-        print("Hiding slider elements: lipizones selection page in all sections mode")
-        return {"display": "none"}, {"display": "none"}, {"display": "none"}
-
-    # Then check if we're on a page that should hide the slider but keep brain chips
-    if pathname in l_path_without_slider_but_with_brain:
-        print("Hiding slider elements but keeping brain chips: page is in l_path_without_slider_but_with_brain")
-        return {"visibility": "hidden"}, {"visibility": "hidden"}, {"visibility": "hidden"}
-    else:
-        print("Showing slider elements: default case")
-        return {}, {}, {}
-
-@app.callback(
     Output("main-brain", "style"),
     Input("url", "pathname"),
     prevent_initial_call=False,
@@ -704,3 +638,39 @@ def update_slider_value(*args):
     if brain in brain_to_index:
         return values[brain_to_index[brain]]
     return values[0]  # Default to first slider value if brain not found
+
+@app.callback(
+    Output("main-paper-slider", "class_name"),
+    Input("url", "pathname"),
+    Input("page-2-hide-store", "data"),
+    Input("page-6-hide-store", "data"),
+)
+def update_slider_visibility(pathname, hide2, hide6):
+    """
+    We have three “modes” to consider:
+      • If we're on /lipid-selection, use hide2 ("" or "d-none").
+      • If we're on /lipizones-selection, use hide6 ("" or "d-none").
+      • If we're on any other page, show or hide based on your existing list of pages.
+    """
+
+    # 1) On lipid-selection → use hide2
+    if pathname == "/lipid-selection":
+        return hide2 or ""  # (in case hide2 is None, default to "")
+
+    # 2) On lipizones-selection → use hide6
+    if pathname == "/lipizones-selection":
+        return hide6 or ""
+
+    # 3) On all the other “slider‐enabled” pages, always show:
+    if pathname in [
+        "/lp-selection",
+        "/peak-selection",
+        "/lipizones-vs-celltypes",
+        "/lipids-vs-genes",
+        "/region-analysis",
+        # …any other pages where the slider should always appear…
+    ]:
+        return ""  
+
+    # 4) On any remaining page, hide it:
+    return "d-none"

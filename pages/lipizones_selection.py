@@ -26,7 +26,7 @@ import os
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
-from app import app, figures, data, atlas, grid_data, lipizone_data
+from app import app, figures, data, atlas, lipizone_data, cache_flask
 import plotly.express as px
 
 # ==================================================================================================
@@ -669,3 +669,14 @@ def page_6_toggle_annotations_visibility(sections_mode):
     """This callback enables/disables the annotations toggle based on sections mode."""
     # Only enable annotations toggle when in "one" section mode
     return sections_mode != "one"
+
+@app.callback(
+    Output("page-6-hide-store", "data"),
+    Input("page-6-sections-mode", "value"),
+    State("url", "pathname"),
+    prevent_initial_call=True,
+)
+def compute_page6_hide(lipizone_sections_mode, pathname):
+    if pathname == "/lipizones-selection":
+        return "d-none" if (lipizone_sections_mode == "all") else ""
+    return ""

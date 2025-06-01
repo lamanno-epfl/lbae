@@ -189,10 +189,12 @@ def return_layout(basic_config, slice_index=1):
                                 }
                             },
                             style={
-                                "width": "95%",
-                                "height": "95%",
+                                "width": "77%",
+                                "height": "100%",
                                 "position": "absolute",
-                                "left": "2.5%",
+                                "left": "19em",
+                                "top": "0",
+                                "background-color": "#1d1c1f",
                             },
                             figure = figures.compute_rgb_image_per_lipid_selection(
                                         slice_index,

@@ -189,26 +189,27 @@ def return_layout(basic_config, slice_index):
                                 ),
                             ],
                         ),
-                        # Sections mode control
-                        dmc.SegmentedControl(
-                            id="page-2tris-sections-mode",
-                            value="one",
-                            data=[
-                                {"value": "one", "label": "One section"},
-                                {"value": "all", "label": "All sections"},
-                            ],
-                            color="cyan",
-                            disabled=True,
-                            size="xs",
-                            style={
-                                "position": "absolute",
-                                "left": "1%",
-                                "top": "9em",
-                                "width": "20em",
-                                "border": "1px solid rgba(255, 255, 255, 0.1)",
-                                "borderRadius": "4px",
-                            }
-                        ),
+                        # TODO: uncomment this when all sections view are computed and stored correctly
+                        # # Sections mode control
+                        # dmc.SegmentedControl(
+                        #     id="page-2tris-sections-mode",
+                        #     value="one",
+                        #     data=[
+                        #         {"value": "one", "label": "One section"},
+                        #         {"value": "all", "label": "All sections"},
+                        #     ],
+                        #     color="cyan",
+                        #     disabled=True,
+                        #     size="xs",
+                        #     style={
+                        #         "position": "absolute",
+                        #         "left": "1%",
+                        #         "top": "9em",
+                        #         "width": "20em",
+                        #         "border": "1px solid rgba(255, 255, 255, 0.1)",
+                        #         "borderRadius": "4px",
+                        #     }
+                        # ),
                         # Show spectrum button
                         dmc.Button(
                             children="Show section mass spectrum",
@@ -485,7 +486,7 @@ def page_peak_hover(hoverData, slice_index):
     Input("page-2tris-selected-peak-2", "data"),
     Input("page-2tris-selected-peak-3", "data"),
     Input("page-2tris-rgb-switch", "checked"),
-    Input("page-2tris-sections-mode", "value"),
+    # Input("page-2tris-sections-mode", "value"), # TODO: uncomment this when all sections view are computed and stored correctly
     Input("main-brain", "value"),
     Input("page-2tris-toggle-annotations", "checked"),
 
@@ -497,7 +498,7 @@ def page_peak_plot_graph_heatmap_mz_selection(
     peak_2_index,
     peak_3_index,
     rgb_mode,
-    sections_mode,
+    # sections_mode, # TODO: uncomment this when all sections view are computed and stored correctly
     brain_id,
     annotations_checked,
     graph_input,
@@ -522,21 +523,22 @@ def page_peak_plot_graph_heatmap_mz_selection(
                 for index in [peak_1_index, peak_2_index, peak_3_index]
             ]
             
-            # If all sections view is requested, only use first peak
-            if sections_mode == "all":
-                active_peaks = [name for name in ll_peak_names if name is not None]
-                first_peak = active_peaks[0] if active_peaks else "1000.169719"
-                image = grid_data.retrieve_grid_image(
-                    lipid=first_peak,
-                    sample=brain_id
-                )
-                return(peak_figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay),
-                        "Now displaying:")
+            # TODO: when all sections view are computed and stored correctly, uncomment this
+            # # If all sections view is requested, only use first peak
+            # if sections_mode == "all":
+            #     active_peaks = [name for name in ll_peak_names if name is not None]
+            #     first_peak = active_peaks[0] if active_peaks else "1000.169719"
+            #     image = grid_data.retrieve_grid_image(
+            #         lipid=first_peak,
+            #         sample=brain_id
+            #     )
+            #     return(peak_figures.build_lipid_heatmap_from_image(
+            #                 image, 
+            #                 return_base64_string=False,
+            #                 overlay=overlay),
+            #             "Now displaying:")
             
-            if rgb_mode and sections_mode != "all":
+            if rgb_mode: # and sections_mode != "all": # TODO: uncomment this when all sections view are computed and stored correctly
                 return (
                     peak_figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
@@ -566,28 +568,29 @@ def page_peak_plot_graph_heatmap_mz_selection(
                     )
                 else:
                     # If multiple peaks and not in RGB mode, force RGB mode (except in all sections mode)
-                    if sections_mode != "all":
-                        return (
-                            peak_figures.compute_rgb_image_per_lipid_selection(
-                                slice_index,
-                                ll_lipid_names=ll_peak_names,
-                                cache_flask=cache_flask,
-                                overlay=overlay,
-                            ),
-                            "Now displaying:",
-                        )
-                    else:
-                        # In all sections mode, use only first peak
-                        first_peak = active_peaks[0] if active_peaks else "1000.169719"
-                        image = grid_data.retrieve_grid_image(
-                            lipid=first_peak,
-                            sample=brain_id
-                        )
-                        return(peak_figures.build_lipid_heatmap_from_image(
-                                    image, 
-                                    return_base64_string=False,
-                                    overlay=overlay),
-                                "Now displaying:")
+                    # if sections_mode != "all":
+                    return (
+                        peak_figures.compute_rgb_image_per_lipid_selection(
+                            slice_index,
+                            ll_lipid_names=ll_peak_names,
+                            cache_flask=cache_flask,
+                            overlay=overlay,
+                        ),
+                        "Now displaying:",
+                    )
+                    # else:
+                    #     TODO: when all sections view are computed and stored correctly, uncomment this
+                    #     # In all sections mode, use only first peak
+                    #     first_peak = active_peaks[0] if active_peaks else "1000.169719"
+                    #     image = grid_data.retrieve_grid_image(
+                    #         lipid=first_peak,
+                    #         sample=brain_id
+                    #     )
+                    #     return(peak_figures.build_lipid_heatmap_from_image(
+                    #                 image, 
+                    #                 return_base64_string=False,
+                    #                 overlay=overlay),
+                                # "Now displaying:")
 
         return dash.no_update
 
@@ -597,7 +600,7 @@ def page_peak_plot_graph_heatmap_mz_selection(
         or id_input == "page-2tris-selected-peak-2"
         or id_input == "page-2tris-selected-peak-3"
         or id_input == "page-2tris-rgb-switch"
-        or id_input == "page-2tris-sections-mode"
+        # or id_input == "page-2tris-sections-mode" # TODO: uncomment this when all sections view are computed and stored correctly
         or id_input == "main-brain"
         or id_input == "main-slider"
     ):
@@ -609,52 +612,47 @@ def page_peak_plot_graph_heatmap_mz_selection(
                 for index in [peak_1_index, peak_2_index, peak_3_index]
             ]
 
-            # If all sections view is requested
-            if sections_mode == "all":
-                active_peaks = [name for name in ll_peak_names if name is not None]
-                # Use first available peak for all sections view
-                first_peak = active_peaks[0] if active_peaks else "1000.169719"
-                image = grid_data.retrieve_grid_image(
-                    lipid=first_peak,
-                    sample=brain_id
-                )
+            # TODO: when all sections view are computed and stored correctly, uncomment this
+            # # If all sections view is requested
+            # if sections_mode == "all":
+            #     TODO:
                 
-                return(peak_figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay),
-                        "Now displaying:")
+            #     return(peak_figures.build_lipid_heatmap_from_image(
+            #                 image, 
+            #                 return_base64_string=False,
+            #                 overlay=overlay),
+            #             "Now displaying:")
             
             # Handle normal display mode (RGB or colormap)
-            else:
-                active_peaks = [name for name in ll_peak_names if name is not None]
-                if rgb_mode:
-                    return (
-                        peak_figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_peak_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                else:
-                    # If not in RGB mode, use first peak only
-                    first_peak = active_peaks[0] if active_peaks else "1000.169719"
-                    image = peak_figures.compute_image_per_lipid(
+            # else:
+            active_peaks = [name for name in ll_peak_names if name is not None]
+            if rgb_mode:
+                return (
+                    peak_figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
-                        RGB_format=False,
-                        lipid_name=first_peak,
+                        ll_lipid_names=ll_peak_names,
                         cache_flask=cache_flask,
-                    )
-                    return (
-                        peak_figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
+                        overlay=overlay,
+                    ),
+                    "Now displaying:",
+                )
+            else:
+                # If not in RGB mode, use first peak only
+                first_peak = active_peaks[0] if active_peaks else "1000.169719"
+                image = peak_figures.compute_image_per_lipid(
+                    slice_index,
+                    RGB_format=False,
+                    lipid_name=first_peak,
+                    cache_flask=cache_flask,
+                )
+                return (
+                    peak_figures.build_lipid_heatmap_from_image(
+                        image, 
+                        return_base64_string=False,
+                        overlay=overlay,
+                    ),
+                    "Now displaying:",
+                )
         elif (
             id_input == "main-slider" and graph_input == "Now displaying:"
         ):
@@ -707,7 +705,7 @@ def page_peak_plot_graph_heatmap_mz_selection(
     Input("page-2tris-badge-group-2", "class_name"),
     Input("page-2tris-badge-group-3", "class_name"),
     Input("main-slider", "data"),
-    Input("page-2tris-sections-mode", "value"),
+    # Input("page-2tris-sections-mode", "value"), # TODO: uncomment this when all sections view are computed and stored correctly
     Input("page-2tris-rgb-switch", "checked"),
     State("page-2tris-selected-peak-1", "data"),
     State("page-2tris-selected-peak-2", "data"),
@@ -723,7 +721,7 @@ def page_peak_add_toast_selection(
     class_name_badge_2,
     class_name_badge_3,
     slice_index,
-    sections_mode,
+    # sections_mode,
     rgb_switch,
     peak_1_index,
     peak_2_index,
@@ -784,7 +782,9 @@ def page_peak_add_toast_selection(
                     [], "", "", "")
 
     # If RGB is turned off or sections mode is "all", keep only the first peak
-    if (id_input == "page-2tris-rgb-switch" and not rgb_switch) or (id_input == "page-2tris-sections-mode" and sections_mode == "all"):
+    if (id_input == "page-2tris-rgb-switch" and not rgb_switch): 
+        # TODO: uncomment this when all sections view are computed and stored correctly
+        # or (id_input == "page-2tris-sections-mode" and sections_mode == "all"):
         active_peaks = []
         if header_1 and peak_1_index != -1:
             active_peaks.append((header_1, peak_1_index))
@@ -840,76 +840,77 @@ def page_peak_add_toast_selection(
         class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none", "d-none", "d-none"
         annotation_1, annotation_2, annotation_3 = "", "", ""
         
-        # Fill slots in order with remaining peaks
-        # If in all sections mode, only fill the first slot
-        if sections_mode == "all" and remaining_peaks:
-            header_1 = remaining_peaks[0][0]
-            peak_1_index = remaining_peaks[0][1]
-            class_name_badge_1 = "position-absolute"
+        # TODO: uncomment this when all sections view are computed and stored correctly
+        # # Fill slots in order with remaining peaks
+        # # If in all sections mode, only fill the first slot
+        # if sections_mode == "all" and remaining_peaks:
+        #     header_1 = remaining_peaks[0][0]
+        #     peak_1_index = remaining_peaks[0][1]
+        #     class_name_badge_1 = "position-absolute"
             
-            # Get annotation for peak 1
-            annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
-            annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
+        #     # Get annotation for peak 1
+        #     annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
+        #     annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
             
-            return (
-                header_1,
-                "",
-                "",
-                peak_1_index,
-                -1,
-                -1,
-                class_name_badge_1,
-                "d-none",
-                "d-none",
-                [header_1],
-                annotation_1,
-                "",
-                ""
-            )
-        else:
-            for idx, (peak_name, peak_idx) in enumerate(remaining_peaks):
-                if idx == 0:
-                    header_1 = peak_name
-                    peak_1_index = peak_idx
-                    class_name_badge_1 = "position-absolute"
-                    
-                    # Get annotation for peak 1
-                    annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
-                    annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
-                    
-                elif idx == 1:
-                    header_2 = peak_name
-                    peak_2_index = peak_idx
-                    class_name_badge_2 = "position-absolute"
-                    
-                    # Get annotation for peak 2
-                    annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
-                    annotation_2 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
-                    
-                elif idx == 2:
-                    header_3 = peak_name
-                    peak_3_index = peak_idx
-                    class_name_badge_3 = "position-absolute"
-                    
-                    # Get annotation for peak 3
-                    annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
-                    annotation_3 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
+        #     return (
+        #         header_1,
+        #         "",
+        #         "",
+        #         peak_1_index,
+        #         -1,
+        #         -1,
+        #         class_name_badge_1,
+        #         "d-none",
+        #         "d-none",
+        #         [header_1],
+        #         annotation_1,
+        #         "",
+        #         ""
+        #     )
+        # else:
+        for idx, (peak_name, peak_idx) in enumerate(remaining_peaks):
+            if idx == 0:
+                header_1 = peak_name
+                peak_1_index = peak_idx
+                class_name_badge_1 = "position-absolute"
                 
-            return (
-                header_1,
-                header_2,
-                header_3,
-                peak_1_index,
-                peak_2_index,
-                peak_3_index,
-                class_name_badge_1,
-                class_name_badge_2,
-                class_name_badge_3,
-                l_peak_names,
-                annotation_1,
-                annotation_2,
-                annotation_3
-            )
+                # Get annotation for peak 1
+                annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
+                annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
+                
+            elif idx == 1:
+                header_2 = peak_name
+                peak_2_index = peak_idx
+                class_name_badge_2 = "position-absolute"
+                
+                # Get annotation for peak 2
+                annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
+                annotation_2 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
+                
+            elif idx == 2:
+                header_3 = peak_name
+                peak_3_index = peak_idx
+                class_name_badge_3 = "position-absolute"
+                
+                # Get annotation for peak 3
+                annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
+                annotation_3 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
+            
+        return (
+            header_1,
+            header_2,
+            header_3,
+            peak_1_index,
+            peak_2_index,
+            peak_3_index,
+            class_name_badge_1,
+            class_name_badge_2,
+            class_name_badge_3,
+            l_peak_names,
+            annotation_1,
+            annotation_2,
+            annotation_3
+        )
 
     # Handle new peak addition or slice change
     if (id_input == "page-2tris-dropdown-peaks" and l_peak_names is not None) or id_input == "main-slider":
@@ -967,37 +968,38 @@ def page_peak_add_toast_selection(
                 annotation_3 = ""
 
             # If in all sections mode, keep only first peak
-            if sections_mode == "all":
-                current_peaks = []
-                if header_1 and peak_1_index != -1:
-                    current_peaks.append(header_1)
-                    annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
-                    annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
-                elif header_2 and peak_2_index != -1:
-                    current_peaks.append(header_2)
-                    annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
-                    annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
-                elif header_3 and peak_3_index != -1:
-                    current_peaks.append(header_3)
-                    annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
-                    annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
+            # TODO: uncomment this when all sections view are computed and stored correctly
+            # if sections_mode == "all":
+                # current_peaks = []
+                # if header_1 and peak_1_index != -1:
+                #     current_peaks.append(header_1)
+                #     annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
+                #     annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
+                # elif header_2 and peak_2_index != -1:
+                #     current_peaks.append(header_2)
+                #     annotation_value = peak_data.get_annotations().iloc[peak_2_index]["annotation"]
+                #     annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
+                # elif header_3 and peak_3_index != -1:
+                #     current_peaks.append(header_3)
+                #     annotation_value = peak_data.get_annotations().iloc[peak_3_index]["annotation"]
+                #     annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                     
-                if current_peaks:
-                    return (
-                        current_peaks[0],
-                        "",
-                        "",
-                        peak_1_index if header_1 else (peak_2_index if header_2 else peak_3_index),
-                        -1,
-                        -1,
-                        "position-absolute",
-                        "d-none",
-                        "d-none",
-                        current_peaks[:1],
-                        annotation_1,
-                        "",
-                        ""
-                    )
+                # if current_peaks:
+                #     return (
+                #         current_peaks[0],
+                #         "",
+                #         "",
+                #         peak_1_index if header_1 else (peak_2_index if header_2 else peak_3_index),
+                #         -1,
+                #         -1,
+                #         "position-absolute",
+                #         "d-none",
+                #         "d-none",
+                #         current_peaks[:1],
+                #         annotation_1,
+                #         "",
+                #         ""
+                #     )
 
             return (
                 header_1,
@@ -1043,31 +1045,32 @@ def page_peak_add_toast_selection(
                 peak_index = l_peak_loc[0]
                 peak_string = l_peak_names[-1]
 
-                # If in all sections mode, only allow one peak
-                if sections_mode == "all":
-                    header_1 = peak_string
-                    peak_1_index = peak_index
-                    class_name_badge_1 = "position-absolute"
+                # TODO: when all sections view are computed and stored correctly, uncomment this
+                # # If in all sections mode, only allow one peak
+                # if sections_mode == "all":
+                #     header_1 = peak_string
+                #     peak_1_index = peak_index
+                #     class_name_badge_1 = "position-absolute"
                     
-                    # Get annotation for the peak
-                    annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
-                    annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
+                #     # Get annotation for the peak
+                #     annotation_value = peak_data.get_annotations().iloc[peak_1_index]["annotation"]
+                #     annotation_1 = "No matched molecule" if annotation_value == "_db" else "Predicted molecule: " + annotation_value
                     
-                    return (
-                        header_1,
-                        "",
-                        "",
-                        peak_1_index,
-                        -1,
-                        -1,
-                        class_name_badge_1,
-                        "d-none",
-                        "d-none",
-                        [header_1],
-                        annotation_1,
-                        "",
-                        ""
-                    )
+                #     return (
+                #         header_1,
+                #         "",
+                #         "",
+                #         peak_1_index,
+                #         -1,
+                #         -1,
+                #         class_name_badge_1,
+                #         "d-none",
+                #         "d-none",
+                #         [header_1],
+                #         annotation_1,
+                #         "",
+                #         ""
+                #     )
 
                 # If peak already exists, update its index
                 if header_1 == peak_string:
@@ -1265,14 +1268,21 @@ def plot_section_mass_spectrum(slice_index, is_open):
     Input("page-2tris-selected-peak-1", "data"),
     Input("page-2tris-selected-peak-2", "data"),
     Input("page-2tris-selected-peak-3", "data"),
-    Input("page-2tris-sections-mode", "value"),
+    # Input("page-2tris-sections-mode", "value"), # TODO: uncomment this when all sections view are computed and stored correctly
     State("page-2tris-rgb-switch", "checked"),
 )
-def page_peak_auto_toggle_rgb(peak_1_index, peak_2_index, peak_3_index, sections_mode, current_rgb_state):
+def page_peak_auto_toggle_rgb(
+    peak_1_index, 
+    peak_2_index, 
+    peak_3_index, 
+    # sections_mode, 
+    current_rgb_state):
     """This callback automatically toggles the RGB switch when multiple peaks are selected."""
-    # Force RGB off when in all sections mode
-    if sections_mode == "all":
-        return False
+
+    # TODO: uncomment this when all sections view are computed and stored correctly
+    # # Force RGB off when in all sections mode
+    # if sections_mode == "all":
+    #     return False
         
     active_peaks = [x for x in [peak_1_index, peak_2_index, peak_3_index] if x != -1]
     # Only turn on RGB automatically when going from 1 to multiple peaks
@@ -1281,70 +1291,73 @@ def page_peak_auto_toggle_rgb(peak_1_index, peak_2_index, peak_3_index, sections
         return True
     return current_rgb_state  # Keep current state otherwise
 
-@app.callback(
-    Output("page-2tris-sections-mode", "disabled"),
-    Input("page-2tris-selected-peak-1", "data"),
-    Input("page-2tris-selected-peak-2", "data"),
-    Input("page-2tris-selected-peak-3", "data"),
-)
-def page_peak_active_sections_control(peak_1_index, peak_2_index, peak_3_index):
-    """This callback enables/disables the sections mode control based on peak selection."""
-    # Get the current peak selection
-    active_peaks = [x for x in [peak_1_index, peak_2_index, peak_3_index] if x != -1]
-    # Enable control if at least one peak is selected
-    return len(active_peaks) == 0
+# TODO: uncomment this when all sections view are computed and stored correctly
+# @app.callback(
+#     # Output("page-2tris-sections-mode", "disabled"),
+#     Input("page-2tris-selected-peak-1", "data"),
+#     Input("page-2tris-selected-peak-2", "data"),
+#     Input("page-2tris-selected-peak-3", "data"),
+# )
+# def page_peak_active_sections_control(peak_1_index, peak_2_index, peak_3_index):
+#     """This callback enables/disables the sections mode control based on peak selection."""
+#     # Get the current peak selection
+#     active_peaks = [x for x in [peak_1_index, peak_2_index, peak_3_index] if x != -1]
+#     # Enable control if at least one peak is selected
+#     return len(active_peaks) == 0
 
-@app.callback(
-    Output("page-2tris-main-slider-style", "data"),
-    Output("page-2tris-graph-hover-text", "style"),
-    Output("page-2tris-annotations-container", "style"),
-    Input("page-2tris-sections-mode", "value"),
-)
-def page_peak_toggle_elements_visibility(sections_mode):
-    """This callback toggles the visibility of elements based on sections mode."""
-    if sections_mode == "all":
-        # Hide elements
-        return {"display": "none"}, {"display": "none"}, {"display": "none"}
-    else:
-        # Show elements
-        return (
-            {"display": "block"}, 
-            {
-                "width": "auto",
-                "position": "absolute",
-                "left": "50%",
-                "transform": "translateX(-50%)",
-                "top": "1em",
-                "fontSize": "1.5em",
-                "textAlign": "center",
-                "zIndex": 1000,
-                "backgroundColor": "rgba(0, 0, 0, 0.7)",
-                "padding": "0.5em 2em",
-                "borderRadius": "8px",
-                "minWidth": "200px",
-            },
-            {
-                "position": "absolute",
-                "left": "50%",
-                "transform": "translateX(-50%)",
-                "top": "0.5em",
-                "z-index": 1000,
-                "display": "flex",
-                "flexDirection": "row",
-                "alignItems": "center",
-                "justifyContent": "center",
-                "padding": "0.5em 2em",
-            }
-        )
+# TODO: uncomment this when all sections view are computed and stored correctly
+# @app.callback(
+#     Output("page-2tris-main-slider-style", "data"),
+#     Output("page-2tris-graph-hover-text", "style"),
+#     Output("page-2tris-annotations-container", "style"),
+#     # Input("page-2tris-sections-mode", "value"),
+# )
+# def page_peak_toggle_elements_visibility(sections_mode):
+#     """This callback toggles the visibility of elements based on sections mode."""
+#     if sections_mode == "all":
+#         # Hide elements
+#         return {"display": "none"}, {"display": "none"}, {"display": "none"}
+#     else:
+#         # Show elements
+#         return (
+#             {"display": "block"}, 
+#             {
+#                 "width": "auto",
+#                 "position": "absolute",
+#                 "left": "50%",
+#                 "transform": "translateX(-50%)",
+#                 "top": "1em",
+#                 "fontSize": "1.5em",
+#                 "textAlign": "center",
+#                 "zIndex": 1000,
+#                 "backgroundColor": "rgba(0, 0, 0, 0.7)",
+#                 "padding": "0.5em 2em",
+#                 "borderRadius": "8px",
+#                 "minWidth": "200px",
+#             },
+#             {
+#                 "position": "absolute",
+#                 "left": "50%",
+#                 "transform": "translateX(-50%)",
+#                 "top": "0.5em",
+#                 "z-index": 1000,
+#                 "display": "flex",
+#                 "flexDirection": "row",
+#                 "alignItems": "center",
+#                 "justifyContent": "center",
+#                 "padding": "0.5em 2em",
+#             }
+#         )
 
-# Add a separate callback just for the RGB group visibility
-@app.callback(
-    Output("page-2tris-rgb-group", "style"),
-    Input("page-2tris-sections-mode", "value"),
-)
-def page_peak_toggle_rgb_group_visibility(sections_mode):
-    """Controls the visibility of the RGB group."""
-    if sections_mode == "all":
-        return {"display": "none"}
-    else:
-        return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}
+# TODO: uncomment this when all sections view are computed and stored correctly
+# # Add a separate callback just for the RGB group visibility
+# @app.callback(
+#     Output("page-2tris-rgb-group", "style"),
+#     Input("page-2tris-sections-mode", "value"),
+# )
+# def page_peak_toggle_rgb_group_visibility(sections_mode):
+#     """Controls the visibility of the RGB group."""
+#     if sections_mode == "all":
+#         return {"display": "none"}
+#     else:
+#         return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}

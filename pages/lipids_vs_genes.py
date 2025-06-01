@@ -281,26 +281,6 @@ def return_layout(basic_config, slice_index):
                                 ),
                             ],
                         ),
-                        # # Sections mode control
-                        # dmc.SegmentedControl(
-                        #     id="page-6tris-sections-mode",
-                        #     value="one",
-                        #     data=[
-                        #         {"value": "one", "label": "One section"},
-                        #         {"value": "all", "label": "All sections"},
-                        #     ],
-                        #     color="cyan",
-                        #     disabled=True,
-                        #     size="xs",
-                        #     style={
-                        #         "position": "absolute",
-                        #         "left": "1%",
-                        #         "top": "9em",
-                        #         "width": "20em",
-                        #         "border": "1px solid rgba(255, 255, 255, 0.1)",
-                        #         "borderRadius": "4px",
-                        #     }
-                        # ),
                         # Title and badges group on the left side
                         dmc.Group(
                             direction="column",
@@ -1041,20 +1021,15 @@ def page_6tris_add_toast_selection_lipids(
     Input("page-6tris-selected-lipid-1", "data"),
     Input("page-6tris-selected-lipid-2", "data"),
     Input("page-6tris-selected-lipid-3", "data"),
-    # Input("page-6tris-sections-mode", "value"),
     State("page-6tris-rgb-switch", "checked"),
 )
 def page_6tris_auto_toggle_rgb(
     lipid_1_index, 
     lipid_2_index, 
     lipid_3_index, 
-    # sections_mode,
     current_rgb_state
 ):
     """This callback automatically toggles the RGB switch when multiple lipids are selected."""
-    # Force RGB off when in all sections mode
-    # if sections_mode == "all":
-    #     return False
         
     active_lipids = [x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]
     # Only turn on RGB automatically when going from 1 to multiple lipids
@@ -1062,19 +1037,6 @@ def page_6tris_auto_toggle_rgb(
     if len(active_lipids) > 1:
         return True
     return current_rgb_state  # Keep current state otherwise
-
-# @app.callback(
-#     Output("page-6tris-sections-mode", "disabled"),
-#     Input("page-6tris-selected-lipid-1", "data"),
-#     Input("page-6tris-selected-lipid-2", "data"),
-#     Input("page-6tris-selected-lipid-3", "data"),
-# )
-# def page_6tris_active_sections_control(lipid_1_index, lipid_2_index, lipid_3_index):
-#     """This callback enables/disables the sections mode control based on lipid selection."""
-#     # Get the current lipid selection
-#     active_lipids = [x for x in [lipid_1_index, lipid_2_index, lipid_3_index] if x != -1]
-#     # Enable control if at least one lipid is selected
-#     return len(active_lipids) == 0
 
 @app.callback(
     Output("page-6tris-badge-gene-1", "children"),
@@ -1390,58 +1352,3 @@ clientside_callback(
     Input("page-6tris-download-image-button", "n_clicks"),
 )
 """This clientside callback is used to download the current heatmap."""
-
-# @app.callback(
-#     Output("page-6tris-main-slider-style", "data"),
-#     Output("page-6tris-graph-hover-text", "style"),
-#     Output("page-6tris-annotations-container", "style"),
-#     Input("page-6tris-sections-mode", "value"),
-# )
-# def page_6tris_toggle_elements_visibility(sections_mode):
-#     """This callback toggles the visibility of elements based on sections mode."""
-#     if sections_mode == "all":
-#         # Hide elements
-#         return {"display": "none"}, {"display": "none"}, {"display": "none"}
-#     else:
-#         # Show elements
-#         return (
-#             {"display": "block"}, 
-#             {
-#                 "width": "auto",
-#                 "position": "absolute",
-#                 "left": "50%",
-#                 "transform": "translateX(-50%)",
-#                 "top": "1em",
-#                 "fontSize": "1.5em",
-#                 "textAlign": "center",
-#                 "zIndex": 1000,
-#                 "backgroundColor": "rgba(0, 0, 0, 0.7)",
-#                 "padding": "0.5em 2em",
-#                 "borderRadius": "8px",
-#                 "minWidth": "200px",
-#             },
-#             {
-#                 "position": "absolute",
-#                 "left": "50%",
-#                 "transform": "translateX(-50%)",
-#                 "top": "0.5em",
-#                 "z-index": 1000,
-#                 "display": "flex",
-#                 "flexDirection": "row",
-#                 "alignItems": "center",
-#                 "justifyContent": "center",
-#                 "padding": "0.5em 2em",
-#             }
-#         )
-
-# # Add a separate callback just for the RGB group visibility
-# @app.callback(
-#     Output("page-6tris-rgb-group", "style"),
-#     Input("page-6tris-sections-mode", "value"),
-# )
-# def page_6tris_toggle_rgb_group_visibility(sections_mode):
-#     """Controls the visibility of the RGB group."""
-#     if sections_mode == "all":
-#         return {"display": "none"}
-#     else:
-#         return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}

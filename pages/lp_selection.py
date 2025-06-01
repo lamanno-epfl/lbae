@@ -199,26 +199,27 @@ def return_layout(basic_config, slice_index):
                                 ),
                             ],
                         ),
-                        # Sections mode control
-                        dmc.SegmentedControl(
-                            id="page-2bis-sections-mode",
-                            value="one",
-                            data=[
-                                {"value": "one", "label": "One section"},
-                                {"value": "all", "label": "All sections"},
-                            ],
-                            color="cyan",
-                            disabled=True,
-                            size="xs",
-                            style={
-                                "position": "absolute",
-                                "left": "1%",
-                                "top": "9em",
-                                "width": "20em",
-                                "border": "1px solid rgba(255, 255, 255, 0.1)",
-                                "borderRadius": "4px",
-                            }
-                        ),
+                        # TODO: uncomment this when we compute and store the all-sections mode
+                        # # Sections mode control
+                        # dmc.SegmentedControl(
+                        #     id="page-2bis-sections-mode",
+                        #     value="one",
+                        #     data=[
+                        #         {"value": "one", "label": "One section"},
+                        #         {"value": "all", "label": "All sections"},
+                        #     ],
+                        #     color="cyan",
+                        #     disabled=True,
+                        #     size="xs",
+                        #     style={
+                        #         "position": "absolute",
+                        #         "left": "1%",
+                        #         "top": "9em",
+                        #         "width": "20em",
+                        #         "border": "1px solid rgba(255, 255, 255, 0.1)",
+                        #         "borderRadius": "4px",
+                        #     }
+                        # ),
                         dmc.Text(
                             id="page-2bis-badge-input",
                             children="Now displaying:",
@@ -354,7 +355,7 @@ def page_2bis_hover(hoverData, slice_index):
     Input("page-2bis-selected-program-2", "data"),
     Input("page-2bis-selected-program-3", "data"),
     Input("page-2bis-rgb-switch", "checked"),
-    Input("page-2bis-sections-mode", "value"),
+    # Input("page-2bis-sections-mode", "value"), # TODO: uncomment this when we compute and store the all-sections mode
     Input("main-brain", "value"),
     Input("page-2bis-toggle-annotations", "checked"),
 
@@ -366,7 +367,7 @@ def page_2bis_plot_graph_heatmap_mz_selection(
     program_2_index,
     program_3_index,
     rgb_mode,
-    sections_mode,
+    # sections_mode, # TODO: uncomment this when we compute and store the all-sections mode
     brain_id,
     annotations_checked,
     graph_input,
@@ -392,22 +393,23 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                 for index in [program_1_index, program_2_index, program_3_index]
             ]
     
-            # If all sections view is requested, only use first lipid
-            if sections_mode == "all":
-                active_programs = [name for name in ll_program_names if name is not None]
-                first_program = active_programs[0] if active_programs else "mitochondrion"
-                image = grid_data.retrieve_grid_image(
-                    lipid=first_program,
-                    sample=brain_id
-                )
-                return(program_figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                            colormap_type="PuOr"),
-                        "Now displaying:")
+            # # If all sections view is requested, only use first lipid
+            # if sections_mode == "all":
+            #     active_programs = [name for name in ll_program_names if name is not None]
+            #     first_program = active_programs[0] if active_programs else "mitochondrion"
+            #     image = grid_data.retrieve_grid_image(
+            #         lipid=first_program,
+            #         sample=brain_id
+            #     )
+            #     return(program_figures.build_lipid_heatmap_from_image(
+            #                 image, 
+            #                 return_base64_string=False,
+            #                 overlay=overlay,
+            #                 colormap_type="PuOr"),
+            #             "Now displaying:")
             
-            if rgb_mode and sections_mode != "all":
+            if rgb_mode:
+                # and sections_mode != "all" # TODO: uncomment this when we compute and store the all-sections mode
                 return (
                     program_figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
@@ -438,29 +440,30 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                     )
                 else:
                     # If multiple lipids and not in RGB mode, force RGB mode (except in all sections mode)
-                    if sections_mode != "all":
-                        return (
-                            program_figures.compute_rgb_image_per_lipid_selection(
-                                slice_index,
-                                ll_lipid_names=ll_program_names,
-                                cache_flask=cache_flask,
-                                overlay=overlay,
-                            ),
-                            "Now displaying:",
-                        )
-                    else:
-                        # In all sections mode, use only first lipid
-                        first_program = active_programs[0] if active_programs else "mitochondrion"
-                        image = grid_data.retrieve_grid_image(
-                            lipid=first_program,
-                            sample=brain_id
-                        )
-                        return(program_figures.build_lipid_heatmap_from_image(
-                                    image, 
-                                    return_base64_string=False,
-                                    overlay=overlay,
-                                    colormap_type="PuOr"),
-                                "Now displaying:")
+                    # if sections_mode != "all":
+                    return (
+                        program_figures.compute_rgb_image_per_lipid_selection(
+                            slice_index,
+                            ll_lipid_names=ll_program_names,
+                            cache_flask=cache_flask,
+                            overlay=overlay,
+                        ),
+                        "Now displaying:",
+                    )
+                    # TODO: uncomment this when we compute and store the all-sections mode
+                    # else:
+                    #     # In all sections mode, use only first lipid
+                    #     first_program = active_programs[0] if active_programs else "mitochondrion"
+                    #     image = grid_data.retrieve_grid_image(
+                    #         lipid=first_program,
+                    #         sample=brain_id
+                    #     )
+                    #     return(program_figures.build_lipid_heatmap_from_image(
+                    #                 image, 
+                    #                 return_base64_string=False,
+                    #                 overlay=overlay,
+                    #                 colormap_type="PuOr"),
+                    #             "Now displaying:")
 
         return dash.no_update
 
@@ -470,7 +473,7 @@ def page_2bis_plot_graph_heatmap_mz_selection(
         or id_input == "page-2bis-selected-program-2"
         or id_input == "page-2bis-selected-program-3"
         or id_input == "page-2bis-rgb-switch"
-        or id_input == "page-2bis-sections-mode"
+        # or id_input == "page-2bis-sections-mode" # TODO: uncomment this when we compute and store the all-sections mode
         or id_input == "main-brain"
         or id_input == "main-slider"
     ):
@@ -483,54 +486,55 @@ def page_2bis_plot_graph_heatmap_mz_selection(
                 for index in [program_1_index, program_2_index, program_3_index]
             ]
 
-            # If all sections view is requested
-            if sections_mode == "all":
-                active_programs = [name for name in ll_program_names if name is not None]
-                # Use first available lipid for all sections view
-                first_program = active_programs[0] if active_programs else "mitochondrion"
-                image = grid_data.retrieve_grid_image(
-                    lipid=first_program,
-                    sample=brain_id
-                )
+            # TODO: uncomment this when we compute and store the all-sections mode
+            # # If all sections view is requested
+            # if sections_mode == "all":
+            #     active_programs = [name for name in ll_program_names if name is not None]
+            #     # Use first available lipid for all sections view
+            #     first_program = active_programs[0] if active_programs else "mitochondrion"
+            #     image = grid_data.retrieve_grid_image(
+            #         lipid=first_program,
+            #         sample=brain_id
+            #     )
                 
-                return(program_figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                            colormap_type="PuOr"),
-                        "Now displaying:")
+            #     return(program_figures.build_lipid_heatmap_from_image(
+            #                 image, 
+            #                 return_base64_string=False,
+            #                 overlay=overlay,
+            #                 colormap_type="PuOr"),
+            #             "Now displaying:")
             
             # Handle normal display mode (RGB or colormap)
-            else:
-                active_programs = [name for name in ll_program_names if name is not None]
-                if rgb_mode:
-                    return (
-                        program_figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_program_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                else:
-                    # If not in RGB mode, use first lipid only
-                    first_program = active_programs[0] if active_programs else "mitochondrion"
-                    image = program_figures.compute_image_per_lipid(
+            # else:
+            active_programs = [name for name in ll_program_names if name is not None]
+            if rgb_mode:
+                return (
+                    program_figures.compute_rgb_image_per_lipid_selection(
                         slice_index,
-                        RGB_format=False,
-                        lipid_name=first_program,
+                        ll_lipid_names=ll_program_names,
                         cache_flask=cache_flask,
-                    )
-                    return (
-                        program_figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                            colormap_type="PuOr",
-                        ),
-                        "Now displaying:",
-                    )
+                        overlay=overlay,
+                    ),
+                    "Now displaying:",
+                )
+            else:
+                # If not in RGB mode, use first lipid only
+                first_program = active_programs[0] if active_programs else "mitochondrion"
+                image = program_figures.compute_image_per_lipid(
+                    slice_index,
+                    RGB_format=False,
+                    lipid_name=first_program,
+                    cache_flask=cache_flask,
+                )
+                return (
+                    program_figures.build_lipid_heatmap_from_image(
+                        image, 
+                        return_base64_string=False,
+                        overlay=overlay,
+                        colormap_type="PuOr",
+                    ),
+                    "Now displaying:",
+                )
         elif (
             id_input == "main-slider" and graph_input == "Now displaying:"
         ):
@@ -582,7 +586,7 @@ def page_2bis_plot_graph_heatmap_mz_selection(
     Input("page-2bis-badge-program-2", "class_name"),
     Input("page-2bis-badge-program-3", "class_name"),
     Input("main-slider", "data"),
-    Input("page-2bis-sections-mode", "value"),
+    # Input("page-2bis-sections-mode", "value"), # TODO: uncomment this when we compute and store the all-sections mode
     Input("page-2bis-rgb-switch", "checked"),
     State("page-2bis-selected-program-1", "data"),
     State("page-2bis-selected-program-2", "data"),
@@ -598,7 +602,7 @@ def page_2bis_add_toast_selection(
     class_name_badge_2,
     class_name_badge_3,
     slice_index,
-    sections_mode,
+    # sections_mode,
     rgb_switch,
     program_1_index,
     program_2_index,
@@ -645,7 +649,9 @@ def page_2bis_add_toast_selection(
             return "", "", "", -1, -1, -1, "d-none", "d-none", "d-none", []
 
     # If RGB is turned off or sections mode is "all", keep only the first lipid
-    if (id_input == "page-2bis-rgb-switch" and not rgb_switch) or (id_input == "page-2bis-sections-mode" and sections_mode == "all"):
+    if (id_input == "page-2bis-rgb-switch" and not rgb_switch):
+        # TODO: uncomment this when we compute and store the all-sections mode 
+        # or (id_input == "page-2bis-sections-mode" and sections_mode == "all"):
         active_programs = []
         if header_1 and program_1_index != -1:
             active_programs.append((header_1, program_1_index))
@@ -704,51 +710,52 @@ def page_2bis_add_toast_selection(
         program_1_index, program_2_index, program_3_index = -1, -1, -1
         class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none", "d-none", "d-none"
         
-        # Fill slots in order with remaining lipids
-        # If in all sections mode, only fill the first slot
-        if sections_mode == "all" and remaining_programs:
-            header_1 = remaining_programs[0][0]
-            program_1_index = remaining_programs[0][1]
-            class_name_badge_1 = "position-absolute"
-            return (
-                header_1,
-                "",
-                "",
-                program_1_index,
-                -1,
-                -1,
-                class_name_badge_1,
-                "d-none",
-                "d-none",
-                [header_1]
-            )
-        else:
-            for idx, (program_name, program_idx) in enumerate(remaining_programs):
-                if idx == 0:
-                    header_1 = program_name
-                    program_1_index = program_idx
-                    class_name_badge_1 = "position-absolute"
-                elif idx == 1:
-                    header_2 = program_name
-                    program_2_index = program_idx
-                    class_name_badge_2 = "position-absolute"
-                elif idx == 2:
-                    header_3 = program_name
-                    program_3_index = program_idx
-                    class_name_badge_3 = "position-absolute"
-                
-            return (
-                header_1,
-                header_2,
-                header_3,
-                program_1_index,
-                program_2_index,
-                program_3_index,
-                class_name_badge_1,
-                class_name_badge_2,
-                class_name_badge_3,
-                l_program_names
-            )
+        # TODO: uncomment this when we compute and store the all-sections mode
+        # # Fill slots in order with remaining lipids
+        # # If in all sections mode, only fill the first slot
+        # if sections_mode == "all" and remaining_programs:
+        #     header_1 = remaining_programs[0][0]
+        #     program_1_index = remaining_programs[0][1]
+        #     class_name_badge_1 = "position-absolute"
+        #     return (
+        #         header_1,
+        #         "",
+        #         "",
+        #         program_1_index,
+        #         -1,
+        #         -1,
+        #         class_name_badge_1,
+        #         "d-none",
+        #         "d-none",
+        #         [header_1]
+        #     )
+        # else:
+        for idx, (program_name, program_idx) in enumerate(remaining_programs):
+            if idx == 0:
+                header_1 = program_name
+                program_1_index = program_idx
+                class_name_badge_1 = "position-absolute"
+            elif idx == 1:
+                header_2 = program_name
+                program_2_index = program_idx
+                class_name_badge_2 = "position-absolute"
+            elif idx == 2:
+                header_3 = program_name
+                program_3_index = program_idx
+                class_name_badge_3 = "position-absolute"
+            
+        return (
+            header_1,
+            header_2,
+            header_3,
+            program_1_index,
+            program_2_index,
+            program_3_index,
+            class_name_badge_1,
+            class_name_badge_2,
+            class_name_badge_3,
+            l_program_names
+        )
 
     # Handle new lipid addition or slice change
     if (id_input == "page-2bis-dropdown-programs" and l_program_names is not None) or id_input == "main-slider":
@@ -790,29 +797,29 @@ def page_2bis_add_toast_selection(
                 elif header_3 == header:
                     program_3_index = program_index
 
-            # If in all sections mode, keep only first lipid
-            if sections_mode == "all":
-                current_programs = []
-                if header_1:
-                    current_programs.append(header_1)
-                elif header_2:
-                    current_programs.append(header_2)
-                elif header_3:
-                    current_programs.append(header_3)
+            # # If in all sections mode, keep only first lipid
+            # if sections_mode == "all":
+            #     current_programs = []
+            #     if header_1:
+            #         current_programs.append(header_1)
+            #     elif header_2:
+            #         current_programs.append(header_2)
+            #     elif header_3:
+            #         current_programs.append(header_3)
                     
-                if current_programs:
-                    return (
-                        current_programs[0],
-                        "",
-                        "",
-                        program_1_index if header_1 else (program_2_index if header_2 else program_3_index),
-                        -1,
-                        -1,
-                        "position-absolute",
-                        "d-none",
-                        "d-none",
-                        current_programs[:1]
-                    )
+            #     if current_programs:
+            #         return (
+            #             current_programs[0],
+            #             "",
+            #             "",
+            #             program_1_index if header_1 else (program_2_index if header_2 else program_3_index),
+            #             -1,
+            #             -1,
+            #             "position-absolute",
+            #             "d-none",
+            #             "d-none",
+            #             current_programs[:1]
+            #         )
 
             return (
                 header_1,
@@ -862,23 +869,24 @@ def page_2bis_add_toast_selection(
                 program_index = l_program_loc[0]
                 program_string = l_program_names[-1]
 
-                # If in all sections mode, only allow one lipid
-                if sections_mode == "all":
-                    header_1 = program_string
-                    program_1_index = program_index
-                    class_name_badge_1 = "position-absolute"
-                    return (
-                        header_1,
-                        "",
-                        "",
-                        program_1_index,
-                        -1,
-                        -1,
-                        class_name_badge_1,
-                        "d-none",
-                        "d-none",
-                        [header_1]
-                    )
+                # TODO: uncomment this when we compute and store the all-sections mode
+                # # If in all sections mode, only allow one lipid
+                # if sections_mode == "all":
+                #     header_1 = program_string
+                #     program_1_index = program_index
+                #     class_name_badge_1 = "position-absolute"
+                #     return (
+                #         header_1,
+                #         "",
+                #         "",
+                #         program_1_index,
+                #         -1,
+                #         -1,
+                #         class_name_badge_1,
+                #         "d-none",
+                #         "d-none",
+                #         [header_1]
+                #     )
 
                 # If lipid already exists, update its index
                 if header_1 == program_string:
@@ -988,14 +996,21 @@ def page_2bis_add_toast_selection(
     Input("page-2bis-selected-program-1", "data"),
     Input("page-2bis-selected-program-2", "data"),
     Input("page-2bis-selected-program-3", "data"),
-    Input("page-2bis-sections-mode", "value"),
+    # Input("page-2bis-sections-mode", "value"), # TODO: uncomment this when we compute and store the all-sections mode
     State("page-2bis-rgb-switch", "checked"),
 )
-def page_2bis_auto_toggle_rgb(program_1_index, program_2_index, program_3_index, sections_mode, current_rgb_state):
+def page_2bis_auto_toggle_rgb(
+    program_1_index, 
+    program_2_index, 
+    program_3_index, 
+    # sections_mode, # TODO: uncomment this when we compute and store the all-sections mode
+    current_rgb_state
+):
     """This callback automatically toggles the RGB switch when multiple lipid programs are selected."""
     # Force RGB off when in all sections mode
-    if sections_mode == "all":
-        return False
+    # TODO: uncomment this when we compute and store the all-sections mode
+    # if sections_mode == "all":
+    #     return False
         
     active_programs = [x for x in [program_1_index, program_2_index, program_3_index] if x != -1]
     # Only turn on RGB automatically when going from 1 to multiple lipids
@@ -1004,18 +1019,18 @@ def page_2bis_auto_toggle_rgb(program_1_index, program_2_index, program_3_index,
         return True
     return current_rgb_state  # Keep current state otherwise
 
-@app.callback(
-    Output("page-2bis-sections-mode", "disabled"),
-    Input("page-2bis-selected-program-1", "data"),
-    Input("page-2bis-selected-program-2", "data"),
-    Input("page-2bis-selected-program-3", "data"),
-)
-def page_2bis_active_sections_control(program_1_index, program_2_index, program_3_index):
-    """This callback enables/disables the sections mode control based on lipid program selection."""
-    # Get the current lipid selection
-    active_programs = [x for x in [program_1_index, program_2_index, program_3_index] if x != -1]
-    # Enable control if at least one lipid is selected
-    return len(active_programs) == 0
+# @app.callback(
+#     Output("page-2bis-sections-mode", "disabled"),
+#     Input("page-2bis-selected-program-1", "data"),
+#     Input("page-2bis-selected-program-2", "data"),
+#     Input("page-2bis-selected-program-3", "data"),
+# )
+# def page_2bis_active_sections_control(program_1_index, program_2_index, program_3_index):
+#     """This callback enables/disables the sections mode control based on lipid program selection."""
+#     # Get the current lipid selection
+#     active_programs = [x for x in [program_1_index, program_2_index, program_3_index] if x != -1]
+#     # Enable control if at least one lipid is selected
+#     return len(active_programs) == 0
 
 clientside_callback(
     """
@@ -1034,57 +1049,57 @@ clientside_callback(
 )
 """This clientside callback is used to download the current heatmap."""
 
-@app.callback(
-    Output("page-2bis-main-slider-style", "data"),
-    Output("page-2bis-graph-hover-text", "style"),
-    Output("page-2bis-annotations-container", "style"),
-    Input("page-2bis-sections-mode", "value"),
-)
-def page_2bis_toggle_elements_visibility(sections_mode):
-    """This callback toggles the visibility of elements based on sections mode."""
-    if sections_mode == "all":
-        # Hide elements
-        return {"display": "none"}, {"display": "none"}, {"display": "none"}
-    else:
-        # Show elements
-        return (
-            {"display": "block"}, 
-            {
-                "width": "auto",
-                "position": "absolute",
-                "left": "50%",
-                "transform": "translateX(-50%)",
-                "top": "1em",
-                "fontSize": "1.5em",
-                "textAlign": "center",
-                "zIndex": 1000,
-                "backgroundColor": "rgba(0, 0, 0, 0.7)",
-                "padding": "0.5em 2em",
-                "borderRadius": "8px",
-                "minWidth": "200px",
-            },
-            {
-                "position": "absolute",
-                "left": "50%",
-                "transform": "translateX(-50%)",
-                "top": "0.5em",
-                "z-index": 1000,
-                "display": "flex",
-                "flexDirection": "row",
-                "alignItems": "center",
-                "justifyContent": "center",
-                "padding": "0.5em 2em",
-            }
-        )
+# @app.callback(
+#     Output("page-2bis-main-slider-style", "data"),
+#     Output("page-2bis-graph-hover-text", "style"),
+#     Output("page-2bis-annotations-container", "style"),
+#     Input("page-2bis-sections-mode", "value"),
+# )
+# def page_2bis_toggle_elements_visibility(sections_mode):
+#     """This callback toggles the visibility of elements based on sections mode."""
+#     if sections_mode == "all":
+#         # Hide elements
+#         return {"display": "none"}, {"display": "none"}, {"display": "none"}
+#     else:
+#         # Show elements
+#         return (
+#             {"display": "block"}, 
+#             {
+#                 "width": "auto",
+#                 "position": "absolute",
+#                 "left": "50%",
+#                 "transform": "translateX(-50%)",
+#                 "top": "1em",
+#                 "fontSize": "1.5em",
+#                 "textAlign": "center",
+#                 "zIndex": 1000,
+#                 "backgroundColor": "rgba(0, 0, 0, 0.7)",
+#                 "padding": "0.5em 2em",
+#                 "borderRadius": "8px",
+#                 "minWidth": "200px",
+#             },
+#             {
+#                 "position": "absolute",
+#                 "left": "50%",
+#                 "transform": "translateX(-50%)",
+#                 "top": "0.5em",
+#                 "z-index": 1000,
+#                 "display": "flex",
+#                 "flexDirection": "row",
+#                 "alignItems": "center",
+#                 "justifyContent": "center",
+#                 "padding": "0.5em 2em",
+#             }
+#         )
 
-# Add a separate callback just for the RGB group visibility
-@app.callback(
-    Output("page-2bis-rgb-group", "style"),
-    Input("page-2bis-sections-mode", "value"),
-)
-def page_2bis_toggle_rgb_group_visibility(sections_mode):
-    """Controls the visibility of the RGB group."""
-    if sections_mode == "all":
-        return {"display": "none"}
-    else:
-        return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}
+# # Add a separate callback just for the RGB group visibility
+# @app.callback(
+#     Output("page-2bis-rgb-group", "style"),
+#     Input("page-2bis-sections-mode", "value"),
+# )
+# def page_2bis_toggle_rgb_group_visibility(sections_mode):
+#     """Controls the visibility of the RGB group."""
+#     if sections_mode == "all":
+#         return {"display": "none"}
+#     else:
+#         return {"display": "flex", "alignItems": "center", "marginLeft": "15px"}

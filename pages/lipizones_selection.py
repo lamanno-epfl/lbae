@@ -70,8 +70,8 @@ def return_layout(basic_config, slice_index):
                             "scrollZoom": True
                         },
                         style={
-                            "width": "70%",
-                            "height": "95%",
+                            "width": "77%",
+                            "height": "100%",
                             "position": "absolute",
                             "left": "20%",
                             "top": "0",
@@ -241,7 +241,7 @@ def return_layout(basic_config, slice_index):
                             # Sections mode control
                             dmc.SegmentedControl(
                                 id="page-6-sections-mode",
-                                value="one",
+                                value="all",
                                 data=[
                                     {"value": "one", "label": "One section"},
                                     {"value": "all", "label": "All sections"},

@@ -150,7 +150,87 @@ def return_main_content():
             html.Div(
                 children=[
                     sidebar.layout,
-                    html.Div(id="content"),
+                    # Add loading wrapper around content
+                    dbc.Spinner(
+                        id="loading-1",
+                        color="light",
+                        type="grow",
+                        fullscreen=True,
+                        delay_show=500,  # Show after 0.5 second
+                        delay_hide=100,   # Hide quickly when done
+                        spinner_style={
+                            "width": "3rem",
+                            "height": "3rem"
+                        },
+                        fullscreen_style={
+                            "position": "fixed",
+                            "top": "50%",
+                            "left": "50%",
+                            "transform": "translate(-50%, -50%)",
+                            "zIndex": 1000,
+                            "backgroundColor": "rgba(0, 0, 0, 0.7)",
+                            "padding": "20px",
+                            "borderRadius": "10px",
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "alignItems": "center",
+                            "justifyContent": "center"
+                        },
+                        children=[
+                            html.Div(
+                                id="content",
+                                children=[
+                                    html.Div(
+                                        id="loading-message",
+                                        style={
+                                            "position": "fixed",
+                                            "top": "50%",
+                                            "left": "50%",
+                                            "transform": "translate(-50%, -50%)",
+                                            "zIndex": 1000,
+                                            "backgroundColor": "rgba(0, 0, 0, 0.7)",
+                                            "padding": "20px",
+                                            "borderRadius": "10px",
+                                            "display": "none",
+                                            "textAlign": "center",
+                                            "minWidth": "300px"
+                                        },
+                                        children=[
+                                            html.H4(
+                                                "Processing visualization data...",
+                                                style={
+                                                    "color": "white",
+                                                    "marginBottom": "10px",
+                                                    "textAlign": "center"
+                                                }
+                                            ),
+                                            html.Div(
+                                                style={
+                                                    "width": "200px",
+                                                    "height": "4px",
+                                                    "backgroundColor": "#ddd",
+                                                    "borderRadius": "2px",
+                                                    "overflow": "hidden",
+                                                    "margin": "0 auto"
+                                                },
+                                                children=[
+                                                    html.Div(
+                                                        id="loading-bar",
+                                                        style={
+                                                            "width": "0%",
+                                                            "height": "100%",
+                                                            "backgroundColor": "#00bfff",
+                                                            "transition": "width 0.5s ease-in-out"
+                                                        }
+                                                    )
+                                                ]
+                                            )
+                                        ]
+                                    )
+                                ]
+                            )
+                        ]
+                    ),
                     # Slider component
                     dmc.Center(
                         id="main-paper-slider",
@@ -416,16 +496,16 @@ def return_main_content():
                         size="85vh",
                         position="bottom",
                     ),
-                    # Spinner when switching pages
-                    dbc.Spinner(
-                        id="main-spinner",
-                        color="light",
-                        children=html.Div(id="empty-content"),
-                        fullscreen=True,
-                        fullscreen_style={"left": "6rem", "background-color": "#1d1c1f"},
-                        spinner_style={"width": "6rem", "height": "6rem"},
-                        delay_hide=100,
-                    ),
+                    # Spinner when switchin# g pages
+                    # dbc.Spinner(
+                    #     id="main-spinner",
+                    #     color="light",
+                    #     children=html.Div(id="empty-content"),
+                    #     fullscreen=True,
+                    #     fullscreen_style={"left": "6rem", "background-color": "#1d1c1f"},
+                    #     spinner_style={"width": "6rem", "height": "6rem"},
+                    #     delay_hide=100,
+                    # ),
                 ],
             ),
         ],
@@ -468,7 +548,7 @@ def return_validation_layout(main_content, initial_slice=12):
 # ==================================================================================================
 @app.callback(
     Output("content", "children"),
-    Output("empty-content", "children"),
+    # Output("empty-content", "children"),
     Input("url", "pathname"),
     State("main-slider", "data"),
     State("main-brain", "value"),
@@ -525,7 +605,7 @@ def render_page_content(pathname, slice_index, brain):
             ),
             class_name="mt-5",
         )
-    return page, ""
+    return page
 
 
 @app.callback(
@@ -550,13 +630,11 @@ def toggle_collapse(n1, is_open):
 )
 def hide_brain_chips(pathname):
     """This callback is used to hide the brain selection chips when they are not needed."""
-    if pathname == "/lipizones-vs-celltypes":
-        return {"display": "none"}
-    elif pathname == "/lipids-vs-genes":
-        return {"display": "none"}
-    elif pathname == "/3D-exploration":
-        return {"display": "none"}
-    elif pathname == "/3D-lipizones":
+    if pathname == "/" \
+    or pathname == "/lipizones-vs-celltypes" \
+    or pathname == "/lipids-vs-genes" \
+    or pathname == "/3D-exploration" \
+    or pathname == "/3D-lipizones":
         return {"display": "none"}
     else:
         return {
@@ -647,11 +725,15 @@ def update_slider_value(*args):
 )
 def update_slider_visibility(pathname, hide2, hide6):
     """
-    We have three “modes” to consider:
+    We have three "modes" to consider:
       • If we're on /lipid-selection, use hide2 ("" or "d-none").
       • If we're on /lipizones-selection, use hide6 ("" or "d-none").
       • If we're on any other page, show or hide based on your existing list of pages.
     """
+
+    # Hide on home page
+    if pathname == "/":
+        return "d-none"
 
     # 1) On lipid-selection → use hide2
     if pathname == "/lipid-selection":
@@ -661,7 +743,7 @@ def update_slider_visibility(pathname, hide2, hide6):
     if pathname == "/lipizones-selection":
         return hide6 or ""
 
-    # 3) On all the other “slider‐enabled” pages, always show:
+    # 3) On all the other "slider‐enabled" pages, always show:
     if pathname in [
         "/lp-selection",
         "/peak-selection",

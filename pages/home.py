@@ -54,15 +54,16 @@ layout = (
                         html.Div(
                             id="sidebar-tutorial-target",
                             style={
-                                "position": "relative",
-                                "width": "10rem",
-                                "height": "4rem",
-                                "margin": "1rem auto",
-                                "zIndex": 1000,
+                                "position": "fixed",
+                                "top": "20px",
+                                "left": "115px",
+                                "zIndex": 2100,
+                                # "width": "10rem",
+                                # "height": "3rem",
                                 "backgroundColor": "transparent",
                                 "border": "3px solid #00bfff",
                                 "borderRadius": "4px",
-                                "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
+                                # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
                                 "cursor": "pointer",
                             },
                             children=[
@@ -72,17 +73,12 @@ layout = (
                                     color="info",
                                     size="sm",
                                     style={
-                                        "position": "absolute",
-                                        "top": "50%",
-                                        "left": "50%",
-                                        "transform": "translate(-50%, -50%)",
-                                        "zIndex": 1001,
-                                        "width": "100%",
-                                        "height": "100%",
+                                        # "width": "100%",
+                                        # "height": "100%",
                                         "borderRadius": "4px",
                                         "backgroundColor": "transparent",
                                         "border": "none",
-                                        "color": "#00bfff",
+                                        # "color": "#00ffff",
                                         "fontWeight": "bold",
                                     }
                                 )
@@ -180,10 +176,6 @@ layout = (
                     "width": "40px",
                     "height": "40px",
                     "zIndex": 1000,
-                    # "backgroundColor": "rgba(0,191,255,0.1)",
-                    # "border": "3px solid #00bfff",
-                    # "borderRadius": "50%",
-                    # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
                     "cursor": "pointer",
                 }
             ),
@@ -196,18 +188,24 @@ layout = (
                     "width": "40px",
                     "height": "40px",
                     "zIndex": 1000,
-                    # "backgroundColor": "rgba(0,191,255,0.1)",
-                    # "border": "3px solid #00bfff",
-                    # "borderRadius": "50%",
-                    # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
                     "cursor": "pointer",
                 }
             ),
+            # --- New: Sidebar icon tutorial targets (invisible, just for popover targets) ---
+            html.Div(id="sidebar-molecules-tutorial-target"),
+            html.Div(id="sidebar-programs-tutorial-target"),
+            html.Div(id="sidebar-region-analysis-tutorial-target"),
+            html.Div(id="sidebar-lipizones-tutorial-target"),
+            html.Div(id="sidebar-comparisons-tutorial-target"),
+            html.Div(id="sidebar-3d-tutorial-target"),
+            # --- End new tutorial targets ---
             
             # Tutorial Popovers with adjusted positions
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Welcome to the Lipid Brain Atlas Explorer!"),
+                    dbc.PopoverHeader(
+                        "Welcome to the Lipid Brain Atlas Explorer!",
+                    ),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -224,14 +222,14 @@ layout = (
                 is_open=False,
                 style={"zIndex": 2000}
             ),
-            
+            # --- Home Button (now points to sidebar brain icon) ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Navigation"),
+                    dbc.PopoverHeader("Home Button"),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "Use the sidebar on the left to navigate between different pages and explore the atlas.",
+                                "Click the brain icon at the top left to return to this page anytime.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="tutorial-next-2", color="primary", size="sm", className="float-end")
@@ -239,19 +237,20 @@ layout = (
                     ),
                 ],
                 id="tutorial-popover-2",
-                target="sidebar-tutorial-target",
+                target="sidebar-title",  # <-- brain icon in sidebar
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000}
+                style={"zIndex": 2000},
+                offset=40
             ),
-            
+            # --- Molecules ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Home Button"),
+                    dbc.PopoverHeader("Molecules"),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "Click the home icon at the top left to return to this page anytime.",
+                                "Explore Lipids and M/Z Peaks using the molecules section.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="tutorial-next-3", color="primary", size="sm", className="float-end")
@@ -259,12 +258,118 @@ layout = (
                     ),
                 ],
                 id="tutorial-popover-3",
-                target="home-tutorial-target",
-                placement="bottom",
+                target="sidebar-molecules",  # molecules icon
+                placement="right",
                 is_open=False,
-                style={"zIndex": 2000}
+                style={"zIndex": 2000},
+                offset=40
             ),
-            
+            # --- Lipid Programs ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Lipid Programs"),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "Check out Lipid Programs (embeddings) for advanced analysis.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="tutorial-next-4", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="tutorial-popover-4",
+                target="sidebar-programs",  # lipid programs icon
+                placement="right",
+                is_open=False,
+                style={"zIndex": 2000},
+                offset=40
+            ),
+            # --- Differential Analysis ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Differential Analysis"),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "Perform region-based differential analysis here.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="tutorial-next-5", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="tutorial-popover-5",
+                target="sidebar-region-analysis",  # region analysis icon
+                placement="right",
+                is_open=False,
+                style={"zIndex": 2000},
+                offset=40
+            ),
+            # --- Lipizones ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Lipizones"),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "Explore Lipizones and their ID cards.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="tutorial-next-6", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="tutorial-popover-6",
+                target="sidebar-lipizones",  # lipizones icon
+                placement="right",
+                is_open=False,
+                style={"zIndex": 2000},
+                offset=40
+            ),
+            # --- Comparisons ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Comparisons"),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "Compare Lipizones vs Cell Types and Lipids vs Genes.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="tutorial-next-7", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="tutorial-popover-7",
+                target="sidebar-comparisons",  # comparisons icon
+                placement="right",
+                is_open=False,
+                style={"zIndex": 2000},
+                offset=40
+            ),
+            # --- 3D Exploration ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("3D Exploration"),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "Visualize 3D Lipids and Lipizones in this section.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="tutorial-next-8", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="tutorial-popover-8",
+                target="sidebar-3d",  # 3d icon
+                placement="right",
+                is_open=False,
+                style={"zIndex": 2000},
+                offset=40
+            ),
+            # --- Documentation (now points to book icon) ---
             dbc.Popover(
                 [
                     dbc.PopoverHeader("Documentation"),
@@ -278,11 +383,12 @@ layout = (
                         ]
                     ),
                 ],
-                id="tutorial-popover-4",
-                target="docs-tutorial-target",
-                placement="top",
+                id="tutorial-popover-9",
+                target="sidebar-documentation-inside",  # <-- book icon in sidebar
+                placement="right",
                 is_open=False,
-                style={"zIndex": 2000}
+                style={"zIndex": 2000},
+                offset=40
             ),
             
             dbc.Offcanvas(
@@ -408,14 +514,12 @@ def sync_alerts_panel(is_open):
 # Use clientside callback for tutorial step updates
 app.clientside_callback(
     """
-    function(start, next1, next2, next3, finish) {
+    function(start, next1, next2, next3, next4, next5, next6, next7, next8, finish) {
         const ctx = window.dash_clientside.callback_context;
         if (!ctx.triggered.length) {
             return window.dash_clientside.no_update;
         }
-        
         const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
-        
         if (trigger_id === 'start-tutorial-btn' && start) {
             return 1;
         } else if (trigger_id === 'tutorial-next-1' && next1) {
@@ -424,10 +528,19 @@ app.clientside_callback(
             return 3;
         } else if (trigger_id === 'tutorial-next-3' && next3) {
             return 4;
+        } else if (trigger_id === 'tutorial-next-4' && next4) {
+            return 5;
+        } else if (trigger_id === 'tutorial-next-5' && next5) {
+            return 6;
+        } else if (trigger_id === 'tutorial-next-6' && next6) {
+            return 7;
+        } else if (trigger_id === 'tutorial-next-7' && next7) {
+            return 8;
+        } else if (trigger_id === 'tutorial-next-8' && next8) {
+            return 9;
         } else if (trigger_id === 'tutorial-finish' && finish) {
             return 0;
         }
-        
         return window.dash_clientside.no_update;
     }
     """,
@@ -436,6 +549,11 @@ app.clientside_callback(
      Input("tutorial-next-1", "n_clicks"),
      Input("tutorial-next-2", "n_clicks"),
      Input("tutorial-next-3", "n_clicks"),
+     Input("tutorial-next-4", "n_clicks"),
+     Input("tutorial-next-5", "n_clicks"),
+     Input("tutorial-next-6", "n_clicks"),
+     Input("tutorial-next-7", "n_clicks"),
+     Input("tutorial-next-8", "n_clicks"),
      Input("tutorial-finish", "n_clicks")],
     prevent_initial_call=True,
 )
@@ -445,17 +563,22 @@ app.clientside_callback(
     """
     function(step) {
         if (step === undefined || step === null) {
-            return [false, false, false, false];
+            return [false, false, false, false, false, false, false, false, false];
         }
         return [
             step === 1,
             step === 2,
             step === 3,
-            step === 4
+            step === 4,
+            step === 5,
+            step === 6,
+            step === 7,
+            step === 8,
+            step === 9
         ];
     }
     """,
-    [Output(f"tutorial-popover-{i}", "is_open") for i in range(1, 5)],
+    [Output(f"tutorial-popover-{i}", "is_open") for i in range(1, 10)],
     Input("tutorial-step", "data"),
     prevent_initial_call=True,
 )

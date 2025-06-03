@@ -737,3 +737,37 @@ body .tooltip {
   display: flex;
   align-items: center;
 }
+
+/*===== TUTORIAL =====*/
+
+.dash-bootstrap .popover {
+  border: 3px solid #00bfff !important;
+  box-shadow: 0 0 15px rgba(0, 191, 255, 0.7) !important;
+  border-radius: 4px !important;
+  padding: 0 !important;
+  background: #1d1c1f !important;
+  color: #dee2e6 !important;
+}
+
+.dash-bootstrap .popover .popover-arrow,
+.dash-bootstrap .popover .arrow {
+  border-right-color: #00bfff !important;
+  border-left-color: #00bfff !important;
+  border-top-color: #00bfff !important;
+  border-bottom-color: #00bfff !important;
+  background: transparent !important;
+}
+
+.dash-bootstrap .popover .popover-header {
+  border: none !important;
+  border-radius: 4px 4px 0 0 !important;
+  background: #1d1c1f !important;
+  color: #dee2e6 !important;
+}
+
+.dash-bootstrap .popover .popover-body {
+  border: none !important;
+  border-radius: 0 0 4px 4px !important;
+  background: #1d1c1f !important;
+  color: #dee2e6 !important;
+}

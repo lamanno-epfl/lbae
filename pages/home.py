@@ -205,6 +205,7 @@ layout = (
                 [
                     dbc.PopoverHeader(
                         "Welcome to the Lipid Brain Atlas Explorer!",
+                        style={"fontWeight": "bold"}
                     ),
                     dbc.PopoverBody(
                         [
@@ -220,12 +221,16 @@ layout = (
                 target="sidebar-tutorial-target",
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000}
+                style={
+                    "zIndex": 2000,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                }
             ),
             # --- Home Button (now points to sidebar brain icon) ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Home Button"),
+                    dbc.PopoverHeader("Home Button", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -240,13 +245,17 @@ layout = (
                 target="sidebar-title",  # <-- brain icon in sidebar
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000},
+                style={
+                    "zIndex": 2000,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
                 offset=40
             ),
             # --- Molecules ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Molecules"),
+                    dbc.PopoverHeader("Molecules", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -261,13 +270,17 @@ layout = (
                 target="sidebar-molecules",  # molecules icon
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000},
+                style={
+                    "zIndex": 2000,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
                 offset=40
             ),
             # --- Lipid Programs ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Lipid Programs"),
+                    dbc.PopoverHeader("Lipid Programs", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -282,13 +295,17 @@ layout = (
                 target="sidebar-programs",  # lipid programs icon
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000},
+                style={
+                    "zIndex": 2000,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
                 offset=40
             ),
             # --- Differential Analysis ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Differential Analysis"),
+                    dbc.PopoverHeader("Differential Analysis", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -303,13 +320,17 @@ layout = (
                 target="sidebar-region-analysis",  # region analysis icon
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000},
+                style={
+                    "zIndex": 2000,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
                 offset=40
             ),
             # --- Lipizones ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Lipizones"),
+                    dbc.PopoverHeader("Lipizones", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -324,13 +345,17 @@ layout = (
                 target="sidebar-lipizones",  # lipizones icon
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000},
+                style={
+                    "zIndex": 2000,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
                 offset=40
             ),
             # --- Comparisons ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Comparisons"),
+                    dbc.PopoverHeader("Comparisons", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -345,13 +370,17 @@ layout = (
                 target="sidebar-comparisons",  # comparisons icon
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000},
+                style={
+                    "zIndex": 2000,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
                 offset=40
             ),
             # --- 3D Exploration ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("3D Exploration"),
+                    dbc.PopoverHeader("3D Exploration", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -366,13 +395,17 @@ layout = (
                 target="sidebar-3d",  # 3d icon
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000},
+                style={
+                    "zIndex": 2000,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
                 offset=40
             ),
             # --- Documentation (now points to book icon) ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Documentation"),
+                    dbc.PopoverHeader("Documentation", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -387,7 +420,11 @@ layout = (
                 target="sidebar-documentation-inside",  # <-- book icon in sidebar
                 placement="right",
                 is_open=False,
-                style={"zIndex": 2000},
+                style={
+                    "zIndex": 2000,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
                 offset=40
             ),
             

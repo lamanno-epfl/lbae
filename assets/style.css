@@ -771,3 +771,15 @@ body .tooltip {
   background: #1d1c1f !important;
   color: #dee2e6 !important;
 }
+
+/* Color the popover arrow the same as the border for right-placement popovers */
+.popover.bs-popover-end .popover-arrow::before,
+.popover.bs-popover-end .popover-arrow::after {
+  border-right-color: #00bfff !important;
+}
+
+/* For legacy Bootstrap 4 naming (if needed) */
+.popover.bs-popover-right .arrow::before,
+.popover.bs-popover-right .arrow::after {
+  border-right-color: #00bfff !important;
+}

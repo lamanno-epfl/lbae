@@ -72,6 +72,7 @@ layout = (
                                     id="start-tutorial-btn",
                                     color="info",
                                     size="sm",
+                                    className="tutorial-start-btn",
                                     style={
                                         # "width": "100%",
                                         # "height": "100%",
@@ -129,7 +130,7 @@ layout = (
                                         children=[
                                             html.Video(
                                                 id="brain-video",
-                                                src="/assets/lba01mp4.mp4",
+                                                src="/assets/lba02mp4.mp4",
                                                 autoPlay=True,
                                                 loop=True,
                                                 muted=True,
@@ -222,7 +223,7 @@ layout = (
                 placement="right",
                 is_open=False,
                 style={
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "border": "2px solid #00bfff",
                     "boxShadow": "0 0 15px 2px #00bfff"
                 }
@@ -230,7 +231,7 @@ layout = (
             # --- Home Button (now points to sidebar brain icon) ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Home Button", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Home Page", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
@@ -246,7 +247,7 @@ layout = (
                 placement="right",
                 is_open=False,
                 style={
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "border": "2px solid #00bfff",
                     "boxShadow": "0 0 15px 2px #00bfff"
                 },
@@ -271,7 +272,7 @@ layout = (
                 placement="right",
                 is_open=False,
                 style={
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "border": "2px solid #00bfff",
                     "boxShadow": "0 0 15px 2px #00bfff"
                 },
@@ -296,7 +297,7 @@ layout = (
                 placement="right",
                 is_open=False,
                 style={
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "border": "2px solid #00bfff",
                     "boxShadow": "0 0 15px 2px #00bfff"
                 },
@@ -321,7 +322,7 @@ layout = (
                 placement="right",
                 is_open=False,
                 style={
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "border": "2px solid #00bfff",
                     "boxShadow": "0 0 15px 2px #00bfff"
                 },
@@ -346,7 +347,7 @@ layout = (
                 placement="right",
                 is_open=False,
                 style={
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "border": "2px solid #00bfff",
                     "boxShadow": "0 0 15px 2px #00bfff"
                 },
@@ -371,7 +372,7 @@ layout = (
                 placement="right",
                 is_open=False,
                 style={
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "border": "2px solid #00bfff",
                     "boxShadow": "0 0 15px 2px #00bfff"
                 },
@@ -396,7 +397,7 @@ layout = (
                 placement="right",
                 is_open=False,
                 style={
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "border": "2px solid #00bfff",
                     "boxShadow": "0 0 15px 2px #00bfff"
                 },
@@ -421,7 +422,7 @@ layout = (
                 placement="right",
                 is_open=False,
                 style={
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "border": "2px solid #00bfff",
                     "boxShadow": "0 0 15px 2px #00bfff"
                 },
@@ -434,7 +435,7 @@ layout = (
                 placement="end",
                 style={
                     "width": "350px",
-                    "zIndex": 2000,
+                    "zIndex": 9999,
                     "backgroundColor": "#1d1c1f",
                     "color": "white",
                 },

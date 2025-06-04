@@ -88,14 +88,14 @@ li {
 }
 
 /* Adjust main logo position */
-.sidebar-header .nav-link {
+/* .sidebar-header .nav-link {
   padding-left: 0.1rem;
-}
+} */
 
-/* Adjust other icon position */
-#sidebar-page-3 {
+/* Adjust other this is position */
+/* #sidebar-page-3 {
   padding-right: 1.2rem;
-}
+} */
 
 /* Container for the sidebar footbar. Keep bar at the lowest position. */
 .sidebar-bottom {
@@ -109,6 +109,32 @@ li {
   bottom: 0;
   padding-left: 0rem;
 }
+
+/* Fix hover/active underline highlight for sidebar icons */
+.sidebar .nav-link::after {
+  content: "";
+  display: none;
+}
+
+.sidebar .nav-link:hover::after,
+.sidebar .nav-link.active::after {
+  background: transparent;
+  width: 0;
+}
+
+/* Remove any previous border or box-shadow on nav-link hover/active */
+.sidebar .nav-link,
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.sidebar-header .icon-brain {
+  font-size: 3rem !important;
+}
+
+/*===== SUPER-TABS =====*/
 
 /* Super-tab styles */
 .super-tab {
@@ -782,4 +808,30 @@ body .tooltip {
 .popover.bs-popover-right .arrow::before,
 .popover.bs-popover-right .arrow::after {
   border-right-color: #00bfff !important;
+}
+
+/* Make all sidebar icons (except brain) larger and perfectly centered */
+.sidebar .nav-link .icon-molecules,
+.sidebar .nav-link .icon-programs,
+.sidebar .nav-link .icon-analysis,
+.sidebar .nav-link .icon-lipizones,
+.sidebar .nav-link .icon-comparisons,
+.sidebar .nav-link .icon-threed {
+  font-size: 1.5rem !important;
+  margin: 0 auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Docs and copyright icons in sidebar-bottom */
+.sidebar-bottom .icon-docs,
+.sidebar-bottom .icon-cc {
+  /* margin-left: 1.2rem !important; */
+  position: relative;
+  top: -0.6rem;
+  margin: 0 auto !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }

@@ -58,7 +58,7 @@ layout = html.Div(
                                     children=[
                                         html.I(
                                             id="sidebar-molecules",
-                                            className="icon-lipid fs-5 has-submenu",
+                                            className="icon-molecules fs-5 has-submenu",
                                             style={"margin-left": "0.7em"},
                                         )
                                     ],
@@ -97,7 +97,7 @@ layout = html.Div(
                                     children=[
                                         html.I(
                                             id="sidebar-programs",
-                                            className="icon-lipid fs-5 has-submenu",
+                                            className="icon-programs fs-5 has-submenu",
                                             style={"margin-left": "0.7em"},
                                         )
                                     ],
@@ -127,7 +127,7 @@ layout = html.Div(
                                     children=[
                                         html.I(
                                             id="sidebar-region-analysis",
-                                            className="icon-chart-bar fs-5 has-submenu",
+                                            className="icon-analysis fs-5 has-submenu",
                                             style={"margin-left": "0.7em"},
                                         )
                                     ],
@@ -157,7 +157,7 @@ layout = html.Div(
                                     children=[
                                         html.I(
                                             id="sidebar-lipizones",
-                                            className="icon-lipid fs-5 has-submenu",
+                                            className="icon-lipizones fs-5 has-submenu",
                                             style={"margin-left": "0.7em"},
                                         )
                                     ],
@@ -196,7 +196,7 @@ layout = html.Div(
                                     children=[
                                         html.I(
                                             id="sidebar-comparisons",
-                                            className="icon-chart-bar fs-5 has-submenu",
+                                            className="icon-comparisons fs-5 has-submenu",
                                             style={"margin-left": "0.7em"},
                                         )
                                     ],
@@ -235,7 +235,7 @@ layout = html.Div(
                                     children=[
                                         html.I(
                                             id="sidebar-3d",
-                                            className="icon-3d fs-5 has-submenu",
+                                            className="icon-threed fs-5 has-submenu",
                                             style={"margin-left": "0.7em"},
                                         )
                                     ],
@@ -275,7 +275,7 @@ layout = html.Div(
                                     children=[
                                         html.I(
                                             id="sidebar-documentation-inside",
-                                            className="icon-library mb-3 fs-3",
+                                            className="icon-docs mb-3 fs-3",
                                             style={"margin-left": "0.5rem"},
                                         )
                                     ],

@@ -175,14 +175,14 @@ layout = (
                     "cursor": "pointer",
                 }
             ),
-            # --- New: Sidebar icon tutorial targets (invisible, just for popover targets) ---
-            html.Div(id="sidebar-molecules-tutorial-target"),
-            html.Div(id="sidebar-programs-tutorial-target"),
-            html.Div(id="sidebar-region-analysis-tutorial-target"),
-            html.Div(id="sidebar-lipizones-tutorial-target"),
-            html.Div(id="sidebar-comparisons-tutorial-target"),
-            html.Div(id="sidebar-3d-tutorial-target"),
-            # --- End new tutorial targets ---
+            # # --- New: Sidebar icon tutorial targets (invisible, just for popover targets) ---
+            # html.Div(id="sidebar-molecules-tutorial-target"),
+            # html.Div(id="sidebar-programs-tutorial-target"),
+            # html.Div(id="sidebar-region-analysis-tutorial-target"),
+            # html.Div(id="sidebar-lipizones-tutorial-target"),
+            # html.Div(id="sidebar-comparisons-tutorial-target"),
+            # html.Div(id="sidebar-3d-tutorial-target"),
+            # # --- End new tutorial targets ---
             
             # Tutorial Popovers with adjusted positions
             dbc.Popover(

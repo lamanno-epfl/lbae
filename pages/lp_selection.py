@@ -52,6 +52,44 @@ def return_layout(basic_config, slice_index):
             children=[
                 # Add a store component to hold the slider style
                 dcc.Store(id="page-2bis-main-slider-style", data={"display": "block"}),
+                dcc.Store(id="lp-tutorial-step", data=0),
+                dcc.Store(id="lp-tutorial-completed", storage_type="local", data=False),
+
+                # Add tutorial button under welcome text
+                html.Div(
+                    id="lp-start-tutorial-target",
+                    style={
+                        "position": "fixed",
+                        "top": "0.9em",
+                        "left": "20.3em",
+                        "zIndex": 2100,
+                        # "width": "10rem",
+                        # "height": "3rem",
+                        "backgroundColor": "transparent",
+                        "border": "3px solid #00bfff",
+                        "borderRadius": "4px",
+                        # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
+                        "cursor": "pointer",
+                    },
+                    children=[
+                        dbc.Button(
+                            "Start Tutorial",
+                            id="lp-start-tutorial-btn",
+                            color="info",
+                            size="sm",
+                            className="tutorial-start-btn",
+                            style={
+                                # "width": "100%",
+                                # "height": "100%",
+                                "borderRadius": "4px",
+                                "backgroundColor": "transparent",
+                                "border": "none",
+                                # "color": "#00ffff",
+                                "fontWeight": "bold",
+                            }
+                        )
+                    ]
+                ),
                 html.Div(
                     className="fixed-aspect-ratio",
                     style={
@@ -315,6 +353,180 @@ def return_layout(basic_config, slice_index):
                             ],
                         ),
                         dcc.Download(id="page-2bis-download-data"),
+
+                        # Tutorial Popovers with adjusted positions
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader(
+                                    "Lipid Programs Exploration Tutorial",
+                                    style={"fontWeight": "bold"}
+                                ),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "This page is used to visualize lipid programs and embeddings in the Allen Brain Atlas. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lp-tutorial-next-1", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lp-tutorial-popover-1",
+                            target="lp-start-tutorial-target",
+                            placement="right",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            }
+                        ),
+                        # --- Peak Selection ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Lipid Program Selection", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Select up to 3 peaks from the dropdown menu. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lp-tutorial-next-2", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lp-tutorial-popover-2",
+                            target="page-2bis-dropdown-programs",  # dropdown menu
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- RGB Mode ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("RGB Mode", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Activate the RGB mode to visualize the lipids as RGB images. Each lipid is displayed in a different color. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lp-tutorial-next-3", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lp-tutorial-popover-3",
+                            target="page-2bis-rgb-switch",  # rgb switch
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # # TODO: uncomment and add tutorial for one vs all sections when all sections view are computed and stored correctly
+                        # # --- One vs All Sections ---
+                        # dbc.Popover(
+                        #     [
+                        #         dbc.PopoverHeader("One vs All Sections", style={"fontWeight": "bold"}),
+                        #         dbc.PopoverBody(
+                        #             [
+                        #                 html.P(
+                        #                     "Decide whether to display the selected lipids in one section or all sections. Click 'Next' to continue.",
+                        #                     style={"color": "#333", "marginBottom": "15px"}
+                        #                 ),
+                        #                 dbc.Button("Next", id="lp-tutorial-next-4", color="primary", size="sm", className="float-end")
+                        #             ]
+                        #         ),
+                        #     ],
+                        #     id="lp-tutorial-popover-4",
+                        #     target="page-2bis-sections-mode",  # sections mode switch
+                        #     placement="bottom",
+                        #     is_open=False,
+                        #     style={
+                        #         "zIndex": 9999,
+                        #         "border": "2px solid #00bfff",
+                        #         "boxShadow": "0 0 15px 2px #00bfff"
+                        #     },
+                        # ),
+                        # --- Annotations ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lp-tutorial-next-4", color="primary", size="sm", className="float-end") # TODO: change this to 5 when the tutorial for all sections is updated
+                                    ]
+                                ),
+                            ],
+                            id="lp-tutorial-popover-4", # TODO: change this to 5 when the tutorial for all sections is updated
+                            target="page-2bis-toggle-annotations",  # annotations switch
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                            offset=40
+                        ),
+                        # --- Brain Slider ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lp-tutorial-next-5", color="primary", size="sm", className="float-end") # TODO: change this to 6 when the tutorial for all sections is updated
+                                    ]
+                                ),
+                            ],
+                            id="lp-tutorial-popover-5", # TODO: change this to 6 when the tutorial for all sections is updated
+                            target="main-paper-slider",  # slider
+                            placement="top",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- Brain Chips ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Different Mouse Brains", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Switch from one mouse brain to another to analyse the differences. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Finish", id="lp-tutorial-finish", color="success", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lp-tutorial-popover-6", # TODO: change this to 7 when the tutorial for all sections is updated
+                            target="main-brain",  # brain switch
+                            placement="left",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
                     ],
                 ),
             ],
@@ -1116,3 +1328,78 @@ clientside_callback(
 #     if pathname == "/lp-selection":
 #         return "d-none" if (lp_sections_mode == "all") else ""
 #     return ""
+
+# Use clientside callback for tutorial step updates
+app.clientside_callback(
+    """
+    function(start, next1, next2, next3, next4, next5, finish) { 
+        const ctx = window.dash_clientside.callback_context;
+        if (!ctx.triggered.length) {
+            return window.dash_clientside.no_update;
+        }
+        const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
+        if (trigger_id === 'lp-start-tutorial-btn' && start) {
+            return 1;
+        } else if (trigger_id === 'lp-tutorial-next-1' && next1) {
+            return 2;
+        } else if (trigger_id === 'lp-tutorial-next-2' && next2) {
+            return 3;
+        } else if (trigger_id === 'lp-tutorial-next-3' && next3) {
+            return 4;
+        } else if (trigger_id === 'lp-tutorial-next-4' && next4) {
+            return 5;
+        } else if (trigger_id === 'lp-tutorial-next-5' && next5) {
+            return 6;
+        } else if (trigger_id === 'lp-tutorial-finish' && finish) {
+            return 0;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("lp-tutorial-step", "data"),
+    [Input("lp-start-tutorial-btn", "n_clicks"),
+     Input("lp-tutorial-next-1", "n_clicks"),
+     Input("lp-tutorial-next-2", "n_clicks"),
+     Input("lp-tutorial-next-3", "n_clicks"),
+     Input("lp-tutorial-next-4", "n_clicks"),
+     Input("lp-tutorial-next-5", "n_clicks"),
+     Input("lp-tutorial-finish", "n_clicks")],
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for popover visibility
+app.clientside_callback(
+    """
+    function(step) {
+        if (step === undefined || step === null) {
+            return [false, false, false, false, false, false];
+        }
+        return [
+            step === 1,
+            step === 2,
+            step === 3,
+            step === 4,
+            step === 5,
+            step === 6,
+        ];
+    }
+    """,
+    [Output(f"lp-tutorial-popover-{i}", "is_open") for i in range(1, 7)], # TODO: change this to 8 when the tutorial for all sections is updated
+    Input("lp-tutorial-step", "data"),
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for tutorial completion
+app.clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            return true;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("lp-tutorial-completed", "data"),
+    Input("lp-tutorial-finish", "n_clicks"),
+    prevent_initial_call=True,
+)

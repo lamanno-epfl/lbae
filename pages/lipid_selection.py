@@ -52,11 +52,11 @@ def return_layout(basic_config, slice_index):
 
                 # Add tutorial button under welcome text
                 html.Div(
-                    id="lipid-start-tutorial-target",
+                    id="peak-start-tutorial-target",
                     style={
                         "position": "fixed",
-                        "top": "20px",
-                        "left": "500px",
+                        "top": "0.9em",
+                        "left": "20.3em",
                         "zIndex": 2100,
                         # "width": "10rem",
                         # "height": "3rem",
@@ -69,7 +69,7 @@ def return_layout(basic_config, slice_index):
                     children=[
                         dbc.Button(
                             "Start Tutorial",
-                            id="lipid-start-tutorial-btn",
+                            id="peak-start-tutorial-btn",
                             color="info",
                             size="sm",
                             className="tutorial-start-btn",
@@ -348,15 +348,6 @@ def return_layout(basic_config, slice_index):
                         dcc.Download(id="page-2-download-data"),
                     ],
                 ),
-
-                # Tutorial target elements with highlight effect
-                html.Div(id="dropdown-tutorial-target"),
-                html.Div(id="rgb-tutorial-target"),
-                html.Div(id="switch-tutorial-target"),
-                html.Div(id="slider-tutorial-target"),
-                html.Div(id="aba-tutorial-target"),
-                html.Div(id="chips-tutorial-target"),
-                # --- End new tutorial targets ---
 
                 # Tutorial Popovers with adjusted positions
                 dbc.Popover(
@@ -1305,10 +1296,10 @@ def page_2_toggle_rgb_group_visibility(sections_mode):
     prevent_initial_call=True,
 )
 def compute_page2_hide(lipid_sections_mode, pathname):
-    # Only take action if we’re really on /lipid-selection
+    # Only take action if we're really on /lipid-selection
     if pathname == "/lipid-selection":
         return "d-none" if (lipid_sections_mode == "all") else ""
-    # If we’re not on that page, leave the store unchanged (or send back "")
+    # If we're not on that page, leave the store unchanged (or send back "")
     return ""
 
 
@@ -1358,7 +1349,7 @@ app.clientside_callback(
     """
     function(step) {
         if (step === undefined || step === null) {
-            return [false, false, false, false, false, false, false, false, false];
+            return [false, false, false, false, false, false, false];
         }
         return [
             step === 1,

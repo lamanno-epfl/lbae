@@ -97,39 +97,97 @@ def return_layout(basic_config, slice_index):
             "background-color": "#1d1c1f",
         },
         children=[
+            dcc.Store(id="3d-lipizone-tutorial-step", data=0),
+            dcc.Store(id="3d-lipizone-tutorial-completed", storage_type="local", data=False),
+            # Add tutorial button under welcome text
+            html.Div(
+                id="lipizone-start-tutorial-target",
+                style={
+                    "position": "fixed",
+                    "top": "0.9em",
+                    "left": "21.3em",
+                    "zIndex": 2100,
+                    # "width": "10rem",
+                    # "height": "3rem",
+                    "backgroundColor": "transparent",
+                    "border": "3px solid #00bfff",
+                    "borderRadius": "4px",
+                    # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
+                    "cursor": "pointer",
+                },
+                children=[
+                    dbc.Button(
+                        "Start Tutorial",
+                        id="3d-lipizone-start-tutorial-btn",
+                        color="info",
+                        size="sm",
+                        className="tutorial-start-btn",
+                        style={
+                            # "width": "100%",
+                            # "height": "100%",
+                            "borderRadius": "4px",
+                            "backgroundColor": "transparent",
+                            "border": "none",
+                            # "color": "#00ffff",
+                            "fontWeight": "bold",
+                        }
+                    )
+                ]
+            ),
             # Left panel for selection controls
+            # Title
+            html.H4(
+                "Lipizones in 3D",
+                style={
+                    "color": "white",
+                    "marginBottom": "15px",
+                    "fontSize": "1.2em",
+                    "fontWeight": "500",
+                    "position": "absolute",
+                    "left": "1%",
+                    "top": "1em",
+                }
+            ),
             html.Div(
                 style={
-                    "position": "absolute", 
-                    "left": "1%", 
-                    "top": "1em", 
-                    "width": "22em",
-                    "zIndex": 100,
-                    "backgroundColor": "#1d1c1f",
+                    "width": "20%",
+                    "height": "95%",
+                    "position": "absolute",
+                    "left": "0",
+                    "top": "3em",
+                    "background-color": "#1d1c1f",
                     "display": "flex",
                     "flexDirection": "column",
                     "padding": "10px",
                 },
                 children=[
-                    # Title
-                    html.H4(
-                        "Select Lipizones for 3D Visualization",
-                        style={
-                            "color": "white",
-                            "marginBottom": "15px",
-                            "fontSize": "1.2em",
-                            "fontWeight": "500",
-                        }
+                    # Button to view all lipizones together
+                    dmc.Button(
+                        "Display All Lipizones",
+                        id="view-all-lipizones-btn",
+                        variant="filled",
+                        color="cyan",
+                        radius="md",
+                        size="sm",
+                        style={"marginBottom": "5pxem"},
                     ),
-                    # Treemap visualization
-                    dcc.Graph(
-                        id="3d-lipizones-treemap",
-                        figure=lipizone_data.create_treemap_figure_lipizones(df_treemap, node_colors),
+                    html.Div(
+                        id="3d-lipizones-treemap-container",  # Add this ID
                         style={
                             "height": "40%",
                             "background-color": "#1d1c1f",
                         },
-                        config={'displayModeBar': False}
+                        children=[
+                            dcc.Graph(
+                                id="page-6-lipizones-treemap",
+                                figure=lipizone_data.create_treemap_figure_lipizones(df_treemap, node_colors),
+                                style={
+                                    "height": "100%",  # Make it fill the container
+                                    "background-color": "#1d1c1f",
+                                },
+                                config={'displayModeBar': False}
+                            ),
+                        ]
                     ),
                     # Current selection text
                     html.Div(
@@ -195,13 +253,6 @@ def return_layout(basic_config, slice_index):
                             ),
                         ]
                     ),
-                    # Button to view all lipizones together
-                    dmc.Button(
-                        "View All Lipizones",
-                        id="view-all-lipizones-btn",
-                        color="cyan",
-                        style={"width": "100%", "marginTop": "1.5em"},
-                    ),
                 ],
             ),
             
@@ -209,11 +260,11 @@ def return_layout(basic_config, slice_index):
             html.Div(
                 id="3d-lipizones-visualization-container",
                 style={
-                    "width": "calc(100% - 22em)",  # Leave space for the left panel
+                    "width": "80%",  # Leave space for the left panel
                     "height": "100%",
                     "position": "absolute",
                     "top": "0",
-                    "right": "0",
+                    "left": "20%",
                     "backgroundColor": "#1d1c1f",
                 },
                 children=[
@@ -226,6 +277,130 @@ def return_layout(basic_config, slice_index):
                         }
                     )
                 ]
+            ),
+
+            # Tutorial Popovers with adjusted positions
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader(
+                        "3D Lipizones Exploration Tutorial",
+                        style={"fontWeight": "bold"}
+                    ),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                ".",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="3d-lipizone-tutorial-next-1", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="3d-lipizone-tutorial-popover-1",
+                target="lipizone-start-tutorial-target",
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                }
+            ),
+            # --- All Lipizones Button ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("All Lipizones", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "When selected, all lipizones are displayed in 3D in a scatter plot, it differs from the treemap selection view.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="3d-lipizone-tutorial-next-2", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="3d-lipizone-tutorial-popover-2",
+                target="view-all-lipizones-btn",
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Lipizones Selection ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Lipizones Hierarchy", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                ".",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="3d-lipizone-tutorial-next-3", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="3d-lipizone-tutorial-popover-3",
+                target="3d-lipizones-treemap-container",  # dropdown menu
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Add Selection Button ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Add Selection", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                ".",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="3d-lipizone-tutorial-next-4", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="3d-lipizone-tutorial-popover-4",
+                target="3d-lipizones-add-selection-button",  # dropdown menu
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Clear Selection Button ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Clear Selection", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                ".",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                             dbc.Button("Finish", id="3d-lipizone-tutorial-finish", color="success", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="3d-lipizone-tutorial-popover-5",
+                target="3d-lipizones-clear-selection-button",  # dropdown menu
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
             ),
         ],
     )
@@ -547,3 +722,74 @@ def update_3d_visualization(
             f"An error occurred: {str(e)}", 
             style={"color": "white", "textAlign": "center", "marginTop": "20%"}
         ) 
+
+# Use clientside callback for tutorial step updates
+app.clientside_callback(
+    """
+    function(start, next1, next2, next3, next4, finish) {
+        const ctx = window.dash_clientside.callback_context;
+        if (!ctx.triggered.length) {
+            return window.dash_clientside.no_update;
+        }
+        const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
+        if (trigger_id === '3d-lipizone-start-tutorial-btn' && start) {
+            return 1;
+        } else if (trigger_id === '3d-lipizone-tutorial-next-1' && next1) {
+            return 2;
+        } else if (trigger_id === '3d-lipizone-tutorial-next-2' && next2) {
+            return 3;
+        } else if (trigger_id === '3d-lipizone-tutorial-next-3' && next3) {
+            return 4;
+        } else if (trigger_id === '3d-lipizone-tutorial-next-4' && next4) {
+            return 5;
+        } else if (trigger_id === '3d-lipizone-tutorial-finish' && finish) {
+            return 0;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("3d-lipizone-tutorial-step", "data"),
+    [Input("3d-lipizone-start-tutorial-btn", "n_clicks"),
+     Input("3d-lipizone-tutorial-next-1", "n_clicks"),
+     Input("3d-lipizone-tutorial-next-2", "n_clicks"),
+     Input("3d-lipizone-tutorial-next-3", "n_clicks"),
+     Input("3d-lipizone-tutorial-next-4", "n_clicks"),
+     Input("3d-lipizone-tutorial-finish", "n_clicks")],
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for popover visibility
+app.clientside_callback(
+    """
+    function(step) {
+        if (step === undefined || step === null) {
+            return [false, false, false, false, false];
+        }
+        return [
+            step === 1,
+            step === 2,
+            step === 3,
+            step === 4,
+            step === 5,
+        ];
+    }
+    """,
+    [Output(f"3d-lipizone-tutorial-popover-{i}", "is_open") for i in range(1, 6)],
+    Input("3d-lipizone-tutorial-step", "data"),
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for tutorial completion
+app.clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            return true;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("3d-lipizone-tutorial-completed", "data"),
+    Input("3d-lipizone-tutorial-finish", "n_clicks"),
+    prevent_initial_call=True,
+)

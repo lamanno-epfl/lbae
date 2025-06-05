@@ -155,13 +155,13 @@ def return_layout(basic_config, slice_index):
                     html.H4(
                         "Visualize Lipizones",
                         style={
-                        "color": "white",
-                        "marginBottom": "15px",
-                        "fontSize": "1.2em",
-                        "fontWeight": "500",
-                        "position": "absolute",
-                        "left": "1%",
-                        "top": "1em",
+                            "color": "white",
+                            "marginBottom": "15px",
+                            "fontSize": "1.2em",
+                            "fontWeight": "500",
+                            "position": "absolute",
+                            "left": "1%",
+                            "top": "1em",
                         }
                     ),
                     # Left panel with treemap and controls
@@ -278,7 +278,7 @@ def return_layout(basic_config, slice_index):
                     html.Div(
                         style={
                             "left": "25%",
-                            "top": "3rem",
+                            "top": "3.5em",
                             "position": "fixed",
                             "z-index": 1000,
                             "display": "flex",

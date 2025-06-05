@@ -24,7 +24,7 @@ import os
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
-from app import app, figures, data, cache_flask, atlas, lipizone_data, celltype_data
+from app import app, figures, data, atlas, celltype_data
 
 # ==================================================================================================
 # --- Data
@@ -70,14 +70,44 @@ def return_layout(basic_config, slice_index):
             children=[
                 # Add a store component to hold the slider style
                 dcc.Store(id="page-6tris-main-slider-style", data={"display": "block"}),
-                # Add store components for genes
-                dcc.Store(id="page-6tris-selected-gene-1", data=-1),
-                dcc.Store(id="page-6tris-selected-gene-2", data=-1),
-                dcc.Store(id="page-6tris-selected-gene-3", data=-1),
-                # Add stores for gene expression thresholds
-                dcc.Store(id="page-6tris-gene-threshold-1", data=0),
-                dcc.Store(id="page-6tris-gene-threshold-2", data=0),
-                dcc.Store(id="page-6tris-gene-threshold-3", data=0),
+                dcc.Store(id="lipigene-tutorial-step", data=0),
+                dcc.Store(id="lipigene-tutorial-completed", storage_type="local", data=False),
+
+                # Add tutorial button under welcome text
+                html.Div(
+                    id="lipigene-start-tutorial-target",
+                    style={
+                        "position": "fixed",
+                        "top": "0.9em",
+                        "left": "20.3em",
+                        "zIndex": 2100,
+                        # "width": "10rem",
+                        # "height": "3rem",
+                        "backgroundColor": "transparent",
+                        "border": "3px solid #00bfff",
+                        "borderRadius": "4px",
+                        # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
+                        "cursor": "pointer",
+                    },
+                    children=[
+                        dbc.Button(
+                            "Start Tutorial",
+                            id="lipigene-start-tutorial-btn",
+                            color="info",
+                            size="sm",
+                            className="tutorial-start-btn",
+                            style={
+                                # "width": "100%",
+                                # "height": "100%",
+                                "borderRadius": "4px",
+                                "backgroundColor": "transparent",
+                                "border": "none",
+                                # "color": "#00ffff",
+                                "fontWeight": "bold",
+                            }
+                        )
+                    ]
+                ),
                 html.Div(
                     className="fixed-aspect-ratio",
                     style={
@@ -112,7 +142,7 @@ def return_layout(basic_config, slice_index):
                             figure=figures.build_lipid_heatmap_from_image(
                                 figures.compute_image_lipids_genes(
                                     all_selected_lipids=["HexCer 42:2;O2"],
-                                    all_selected_genes=["Xkr4=ENSMUSG00000051951"],
+                                    all_selected_genes=["Actr1b=ENSMUSG00000037351"],
                                     slice_index=slice_index,
                                     df_genes=df_genes,
                                     rgb_mode_lipids=False,
@@ -262,7 +292,7 @@ def return_layout(basic_config, slice_index):
                                         dmc.MultiSelect(
                                             id="page-6tris-dropdown-genes",
                                             data=get_gene_options(slice_index),# data.return_gene_options(),
-                                            value=[],
+                                            value=["Actr1b=ENSMUSG00000037351"],
                                             searchable=True,
                                             nothingFound="No gene found",
                                             radius="md",
@@ -480,6 +510,180 @@ def return_layout(basic_config, slice_index):
                             ],
                         ),
                         dcc.Download(id="page-6tris-download-data"),
+
+                        
+                        # Tutorial Popovers with adjusted positions
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader(
+                                    "Lipid vs Genes Tutorial",
+                                    style={"fontWeight": "bold"}
+                                ),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            ".",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipigene-tutorial-next-1", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipigene-tutorial-popover-1",
+                            target="lipigene-start-tutorial-target",
+                            placement="right",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            }
+                        ),
+                        # --- Lipid Selection ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Lipid Selection", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Select up to 3 lipids from the dropdown menu. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipigene-tutorial-next-2", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipigene-tutorial-popover-2",
+                            target="page-6tris-dropdown-lipids",  # dropdown menu
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- RGB Mode ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("RGB Mode", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Activate the RGB mode to visualize the lipids as RGB images. Each lipid is displayed in a different color. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipigene-tutorial-next-3", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipigene-tutorial-popover-3",
+                            target="page-6tris-rgb-switch",  # rgb switch
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- Gene Selection ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Gene Selection", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Select up to 3 genes from the dropdown menu. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipigene-tutorial-next-4", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipigene-tutorial-popover-4",
+                            target="page-6tris-dropdown-genes",  # dropdown menu
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- Gene Filtering ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Filtering", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Filter each gene by its minimum expression level. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipigene-tutorial-next-5", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipigene-tutorial-popover-5",
+                            target="page-6tris-gene-slider-1",  # gene slider
+                            placement="left",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+
+                        # --- Annotations ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipigene-tutorial-next-6", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipigene-tutorial-popover-6",
+                            target="page-6tris-toggle-annotations",  # annotations switch
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- Brain Slider ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Finish", id="lipigene-tutorial-finish", color="success", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipigene-tutorial-popover-7",
+                            target="main-paper-slider",  # slider
+                            placement="top",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
                     ],
                 ),
             ],
@@ -1069,7 +1273,6 @@ def page_6tris_auto_toggle_rgb(
     Input("page-6tris-badge-gene-2", "class_name"),
     Input("page-6tris-badge-gene-3", "class_name"),
     Input("main-slider", "data"),
-    Input("page-6tris-rgb-switch", "checked"),
     State("page-6tris-selected-gene-1", "data"),
     State("page-6tris-selected-gene-2", "data"),
     State("page-6tris-selected-gene-3", "data"),
@@ -1084,7 +1287,6 @@ def page_6tris_add_toast_selection_genes(
     class_name_badge_2,
     class_name_badge_3,
     slice_index,
-    rgb_switch,
     gene_1_index,
     gene_2_index,
     gene_3_index,
@@ -1140,7 +1342,7 @@ def page_6tris_add_toast_selection_genes(
         }
     
     # Initialize with no genes if no selection exists
-    if len(id_input) == 0 or (id_input == "page-6tris-dropdown-genes" and l_gene_names is None):
+    if (l_gene_names is None) or (isinstance(l_gene_names, list) and len(l_gene_names) == 0):
         return (
             "", "", "",  # badge texts
             -1, -1, -1,  # gene indices
@@ -1149,26 +1351,16 @@ def page_6tris_add_toast_selection_genes(
             *[prop for _ in range(3) for prop in default_slider_props.values()],  # slider props x3
             []  # dropdown value
         )
-
-    # Handle gene deletion
-    if l_gene_names is not None and len(l_gene_names) < len([x for x in [gene_1_index, gene_2_index, gene_3_index] if x != -1]):
-        logging.info("One or several genes have been deleted. Reorganizing gene badges.")
-        
+    # If l_gene_names is a non-empty list, initialize badges, indices, and sliders for those genes
+    if isinstance(l_gene_names, list) and len(l_gene_names) > 0:
         # Reset all slots
         header_1, header_2, header_3 = "", "", ""
         gene_1_index, gene_2_index, gene_3_index = -1, -1, -1
         class_name_badge_1, class_name_badge_2, class_name_badge_3 = "d-none mt-2", "d-none mt-4", "d-none mt-4"
         class_name_slider_1, class_name_slider_2, class_name_slider_3 = "d-none mt-2", "d-none mt-2", "d-none mt-2"
-        
-        # Get slider props for remaining genes
-        slider_props = []
-        for i in range(3):
-            slider_props.append(default_slider_props)
-        
-        # Fill slots in order with remaining genes
+        slider_props = [default_slider_props, default_slider_props, default_slider_props]
         for idx, gene_name in enumerate(l_gene_names):
             gene_idx = available_genes.index(gene_name) if gene_name in available_genes else -1
-            
             if idx == 0 and gene_idx != -1:
                 header_1 = gene_name
                 gene_1_index = gene_idx
@@ -1187,7 +1379,6 @@ def page_6tris_add_toast_selection_genes(
                 class_name_badge_3 = "mt-4"
                 class_name_slider_3 = "mt-2"
                 slider_props[2] = get_gene_slider_props(gene_name)
-            
         return (
             header_1, header_2, header_3,
             gene_1_index, gene_2_index, gene_3_index,
@@ -1198,128 +1389,6 @@ def page_6tris_add_toast_selection_genes(
             slider_props[2]["min"], slider_props[2]["max"], slider_props[2]["value"], slider_props[2]["marks"],
             l_gene_names
         )
-
-    # Handle new gene addition or slice change
-    if (id_input == "page-6tris-dropdown-genes" and l_gene_names is not None) or id_input == "main-slider":
-        # If a new slice has been selected
-        if id_input == "main-slider":
-            # Get new available genes for this slice
-            available_genes = get_gene_options(slice_index)
-            
-            # Update existing gene selections based on new available genes
-            updated_headers = []
-            updated_indices = []
-            updated_badge_classes = []
-            updated_slider_classes = []
-            updated_slider_props = []
-            
-            for i, header in enumerate([header_1, header_2, header_3]):
-                if header and header in available_genes:
-                    gene_idx = available_genes.index(header)
-                    updated_headers.append(header)
-                    updated_indices.append(gene_idx)
-                    updated_badge_classes.append("mt-2" if i == 0 else "mt-4")
-                    updated_slider_classes.append("mt-2")
-                    updated_slider_props.append(get_gene_slider_props(header))
-                else:
-                    updated_headers.append("")
-                    updated_indices.append(-1)
-                    updated_badge_classes.append("d-none mt-2" if i == 0 else "d-none mt-4")
-                    updated_slider_classes.append("d-none mt-2")
-                    updated_slider_props.append(default_slider_props)
-            
-            # Fill in any missing slider props with defaults
-            while len(updated_slider_props) < 3:
-                updated_slider_props.append(default_slider_props)
-            
-            return (
-                updated_headers[0], updated_headers[1], updated_headers[2],
-                updated_indices[0], updated_indices[1], updated_indices[2],
-                updated_badge_classes[0], updated_badge_classes[1], updated_badge_classes[2],
-                updated_slider_classes[0], updated_slider_classes[1], updated_slider_classes[2],
-                updated_slider_props[0]["min"], updated_slider_props[0]["max"], updated_slider_props[0]["value"], updated_slider_props[0]["marks"],
-                updated_slider_props[1]["min"], updated_slider_props[1]["max"], updated_slider_props[1]["value"], updated_slider_props[1]["marks"],
-                updated_slider_props[2]["min"], updated_slider_props[2]["max"], updated_slider_props[2]["value"], updated_slider_props[2]["marks"],
-                [h for h in updated_headers if h]
-            )
-
-        # If genes have been added from dropdown menu
-        elif id_input == "page-6tris-dropdown-genes":
-            # Get the latest selected gene from dropdown
-            if l_gene_names and len(l_gene_names) > 0:
-                new_gene = l_gene_names[-1]
-                
-                # Check if gene exists in available genes for this slice
-                if new_gene in available_genes:
-                    gene_idx = available_genes.index(new_gene)
-                    
-                    # Get slider properties for the new gene
-                    new_gene_slider_props = get_gene_slider_props(new_gene)
-                    
-                    # Initialize with existing slider props
-                    slider_props = [
-                        default_slider_props,
-                        default_slider_props,
-                        default_slider_props
-                    ]
-                    
-                    # If gene already exists, update its index
-                    if header_1 == new_gene:
-                        gene_1_index = gene_idx
-                        slider_props[0] = new_gene_slider_props
-                    elif header_2 == new_gene:
-                        gene_2_index = gene_idx
-                        slider_props[1] = new_gene_slider_props
-                    elif header_3 == new_gene:
-                        gene_3_index = gene_idx
-                        slider_props[2] = new_gene_slider_props
-                    # If it's a new gene, fill the first available slot
-                    else:
-                        if class_name_badge_1 == "d-none mt-2":
-                            header_1 = new_gene
-                            gene_1_index = gene_idx
-                            class_name_badge_1 = "mt-2"
-                            class_name_slider_1 = "mt-2"
-                            slider_props[0] = new_gene_slider_props
-                        elif class_name_badge_2 == "d-none mt-4":
-                            header_2 = new_gene
-                            gene_2_index = gene_idx
-                            class_name_badge_2 = "mt-4"
-                            class_name_slider_2 = "mt-2"
-                            slider_props[1] = new_gene_slider_props
-                        elif class_name_badge_3 == "d-none mt-4":
-                            header_3 = new_gene
-                            gene_3_index = gene_idx
-                            class_name_badge_3 = "mt-4"
-                            class_name_slider_3 = "mt-2"
-                            slider_props[2] = new_gene_slider_props
-                        else:
-                            logging.warning("More than 3 genes have been selected")
-                            return dash.no_update
-                            
-                    # Update slider classes based on badge classes
-                    class_name_slider_1 = "mt-2" if class_name_badge_1 in ["mt-2", "mt-4"] else "d-none mt-2"
-                    class_name_slider_2 = "mt-2" if class_name_badge_2 in ["mt-2", "mt-4"] else "d-none mt-2"
-                    class_name_slider_3 = "mt-2" if class_name_badge_3 in ["mt-2", "mt-4"] else "d-none mt-2"
-                    
-                    # Get slider properties for existing genes
-                    if header_1 and header_1 in available_genes and class_name_badge_1 in ["mt-2", "mt-4"]:
-                        slider_props[0] = get_gene_slider_props(header_1)
-                    if header_2 and header_2 in available_genes and class_name_badge_2 in ["mt-2", "mt-4"]:
-                        slider_props[1] = get_gene_slider_props(header_2) 
-                    if header_3 and header_3 in available_genes and class_name_badge_3 in ["mt-2", "mt-4"]:
-                        slider_props[2] = get_gene_slider_props(header_3)
-
-                    return (
-                        header_1, header_2, header_3,
-                        gene_1_index, gene_2_index, gene_3_index,
-                        class_name_badge_1, class_name_badge_2, class_name_badge_3,
-                        class_name_slider_1, class_name_slider_2, class_name_slider_3,
-                        slider_props[0]["min"], slider_props[0]["max"], slider_props[0]["value"], slider_props[0]["marks"],
-                        slider_props[1]["min"], slider_props[1]["max"], slider_props[1]["value"], slider_props[1]["marks"],
-                        slider_props[2]["min"], slider_props[2]["max"], slider_props[2]["value"], slider_props[2]["marks"],
-                        l_gene_names
-                    )
 
     return dash.no_update
 
@@ -1352,3 +1421,82 @@ clientside_callback(
     Input("page-6tris-download-image-button", "n_clicks"),
 )
 """This clientside callback is used to download the current heatmap."""
+
+# Use clientside callback for tutorial step updates
+app.clientside_callback(
+    """
+    function(start, next1, next2, next3, next4, next5, next6, finish) {
+        const ctx = window.dash_clientside.callback_context;
+        if (!ctx.triggered.length) {
+            return window.dash_clientside.no_update;
+        }
+        const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
+        if (trigger_id === 'lipigene-start-tutorial-btn' && start) {
+            return 1;
+        } else if (trigger_id === 'lipigene-tutorial-next-1' && next1) {
+            return 2;
+        } else if (trigger_id === 'lipigene-tutorial-next-2' && next2) {
+            return 3;
+        } else if (trigger_id === 'lipigene-tutorial-next-3' && next3) {
+            return 4;
+        } else if (trigger_id === 'lipigene-tutorial-next-4' && next4) {
+            return 5;
+        } else if (trigger_id === 'lipigene-tutorial-next-5' && next5) {
+            return 6;
+        } else if (trigger_id === 'lipigene-tutorial-next-6' && next6) {
+            return 7;
+        } else if (trigger_id === 'lipigene-tutorial-finish' && finish) {
+            return 0;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("lipigene-tutorial-step", "data"),
+    [Input("lipigene-start-tutorial-btn", "n_clicks"),
+     Input("lipigene-tutorial-next-1", "n_clicks"),
+     Input("lipigene-tutorial-next-2", "n_clicks"),
+     Input("lipigene-tutorial-next-3", "n_clicks"),
+     Input("lipigene-tutorial-next-4", "n_clicks"),
+     Input("lipigene-tutorial-next-5", "n_clicks"),
+     Input("lipigene-tutorial-next-6", "n_clicks"),
+     Input("lipigene-tutorial-finish", "n_clicks")],
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for popover visibility
+app.clientside_callback(
+    """
+    function(step) {
+        if (step === undefined || step === null) {
+            return [false, false, false, false, false, false, false];
+        }
+        return [
+            step === 1,
+            step === 2,
+            step === 3,
+            step === 4,
+            step === 5,
+            step === 6,
+            step === 7,
+        ];
+    }
+    """,
+    [Output(f"lipigene-tutorial-popover-{i}", "is_open") for i in range(1, 8)],
+    Input("lipigene-tutorial-step", "data"),
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for tutorial completion
+app.clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            return true;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("lipigene-tutorial-completed", "data"),
+    Input("lipigene-tutorial-finish", "n_clicks"),
+    prevent_initial_call=True,
+)

@@ -59,7 +59,44 @@ def return_layout(basic_config, slice_index):
             "background-color": "#1d1c1f",
         },
         children=[
-            # Left panel for selection controls
+            dcc.Store(id="lipizone-tutorial-step", data=0),
+            dcc.Store(id="lipizone-tutorial-completed", storage_type="local", data=False),
+            # Add tutorial button under welcome text
+            html.Div(
+                id="lipizone-start-tutorial-target",
+                style={
+                    "position": "fixed",
+                    "top": "0.9em",
+                    "left": "20.3em",
+                    "zIndex": 2100,
+                    # "width": "10rem",
+                    # "height": "3rem",
+                    "backgroundColor": "transparent",
+                    "border": "3px solid #00bfff",
+                    "borderRadius": "4px",
+                    # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
+                    "cursor": "pointer",
+                },
+                children=[
+                    dbc.Button(
+                        "Start Tutorial",
+                        id="lipizone-start-tutorial-btn",
+                        color="info",
+                        size="sm",
+                        className="tutorial-start-btn",
+                        style={
+                            # "width": "100%",
+                            # "height": "100%",
+                            "borderRadius": "4px",
+                            "backgroundColor": "transparent",
+                            "border": "none",
+                            # "color": "#00ffff",
+                            "fontWeight": "bold",
+                        }
+                    )
+                ]
+            ),
+
             html.Div(
                 style={
                     "position": "absolute", 
@@ -75,23 +112,35 @@ def return_layout(basic_config, slice_index):
                 children=[
                     # Title
                     html.H4(
-                        "Select Lipizones for ID Cards",
+                        "Lipizones ID Cards",
                         style={
-                            "color": "white",
-                            "marginBottom": "15px",
-                            "fontSize": "1.2em",
-                            "fontWeight": "500",
+                        "color": "white",
+                        "marginBottom": "15px",
+                        "fontSize": "1.2em",
+                        "fontWeight": "500",
+                        "position": "absolute",
+                        "left": "1%",
+                        "top": "1em",
                         }
                     ),
                     # Treemap visualization
-                    dcc.Graph(
-                        id="id-cards-lipizones-treemap",
-                        figure=lipizone_data.create_treemap_figure_lipizones(df_treemap, node_colors),
+                    html.Div(
+                        id="lipizone-treemap-container",  # Add this ID
                         style={
                             "height": "40%",
                             "background-color": "#1d1c1f",
                         },
-                        config={'displayModeBar': False}
+                        children=[
+                            dcc.Graph(
+                                id="id-cards-lipizones-treemap",
+                                figure=lipizone_data.create_treemap_figure_lipizones(df_treemap, node_colors),
+                                style={
+                                    "height": "40%",
+                                    "background-color": "#1d1c1f",
+                                },
+                                config={'displayModeBar': False}
+                            ),
+                        ]
                     ),
                     # Current selection text
                     html.Div(

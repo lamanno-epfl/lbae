@@ -52,7 +52,7 @@ def return_layout(basic_config, slice_index):
 
                 # Add tutorial button under welcome text
                 html.Div(
-                    id="peak-start-tutorial-target",
+                    id="lipid-start-tutorial-target",
                     style={
                         "position": "fixed",
                         "top": "0.9em",
@@ -69,7 +69,7 @@ def return_layout(basic_config, slice_index):
                     children=[
                         dbc.Button(
                             "Start Tutorial",
-                            id="peak-start-tutorial-btn",
+                            id="lipid-start-tutorial-btn",
                             color="info",
                             size="sm",
                             className="tutorial-start-btn",
@@ -346,179 +346,179 @@ def return_layout(basic_config, slice_index):
                             ],
                         ),
                         dcc.Download(id="page-2-download-data"),
-                    ],
-                ),
 
-                # Tutorial Popovers with adjusted positions
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader(
-                            "Lipid Exploration Tutorial",
-                            style={"fontWeight": "bold"}
-                        ),
-                        dbc.PopoverBody(
+                        # Tutorial Popovers with adjusted positions
+                        dbc.Popover(
                             [
-                                html.P(
-                                    "This page is used to visualize lipids in the Allen Brain Atlas. Click 'Next' to continue.",
-                                    style={"color": "#333", "marginBottom": "15px"}
+                                dbc.PopoverHeader(
+                                    "Lipid Exploration Tutorial",
+                                    style={"fontWeight": "bold"}
                                 ),
-                                dbc.Button("Next", id="lipid-tutorial-next-1", color="primary", size="sm", className="float-end")
-                            ]
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "This page is used to visualize lipids in the Allen Brain Atlas. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipid-tutorial-next-1", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipid-tutorial-popover-1",
+                            target="lipid-start-tutorial-target",
+                            placement="right",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            }
+                        ),
+                        # --- Lipid Selection ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Lipid Selection", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Select up to 3 lipids from the dropdown menu. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipid-tutorial-next-2", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipid-tutorial-popover-2",
+                            target="page-2-dropdown-lipids",  # dropdown menu
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- RGB Mode ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("RGB Mode", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Activate the RGB mode to visualize the lipids as RGB images. Each lipid is displayed in a different color. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipid-tutorial-next-3", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipid-tutorial-popover-3",
+                            target="page-2-rgb-switch",  # rgb switch
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- One vs All Sections ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("One vs All Sections", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Decide whether to display the selected lipids in one section or all sections. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipid-tutorial-next-4", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipid-tutorial-popover-4",
+                            target="page-2-sections-mode",  # sections mode switch
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- Annotations ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipid-tutorial-next-5", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipid-tutorial-popover-5",
+                            target="page-2-toggle-annotations",  # annotations switch
+                            placement="bottom",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- Brain Slider ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Next", id="lipid-tutorial-next-6", color="primary", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipid-tutorial-popover-6",
+                            target="main-paper-slider",  # slider
+                            placement="top",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
+                        ),
+                        # --- Brain Chips ---
+                        dbc.Popover(
+                            [
+                                dbc.PopoverHeader("Different Mouse Brains", style={"fontWeight": "bold"}),
+                                dbc.PopoverBody(
+                                    [
+                                        html.P(
+                                            "Switch from one mouse brain to another to analyse the differences. Click 'Next' to continue.",
+                                            style={"color": "#333", "marginBottom": "15px"}
+                                        ),
+                                        dbc.Button("Finish", id="lipid-tutorial-finish", color="success", size="sm", className="float-end")
+                                    ]
+                                ),
+                            ],
+                            id="lipid-tutorial-popover-7",
+                            target="main-brain",  # brain switch
+                            placement="left",
+                            is_open=False,
+                            style={
+                                "zIndex": 9999,
+                                "border": "2px solid #00bfff",
+                                "boxShadow": "0 0 15px 2px #00bfff"
+                            },
                         ),
                     ],
-                    id="lipid-tutorial-popover-1",
-                    target="lipid-start-tutorial-target",
-                    placement="right",
-                    is_open=False,
-                    style={
-                        "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
-                    }
-                ),
-                # --- Lipid Selection ---
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Lipid Selection", style={"fontWeight": "bold"}),
-                        dbc.PopoverBody(
-                            [
-                                html.P(
-                                    "Select up to 3 lipids from the dropdown menu. Click 'Next' to continue.",
-                                    style={"color": "#333", "marginBottom": "15px"}
-                                ),
-                                dbc.Button("Next", id="lipid-tutorial-next-2", color="primary", size="sm", className="float-end")
-                            ]
-                        ),
-                    ],
-                    id="lipid-tutorial-popover-2",
-                    target="page-2-dropdown-lipids",  # dropdown menu
-                    placement="bottom",
-                    is_open=False,
-                    style={
-                        "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
-                    },
-                ),
-                # --- RGB Mode ---
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("RGB Mode", style={"fontWeight": "bold"}),
-                        dbc.PopoverBody(
-                            [
-                                html.P(
-                                    "Activate the RGB mode to visualize the lipids as RGB images. Each lipid is displayed in a different color. Click 'Next' to continue.",
-                                    style={"color": "#333", "marginBottom": "15px"}
-                                ),
-                                dbc.Button("Next", id="lipid-tutorial-next-3", color="primary", size="sm", className="float-end")
-                            ]
-                        ),
-                    ],
-                    id="lipid-tutorial-popover-3",
-                    target="page-2-rgb-switch",  # rgb switch
-                    placement="bottom",
-                    is_open=False,
-                    style={
-                        "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
-                    },
-                ),
-                # --- One vs All Sections ---
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("One vs All Sections", style={"fontWeight": "bold"}),
-                        dbc.PopoverBody(
-                            [
-                                html.P(
-                                    "Decide whether to display the selected lipids in one section or all sections. Click 'Next' to continue.",
-                                    style={"color": "#333", "marginBottom": "15px"}
-                                ),
-                                dbc.Button("Next", id="lipid-tutorial-next-4", color="primary", size="sm", className="float-end")
-                            ]
-                        ),
-                    ],
-                    id="lipid-tutorial-popover-4",
-                    target="page-2-sections-mode",  # sections mode switch
-                    placement="bottom",
-                    is_open=False,
-                    style={
-                        "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
-                    },
-                ),
-                # --- Annotations ---
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
-                        dbc.PopoverBody(
-                            [
-                                html.P(
-                                    "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
-                                    style={"color": "#333", "marginBottom": "15px"}
-                                ),
-                                dbc.Button("Next", id="lipid-tutorial-next-5", color="primary", size="sm", className="float-end")
-                            ]
-                        ),
-                    ],
-                    id="lipid-tutorial-popover-5",
-                    target="page-2-toggle-annotations",  # annotations switch
-                    placement="bottom",
-                    is_open=False,
-                    style={
-                        "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
-                    },
-                ),
-                # --- Brain Slider ---
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
-                        dbc.PopoverBody(
-                            [
-                                html.P(
-                                    "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
-                                    style={"color": "#333", "marginBottom": "15px"}
-                                ),
-                                dbc.Button("Next", id="lipid-tutorial-next-6", color="primary", size="sm", className="float-end")
-                            ]
-                        ),
-                    ],
-                    id="lipid-tutorial-popover-6",
-                    target="main-paper-slider",  # slider
-                    placement="top",
-                    is_open=False,
-                    style={
-                        "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
-                    },
-                ),
-                # --- Brain Chips ---
-                dbc.Popover(
-                    [
-                        dbc.PopoverHeader("Different Mouse Brains", style={"fontWeight": "bold"}),
-                        dbc.PopoverBody(
-                            [
-                                html.P(
-                                    "Switch from one mouse brain to another to analyse the differences. Click 'Next' to continue.",
-                                    style={"color": "#333", "marginBottom": "15px"}
-                                ),
-                                dbc.Button("Finish", id="lipid-tutorial-finish", color="success", size="sm", className="float-end")
-                            ]
-                        ),
-                    ],
-                    id="lipid-tutorial-popover-7",
-                    target="main-brain",  # brain switch
-                    placement="left",
-                    is_open=False,
-                    style={
-                        "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
-                    },
                 ),
             ],
         ),

@@ -199,7 +199,7 @@ def return_layout(basic_config, slice_index):
                     dmc.Button(
                         "View All Lipizones",
                         id="view-all-lipizones-btn",
-                        color="blue",
+                        color="cyan",
                         style={"width": "100%", "marginTop": "1.5em"},
                     ),
                 ],

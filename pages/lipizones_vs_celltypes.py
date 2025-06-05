@@ -1,7 +1,7 @@
 # Copyright (c) 2022, Colas Droin. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-""" This file contains the page used to select and visualize lipids according to pre-existing 
+"""This file contains the page used to select and visualize lipids according to pre-existing
 annotations, or directly using m/z ranges."""
 
 # ==================================================================================================
@@ -20,10 +20,12 @@ import dash_mantine_components as dmc
 import numpy as np
 from tqdm import tqdm
 from scipy.ndimage import gaussian_filter
+
 # threadpoolctl import threadpool_limits, threadpool_info
-#threadpool_limits(limits=8)
+# threadpool_limits(limits=8)
 import os
-os.environ['OMP_NUM_THREADS'] = '6'
+
+os.environ["OMP_NUM_THREADS"] = "6"
 import pickle
 import plotly.express as px
 
@@ -40,18 +42,22 @@ from modules.figures import is_light_color, black_aba_contours
 # --- Layout
 # ==================================================================================================
 
+
 def return_layout(basic_config, slice_index):
     """Return the layout for the page."""
     # Create treemap data
-    df_treemap_lipizones, node_colors_lipizones = lipizone_data.create_treemap_data_lipizones()
-    df_treemap_celltypes, node_colors_celltypes = celltype_data.create_treemap_data_celltypes(slice_index=slice_index)
+    df_treemap_lipizones, node_colors_lipizones = (
+        lipizone_data.create_treemap_data_lipizones()
+    )
+    df_treemap_celltypes, node_colors_celltypes = (
+        celltype_data.create_treemap_data_celltypes(slice_index=slice_index)
+    )
 
     # Get celltype pixel counts for the current slice
     section_data_celltypes = celltype_data.retrieve_section_data(int(slice_index))
     color_masks_celltypes = section_data_celltypes["color_masks"]
     celltype_pixel_counts = {
-        celltype: np.sum(mask) 
-        for celltype, mask in color_masks_celltypes.items()
+        celltype: np.sum(mask) for celltype, mask in color_masks_celltypes.items()
     }
     max_pixels = max(celltype_pixel_counts.values()) if celltype_pixel_counts else 1
 
@@ -65,6 +71,45 @@ def return_layout(basic_config, slice_index):
             "background-color": "#1d1c1f",
         },
         children=[
+            dcc.Store(id="lipicell-tutorial-step", data=0),
+            dcc.Store(
+                id="lipicell-tutorial-completed", storage_type="local", data=False
+            ),
+            # Add tutorial button under welcome text
+            html.Div(
+                id="lipicell-start-tutorial-target",
+                style={
+                    "position": "fixed",
+                    "top": "0.9em",
+                    "left": "21.3em",
+                    "zIndex": 2100,
+                    # "width": "10rem",
+                    # "height": "3rem",
+                    "backgroundColor": "transparent",
+                    "border": "3px solid #00bfff",
+                    "borderRadius": "4px",
+                    # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
+                    "cursor": "pointer",
+                },
+                children=[
+                    dbc.Button(
+                        "Start Tutorial",
+                        id="lipicell-start-tutorial-btn",
+                        color="info",
+                        size="sm",
+                        className="tutorial-start-btn",
+                        style={
+                            # "width": "100%",
+                            # "height": "100%",
+                            "borderRadius": "4px",
+                            "backgroundColor": "transparent",
+                            "border": "none",
+                            # "color": "#00ffff",
+                            "fontWeight": "bold",
+                        },
+                    )
+                ],
+            ),
             html.Div(
                 className="fixed-aspect-ratio",
                 style={"background-color": "#1d1c1f"},
@@ -72,13 +117,14 @@ def return_layout(basic_config, slice_index):
                     # Main visualization
                     dcc.Graph(
                         id="page-6bis-graph-heatmap-mz-selection",
-                        config=basic_config | {
+                        config=basic_config
+                        | {
                             "toImageButtonOptions": {
                                 "format": "png",
                                 "filename": "brain_lipizone_selection",
                                 "scale": 2,
                             },
-                            "scrollZoom": True
+                            "scrollZoom": True,
                         },
                         style={
                             "width": "60%",  # Reduced from 80% to give more balanced space
@@ -90,15 +136,25 @@ def return_layout(basic_config, slice_index):
                         },
                         figure=figures.build_lipid_heatmap_from_image(
                             figures.compute_image_lipizones_celltypes(
-                                {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []}, 
-                                {"names": list(celltype_data.celltype_to_color.keys()), "indices": []}, 
-                                slice_index
+                                {
+                                    "names": list(
+                                        lipizone_data.lipizone_to_color.keys()
+                                    ),
+                                    "indices": [],
+                                },
+                                {
+                                    "names": list(
+                                        celltype_data.celltype_to_color.keys()
+                                    ),
+                                    "indices": [],
+                                },
+                                slice_index,
                             ),
                             return_base64_string=False,
                             draw=False,
                             type_image="RGB",
                             return_go_image=False,
-                        )
+                        ),
                     ),
                     # Allen Brain Atlas switch (independent)
                     html.Div(
@@ -157,29 +213,32 @@ def return_layout(basic_config, slice_index):
                         },
                     ),
                     # Left panel with lipizones treemap and controls
+                    # Title
+                    html.H4(
+                        "Visualize Lipizones",
+                        style={
+                            "color": "white",
+                            "marginBottom": "15px",
+                            "fontSize": "1.2em",
+                            "fontWeight": "500",
+                            "position": "absolute",
+                            "left": "1%",
+                            "top": "1em",
+                        },
+                    ),
                     html.Div(
                         style={
                             "width": "20%",
                             "height": "95%",
                             "position": "absolute",
                             "left": "0",
-                            "top": "0",
+                            "top": "3em",
                             "background-color": "#1d1c1f",
                             "display": "flex",
                             "flexDirection": "column",
                             "padding": "10px",
                         },
                         children=[
-                            # Title
-                            html.H4(
-                                "Visualize Lipizones",
-                                style={
-                                    "color": "white",
-                                    "marginBottom": "15px",
-                                    "fontSize": "1.2em",
-                                    "fontWeight": "500",
-                                }
-                            ),
                             # Select All button
                             dmc.Button(
                                 children="Select All Lipizones",
@@ -193,17 +252,25 @@ def return_layout(basic_config, slice_index):
                                 },
                             ),
                             # Lipizones treemap visualization
-                            dcc.Graph(
-                                id="page-6bis-lipizones-treemap",
-                                figure=lipizone_data.create_treemap_figure_lipizones(
-                                    df_treemap_lipizones, 
-                                    node_colors_lipizones
-                                    ),
+                            html.Div(
+                                id="lipizone-treemap-container",  # Add this ID
                                 style={
                                     "height": "40%",
                                     "background-color": "#1d1c1f",
                                 },
-                                config={'displayModeBar': False}
+                                children=[
+                                    dcc.Graph(
+                                        id="page-6bis-lipizones-treemap",
+                                        figure=lipizone_data.create_treemap_figure_lipizones(
+                                            df_treemap_lipizones, node_colors_lipizones
+                                        ),
+                                        style={
+                                            "height": "100%",
+                                            "background-color": "#1d1c1f",
+                                        },
+                                        config={"displayModeBar": False},
+                                    ),
+                                ],
                             ),
                             # Current selection text
                             html.Div(
@@ -216,7 +283,9 @@ def return_layout(basic_config, slice_index):
                                     "borderRadius": "5px",
                                     "marginTop": "10px",
                                 },
-                                children=["Click on a node in the tree to select all lipizones under it"]
+                                children=[
+                                    "Click on a node in the tree to select all lipizones under it"
+                                ],
                             ),
                             # Add selection buttons group
                             html.Div(
@@ -252,7 +321,7 @@ def return_layout(basic_config, slice_index):
                                             "maxWidth": "50%",  # Ensure button doesn't exceed half the container
                                         },
                                     ),
-                                ]
+                                ],
                             ),
                             # Selected lipizones badges
                             html.Div(
@@ -266,36 +335,44 @@ def return_layout(basic_config, slice_index):
                                     "borderRadius": "5px",
                                 },
                                 children=[
-                                    html.H6("Selected Lipizones", style={"color": "white", "marginBottom": "10px"}),
-                                ]
+                                    html.H6(
+                                        "Selected Lipizones",
+                                        style={
+                                            "color": "white",
+                                            "marginBottom": "10px",
+                                        },
+                                    ),
+                                ],
                             ),
                         ],
                     ),
                     # Right panel with celltypes treemap and controls
+                    # Title
+                    html.H4(
+                        "Visualize Cell Types",
+                        style={
+                            "color": "white",
+                            "marginBottom": "15px",
+                            "fontSize": "1.2em",
+                            "fontWeight": "500",
+                            "position": "absolute",
+                            "right": "1%",
+                            "top": "1em",
+                        },
+                    ),
                     html.Div(
                         style={
                             "width": "20%",
                             "height": "95%",
                             "position": "absolute",
                             "right": "0",
-                            "top": "0",
+                            "top": "3em",
                             "background-color": "#1d1c1f",
                             "display": "flex",
                             "flexDirection": "column",
                             "padding": "10px",
                         },
                         children=[
-                            # Title
-                            html.H4(
-                                "Visualize Cell Types",
-                                style={
-                                    "color": "white",
-                                    "marginBottom": "15px",
-                                    "fontSize": "1.2em",
-                                    "fontWeight": "500",
-                                    "textAlign": "right"  # Add right alignment
-                                }
-                            ),
                             # Select All button
                             dmc.Button(
                                 children="Select All Cell Types",
@@ -309,17 +386,25 @@ def return_layout(basic_config, slice_index):
                                 },
                             ),
                             # Celltypes treemap visualization
-                            dcc.Graph(
-                                id="page-6bis-celltypes-treemap",
-                                figure=celltype_data.create_treemap_figure_celltypes(
-                                    df_treemap_celltypes, 
-                                    node_colors_celltypes
-                                    ),
+                            html.Div(
+                                id="celltype-treemap-container",  # Add this ID
                                 style={
                                     "height": "40%",
                                     "background-color": "#1d1c1f",
                                 },
-                                config={'displayModeBar': False}
+                                children=[
+                                    dcc.Graph(
+                                        id="page-6bis-celltypes-treemap",
+                                        figure=celltype_data.create_treemap_figure_celltypes(
+                                            df_treemap_celltypes, node_colors_celltypes
+                                        ),
+                                        style={
+                                            "height": "100%",
+                                            "background-color": "#1d1c1f",
+                                        },
+                                        config={"displayModeBar": False},
+                                    ),
+                                ],
                             ),
                             # Current selection text
                             html.Div(
@@ -332,32 +417,10 @@ def return_layout(basic_config, slice_index):
                                     "borderRadius": "5px",
                                     "marginTop": "10px",
                                 },
-                                children=["Click on a node in the tree to select all cell types under it"]
+                                children=[
+                                    "Click on a node in the tree to select all cell types under it"
+                                ],
                             ),
-                            # Add pixel count filter slider
-                            html.Div([
-                                html.Label(
-                                    "Filter by minimum pixel count:",
-                                    style={
-                                        "color": "white",
-                                        "marginTop": "10px",  # Reduced from 20px
-                                        "marginBottom": "5px",  # Reduced from 10px
-                                    }
-                                ),
-                                dcc.Slider(
-                                    id="page-6bis-celltype-pixel-filter",
-                                    min=0,
-                                    max=max_pixels,
-                                    step=int(max_pixels/100),  # 100 steps
-                                    value=0,
-                                    marks={
-                                        '0': {'label': '0', 'style': {'color': 'white'}},
-                                        str(max_pixels): {'label': str(max_pixels), 'style': {'color': 'white'}}
-                                    },
-                                    tooltip={"placement": "bottom", "always_visible": True},
-                                    className="slider-white"
-                                ),
-                            ], style={"padding": "5px"}),  # Reduced from 10px
                             # Add selection buttons group
                             html.Div(
                                 style={
@@ -392,7 +455,7 @@ def return_layout(basic_config, slice_index):
                                             "maxWidth": "50%",  # Ensure button doesn't exceed half the container
                                         },
                                     ),
-                                ]
+                                ],
                             ),
                             # Selected celltypes badges
                             html.Div(
@@ -406,9 +469,51 @@ def return_layout(basic_config, slice_index):
                                     "borderRadius": "5px",
                                 },
                                 children=[
-                                    html.H6("Selected Cell Types", style={"color": "white", "marginBottom": "10px"}),
-                                ]
+                                    html.H6(
+                                        "Selected Cell Types",
+                                        style={
+                                            "color": "white",
+                                            "marginBottom": "10px",
+                                        },
+                                    ),
+                                ],
                             ),
+                            # Add pixel count filter slider
+                            html.Div(
+                                [
+                                    html.Label(
+                                        "Filter by minimum pixel count:",
+                                        style={
+                                            "color": "white",
+                                            "marginTop": "10px",  # Reduced from 20px
+                                            "marginBottom": "5px",  # Reduced from 10px
+                                        },
+                                    ),
+                                    dcc.Slider(
+                                        id="page-6bis-celltype-pixel-filter",
+                                        min=0,
+                                        max=max_pixels,
+                                        step=int(max_pixels / 100),  # 100 steps
+                                        value=0,
+                                        marks={
+                                            "0": {
+                                                "label": "0",
+                                                "style": {"color": "white"},
+                                            },
+                                            str(max_pixels): {
+                                                "label": str(max_pixels),
+                                                "style": {"color": "white"},
+                                            },
+                                        },
+                                        tooltip={
+                                            "placement": "bottom",
+                                            "always_visible": True,
+                                        },
+                                        className="slider-white",
+                                    ),
+                                ],
+                                style={"padding": "5px"},
+                            ),  # Reduced from 10px
                         ],
                     ),
                     # Controls at the bottom right
@@ -446,6 +551,392 @@ def return_layout(basic_config, slice_index):
                         ],
                     ),
                     dcc.Download(id="page-6bis-download-data"),
+                    # Tutorial Popovers with adjusted positions
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Lipizones vs Cell Types Tutorial",
+                                style={"fontWeight": "bold"},
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        ".",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-1",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-1",
+                        target="lipicell-start-tutorial-target",
+                        placement="right",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- All Lipizones Button ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "All Lipizones", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        "Default value.",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-2",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-2",
+                        target="page-6bis-select-all-lipizones-button",
+                        placement="right",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Lipizones Selection ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Lipizones Hierarchy", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        ".",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-3",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-3",
+                        target="lipizone-treemap-container",  # dropdown menu
+                        placement="right",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Add Selection Button ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Add Selection", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        ".",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-4",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-4",
+                        target="page-6bis-add-lipizone-selection-button",  # dropdown menu
+                        placement="right",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Clear Selection Button ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Clear Selection", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        ".",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-5",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-5",
+                        target="page-6bis-clear-lipizone-selection-button",  # dropdown menu
+                        placement="right",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Cell Types Selection ---
+                    # --- All Cell Types Button ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "All Cell Types", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        "Default value.",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-6",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-6",
+                        target="page-6bis-select-all-celltypes-button",
+                        placement="left",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Cell Types Selection ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Cell Types Hierarchy", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        "Check mackosko to blaim the un-interpretability, not our fault!",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-7",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-7",
+                        target="celltype-treemap-container",
+                        placement="left",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Add Selection Button ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Add Selection", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        ".",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-8",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-8",
+                        target="page-6bis-add-celltype-selection-button",  # dropdown menu
+                        placement="left",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Clear Selection Button ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Clear Selection", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        ".",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-9",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-9",
+                        target="page-6bis-clear-celltype-selection-button",  # dropdown menu
+                        placement="left",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Filter by Pixel Count ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Filter by Pixel Count", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        "Remove from the visualization cells with less than the selected amount of pixels pixels.",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-10",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-10",
+                        target="page-6bis-celltype-pixel-filter",  # dropdown menu
+                        placement="left",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Annotations ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Brain Anatomy", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="lipicell-tutorial-next-11",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-11",
+                        target="page-6bis-toggle-annotations",  # annotations switch
+                        placement="bottom",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
+                    # --- Brain Slider ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader(
+                                "Navigate Brain Slices", style={"fontWeight": "bold"}
+                            ),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                        style={"color": "#333", "marginBottom": "15px"},
+                                    ),
+                                    dbc.Button(
+                                        "Finish",
+                                        id="lipicell-tutorial-finish",
+                                        color="success",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        id="lipicell-tutorial-popover-12",
+                        target="main-paper-slider",  # slider
+                        placement="top",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff",
+                        },
+                    ),
                 ],
             ),
         ],
@@ -457,101 +948,127 @@ def return_layout(basic_config, slice_index):
 # --- Callbacks
 # ==================================================================================================
 
+
 @app.callback(
     Output("page-6bis-celltypes-treemap", "figure"),
     Input("main-slider", "data"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def update_celltype_treemap(slice_index):
     """Update the celltype treemap when the slice changes."""
     print("\n======== update_celltype_treemap =========")
     # Create new treemap data for celltypes with the current slice
-    df_treemap_celltypes, node_colors_celltypes = celltype_data.create_treemap_data_celltypes(slice_index=slice_index)
+    df_treemap_celltypes, node_colors_celltypes = (
+        celltype_data.create_treemap_data_celltypes(slice_index=slice_index)
+    )
     # Create and return the new figure
     return celltype_data.create_treemap_figure_celltypes(
-        df_treemap_celltypes, 
-        node_colors_celltypes
+        df_treemap_celltypes, node_colors_celltypes
     )
+
 
 @app.callback(
     Output("page-6bis-current-lipizone-treemap-selection", "data"),
     Output("page-6bis-current-lipizone-selection-text", "children"),
     Input("page-6bis-lipizones-treemap", "clickData"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def update_current_lipizone_selection(click_data):
     """Store the current treemap selection for lipizones."""
-    print("\n======== update_current_lipizone_selection =========")    
+    print("\n======== update_current_lipizone_selection =========")
     input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    
+
     if not click_data:
         return None, "Click on a node in the tree to select all lipizones under it"
-    
+
     clicked_label = click_data["points"][0]["label"]
     current_path = click_data["points"][0]["id"]
-    
+
     # Filter hierarchy based on the clicked node's path
     filtered = lipizone_data.df_hierarchy_lipizones.copy()
-    
+
     # Get the level of the clicked node
-    path_columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
-    
+    path_columns = [
+        "level_1_name",
+        "level_2_name",
+        "level_3_name",
+        "level_4_name",
+        "subclass_name",
+        "lipizone_names",
+    ]
+
     # Apply filters based on the entire path up to the clicked node
     for i, value in enumerate(current_path.split("/")):
         if i < len(path_columns):
             column = path_columns[i]
             filtered = filtered[filtered[column].astype(str) == str(value)]
-    
+
     # Get all lipizones under this node
     lipizones = sorted(filtered["lipizone_names"].unique())
-    
+
     if lipizones:
         return lipizones, f"Selected: {clicked_label} ({len(lipizones)} lipizones)"
-    
+
     return None, "Click on a node in the tree to select all lipizones under it"
+
 
 @app.callback(
     Output("page-6bis-current-celltype-treemap-selection", "data"),
     Output("page-6bis-current-celltype-selection-text", "children"),
     Input("page-6bis-celltypes-treemap", "clickData"),
     Input("main-slider", "data"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def update_current_celltype_selection(click_data, slice_index):
     """Store the current treemap selection for celltypes."""
     print("\n======== update_current_celltype_selection =========")
     input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    
+
     if not click_data:
         return None, "Click on a node in the tree to select all cell types under it"
-    
+
     clicked_label = click_data["points"][0]["label"]
     current_path = click_data["points"][0]["id"]
-    
-    celltype_in_section = list(celltype_data.retrieve_section_data(int(slice_index))['color_masks'].keys())
+
+    celltype_in_section = list(
+        celltype_data.retrieve_section_data(int(slice_index))["color_masks"].keys()
+    )
     # Filter the DataFrame
-    filtered = celltype_data.df_hierarchy_celltypes[celltype_data.df_hierarchy_celltypes["cell_type"].isin(celltype_in_section)]
-    
+    filtered = celltype_data.df_hierarchy_celltypes[
+        celltype_data.df_hierarchy_celltypes["cell_type"].isin(celltype_in_section)
+    ]
+
     # Get the level of the clicked node
-    path_columns = ['level_1', 'level_2', 'level_3', 'level_4', 'level_5', 
-                    'level_6', 'level_7', 'level_8', 'level_9', 'level_10', 
-                    'cell_type']
-    
+    path_columns = [
+        "level_1",
+        "level_2",
+        "level_3",
+        "level_4",
+        "level_5",
+        "level_6",
+        "level_7",
+        "level_8",
+        "level_9",
+        "level_10",
+        "cell_type",
+    ]
+
     # Apply filters based on the entire path up to the clicked node
     for i, value in enumerate(current_path.split("/")):
         if i < len(path_columns):
             column = path_columns[i]
             filtered = filtered[filtered[column].astype(str) == str(value)]
-    
+
     # Get all cell types under this node that are present in the current slice
     celltypes = sorted(filtered["cell_type"].unique())
-    
+
     if celltypes:
         return celltypes, f"Selected: {clicked_label} ({len(celltypes)} cell types)"
-    
+
     return None, "Click on a node in the tree to select all cell types under it"
+
 
 @app.callback(
     Output("page-6bis-all-selected-lipizones", "data"),
@@ -560,26 +1077,29 @@ def update_current_celltype_selection(click_data, slice_index):
     Input("page-6bis-clear-lipizone-selection-button", "n_clicks"),
     State("page-6bis-current-lipizone-treemap-selection", "data"),
     State("page-6bis-all-selected-lipizones", "data"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def handle_lipizone_selection_changes(
-    select_all_clicks, 
-    add_clicks, 
-    clear_clicks, 
-    current_selection, 
-    all_selected_lipizones):
+    select_all_clicks,
+    add_clicks,
+    clear_clicks,
+    current_selection,
+    all_selected_lipizones,
+):
     """Handle all lipizone selection changes."""
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update
-    
+
     # Get which button was clicked
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    
+
     # Handle select all button
     if triggered_id == "page-6bis-select-all-lipizones-button":
         all_lipizones = {"names": [], "indices": []}
-        for lipizone_name in lipizone_data.df_hierarchy_lipizones["lipizone_names"].unique():
+        for lipizone_name in lipizone_data.df_hierarchy_lipizones[
+            "lipizone_names"
+        ].unique():
             lipizone_indices = lipizone_data.df_hierarchy_lipizones.index[
                 lipizone_data.df_hierarchy_lipizones["lipizone_names"] == lipizone_name
             ].tolist()
@@ -587,34 +1107,36 @@ def handle_lipizone_selection_changes(
                 all_lipizones["names"].append(lipizone_name)
                 all_lipizones["indices"].extend(lipizone_indices[:1])
         return all_lipizones
-    
+
     # Handle clear button
     elif triggered_id == "page-6bis-clear-lipizone-selection-button":
         return {"names": [], "indices": []}
-    
+
     # Handle add button
     elif triggered_id == "page-6bis-add-lipizone-selection-button":
         if not current_selection:
             return all_selected_lipizones or {"names": [], "indices": []}
-        
+
         # Initialize all_selected_lipizones if it's empty
         all_selected_lipizones = all_selected_lipizones or {"names": [], "indices": []}
-        
+
         # Add each lipizone that isn't already selected
         for lipizone_name in current_selection:
             if lipizone_name not in all_selected_lipizones["names"]:
                 # Find the indices for this lipizone
                 lipizone_indices = lipizone_data.df_hierarchy_lipizones.index[
-                    lipizone_data.df_hierarchy_lipizones["lipizone_names"] == lipizone_name
+                    lipizone_data.df_hierarchy_lipizones["lipizone_names"]
+                    == lipizone_name
                 ].tolist()
-                
+
                 if lipizone_indices:
                     all_selected_lipizones["names"].append(lipizone_name)
                     all_selected_lipizones["indices"].extend(lipizone_indices[:1])
-        
+
         return all_selected_lipizones
-    
+
     return dash.no_update
+
 
 @app.callback(
     Output("page-6bis-all-selected-celltypes", "data"),
@@ -629,54 +1151,62 @@ def handle_lipizone_selection_changes(
     Input("page-6bis-celltype-pixel-filter", "value"),
     State("page-6bis-current-celltype-treemap-selection", "data"),
     State("page-6bis-all-selected-celltypes", "data"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def handle_celltype_selection_changes(
-    select_all_clicks, 
-    add_clicks, 
-    clear_clicks, 
+    select_all_clicks,
+    add_clicks,
+    clear_clicks,
     slice_index,
     min_pixels,
-    current_selection, 
-    all_selected_celltypes):
+    current_selection,
+    all_selected_celltypes,
+):
     """Handle all celltype selection changes."""
     ctx = dash.callback_context
     if not ctx.triggered:
-        return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
-    
+        return (
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
+        )
+
     # Get which input triggered the callback
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    
+
     # Get the available celltypes and their masks in the current slice
     section_data = celltype_data.retrieve_section_data(int(slice_index))
     color_masks = section_data["color_masks"]
-    
+
     # Calculate pixel counts for each celltype
     celltype_pixel_counts = {
-        celltype: np.sum(mask) 
-        for celltype, mask in color_masks.items()
+        celltype: np.sum(mask) for celltype, mask in color_masks.items()
     }
-    
+
     # Calculate max pixels for this slice
     max_pixels = max(celltype_pixel_counts.values()) if celltype_pixel_counts else 1
-    step = max(1, int(max_pixels/100))  # 100 steps
+    step = max(1, int(max_pixels / 100))  # 100 steps
     marks = {
-        '0': {'label': '0', 'style': {'color': 'white'}},
-        str(max_pixels): {'label': str(max_pixels), 'style': {'color': 'white'}}
+        "0": {"label": "0", "style": {"color": "white"}},
+        str(max_pixels): {"label": str(max_pixels), "style": {"color": "white"}},
     }
-    
+
     # Filter celltypes based on pixel count
     available_celltypes = [
-        celltype 
-        for celltype, count in celltype_pixel_counts.items() 
+        celltype
+        for celltype, count in celltype_pixel_counts.items()
         if count >= min_pixels
     ]
-    
+
     # If slice changed, reset slider to 0 and show all celltypes
     if triggered_id == "main-slider":
         # Filter the DataFrame
-        filtered_df = celltype_data.df_hierarchy_celltypes[celltype_data.df_hierarchy_celltypes["cell_type"].isin(available_celltypes)]
-        
+        filtered_df = celltype_data.df_hierarchy_celltypes[
+            celltype_data.df_hierarchy_celltypes["cell_type"].isin(available_celltypes)
+        ]
+
         # Create the all_celltypes dictionary with only celltypes from the current slice
         all_celltypes = {"names": [], "indices": []}
         for celltype_name in filtered_df["cell_type"].unique():
@@ -687,12 +1217,14 @@ def handle_celltype_selection_changes(
                 all_celltypes["names"].append(celltype_name)
                 all_celltypes["indices"].extend(celltype_indices[:1])
         return all_celltypes, max_pixels, step, marks, 0
-    
+
     # If slider value changed, filter current selection
     elif triggered_id == "page-6bis-celltype-pixel-filter":
         # Filter the DataFrame
-        filtered_df = celltype_data.df_hierarchy_celltypes[celltype_data.df_hierarchy_celltypes["cell_type"].isin(available_celltypes)]
-        
+        filtered_df = celltype_data.df_hierarchy_celltypes[
+            celltype_data.df_hierarchy_celltypes["cell_type"].isin(available_celltypes)
+        ]
+
         # Create the all_celltypes dictionary with only celltypes that meet the pixel threshold
         all_celltypes = {"names": [], "indices": []}
         for celltype_name in filtered_df["cell_type"].unique():
@@ -703,12 +1235,14 @@ def handle_celltype_selection_changes(
                 all_celltypes["names"].append(celltype_name)
                 all_celltypes["indices"].extend(celltype_indices[:1])
         return all_celltypes, max_pixels, step, marks, min_pixels
-    
+
     # Handle select all button
     elif triggered_id == "page-6bis-select-all-celltypes-button":
         # Filter the DataFrame
-        filtered_df = celltype_data.df_hierarchy_celltypes[celltype_data.df_hierarchy_celltypes["cell_type"].isin(available_celltypes)]
-        
+        filtered_df = celltype_data.df_hierarchy_celltypes[
+            celltype_data.df_hierarchy_celltypes["cell_type"].isin(available_celltypes)
+        ]
+
         # Create the all_celltypes dictionary with only celltypes that meet the pixel threshold
         all_celltypes = {"names": [], "indices": []}
         for celltype_name in filtered_df["cell_type"].unique():
@@ -719,34 +1253,50 @@ def handle_celltype_selection_changes(
                 all_celltypes["names"].append(celltype_name)
                 all_celltypes["indices"].extend(celltype_indices[:1])
         return all_celltypes, max_pixels, step, marks, min_pixels
-    
+
     # Handle clear button
     elif triggered_id == "page-6bis-clear-celltype-selection-button":
         return {"names": [], "indices": []}, max_pixels, step, marks, min_pixels
-    
+
     # Handle add button
     elif triggered_id == "page-6bis-add-celltype-selection-button":
         if not current_selection:
-            return all_selected_celltypes or {"names": [], "indices": []}, max_pixels, step, marks, min_pixels
-        
+            return (
+                all_selected_celltypes or {"names": [], "indices": []},
+                max_pixels,
+                step,
+                marks,
+                min_pixels,
+            )
+
         # Initialize all_selected_celltypes if it's empty
         all_selected_celltypes = all_selected_celltypes or {"names": [], "indices": []}
-        
+
         # Add each celltype that isn't already selected and meets the pixel threshold
         for celltype_name in current_selection:
-            if celltype_name not in all_selected_celltypes["names"] and celltype_name in available_celltypes:
+            if (
+                celltype_name not in all_selected_celltypes["names"]
+                and celltype_name in available_celltypes
+            ):
                 # Find the indices for this celltype
                 celltype_indices = celltype_data.df_hierarchy_celltypes.index[
                     celltype_data.df_hierarchy_celltypes["cell_type"] == celltype_name
                 ].tolist()
-                
+
                 if celltype_indices:
                     all_selected_celltypes["names"].append(celltype_name)
                     all_selected_celltypes["indices"].extend(celltype_indices[:1])
-        
+
         return all_selected_celltypes, max_pixels, step, marks, min_pixels
-    
-    return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
+
+    return (
+        dash.no_update,
+        dash.no_update,
+        dash.no_update,
+        dash.no_update,
+        dash.no_update,
+    )
+
 
 @app.callback(
     Output("page-6bis-graph-hover-text", "children"),
@@ -766,13 +1316,14 @@ def page_6_hover(hoverData, slice_index):
                 return "Undefined"
     return dash.no_update
 
+
 @app.callback(
     Output("page-6bis-graph-heatmap-mz-selection", "figure"),
     Input("main-slider", "data"),
     Input("page-6bis-all-selected-lipizones", "data"),
     Input("page-6bis-all-selected-celltypes", "data"),
     Input("page-6bis-toggle-annotations", "checked"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def page_6_plot_graph_heatmap_mz_selection(
     slice_index,
@@ -791,15 +1342,18 @@ def page_6_plot_graph_heatmap_mz_selection(
     input_id = ctx.triggered[0]["prop_id"].split(".")[1]
 
     # Handle annotations overlay
-    overlay = black_aba_contours(data.get_aba_contours(slice_index)) if annotations_checked else None
-    
+    overlay = (
+        black_aba_contours(data.get_aba_contours(slice_index))
+        if annotations_checked
+        else None
+    )
+
     # If annotations toggle was triggered, preserve current selections
     if triggered_id == "page-6bis-toggle-annotations":
-        lipizones_celltypes_image = figures.compute_image_lipizones_celltypes(  
-            all_selected_lipizones, 
-            all_selected_celltypes, 
-            slice_index)
-        
+        lipizones_celltypes_image = figures.compute_image_lipizones_celltypes(
+            all_selected_lipizones, all_selected_celltypes, slice_index
+        )
+
         fig = figures.build_lipid_heatmap_from_image(
             lipizones_celltypes_image,
             return_base64_string=False,
@@ -808,19 +1362,17 @@ def page_6_plot_graph_heatmap_mz_selection(
             return_go_image=False,
             overlay=overlay,
         )
-        
+
         return fig
-    
+
     # Handle other triggers (slider, selections, brain change)
     if (
-        (all_selected_lipizones and len(all_selected_lipizones.get("names", [])) > 0)
-        or (all_selected_celltypes and len(all_selected_celltypes.get("names", [])) > 0)
-    ):
+        all_selected_lipizones and len(all_selected_lipizones.get("names", [])) > 0
+    ) or (all_selected_celltypes and len(all_selected_celltypes.get("names", [])) > 0):
         lipizones_celltypes_image = figures.compute_image_lipizones_celltypes(
-            all_selected_lipizones, 
-            all_selected_celltypes, 
-            slice_index)
-            
+            all_selected_lipizones, all_selected_celltypes, slice_index
+        )
+
         fig = figures.build_lipid_heatmap_from_image(
             lipizones_celltypes_image,
             return_base64_string=False,
@@ -834,12 +1386,12 @@ def page_6_plot_graph_heatmap_mz_selection(
 
     else:
         # No selections, use default color for choroid plexus
-        hex_colors_to_highlight = ['#f75400']
+        hex_colors_to_highlight = ["#f75400"]
         fig = figures.build_lipid_heatmap_from_image(
             figures.compute_image_lipizones_celltypes(
-                {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []}, 
-                {"names": list(celltype_data.celltype_to_color.keys()), "indices": []}, 
-                slice_index
+                {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []},
+                {"names": list(celltype_data.celltype_to_color.keys()), "indices": []},
+                slice_index,
             ),
             return_base64_string=False,
             draw=False,
@@ -847,8 +1399,9 @@ def page_6_plot_graph_heatmap_mz_selection(
             return_go_image=False,
             overlay=overlay,
         )
-        
+
         return fig
+
 
 # Add callback to update badges
 @app.callback(
@@ -858,15 +1411,17 @@ def page_6_plot_graph_heatmap_mz_selection(
 def update_selected_lipizones_badges(all_selected_lipizones):
     """Update the badges showing selected lipizones with their corresponding colors."""
     # Get the count of selected lipizones
-    count = len(all_selected_lipizones.get("names", [])) if all_selected_lipizones else 0
-    
+    count = (
+        len(all_selected_lipizones.get("names", [])) if all_selected_lipizones else 0
+    )
+
     children = [
         html.H6(
-            f"Selected Lipizones ({count})", 
-            style={"color": "white", "marginBottom": "10px"}
+            f"Selected Lipizones ({count})",
+            style={"color": "white", "marginBottom": "10px"},
         )
     ]
-    
+
     if all_selected_lipizones and "names" in all_selected_lipizones:
         for name in all_selected_lipizones["names"]:
             # Get the color for this lipizone, default to cyan if not found
@@ -875,7 +1430,7 @@ def update_selected_lipizones_badges(all_selected_lipizones):
             # Determine if the background color is light or dark
             is_light = is_light_color(lipizone_color)
             text_color = "black" if is_light else "white"
-            
+
             # Create a style that uses the lipizone's color
             badge_style = {
                 "margin": "2px",
@@ -883,7 +1438,7 @@ def update_selected_lipizones_badges(all_selected_lipizones):
                 "color": text_color,  # Use black text for better contrast
                 "border": "none",
             }
-            
+
             children.append(
                 dmc.Badge(
                     name,
@@ -892,8 +1447,9 @@ def update_selected_lipizones_badges(all_selected_lipizones):
                     style=badge_style,
                 )
             )
-    
+
     return children
+
 
 @app.callback(
     Output("selected-celltypes-badges", "children"),
@@ -902,30 +1458,32 @@ def update_selected_lipizones_badges(all_selected_lipizones):
 def update_selected_celltypes_badges(all_selected_celltypes):
     """Update the badges showing selected celltypes with their corresponding colors."""
     # Get the count of selected celltypes
-    count = len(all_selected_celltypes.get("names", [])) if all_selected_celltypes else 0
-    
+    count = (
+        len(all_selected_celltypes.get("names", [])) if all_selected_celltypes else 0
+    )
+
     children = [
         html.H6(
-            f"Selected Cell Types ({count})", 
-            style={"color": "white", "marginBottom": "10px"}
+            f"Selected Cell Types ({count})",
+            style={"color": "white", "marginBottom": "10px"},
         )
     ]
-    
+
     if all_selected_celltypes and "names" in all_selected_celltypes:
         for name in all_selected_celltypes["names"]:
             # Get the color for this celltype, default to cyan if not found
             celltype_color = celltype_data.celltype_to_color.get(name, "#00FFFF")
-            
+
             # Convert RGB tuple string to CSS color
-            if isinstance(celltype_color, str) and celltype_color.startswith('('):
+            if isinstance(celltype_color, str) and celltype_color.startswith("("):
                 # Parse the RGB values from the string tuple
-                rgb_values = [float(x) for x in celltype_color.strip('()').split(',')]
+                rgb_values = [float(x) for x in celltype_color.strip("()").split(",")]
                 # Convert from 0-1 range to 0-255 range and format as CSS rgb()
                 css_color = f"rgb({int(rgb_values[0] * 255)}, {int(rgb_values[1] * 255)}, {int(rgb_values[2] * 255)})"
             else:
                 # If it's already a hex color or other format, use as is
                 css_color = celltype_color
-            
+
             # Create a style that uses the celltype's color
             badge_style = {
                 "margin": "2px",
@@ -933,7 +1491,7 @@ def update_selected_celltypes_badges(all_selected_celltypes):
                 "color": "black",  # Use black text for better contrast
                 "border": "none",
             }
-            
+
             children.append(
                 dmc.Badge(
                     name,
@@ -942,5 +1500,108 @@ def update_selected_celltypes_badges(all_selected_celltypes):
                     style=badge_style,
                 )
             )
-    
+
     return children
+
+    # Use clientside callback for tutorial step updates
+
+
+app.clientside_callback(
+    """
+    function(start, next1, next2, next3, next4, next5, next6, next7, next8, next9, next10, next11, finish) {
+        const ctx = window.dash_clientside.callback_context;
+        if (!ctx.triggered.length) {
+            return window.dash_clientside.no_update;
+        }
+        const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
+        if (trigger_id === 'lipicell-start-tutorial-btn' && start) {
+            return 1;
+        } else if (trigger_id === 'lipicell-tutorial-next-1' && next1) {
+            return 2;
+        } else if (trigger_id === 'lipicell-tutorial-next-2' && next2) {
+            return 3;
+        } else if (trigger_id === 'lipicell-tutorial-next-3' && next3) {
+            return 4;
+        } else if (trigger_id === 'lipicell-tutorial-next-4' && next4) {
+            return 5;
+        } else if (trigger_id === 'lipicell-tutorial-next-5' && next5) {
+            return 6;
+        } else if (trigger_id === 'lipicell-tutorial-next-6' && next6) {
+            return 7;
+        } else if (trigger_id === 'lipicell-tutorial-next-7' && next7) {
+            return 8;
+        } else if (trigger_id === 'lipicell-tutorial-next-8' && next8) {
+            return 9;
+        } else if (trigger_id === 'lipicell-tutorial-next-9' && next9) {
+            return 10;
+        } else if (trigger_id === 'lipicell-tutorial-next-10' && next10) {
+            return 11;
+        } else if (trigger_id === 'lipicell-tutorial-next-11' && next11) {
+            return 12;
+        } else if (trigger_id === 'lipicell-tutorial-finish' && finish) {
+            return 0;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("lipicell-tutorial-step", "data"),
+    [
+        Input("lipicell-start-tutorial-btn", "n_clicks"),
+        Input("lipicell-tutorial-next-1", "n_clicks"),
+        Input("lipicell-tutorial-next-2", "n_clicks"),
+        Input("lipicell-tutorial-next-3", "n_clicks"),
+        Input("lipicell-tutorial-next-4", "n_clicks"),
+        Input("lipicell-tutorial-next-5", "n_clicks"),
+        Input("lipicell-tutorial-next-6", "n_clicks"),
+        Input("lipicell-tutorial-next-7", "n_clicks"),
+        Input("lipicell-tutorial-next-8", "n_clicks"),
+        Input("lipicell-tutorial-next-9", "n_clicks"),
+        Input("lipicell-tutorial-next-10", "n_clicks"),
+        Input("lipicell-tutorial-next-11", "n_clicks"),
+        Input("lipicell-tutorial-finish", "n_clicks"),
+    ],
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for popover visibility
+app.clientside_callback(
+    """
+    function(step) {
+        if (step === undefined || step === null) {
+            return [false, false, false, false, false, false, false, false, false, false, false, false];
+        }
+        return [
+            step === 1,
+            step === 2,
+            step === 3,
+            step === 4,
+            step === 5,
+            step === 6,
+            step === 7,
+            step === 8,
+            step === 9,
+            step === 10,
+            step === 11,
+            step === 12,
+        ];
+    }
+    """,
+    [Output(f"lipicell-tutorial-popover-{i}", "is_open") for i in range(1, 13)],
+    Input("lipicell-tutorial-step", "data"),
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for tutorial completion
+app.clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            return true;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("lipicell-tutorial-completed", "data"),
+    Input("lipicell-tutorial-finish", "n_clicks"),
+    prevent_initial_call=True,
+)

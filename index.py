@@ -64,7 +64,7 @@ def return_main_content():
             # Record session id, useful to trigger callbacks at initialization
             dcc.Store(id="session-id", data=session_id),
             # Record the slider index
-            dcc.Store(id="main-slider", data=1),
+            dcc.Store(id="main-slider", data=3),
             
             # Record the lipids selected in page 2
             dcc.Store(id="page-2-selected-lipid-1", data=-1),
@@ -134,6 +134,15 @@ def return_main_content():
             dcc.Store(id="dcc-store-list-volcano-B", data=[]),
             # Record the lipids expressed in the region in page 3
             dcc.Store(id="page-3-dcc-store-lipids-region", data=[]),
+
+            # Add store components for genes
+            dcc.Store(id="page-6tris-selected-gene-1", data=-1),
+            dcc.Store(id="page-6tris-selected-gene-2", data=-1),
+            dcc.Store(id="page-6tris-selected-gene-3", data=-1),
+            # Add stores for gene expression thresholds
+            dcc.Store(id="page-6tris-gene-threshold-1", data=0),
+            dcc.Store(id="page-6tris-gene-threshold-2", data=0),
+            dcc.Store(id="page-6tris-gene-threshold-3", data=0),
 
             # Store to track view state
             dcc.Store(id="all-lipizones-view-state", data=False),
@@ -264,7 +273,7 @@ def return_main_content():
                                     ))
                                 ],
                                 size="xs",
-                                value=data.get_slice_list(indices="ReferenceAtlas")[0],
+                                value=data.get_slice_list(indices="ReferenceAtlas")[2],
                                 color="cyan",
                                 class_name="mt-2 mr-5 ml-2 mb-1 w-50",
                             ),
@@ -282,7 +291,7 @@ def return_main_content():
                                     ))
                                 ],
                                 size="xs",
-                                value=data.get_slice_list(indices="SecondAtlas")[0],
+                                value=data.get_slice_list(indices="SecondAtlas")[2],
                                 color="cyan",
                                 class_name="mt-2 mr-5 ml-2 mb-1 w-50 d-none",
                             ),
@@ -503,7 +512,7 @@ def return_main_content():
     return main_content
 
 
-def return_validation_layout(main_content, initial_slice=12):
+def return_validation_layout(main_content, initial_slice=3):
     """This function compute the layout of the app, including the main container, the sidebar and
     the different pages.
 

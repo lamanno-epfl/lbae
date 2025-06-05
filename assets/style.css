@@ -313,11 +313,6 @@ li {
 
 /*===== MANTINE CORRECTIONS =====*/
 
-/* Correct label position for Mantine Switch */
-div.mantine-Switch-root.mantine-16ttirm>label {
-  margin-top: 0.16rem;
-}
-
 /* Dimmer text */
 .mantine-Text-root {
   color: #ced4da;
@@ -767,7 +762,7 @@ body .tooltip {
 /*===== TUTORIAL =====*/
 
 .dash-bootstrap .popover {
-  border: 3px solid #00bfff !important;
+  border: 3px solid #1fafc8 !important;
   box-shadow: 0 0 15px rgba(0, 191, 255, 0.7) !important;
   border-radius: 4px !important;
   padding: 0 !important;
@@ -777,10 +772,10 @@ body .tooltip {
 
 .dash-bootstrap .popover .popover-arrow,
 .dash-bootstrap .popover .arrow {
-  border-right-color: #00bfff !important;
-  border-left-color: #00bfff !important;
-  border-top-color: #00bfff !important;
-  border-bottom-color: #00bfff !important;
+  border-right-color: #1fafc8 !important;
+  border-left-color: #1fafc8 !important;
+  border-top-color: #1fafc8 !important;
+  border-bottom-color: #1fafc8 !important;
   background: transparent !important;
 }
 
@@ -801,43 +796,43 @@ body .tooltip {
 /* Color the popover arrow the same as the border for popovers */
 .popover.bs-popover-end .popover-arrow::before,
 .popover.bs-popover-end .popover-arrow::after {
-  border-right-color: #00bfff;
+  border-right-color: #1fafc8;
 }
 
 .popover.bs-popover-start .popover-arrow::before,
 .popover.bs-popover-start .popover-arrow::after {
-  border-left-color: #00bfff;
+  border-left-color: #1fafc8;
 }
 
 .popover.bs-popover-top .popover-arrow::before,
 .popover.bs-popover-top .popover-arrow::after {
-  border-top-color: #00bfff;
+  border-top-color: #1fafc8;
 }
 
 .popover.bs-popover-bottom .popover-arrow::before,
 .popover.bs-popover-bottom .popover-arrow::after {
-  border-bottom-color: #00bfff;
+  border-bottom-color: #1fafc8;
 }
 
 /* For legacy Bootstrap 4 naming (if needed) */
 .popover.bs-popover-right .arrow::before,
 .popover.bs-popover-right .arrow::after {
-  border-right-color: #00bfff;
+  border-right-color: #1fafc8;
 }
 
 .popover.bs-popover-left .arrow::before,
 .popover.bs-popover-left .arrow::after {
-  border-left-color: #00bfff;
+  border-left-color: #1fafc8;
 }
 
 .popover.bs-popover-top .arrow::before,
 .popover.bs-popover-top .arrow::after {
-  border-top-color: #00bfff;
+  border-top-color: #1fafc8;
 }
 
 .popover.bs-popover-bottom .arrow::before,
 .popover.bs-popover-bottom .arrow::after {
-  border-bottom-color: #00bfff;
+  border-bottom-color: #1fafc8;
 }
 
 /* Make all sidebar icons (except brain) larger and perfectly centered */
@@ -864,27 +859,6 @@ body .tooltip {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-}
-
-/* Remove white background and outline from switches */
-.mantine-Switch-root,
-.mantine-Switch-root * {
-  background: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-/* Optional: Style the switch for a flat, modern look */
-.mantine-Switch-track {
-  background: #333 !important;
-  /* dark background */
-  border: none !important;
-}
-
-.mantine-Switch-thumb {
-  background: #ced4da !important;
-  /* light thumb */
-  box-shadow: none !important;
 }
 
 /* Remove underline and border-bottom from dropdown text and input fields */

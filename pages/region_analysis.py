@@ -169,6 +169,44 @@ def return_layout(basic_config, slice_index=1):
             "overflow": "hidden",
         },
         children=[
+            dcc.Store(id="analysis-tutorial-step", data=0),
+            dcc.Store(id="analysis-tutorial-completed", storage_type="local", data=False),
+
+            # Add tutorial button under welcome text
+            html.Div(
+                id="analysis-start-tutorial-target",
+                style={
+                    "position": "fixed",
+                    "top": "0.9em",
+                    "left": "20.3em",
+                    "zIndex": 2100,
+                    # "width": "10rem",
+                    # "height": "3rem",
+                    "backgroundColor": "transparent",
+                    "border": "3px solid #00bfff",
+                    "borderRadius": "4px",
+                    # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
+                    "cursor": "pointer",
+                },
+                children=[
+                    dbc.Button(
+                        "Start Tutorial",
+                        id="analysis-start-tutorial-btn",
+                        color="info",
+                        size="sm",
+                        className="tutorial-start-btn",
+                        style={
+                            # "width": "100%",
+                            # "height": "100%",
+                            "borderRadius": "4px",
+                            "backgroundColor": "transparent",
+                            "border": "none",
+                            # "color": "#00ffff",
+                            "fontWeight": "bold",
+                        }
+                    )
+                ]
+            ),
             html.Div(
                 className="fixed-aspect-ratio",
                 style={
@@ -198,7 +236,7 @@ def return_layout(basic_config, slice_index=1):
                             },
                             figure = figures.compute_rgb_image_per_lipid_selection(
                                         slice_index,
-                                        ll_lipid_names=["SM 34:1;O2", None, None],
+                                        ll_lipid_names=["HexCer 42:2;O2", None, None],
                                         cache_flask=cache_flask,
                                     ).update_layout(
                                         dragmode="drawclosedpath",
@@ -211,12 +249,25 @@ def return_layout(basic_config, slice_index=1):
                                     ),
                         ),
                     ),
+                    # Title
+                    html.H4(
+                        "Differential Analysis",
+                        style={
+                            "color": "white",
+                            "marginBottom": "15px",
+                            "fontSize": "1.2em",
+                            "fontWeight": "500",
+                            "position": "absolute",
+                            "left": "1%",
+                            "top": "1em",
+                        }
+                    ),
                     dmc.Group(
                         direction="column",
                         spacing=0,
                         style={
                             "left": "1%",
-                            "top": "1em",
+                            "top": "3em",
                         },
                         class_name="position-absolute",
                         children=[
@@ -228,7 +279,7 @@ def return_layout(basic_config, slice_index=1):
                                     dmc.MultiSelect(
                                         id="page-3-dropdown-lipids",
                                         data=data.return_lipid_options(),
-                                        value=['SM 34:1;O2'],
+                                        value=['HexCer 42:2;O2'],
                                         searchable=True,
                                         nothingFound="No lipid found",
                                         radius="md",
@@ -251,7 +302,7 @@ def return_layout(basic_config, slice_index=1):
                         id="page-3-badge-input",
                         children="Colors: NA",
                         class_name="position-absolute",
-                        style={"left": "1%", "top": "7em"},
+                        style={"left": "1%", "top": "9em"},
                     ),
                     dmc.Badge(
                         id="page-3-badge-lipid-1",
@@ -259,7 +310,7 @@ def return_layout(basic_config, slice_index=1):
                         color="red",
                         variant="filled",
                         class_name="d-none",
-                        style={"left": "1%", "top": "13em"},
+                        style={"left": "1%", "top": "15em"},
                     ),
                     dmc.Badge(
                         id="page-3-badge-lipid-2",
@@ -267,7 +318,7 @@ def return_layout(basic_config, slice_index=1):
                         color="teal",
                         variant="filled",
                         class_name="d-none",
-                        style={"left": "1%", "top": "15em"},
+                        style={"left": "1%", "top": "17em"},
                     ),
                     dmc.Badge(
                         id="page-3-badge-lipid-3",
@@ -275,14 +326,14 @@ def return_layout(basic_config, slice_index=1):
                         color="blue",
                         variant="filled",
                         class_name="d-none",
-                        style={"left": "1%", "top": "17em"},
+                        style={"left": "1%", "top": "19em"},
                     ),
                     # First divider - IMMEDIATELY after badges
                     dmc.Divider(
                         style={
                             "width": "20em",
                             "left": "1%",
-                            "top": "14em",  # EXACTLY where the last badge ends
+                            "top": "16em",  # EXACTLY where the last badge ends
                             "borderTopWidth": "2px",
                             "borderColor": "white",
                         },
@@ -298,7 +349,7 @@ def return_layout(basic_config, slice_index=1):
                         size="sm",
                         style={
                             "left": "1%", 
-                            "top": "15em"},
+                            "top": "17em"},
                         class_name="position-absolute",
                     ),
                     ## Brain regions dropdown - right after switch
@@ -307,7 +358,7 @@ def return_layout(basic_config, slice_index=1):
                         spacing=0,
                         style={
                             "left": "1%",
-                            "top": "17em",
+                            "top": "19em",
                         },
                         class_name="position-absolute",
                         children=[
@@ -347,12 +398,13 @@ def return_layout(basic_config, slice_index=1):
                     ),
                     dmc.Text(
                         "... And draw a region on the brain",
+                        id="page-3-draw-region-text",
                         size="lg",
                         color="cyan",
                         weight=500,
                         style={
                             "left": "1%",
-                            "top": "23em",
+                            "top": "25em",
                             "position": "absolute",
                         },
                     ),
@@ -361,7 +413,7 @@ def return_layout(basic_config, slice_index=1):
                         style={
                             "width": "20em",
                             "left": "1%",
-                            "top": "28em",
+                            "top": "30em",
                             "borderTopWidth": "2px",
                             "borderColor": "white",
                         },
@@ -373,7 +425,7 @@ def return_layout(basic_config, slice_index=1):
                         spacing=0,
                         style={
                             "left": "1%",
-                            "top": "29em",
+                            "top": "31em",
                         },
                         class_name="position-absolute",
                         children=[
@@ -417,7 +469,7 @@ def return_layout(basic_config, slice_index=1):
                         variant="filled",
                         color="cyan",
                         radius="md",
-                        size="xs",
+                        size="md",
                         disabled=True,
                         compact=False,
                         loading=False,
@@ -452,6 +504,250 @@ def return_layout(basic_config, slice_index=1):
                         },
                     ),
                 ],
+            ),
+            # Tutorial Popovers with adjusted positions
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader(
+                        "Differential Analysis Tutorial",
+                        style={"fontWeight": "bold"}
+                    ),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                ".",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="analysis-tutorial-next-1", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-1",
+                target="analysis-start-tutorial-target",
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                }
+            ),
+            # --- Lipid Selection ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Lipid Selection", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "Select up to 3 lipids from the dropdown menu. This is only for visualization purposes, as the differential analysis is computed on all lipids. Notice that the RGB mode is automatically activated in this case.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="analysis-tutorial-next-2", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-2",
+                target="page-3-dropdown-lipids",  # dropdown menu
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Annotations ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "Activating the Allen Brain Atlas contours will help you to identify the regions of interest. Click 'Next' to continue.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="analysis-tutorial-next-3", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-3",
+                target="page-3-toggle-annotations",  # annotations switch
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+                offset=100
+            ),
+            # --- Select Regions ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Select Regions from Anatomy", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "Select the regions of interest among those available in the current slice. When selected, the regions will be highlighted in the brain slice.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="analysis-tutorial-next-4", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-4",
+                target="page-3-dropdown-brain-regions",
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Draw Regions ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Draw Regions", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "You can now draw the regions of interest on the brain slice. Hold the left mouse button to draw the region. This gives higher flexibility and customization in the analysis. Click 'Next' to continue.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="analysis-tutorial-next-5", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-5",
+                target="page-3-draw-region-text",  # brain switch
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Assign Groups ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Assign Regions toGroups", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "You can now assign the regions to two groups to perform differential analysis. Click 'Next' to continue.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="analysis-tutorial-next-6", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-6",
+                target="page-3-group-a-selector",
+                placement="right",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Reset Region Selection ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Reset Region Selection", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "You can reset the region selection by clicking on the reset button. Click 'Next' to continue.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="analysis-tutorial-next-7", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-7",
+                target="page-3-reset-button",  # reset button
+                placement="top",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Compute Volcano Plot ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Compute Volcano Plot for Differential Analysis", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "You can now compute the volcano plot for the differential analysis. ADD FORMULA HERE. Click 'Next' to continue.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="analysis-tutorial-next-8", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-8",
+                target="page-3-button-compute-volcano",  # compute volcano button
+                placement="left",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Brain Slider ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                ".",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Next", id="analysis-tutorial-next-9", color="primary", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-9",
+                target="main-paper-slider",  # slider
+                placement="top",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
+            ),
+            # --- Brain Chips ---
+            dbc.Popover(
+                [
+                    dbc.PopoverHeader("Different Mouse Brains", style={"fontWeight": "bold"}),
+                    dbc.PopoverBody(
+                        [
+                            html.P(
+                                "Switch from one mouse brain to another to analyse the differences. Click 'Next' to continue.",
+                                style={"color": "#333", "marginBottom": "15px"}
+                            ),
+                            dbc.Button("Finish", id="analysis-tutorial-finish", color="success", size="sm", className="float-end")
+                        ]
+                    ),
+                ],
+                id="analysis-tutorial-popover-10",
+                target="main-brain",  # brain switch
+                placement="left",
+                is_open=False,
+                style={
+                    "zIndex": 9999,
+                    "border": "2px solid #00bfff",
+                    "boxShadow": "0 0 15px 2px #00bfff"
+                },
             ),
             html.Div(
                 children=[
@@ -770,7 +1066,7 @@ def page_3_plot_heatmap(
         ):
             fig = figures.compute_rgb_image_per_lipid_selection(
                     slice_index,
-                    ll_lipid_names=["SM 34:1;O2", None, None],
+                    ll_lipid_names=["HexCer 42:2;O2", None, None],
                     cache_flask=cache_flask,
                     overlay=overlay,
                 )
@@ -783,13 +1079,13 @@ def page_3_plot_heatmap(
                 ),
                 autosize=True,
             )
-            return fig, "Colors: " + "SM 34:1;O2", [], True, []
+            return fig, "Colors: " + "HexCer 42:2;O2", [], True, []
 
         else:
             # No lipid has been selected
             fig = figures.compute_rgb_image_per_lipid_selection(
                     slice_index,
-                    ll_lipid_names=["SM 34:1;O2", None, None],
+                    ll_lipid_names=["HexCer 42:2;O2", None, None],
                     cache_flask=cache_flask,
                     overlay=overlay,
                 )
@@ -802,7 +1098,7 @@ def page_3_plot_heatmap(
                 ),
                 autosize=True,
             )
-            return fig, "Colors: " + "SM 34:1;O2", [], True, []
+            return fig, "Colors: " + "HexCer 42:2;O2", [], True, []
     
     # ------------------------------------------------------------------------------------------------
     # If a new slice is loaded or the page just got loaded
@@ -820,7 +1116,7 @@ def page_3_plot_heatmap(
             for index in [lipid_1_index, lipid_2_index, lipid_3_index]
         ]
     else:
-        ll_lipid_names = ["SM 34:1;O2", None, None]
+        ll_lipid_names = ["HexCer 42:2;O2", None, None]
     
     # Drawing or selecting a brain region
     if (
@@ -830,7 +1126,7 @@ def page_3_plot_heatmap(
     ):
         fig = figures.compute_rgb_image_per_lipid_selection(
                 slice_index,
-                ll_lipid_names=ll_lipid_names, # ["SM 34:1;O2", None, None],
+                ll_lipid_names=ll_lipid_names, # ["HexCer 42:2;O2", None, None],
                 cache_flask=cache_flask,
                 overlay=overlay,
             )
@@ -892,7 +1188,7 @@ def page_3_plot_heatmap(
     ):
         fig = figures.compute_rgb_image_per_lipid_selection(
                 slice_index,
-                ll_lipid_names=ll_lipid_names, # ["SM 34:1;O2", None, None],
+                ll_lipid_names=ll_lipid_names, # ["HexCer 42:2;O2", None, None],
                 cache_flask=cache_flask,
                 overlay=overlay,
             )
@@ -914,7 +1210,7 @@ def page_3_plot_heatmap(
             # Rebuild figure
             fig = figures.compute_rgb_image_per_lipid_selection(
                 slice_index,
-                ll_lipid_names=ll_lipid_names, # ["SM 34:1;O2", None, None],
+                ll_lipid_names=ll_lipid_names, # ["HexCer 42:2;O2", None, None],
                 cache_flask=cache_flask,
                 overlay=overlay,
             )
@@ -1069,8 +1365,8 @@ def page_3_add_toast_selection(
     # if page-3-dropdown-lipids is called while there's no lipid name defined, it means the page
     # just got loaded
     if len(id_input) == 0 or (id_input == "page-3-dropdown-lipids" and l_lipid_names is None):
-        # Initialize with SM 34:1;O2 as the default lipid
-        default_lipid = "SM 34:1;O2"
+        # Initialize with HexCer 42:2;O2 as the default lipid
+        default_lipid = "HexCer 42:2;O2"
         # Find lipid location for the default lipid
         name, structure = default_lipid.split(" ")
         l_lipid_loc = (
@@ -1785,3 +2081,94 @@ def partition_shapes(
 # )
 # """This clientside callback allows to download the heatmap used to show differential lipid 
 # expression in the selected regions as a png file."""
+
+# Use clientside callback for tutorial step updates
+app.clientside_callback(
+    """
+    function(start, next1, next2, next3, next4, next5, next6, next7, next8, next9, finish) {
+        const ctx = window.dash_clientside.callback_context;
+        if (!ctx.triggered.length) {
+            return window.dash_clientside.no_update;
+        }
+        const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
+        if (trigger_id === 'analysis-start-tutorial-btn' && start) {
+            return 1;
+        } else if (trigger_id === 'analysis-tutorial-next-1' && next1) {
+            return 2;
+        } else if (trigger_id === 'analysis-tutorial-next-2' && next2) {
+            return 3;
+        } else if (trigger_id === 'analysis-tutorial-next-3' && next3) {
+            return 4;
+        } else if (trigger_id === 'analysis-tutorial-next-4' && next4) {
+            return 5;
+        } else if (trigger_id === 'analysis-tutorial-next-5' && next5) {
+            return 6;
+        } else if (trigger_id === 'analysis-tutorial-next-6' && next6) {
+            return 7;
+        } else if (trigger_id === 'analysis-tutorial-next-7' && next7) {
+            return 8;
+        } else if (trigger_id === 'analysis-tutorial-next-8' && next8) {
+            return 9;
+        } else if (trigger_id === 'analysis-tutorial-next-9' && next9) {
+            return 10;
+        } else if (trigger_id === 'analysis-tutorial-finish' && finish) {
+            return 0;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("analysis-tutorial-step", "data"),
+    [Input("analysis-start-tutorial-btn", "n_clicks"),
+     Input("analysis-tutorial-next-1", "n_clicks"),
+     Input("analysis-tutorial-next-2", "n_clicks"),
+     Input("analysis-tutorial-next-3", "n_clicks"),
+     Input("analysis-tutorial-next-4", "n_clicks"),
+     Input("analysis-tutorial-next-5", "n_clicks"),
+     Input("analysis-tutorial-next-6", "n_clicks"),
+     Input("analysis-tutorial-next-7", "n_clicks"),
+     Input("analysis-tutorial-next-8", "n_clicks"),
+     Input("analysis-tutorial-next-9", "n_clicks"),
+     Input("analysis-tutorial-finish", "n_clicks")],
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for popover visibility
+app.clientside_callback(
+    """
+    function(step) {
+        if (step === undefined || step === null) {
+            return [false, false, false, false, false, false, false, false, false, false];
+        }
+        return [
+            step === 1,
+            step === 2,
+            step === 3,
+            step === 4,
+            step === 5,
+            step === 6,
+            step === 7,
+            step === 8,
+            step === 9,
+            step === 10,
+        ];
+    }
+    """,
+    [Output(f"analysis-tutorial-popover-{i}", "is_open") for i in range(1, 11)],
+    Input("analysis-tutorial-step", "data"),
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for tutorial completion
+app.clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            return true;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("analysis-tutorial-completed", "data"),
+    Input("analysis-tutorial-finish", "n_clicks"),
+    prevent_initial_call=True,
+)

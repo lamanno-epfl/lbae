@@ -471,7 +471,6 @@ def return_layout(basic_config, slice_index):
                         "border": "2px solid #00bfff",
                         "boxShadow": "0 0 15px 2px #00bfff"
                     },
-                    offset=40
                 ),
                 # --- Brain Slider ---
                 dbc.Popover(

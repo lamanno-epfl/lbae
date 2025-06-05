@@ -407,8 +407,6 @@ def update_3d_visualization(
             try:
                 # Create figure with all lipizones
                 fig = figures.create_all_lipizones_figure(downsample_factor=1)
-                # save fig to file
-                fig.write_html("all_lipizones.html")
                 
                 return dcc.Graph(
                     figure=fig,

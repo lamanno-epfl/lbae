@@ -31,12 +31,15 @@ def return_layout(basic_config, slice_index):
     page = html.Div(
         # This style is needed for keeping background color when reducing image size
         style={
-            "position": "absolute",
-            "top": "0px",
-            "right": "0px",
-            "bottom": "0px",
+            "position": "fixed",
+            "top": "0",
+            "right": "0",
+            "bottom": "0",
             "left": "6rem",
+            # "width": "auto",
+            # "height": "100vh",
             "background-color": "#1d1c1f",
+            "overflow": "auto",
         },
         children=[
             # React grid for nice responsivity pattern

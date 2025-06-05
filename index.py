@@ -168,7 +168,7 @@ def return_main_content():
                             "left": "50%",
                             "transform": "translate(-50%, -50%)",
                             "zIndex": 1000,
-                            "backgroundColor": "rgba(0, 0, 0, 0.7)",
+                            "backgroundColor": "#1d1c1f",# black
                             "padding": "20px",
                             "borderRadius": "10px",
                             "display": "flex",
@@ -496,16 +496,6 @@ def return_main_content():
                         size="85vh",
                         position="bottom",
                     ),
-                    # Spinner when switchin# g pages
-                    # dbc.Spinner(
-                    #     id="main-spinner",
-                    #     color="light",
-                    #     children=html.Div(id="empty-content"),
-                    #     fullscreen=True,
-                    #     fullscreen_style={"left": "6rem", "background-color": "#1d1c1f"},
-                    #     spinner_style={"width": "6rem", "height": "6rem"},
-                    #     delay_hide=100,
-                    # ),
                 ],
             ),
         ],
@@ -632,6 +622,7 @@ def hide_brain_chips(pathname):
     """This callback is used to hide the brain selection chips when they are not needed."""
     if pathname == "/" \
     or pathname == "/lipizones-vs-celltypes" \
+    or pathname == "/lipizones-id-cards" \
     or pathname == "/lipids-vs-genes" \
     or pathname == "/3D-exploration" \
     or pathname == "/3D-lipizones":

@@ -46,6 +46,45 @@ def return_layout(basic_config, slice_index):
             children=[
                 # Add a store component to hold the slider style
                 dcc.Store(id="page-2-main-slider-style", data={"display": "block"}),
+
+                dcc.Store(id="lipid-tutorial-step", data=0),
+                dcc.Store(id="lipid-tutorial-completed", storage_type="local", data=False),
+
+                # Add tutorial button under welcome text
+                html.Div(
+                    id="lipid-start-tutorial-target",
+                    style={
+                        "position": "fixed",
+                        "top": "20px",
+                        "left": "500px",
+                        "zIndex": 2100,
+                        # "width": "10rem",
+                        # "height": "3rem",
+                        "backgroundColor": "transparent",
+                        "border": "3px solid #00bfff",
+                        "borderRadius": "4px",
+                        # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
+                        "cursor": "pointer",
+                    },
+                    children=[
+                        dbc.Button(
+                            "Start Tutorial",
+                            id="lipid-start-tutorial-btn",
+                            color="info",
+                            size="sm",
+                            className="tutorial-start-btn",
+                            style={
+                                # "width": "100%",
+                                # "height": "100%",
+                                "borderRadius": "4px",
+                                "backgroundColor": "transparent",
+                                "border": "none",
+                                # "color": "#00ffff",
+                                "fontWeight": "bold",
+                            }
+                        )
+                    ]
+                ),
                 html.Div(
                     className="fixed-aspect-ratio",
                     style={
@@ -70,11 +109,13 @@ def return_layout(basic_config, slice_index):
                             }
                             | {"staticPlot": False},
                             style={
-                                "height": "100vh",
+                                "height": "100%",
                                 "width": "100%",
                                 "position": "absolute",
-                                "left": "0",
-                                "top": "0",
+                                "left": 0,
+                                "top": 0,
+                                "bottom": 0,
+                                "right": 0,
                                 "background-color": "#1d1c1f",
                             },
                             figure=figures.compute_heatmap_per_lipid(
@@ -151,7 +192,7 @@ def return_layout(basic_config, slice_index):
                                             searchable=True,
                                             nothingFound="No lipid found",
                                             radius="md",
-                                            size="xs",
+                                            # size="xs",
                                             placeholder="Choose up to 3 lipids",
                                             clearable=False,
                                             maxSelectedValues=3,
@@ -306,6 +347,188 @@ def return_layout(basic_config, slice_index):
                         ),
                         dcc.Download(id="page-2-download-data"),
                     ],
+                ),
+
+                # Tutorial target elements with highlight effect
+                html.Div(id="dropdown-tutorial-target"),
+                html.Div(id="rgb-tutorial-target"),
+                html.Div(id="switch-tutorial-target"),
+                html.Div(id="slider-tutorial-target"),
+                html.Div(id="aba-tutorial-target"),
+                html.Div(id="chips-tutorial-target"),
+                # --- End new tutorial targets ---
+
+                # Tutorial Popovers with adjusted positions
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader(
+                            "Lipid Exploration Tutorial",
+                            style={"fontWeight": "bold"}
+                        ),
+                        dbc.PopoverBody(
+                            [
+                                html.P(
+                                    "This page is used to visualize lipids in the Allen Brain Atlas. Click 'Next' to continue.",
+                                    style={"color": "#333", "marginBottom": "15px"}
+                                ),
+                                dbc.Button("Next", id="lipid-tutorial-next-1", color="primary", size="sm", className="float-end")
+                            ]
+                        ),
+                    ],
+                    id="lipid-tutorial-popover-1",
+                    target="lipid-start-tutorial-target",
+                    placement="right",
+                    is_open=False,
+                    style={
+                        "zIndex": 9999,
+                        "border": "2px solid #00bfff",
+                        "boxShadow": "0 0 15px 2px #00bfff"
+                    }
+                ),
+                # --- Lipid Selection ---
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Lipid Selection", style={"fontWeight": "bold"}),
+                        dbc.PopoverBody(
+                            [
+                                html.P(
+                                    "Select up to 3 lipids from the dropdown menu. Click 'Next' to continue.",
+                                    style={"color": "#333", "marginBottom": "15px"}
+                                ),
+                                dbc.Button("Next", id="lipid-tutorial-next-2", color="primary", size="sm", className="float-end")
+                            ]
+                        ),
+                    ],
+                    id="lipid-tutorial-popover-2",
+                    target="page-2-dropdown-lipids",  # dropdown menu
+                    placement="bottom",
+                    is_open=False,
+                    style={
+                        "zIndex": 9999,
+                        "border": "2px solid #00bfff",
+                        "boxShadow": "0 0 15px 2px #00bfff"
+                    },
+                ),
+                # --- RGB Mode ---
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("RGB Mode", style={"fontWeight": "bold"}),
+                        dbc.PopoverBody(
+                            [
+                                html.P(
+                                    "Activate the RGB mode to visualize the lipids as RGB images. Each lipid is displayed in a different color. Click 'Next' to continue.",
+                                    style={"color": "#333", "marginBottom": "15px"}
+                                ),
+                                dbc.Button("Next", id="lipid-tutorial-next-3", color="primary", size="sm", className="float-end")
+                            ]
+                        ),
+                    ],
+                    id="lipid-tutorial-popover-3",
+                    target="page-2-rgb-switch",  # rgb switch
+                    placement="bottom",
+                    is_open=False,
+                    style={
+                        "zIndex": 9999,
+                        "border": "2px solid #00bfff",
+                        "boxShadow": "0 0 15px 2px #00bfff"
+                    },
+                ),
+                # --- One vs All Sections ---
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("One vs All Sections", style={"fontWeight": "bold"}),
+                        dbc.PopoverBody(
+                            [
+                                html.P(
+                                    "Decide whether to display the selected lipids in one section or all sections. Click 'Next' to continue.",
+                                    style={"color": "#333", "marginBottom": "15px"}
+                                ),
+                                dbc.Button("Next", id="lipid-tutorial-next-4", color="primary", size="sm", className="float-end")
+                            ]
+                        ),
+                    ],
+                    id="lipid-tutorial-popover-4",
+                    target="page-2-sections-mode",  # sections mode switch
+                    placement="bottom",
+                    is_open=False,
+                    style={
+                        "zIndex": 9999,
+                        "border": "2px solid #00bfff",
+                        "boxShadow": "0 0 15px 2px #00bfff"
+                    },
+                ),
+                # --- Annotations ---
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                        dbc.PopoverBody(
+                            [
+                                html.P(
+                                    "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                    style={"color": "#333", "marginBottom": "15px"}
+                                ),
+                                dbc.Button("Next", id="lipid-tutorial-next-5", color="primary", size="sm", className="float-end")
+                            ]
+                        ),
+                    ],
+                    id="lipid-tutorial-popover-5",
+                    target="page-2-toggle-annotations",  # annotations switch
+                    placement="bottom",
+                    is_open=False,
+                    style={
+                        "zIndex": 9999,
+                        "border": "2px solid #00bfff",
+                        "boxShadow": "0 0 15px 2px #00bfff"
+                    },
+                    offset=40
+                ),
+                # --- Brain Slider ---
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                        dbc.PopoverBody(
+                            [
+                                html.P(
+                                    "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                    style={"color": "#333", "marginBottom": "15px"}
+                                ),
+                                dbc.Button("Next", id="lipid-tutorial-next-6", color="primary", size="sm", className="float-end")
+                            ]
+                        ),
+                    ],
+                    id="lipid-tutorial-popover-6",
+                    target="main-paper-slider",  # slider
+                    placement="top",
+                    is_open=False,
+                    style={
+                        "zIndex": 9999,
+                        "border": "2px solid #00bfff",
+                        "boxShadow": "0 0 15px 2px #00bfff"
+                    },
+                ),
+                # --- Brain Chips ---
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Different Mouse Brains", style={"fontWeight": "bold"}),
+                        dbc.PopoverBody(
+                            [
+                                html.P(
+                                    "Switch from one mouse brain to another to analyse the differences. Click 'Next' to continue.",
+                                    style={"color": "#333", "marginBottom": "15px"}
+                                ),
+                                dbc.Button("Finish", id="lipid-tutorial-finish", color="success", size="sm", className="float-end")
+                            ]
+                        ),
+                    ],
+                    id="lipid-tutorial-popover-7",
+                    target="main-brain",  # brain switch
+                    placement="left",
+                    is_open=False,
+                    style={
+                        "zIndex": 9999,
+                        "border": "2px solid #00bfff",
+                        "boxShadow": "0 0 15px 2px #00bfff"
+                    },
                 ),
             ],
         ),
@@ -1087,3 +1310,83 @@ def compute_page2_hide(lipid_sections_mode, pathname):
         return "d-none" if (lipid_sections_mode == "all") else ""
     # If we’re not on that page, leave the store unchanged (or send back "")
     return ""
+
+
+# Use clientside callback for tutorial step updates
+app.clientside_callback(
+    """
+    function(start, next1, next2, next3, next4, next5, next6, finish) {
+        const ctx = window.dash_clientside.callback_context;
+        if (!ctx.triggered.length) {
+            return window.dash_clientside.no_update;
+        }
+        const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
+        if (trigger_id === 'lipid-start-tutorial-btn' && start) {
+            return 1;
+        } else if (trigger_id === 'lipid-tutorial-next-1' && next1) {
+            return 2;
+        } else if (trigger_id === 'lipid-tutorial-next-2' && next2) {
+            return 3;
+        } else if (trigger_id === 'lipid-tutorial-next-3' && next3) {
+            return 4;
+        } else if (trigger_id === 'lipid-tutorial-next-4' && next4) {
+            return 5;
+        } else if (trigger_id === 'lipid-tutorial-next-5' && next5) {
+            return 6;
+        } else if (trigger_id === 'lipid-tutorial-next-6' && next6) {
+            return 7;
+        } else if (trigger_id === 'lipid-tutorial-finish' && finish) {
+            return 0;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("lipid-tutorial-step", "data"),
+    [Input("lipid-start-tutorial-btn", "n_clicks"),
+     Input("lipid-tutorial-next-1", "n_clicks"),
+     Input("lipid-tutorial-next-2", "n_clicks"),
+     Input("lipid-tutorial-next-3", "n_clicks"),
+     Input("lipid-tutorial-next-4", "n_clicks"),
+     Input("lipid-tutorial-next-5", "n_clicks"),
+     Input("lipid-tutorial-next-6", "n_clicks"),
+     Input("lipid-tutorial-finish", "n_clicks")],
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for popover visibility
+app.clientside_callback(
+    """
+    function(step) {
+        if (step === undefined || step === null) {
+            return [false, false, false, false, false, false, false, false, false];
+        }
+        return [
+            step === 1,
+            step === 2,
+            step === 3,
+            step === 4,
+            step === 5,
+            step === 6,
+            step === 7,
+        ];
+    }
+    """,
+    [Output(f"lipid-tutorial-popover-{i}", "is_open") for i in range(1, 8)],
+    Input("lipid-tutorial-step", "data"),
+    prevent_initial_call=True,
+)
+
+# Use clientside callback for tutorial completion
+app.clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            return true;
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("lipid-tutorial-completed", "data"),
+    Input("lipid-tutorial-finish", "n_clicks"),
+    prevent_initial_call=True,
+)

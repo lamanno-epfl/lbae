@@ -43,6 +43,44 @@ def return_layout(basic_config, slice_index):
             children=[
                 # Add a store component to hold the slider style
                 dcc.Store(id="page-2tris-main-slider-style", data={"display": "block"}),
+                dcc.Store(id="lipid-tutorial-step", data=0),
+                dcc.Store(id="lipid-tutorial-completed", storage_type="local", data=False),
+
+                # Add tutorial button under welcome text
+                html.Div(
+                    id="lipid-start-tutorial-target",
+                    style={
+                        "position": "fixed",
+                        "top": "20px",
+                        "left": "500px",
+                        "zIndex": 2100,
+                        # "width": "10rem",
+                        # "height": "3rem",
+                        "backgroundColor": "transparent",
+                        "border": "3px solid #00bfff",
+                        "borderRadius": "4px",
+                        # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
+                        "cursor": "pointer",
+                    },
+                    children=[
+                        dbc.Button(
+                            "Start Tutorial",
+                            id="lipid-start-tutorial-btn",
+                            color="info",
+                            size="sm",
+                            className="tutorial-start-btn",
+                            style={
+                                # "width": "100%",
+                                # "height": "100%",
+                                "borderRadius": "4px",
+                                "backgroundColor": "transparent",
+                                "border": "none",
+                                # "color": "#00ffff",
+                                "fontWeight": "bold",
+                            }
+                        )
+                    ]
+                ),
                 html.Div(
                     className="fixed-aspect-ratio",
                     style={
@@ -67,11 +105,13 @@ def return_layout(basic_config, slice_index):
                             }
                             | {"staticPlot": False},
                             style={
-                                "height": "100vh",
+                                "height": "100%",
                                 "width": "100%",
                                 "position": "absolute",
-                                "left": "0",
-                                "top": "0",
+                                "left": 0,
+                                "top": 0,
+                                "bottom": 0,
+                                "right": 0,
                                 "background-color": "#1d1c1f",
                             },
                             figure=peak_figures.compute_heatmap_per_lipid(
@@ -148,7 +188,7 @@ def return_layout(basic_config, slice_index):
                                             searchable=True,
                                             nothingFound="No peak found",
                                             radius="md",
-                                            size="xs",
+                                            # size="xs",
                                             placeholder="Choose up to 3 peaks",
                                             clearable=False,
                                             maxSelectedValues=3,

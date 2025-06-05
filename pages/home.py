@@ -52,7 +52,7 @@ layout = (
                         ),
                         # Add tutorial button under welcome text
                         html.Div(
-                            id="sidebar-tutorial-target",
+                            id="home-tutorial-target",
                             style={
                                 "position": "fixed",
                                 "top": "20px",
@@ -69,10 +69,10 @@ layout = (
                             children=[
                                 dbc.Button(
                                     "Start Tutorial",
-                                    id="start-tutorial-btn",
+                                    id="home-start-tutorial-btn",
                                     color="info",
                                     size="sm",
-                                    className="tutorial-start-btn",
+                                    className="home-tutorial-start-btn",
                                     style={
                                         # "width": "100%",
                                         # "height": "100%",
@@ -103,23 +103,6 @@ layout = (
                         children=[
                             html.Div(
                                 children=[
-                                    # # Add docs tutorial target
-                                    # html.Div(
-                                    #     id="docs-tutorial-target",
-                                    #     style={
-                                    #         "position": "absolute",
-                                    #         "left": "20px",
-                                    #         "bottom": "20px",
-                                    #         "width": "40px",
-                                    #         "height": "40px",
-                                    #         "zIndex": 1000,
-                                    #         "backgroundColor": "rgba(0,191,255,0.1)",
-                                    #         "border": "3px solid #00bfff",
-                                    #         "borderRadius": "50%",
-                                    #         "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
-                                    #         "cursor": "pointer",
-                                    #     }
-                                    # ),
                                     dbc.Spinner(
                                         color="info",
                                         spinner_style={
@@ -158,8 +141,8 @@ layout = (
             dcc.Store(id="dcc-store-browser"),
             
             # Store for tracking tutorial state
-            dcc.Store(id="tutorial-step", data=0),
-            dcc.Store(id="tutorial-completed", storage_type="local", data=False),
+            dcc.Store(id="home-tutorial-step", data=0),
+            dcc.Store(id="home-tutorial-completed", storage_type="local", data=False),
             dcc.Store(id="tutorial-trigger", data=True),  # Add trigger store
             
             # Toast notifications trigger
@@ -169,7 +152,7 @@ layout = (
             
             # Tutorial target elements with highlight effect
             html.Div(
-                id="home-tutorial-target",
+                id="brain-tutorial-target",
                 style={
                     "position": "absolute",
                     "top": "20px",
@@ -214,12 +197,12 @@ layout = (
                                 "Let's take a quick tour of the main features. Click 'Next' to continue.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
-                            dbc.Button("Next", id="tutorial-next-1", color="primary", size="sm", className="float-end")
+                            dbc.Button("Next", id="home-tutorial-next-1", color="primary", size="sm", className="float-end")
                         ]
                     ),
                 ],
-                id="tutorial-popover-1",
-                target="sidebar-tutorial-target",
+                id="home-tutorial-popover-1",
+                target="home-tutorial-target",
                 placement="right",
                 is_open=False,
                 style={
@@ -238,11 +221,11 @@ layout = (
                                 "Click the brain icon at the top left to return to this page anytime.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
-                            dbc.Button("Next", id="tutorial-next-2", color="primary", size="sm", className="float-end")
+                            dbc.Button("Next", id="home-tutorial-next-2", color="primary", size="sm", className="float-end")
                         ]
                     ),
                 ],
-                id="tutorial-popover-2",
+                id="home-tutorial-popover-2",
                 target="sidebar-title",  # <-- brain icon in sidebar
                 placement="right",
                 is_open=False,
@@ -263,11 +246,11 @@ layout = (
                                 "Explore Lipids and M/Z Peaks using the molecules section.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
-                            dbc.Button("Next", id="tutorial-next-3", color="primary", size="sm", className="float-end")
+                            dbc.Button("Next", id="home-tutorial-next-3", color="primary", size="sm", className="float-end")
                         ]
                     ),
                 ],
-                id="tutorial-popover-3",
+                id="home-tutorial-popover-3",
                 target="sidebar-molecules",  # molecules icon
                 placement="right",
                 is_open=False,
@@ -288,11 +271,11 @@ layout = (
                                 "Check out Lipid Programs (embeddings) for advanced analysis.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
-                            dbc.Button("Next", id="tutorial-next-4", color="primary", size="sm", className="float-end")
+                            dbc.Button("Next", id="home-tutorial-next-4", color="primary", size="sm", className="float-end")
                         ]
                     ),
                 ],
-                id="tutorial-popover-4",
+                id="home-tutorial-popover-4",
                 target="sidebar-programs",  # lipid programs icon
                 placement="right",
                 is_open=False,
@@ -313,11 +296,11 @@ layout = (
                                 "Perform region-based differential analysis here.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
-                            dbc.Button("Next", id="tutorial-next-5", color="primary", size="sm", className="float-end")
+                            dbc.Button("Next", id="home-tutorial-next-5", color="primary", size="sm", className="float-end")
                         ]
                     ),
                 ],
-                id="tutorial-popover-5",
+                id="home-tutorial-popover-5",
                 target="sidebar-region-analysis",  # region analysis icon
                 placement="right",
                 is_open=False,
@@ -338,11 +321,11 @@ layout = (
                                 "Explore Lipizones and their ID cards.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
-                            dbc.Button("Next", id="tutorial-next-6", color="primary", size="sm", className="float-end")
+                            dbc.Button("Next", id="home-tutorial-next-6", color="primary", size="sm", className="float-end")
                         ]
                     ),
                 ],
-                id="tutorial-popover-6",
+                id="home-tutorial-popover-6",
                 target="sidebar-lipizones",  # lipizones icon
                 placement="right",
                 is_open=False,
@@ -363,11 +346,11 @@ layout = (
                                 "Compare Lipizones vs Cell Types and Lipids vs Genes.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
-                            dbc.Button("Next", id="tutorial-next-7", color="primary", size="sm", className="float-end")
+                            dbc.Button("Next", id="home-tutorial-next-7", color="primary", size="sm", className="float-end")
                         ]
                     ),
                 ],
-                id="tutorial-popover-7",
+                id="home-tutorial-popover-7",
                 target="sidebar-comparisons",  # comparisons icon
                 placement="right",
                 is_open=False,
@@ -388,11 +371,11 @@ layout = (
                                 "Visualize 3D Lipids and Lipizones in this section.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
-                            dbc.Button("Next", id="tutorial-next-8", color="primary", size="sm", className="float-end")
+                            dbc.Button("Next", id="home-tutorial-next-8", color="primary", size="sm", className="float-end")
                         ]
                     ),
                 ],
-                id="tutorial-popover-8",
+                id="home-tutorial-popover-8",
                 target="sidebar-3d",  # 3d icon
                 placement="right",
                 is_open=False,
@@ -413,11 +396,11 @@ layout = (
                                 "Find detailed documentation, GitHub repository links, and publication information at the bottom left.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
-                            dbc.Button("Finish", id="tutorial-finish", color="success", size="sm", className="float-end")
+                            dbc.Button("Finish", id="home-tutorial-finish", color="success", size="sm", className="float-end")
                         ]
                     ),
                 ],
-                id="tutorial-popover-9",
+                id="home-tutorial-popover-9",
                 target="sidebar-documentation-inside",  # <-- book icon in sidebar
                 placement="right",
                 is_open=False,
@@ -558,41 +541,41 @@ app.clientside_callback(
             return window.dash_clientside.no_update;
         }
         const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
-        if (trigger_id === 'start-tutorial-btn' && start) {
+        if (trigger_id === 'home-start-tutorial-btn' && start) {
             return 1;
-        } else if (trigger_id === 'tutorial-next-1' && next1) {
+        } else if (trigger_id === 'home-tutorial-next-1' && next1) {
             return 2;
-        } else if (trigger_id === 'tutorial-next-2' && next2) {
+        } else if (trigger_id === 'home-tutorial-next-2' && next2) {
             return 3;
-        } else if (trigger_id === 'tutorial-next-3' && next3) {
+        } else if (trigger_id === 'home-tutorial-next-3' && next3) {
             return 4;
-        } else if (trigger_id === 'tutorial-next-4' && next4) {
+        } else if (trigger_id === 'home-tutorial-next-4' && next4) {
             return 5;
-        } else if (trigger_id === 'tutorial-next-5' && next5) {
+        } else if (trigger_id === 'home-tutorial-next-5' && next5) {
             return 6;
-        } else if (trigger_id === 'tutorial-next-6' && next6) {
+        } else if (trigger_id === 'home-tutorial-next-6' && next6) {
             return 7;
-        } else if (trigger_id === 'tutorial-next-7' && next7) {
+        } else if (trigger_id === 'home-tutorial-next-7' && next7) {
             return 8;
-        } else if (trigger_id === 'tutorial-next-8' && next8) {
+        } else if (trigger_id === 'home-tutorial-next-8' && next8) {
             return 9;
-        } else if (trigger_id === 'tutorial-finish' && finish) {
+        } else if (trigger_id === 'home-tutorial-finish' && finish) {
             return 0;
         }
         return window.dash_clientside.no_update;
     }
     """,
-    Output("tutorial-step", "data"),
-    [Input("start-tutorial-btn", "n_clicks"),
-     Input("tutorial-next-1", "n_clicks"),
-     Input("tutorial-next-2", "n_clicks"),
-     Input("tutorial-next-3", "n_clicks"),
-     Input("tutorial-next-4", "n_clicks"),
-     Input("tutorial-next-5", "n_clicks"),
-     Input("tutorial-next-6", "n_clicks"),
-     Input("tutorial-next-7", "n_clicks"),
-     Input("tutorial-next-8", "n_clicks"),
-     Input("tutorial-finish", "n_clicks")],
+    Output("home-tutorial-step", "data"),
+    [Input("home-start-tutorial-btn", "n_clicks"),
+     Input("home-tutorial-next-1", "n_clicks"),
+     Input("home-tutorial-next-2", "n_clicks"),
+     Input("home-tutorial-next-3", "n_clicks"),
+     Input("home-tutorial-next-4", "n_clicks"),
+     Input("home-tutorial-next-5", "n_clicks"),
+     Input("home-tutorial-next-6", "n_clicks"),
+     Input("home-tutorial-next-7", "n_clicks"),
+     Input("home-tutorial-next-8", "n_clicks"),
+     Input("home-tutorial-finish", "n_clicks")],
     prevent_initial_call=True,
 )
 
@@ -616,8 +599,8 @@ app.clientside_callback(
         ];
     }
     """,
-    [Output(f"tutorial-popover-{i}", "is_open") for i in range(1, 10)],
-    Input("tutorial-step", "data"),
+    [Output(f"home-tutorial-popover-{i}", "is_open") for i in range(1, 10)],
+    Input("home-tutorial-step", "data"),
     prevent_initial_call=True,
 )
 
@@ -631,7 +614,7 @@ app.clientside_callback(
         return window.dash_clientside.no_update;
     }
     """,
-    Output("tutorial-completed", "data"),
-    Input("tutorial-finish", "n_clicks"),
+    Output("home-tutorial-completed", "data"),
+    Input("home-tutorial-finish", "n_clicks"),
     prevent_initial_call=True,
 )

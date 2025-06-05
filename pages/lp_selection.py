@@ -76,11 +76,13 @@ def return_layout(basic_config, slice_index):
                             }
                             | {"staticPlot": False},
                             style={
-                                "height": "100vh",
+                                "height": "100%",
                                 "width": "100%",
                                 "position": "absolute",
-                                "left": "0",
-                                "top": "0",
+                                "left": 0,
+                                "top": 0,
+                                "bottom": 0,
+                                "right": 0,
                                 "background-color": "#1d1c1f",
                             },
                             figure=program_figures.compute_heatmap_per_lipid(
@@ -158,7 +160,7 @@ def return_layout(basic_config, slice_index):
                                             searchable=True,
                                             nothingFound="No lipid program found",
                                             radius="md",
-                                            size="xs",
+                                            # size="xs",
                                             placeholder="Choose up to 3 programs",
                                             clearable=False,
                                             maxSelectedValues=3,

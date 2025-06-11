@@ -257,14 +257,14 @@ def return_layout(basic_config, slice_index):
                             variant="filled",
                             color="cyan",
                             radius="md",
-                            size="xs",
+                            size="md",
                             disabled=False,
                             compact=False,
                             loading=False,
                             style={
                                 "position": "absolute",
                                 "left": "1%",
-                                "top": "16em",
+                                "top": "12em",
                                 "width": "20em",
                             },
                         ),
@@ -438,13 +438,13 @@ def return_layout(basic_config, slice_index):
                 dbc.Popover(
                     [
                         dbc.PopoverHeader(
-                            "MZ Peaks Exploration Tutorial",
+                            "M/Z Peaks Exploration",
                             style={"fontWeight": "bold"}
                         ),
                         dbc.PopoverBody(
                             [
                                 html.P(
-                                    "This page is used to visualize m/z peaks in the Allen Brain Atlas. Click 'Next' to continue.",
+                                    "Welcome to M/Z Peaks Exploration! This page lets you visualize the spatial distribution of detected m/z peaks across brain sections. As with the Lipid page, you can overlay anatomical structures from the Allen Brain Atlas to guide your interpretation of spatial patterns.",
                                     style={"color": "#333", "marginBottom": "15px"}
                                 ),
                                 dbc.Button("Next", id="peak-tutorial-next-1", color="primary", size="sm", className="float-end")
@@ -464,11 +464,11 @@ def return_layout(basic_config, slice_index):
                 # --- Peak Selection ---
                 dbc.Popover(
                     [
-                        dbc.PopoverHeader("MZ Peak Selection", style={"fontWeight": "bold"}),
+                        dbc.PopoverHeader("Choose Up to 3 M/Z Peaks", style={"fontWeight": "bold"}),
                         dbc.PopoverBody(
                             [
                                 html.P(
-                                    "Select up to 3 peaks from the dropdown menu. Click 'Next' to continue.",
+                                    "You can select up to three m/z peaks to display. Peaks are organized for easy browsing, and you can freely combine them to explore co-expression patterns across the brain.",
                                     style={"color": "#333", "marginBottom": "15px"}
                                 ),
                                 dbc.Button("Next", id="peak-tutorial-next-2", color="primary", size="sm", className="float-end")
@@ -485,14 +485,14 @@ def return_layout(basic_config, slice_index):
                         "boxShadow": "0 0 15px 2px #00bfff"
                     },
                 ),
-                # --- RGB Mode ---
+                # --- Spectrum Viewer ---
                 dbc.Popover(
                     [
-                        dbc.PopoverHeader("RGB Mode", style={"fontWeight": "bold"}),
+                        dbc.PopoverHeader("Inspect the Full M/Z Spectrum", style={"fontWeight": "bold"}),
                         dbc.PopoverBody(
                             [
                                 html.P(
-                                    "Activate the RGB mode to visualize the lipids as RGB images. Each lipid is displayed in a different color. Click 'Next' to continue.",
+                                    "Open the spectrum viewer to see the full m/z intensity profile for the currently selected brain slice. This allows you to inspect the spectral signal, locate specific peaks, and then display them spatially for further analysis.",
                                     style={"color": "#333", "marginBottom": "15px"}
                                 ),
                                 dbc.Button("Next", id="peak-tutorial-next-3", color="primary", size="sm", className="float-end")
@@ -500,6 +500,30 @@ def return_layout(basic_config, slice_index):
                         ),
                     ],
                     id="peak-tutorial-popover-3",
+                    target="page-2tris-show-spectrum-button",  # spectrum viewer button
+                    placement="bottom",
+                    is_open=False,
+                    style={
+                        "zIndex": 9999,
+                        "border": "2px solid #00bfff",
+                        "boxShadow": "0 0 15px 2px #00bfff"
+                    },
+                ),
+                # --- RGB Mode ---
+                dbc.Popover(
+                    [
+                        dbc.PopoverHeader("Color Map Options", style={"fontWeight": "bold"}),
+                        dbc.PopoverBody(
+                            [
+                                html.P(
+                                    "When one peak is selected, you can choose to display it using either the viridis colormap or the red channel of the RGB space. If two or three peaks are selected, the visualization automatically switches to RGB mode, where each peak is mapped to a different channel: red for the first, green for the second, and blue for the third.",
+                                    style={"color": "#333", "marginBottom": "15px"}
+                                ),
+                                dbc.Button("Next", id="peak-tutorial-next-4", color="primary", size="sm", className="float-end")
+                            ]
+                        ),
+                    ],
+                    id="peak-tutorial-popover-4",
                     target="page-2tris-rgb-switch",  # rgb switch
                     placement="bottom",
                     is_open=False,
@@ -513,11 +537,11 @@ def return_layout(basic_config, slice_index):
                 # # --- One vs All Sections ---
                 # dbc.Popover(
                 #     [
-                #         dbc.PopoverHeader("One vs All Sections", style={"fontWeight": "bold"}),
+                #         dbc.PopoverHeader("View All Slices at Once", style={"fontWeight": "bold"}),
                 #         dbc.PopoverBody(
                 #             [
                 #                 html.P(
-                #                     "Decide whether to display the selected lipids in one section or all sections. Click 'Next' to continue.",
+                #                     "You can switch to a view that shows all brain sections at once. In this mode, only the first selected peak will be displayed to keep the view clean and interpretable.",
                 #                     style={"color": "#333", "marginBottom": "15px"}
                 #                 ),
                 #                 dbc.Button("Next", id="peak-tutorial-next-4", color="primary", size="sm", className="float-end")
@@ -537,18 +561,18 @@ def return_layout(basic_config, slice_index):
                 # --- Annotations ---
                 dbc.Popover(
                     [
-                        dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                        dbc.PopoverHeader("Overlay Anatomical Contours", style={"fontWeight": "bold"}),
                         dbc.PopoverBody(
                             [
                                 html.P(
-                                    "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                    "You can enable the Allen Brain Atlas annotations to overlay anatomical labels directly on the slices. This helps you navigate the brain and interpret lipid signals in their biological context.",
                                     style={"color": "#333", "marginBottom": "15px"}
                                 ),
-                                dbc.Button("Next", id="peak-tutorial-next-4", color="primary", size="sm", className="float-end") # TODO: change this to 5 when the tutorial for all sections is updated
+                                dbc.Button("Next", id="peak-tutorial-next-5", color="primary", size="sm", className="float-end") # TODO: change this to 5 when the tutorial for all sections is updated
                             ]
                         ),
                     ],
-                    id="peak-tutorial-popover-4", # TODO: change this to 5 when the tutorial for all sections is updated
+                    id="peak-tutorial-popover-5", # TODO: change this to 5 when the tutorial for all sections is updated
                     target="page-2tris-toggle-annotations",  # annotations switch
                     placement="bottom",
                     is_open=False,
@@ -561,18 +585,18 @@ def return_layout(basic_config, slice_index):
                 # --- Brain Slider ---
                 dbc.Popover(
                     [
-                        dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                        dbc.PopoverHeader("Navigate Along Brain Anterior-Posterior Axis", style={"fontWeight": "bold"}),
                         dbc.PopoverBody(
                             [
                                 html.P(
-                                    "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                    "In the single-section view, you can navigate through the brain by selecting different slices along the rostro-caudal (front-to-back) axis. This allows detailed inspection of lipid signals at specific anatomical levels.",
                                     style={"color": "#333", "marginBottom": "15px"}
                                 ),
-                                dbc.Button("Next", id="peak-tutorial-next-5", color="primary", size="sm", className="float-end") # TODO: change this to 6 when the tutorial for all sections is updated
+                                dbc.Button("Next", id="peak-tutorial-next-6", color="primary", size="sm", className="float-end") # TODO: change this to 6 when the tutorial for all sections is updated
                             ]
                         ),
                     ],
-                    id="peak-tutorial-popover-5", # TODO: change this to 6 when the tutorial for all sections is updated
+                    id="peak-tutorial-popover-6", # TODO: change this to 6 when the tutorial for all sections is updated
                     target="main-paper-slider",  # slider
                     placement="top",
                     is_open=False,
@@ -585,18 +609,18 @@ def return_layout(basic_config, slice_index):
                 # --- Brain Chips ---
                 dbc.Popover(
                     [
-                        dbc.PopoverHeader("Different Mouse Brains", style={"fontWeight": "bold"}),
+                        dbc.PopoverHeader("Choose Experimental Condition", style={"fontWeight": "bold"}),
                         dbc.PopoverBody(
                             [
                                 html.P(
-                                    "Switch from one mouse brain to another to analyse the differences. Click 'Next' to continue.",
+                                    "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions.",
                                     style={"color": "#333", "marginBottom": "15px"}
                                 ),
                                 dbc.Button("Finish", id="peak-tutorial-finish", color="success", size="sm", className="float-end")
                             ]
                         ),
                     ],
-                    id="peak-tutorial-popover-6", # TODO: change this to 7 when the tutorial for all sections is updated
+                    id="peak-tutorial-popover-7", # TODO: change this to 7 when the tutorial for all sections is updated
                     target="main-brain",  # brain switch
                     placement="left",
                     is_open=False,
@@ -614,48 +638,84 @@ def return_layout(basic_config, slice_index):
                 dbc.Offcanvas(
                     id="page-2tris-drawer-spectrum",
                     backdrop=True,
-                    placement="end",
-                    style={"width": "30%"},
+                    placement="bottom",
+                    close_button=False,
+                    style={
+                        "position": "fixed",
+                        "left": "6rem",
+                        "width": "calc(100% - 6rem)",
+                        "height": "88%",
+                        "bottom": 0,
+                        "background-color": "#1d1c1f",
+                        "boxShadow": "0 -2px 16px rgba(0,0,0,0.5)",
+                        "zIndex": 2000,
+                        "padding": 0,
+                    },
                     children=[
                         html.Div(
                             className="loading-wrapper",
-                            style={"margin-top": "5%"},
+                            style={
+                                "position": "relative",
+                                "height": "100%",
+                                "width": "100%",
+                                "padding": 0,
+                                "margin": 0,
+                                "background": "#1d1c1f",
+                            },
                             children=[
-                                dbc.Spinner(
-                                    color="dark",
+                                dmc.Button(
+                                    children="Hide spectrum",
+                                    id="page-2tris-close-spectrum-button",
+                                    variant="filled",
+                                    disabled=False,
+                                    color="red",
+                                    radius="md",
+                                    size="md",
+                                    compact=False,
+                                    loading=False,
+                                    style={
+                                        "position": "absolute",
+                                        "top": "10px",
+                                        "right": "10px",
+                                        "zIndex": 1000,
+                                    },
+                                ),
+                                html.Div(
+                                    style={"height": "100%", "width": "100%"},
                                     children=[
-                                        html.Div(
+                                        dbc.Spinner(
+                                            color="dark",
                                             children=[
-                                                dmc.Button(
-                                                    children="Hide spectrum",
-                                                    id="page-2tris-close-spectrum-button",
-                                                    variant="filled",
-                                                    disabled=False,
-                                                    color="red",
-                                                    radius="md",
-                                                    size="xs",
-                                                    compact=False,
-                                                    loading=False,
+                                                html.Div(
+                                                    style={"height": "100%", "width": "100%", "padding": 0, "margin": 0},
+                                                    children=[
+                                                        dcc.Graph(
+                                                            id="page-2tris-graph-spectrum",
+                                                            style={
+                                                                "height": "100%",
+                                                                "width": "100%",
+                                                                "margin": 0,
+                                                                "padding": 0,
+                                                                "display": "block",
+                                                                "position": "absolute",
+                                                                "top": 0,
+                                                                "left": 0,
+                                                            },
+                                                            responsive=True,
+                                                            config=basic_config
+                                                            | {
+                                                                "toImageButtonOptions": {
+                                                                    "format": "png",
+                                                                    "filename": "section_mass_spectrum",
+                                                                    "scale": 2,
+                                                                }
+                                                            },
+                                                        ),
+                                                    ]
                                                 ),
-                                                dcc.Graph(
-                                                    id="page-2tris-graph-spectrum",
-                                                    style={
-                                                        "height": 280,
-                                                        "width": "100%",
-                                                    },
-                                                    responsive=True,
-                                                    config=basic_config
-                                                    | {
-                                                        "toImageButtonOptions": {
-                                                            "format": "png",
-                                                            "filename": "section_mass_spectrum",
-                                                            "scale": 2,
-                                                        }
-                                                    },
-                                                ),
-                                            ]
+                                            ],
                                         ),
-                                    ],
+                                    ]
                                 ),
                             ],
                         ),
@@ -801,9 +861,9 @@ def page_peak_plot_graph_heatmap_mz_selection(
                     #         sample=brain_id
                     #     )
                     #     return(peak_figures.build_lipid_heatmap_from_image(
-                    #                 image, 
-                    #                 return_base64_string=False,
-                    #                 overlay=overlay),
+                                # image, 
+                                # return_base64_string=False,
+                                # overlay=overlay),
                                 # "Now displaying:")
 
         return dash.no_update
@@ -1452,24 +1512,26 @@ def plot_section_mass_spectrum(slice_index, is_open):
     
     # Define figure layout
     layout = go.Layout(
-        margin=dict(t=50, r=0, b=10, l=0),
+        margin=dict(t=0, r=0, b=0, l=0),
         showlegend=False,
         xaxis=dict(rangeslider={"visible": False}, title="m/z"),
         yaxis=dict(fixedrange=False, title="Intensity"),
         template="plotly_dark",
         autosize=True,
         title={
-            "text": f"Mass spectrum for section {slice_index}",
-            "y": 0.92,
+            "text": "Mass Spectrum",
+            "y": 0.99,
             "x": 0.5,
             "xanchor": "center",
             "yanchor": "top",
             "font": dict(
-                size=14,
+                size=18,
             ),
         },
-        paper_bgcolor="rgba(0,0,0,0.3)",
-        plot_bgcolor="rgba(0,0,0,0.3)",
+        paper_bgcolor="#1d1c1f",
+        plot_bgcolor="#1d1c1f",
+        height=None,
+        width=None,
     )
 
     # Build figure
@@ -1590,7 +1652,7 @@ def page_peak_auto_toggle_rgb(
 # Use clientside callback for tutorial step updates
 app.clientside_callback(
     """
-    function(start, next1, next2, next3, next4, next5, finish) { 
+    function(start, next1, next2, next3, next4, next5, next6, finish) { 
         const ctx = window.dash_clientside.callback_context;
         if (!ctx.triggered.length) {
             return window.dash_clientside.no_update;
@@ -1608,6 +1670,8 @@ app.clientside_callback(
             return 5;
         } else if (trigger_id === 'peak-tutorial-next-5' && next5) {
             return 6;
+        } else if (trigger_id === 'peak-tutorial-next-6' && next6) {
+            return 7;
         } else if (trigger_id === 'peak-tutorial-finish' && finish) {
             return 0;
         }
@@ -1621,6 +1685,7 @@ app.clientside_callback(
      Input("peak-tutorial-next-3", "n_clicks"),
      Input("peak-tutorial-next-4", "n_clicks"),
      Input("peak-tutorial-next-5", "n_clicks"),
+     Input("peak-tutorial-next-6", "n_clicks"),
      Input("peak-tutorial-finish", "n_clicks")],
     prevent_initial_call=True,
 )
@@ -1630,7 +1695,7 @@ app.clientside_callback(
     """
     function(step) {
         if (step === undefined || step === null) {
-            return [false, false, false, false, false, false];
+            return [false, false, false, false, false, false, false];
         }
         return [
             step === 1,
@@ -1639,6 +1704,7 @@ app.clientside_callback(
             step === 4,
             step === 5,
             step === 6,
+            step === 7,
         ];
     }
     """,

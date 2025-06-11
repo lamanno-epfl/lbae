@@ -358,13 +358,13 @@ def return_layout(basic_config, slice_index):
                         dbc.Popover(
                             [
                                 dbc.PopoverHeader(
-                                    "Lipid Programs Exploration Tutorial",
+                                    "Lipid Programs Exploration",
                                     style={"fontWeight": "bold"}
                                 ),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "This page is used to visualize lipid programs and embeddings in the Allen Brain Atlas. Click 'Next' to continue.",
+                                            "Welcome to Lipid Programs Exploration! This page allows you to visualize lipidomic features across the brain. You can select and explore either data-driven components from the NMF global embedding or Lipid Programs learned using the LipiMap model, which organizes lipids into functional biological modules.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lp-tutorial-next-1", color="primary", size="sm", className="float-end")
@@ -384,11 +384,11 @@ def return_layout(basic_config, slice_index):
                         # --- Peak Selection ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Lipid Program Selection", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Choose Up to 3 Programs", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Select up to 3 peaks from the dropdown menu. Click 'Next' to continue.",
+                                            "You can select up to three lipid programs to display at once. The list includes both NMF components and Lipid Programs. Lipid Programs are grouped collections of lipids that are functionally or structurally related, as learned by the LipiMap model.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lp-tutorial-next-2", color="primary", size="sm", className="float-end")
@@ -408,11 +408,11 @@ def return_layout(basic_config, slice_index):
                         # --- RGB Mode ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("RGB Mode", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Color Map Options", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Activate the RGB mode to visualize the lipids as RGB images. Each lipid is displayed in a different color. Click 'Next' to continue.",
+                                            "When one program is selected, you can choose to display it using either the PuOr colormap or the red channel of the RGB space. If two or three programs are selected, the visualization automatically switches to RGB mode, where each program is mapped to a different channel: red for the first, green for the second, and blue for the third.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lp-tutorial-next-3", color="primary", size="sm", className="float-end")
@@ -433,11 +433,11 @@ def return_layout(basic_config, slice_index):
                         # # --- One vs All Sections ---
                         # dbc.Popover(
                         #     [
-                        #         dbc.PopoverHeader("One vs All Sections", style={"fontWeight": "bold"}),
+                        #         dbc.PopoverHeader("View All Slices at Once", style={"fontWeight": "bold"}),
                         #         dbc.PopoverBody(
                         #             [
                         #                 html.P(
-                        #                     "Decide whether to display the selected lipids in one section or all sections. Click 'Next' to continue.",
+                        #                     "You can switch to a view that shows all brain sections at once. In this mode, only the first selected peak will be displayed to keep the view clean and interpretable.",
                         #                     style={"color": "#333", "marginBottom": "15px"}
                         #                 ),
                         #                 dbc.Button("Next", id="lp-tutorial-next-4", color="primary", size="sm", className="float-end")
@@ -457,11 +457,11 @@ def return_layout(basic_config, slice_index):
                         # --- Annotations ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Overlay Anatomical Contours", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                            "You can enable the Allen Brain Atlas annotations to overlay anatomical labels directly on the slices. This helps you navigate the brain and interpret lipid signals in their biological context.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lp-tutorial-next-4", color="primary", size="sm", className="float-end") # TODO: change this to 5 when the tutorial for all sections is updated
@@ -481,11 +481,11 @@ def return_layout(basic_config, slice_index):
                         # --- Brain Slider ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Navigate Along Brain Anterior-Posterior Axis", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                            "In the single-section view, you can navigate through the brain by selecting different slices along the rostro-caudal (front-to-back) axis. This allows detailed inspection of lipid signals at specific anatomical levels.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lp-tutorial-next-5", color="primary", size="sm", className="float-end") # TODO: change this to 6 when the tutorial for all sections is updated
@@ -505,11 +505,11 @@ def return_layout(basic_config, slice_index):
                         # --- Brain Chips ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Different Mouse Brains", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Choose Experimental Condition", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Switch from one mouse brain to another to analyse the differences. Click 'Next' to continue.",
+                                            "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Finish", id="lp-tutorial-finish", color="success", size="sm", className="float-end")

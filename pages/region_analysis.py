@@ -509,13 +509,13 @@ def return_layout(basic_config, slice_index=1):
             dbc.Popover(
                 [
                     dbc.PopoverHeader(
-                        "Differential Analysis Tutorial",
+                        "Differential Analysis",
                         style={"fontWeight": "bold"}
                     ),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                ".",
+                                "Welcome to the Differential Analysis page! This tool helps you identify lipids that differ significantly between two selected brain regions. You can compare regions across the same slice, using anatomical guidance or manual selection.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="analysis-tutorial-next-1", color="primary", size="sm", className="float-end")
@@ -535,11 +535,11 @@ def return_layout(basic_config, slice_index=1):
             # --- Lipid Selection ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Lipid Selection", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Choose Up to 3 Lipids", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "Select up to 3 lipids from the dropdown menu. This is only for visualization purposes, as the differential analysis is computed on all lipids. Notice that the RGB mode is automatically activated in this case.",
+                                "Select up to three lipids from the 172 confidently annotated. Lipids are grouped by family, and some appear under a “Multiple matches” category if they matched different molecules.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="analysis-tutorial-next-2", color="primary", size="sm", className="float-end")
@@ -559,11 +559,11 @@ def return_layout(basic_config, slice_index=1):
             # --- Annotations ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Overlay Anatomical Contours", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "Activating the Allen Brain Atlas contours will help you to identify the regions of interest. Click 'Next' to continue.",
+                                "You can enable the Allen Brain Atlas annotations to overlay anatomical labels directly on the slices. This helps you navigate the brain and interpret lipid signals in their biological context.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="analysis-tutorial-next-3", color="primary", size="sm", className="float-end")
@@ -584,11 +584,11 @@ def return_layout(basic_config, slice_index=1):
             # --- Select Regions ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Select Regions from Anatomy", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Choose Anatomical Regions", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "Select the regions of interest among those available in the current slice. When selected, the regions will be highlighted in the brain slice.",
+                                "Use this dropdown to select anatomical regions present in the current brain slice. These regions are pre-defined based on the Allen Brain Atlas and help you quickly pick relevant structures for analysis.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="analysis-tutorial-next-4", color="primary", size="sm", className="float-end")
@@ -608,11 +608,11 @@ def return_layout(basic_config, slice_index=1):
             # --- Draw Regions ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Draw Regions", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Define Custom Regions", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "You can now draw the regions of interest on the brain slice. Hold the left mouse button to draw the region. This gives higher flexibility and customization in the analysis. Click 'Next' to continue.",
+                                "If needed, you can manually draw regions directly on the brain slice. This gives you full control to define custom areas of interest and tailor the analysis to specific biological questions.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="analysis-tutorial-next-5", color="primary", size="sm", className="float-end")
@@ -632,11 +632,11 @@ def return_layout(basic_config, slice_index=1):
             # --- Assign Groups ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Assign Regions toGroups", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Assign to Group A or B", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "You can now assign the regions to two groups to perform differential analysis. Click 'Next' to continue.",
+                                "Once your regions are selected, assign them to either Group A or Group B. The analysis compares lipid concentrations between these two groups to determine which lipids show statistically significant differences.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="analysis-tutorial-next-6", color="primary", size="sm", className="float-end")
@@ -660,7 +660,7 @@ def return_layout(basic_config, slice_index=1):
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "You can reset the region selection by clicking on the reset button. Click 'Next' to continue.",
+                                "You can reset the region selection by clicking on the reset button.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="analysis-tutorial-next-7", color="primary", size="sm", className="float-end")
@@ -680,11 +680,11 @@ def return_layout(basic_config, slice_index=1):
             # --- Compute Volcano Plot ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Compute Volcano Plot for Differential Analysis", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Run Differential Analysis", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "You can now compute the volcano plot for the differential analysis. ADD FORMULA HERE. Click 'Next' to continue.",
+                                "For each lipid, the average concentration is computed in both groups. Then a statistical test (Mann–Whitney U) checks if the difference is significant. The result is a log₂ fold-change and an adjusted p-value for each lipid, highlighting those that vary most between the selected regions. Click this button to run the analysis. A volcano plot will appear, showing each lipid’s fold-change and significance. Use this to identify key differences in lipid expression across your regions of interest.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="analysis-tutorial-next-8", color="primary", size="sm", className="float-end")
@@ -704,11 +704,11 @@ def return_layout(basic_config, slice_index=1):
             # --- Brain Slider ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Navigate Along Brain Anterior-Posterior Axis", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                ".",
+                                "In the single-section view, you can navigate through the brain by selecting different slices along the rostro-caudal (front-to-back) axis. This allows detailed inspection of lipid signals at specific anatomical levels.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="analysis-tutorial-next-9", color="primary", size="sm", className="float-end")
@@ -728,11 +728,11 @@ def return_layout(basic_config, slice_index=1):
             # --- Brain Chips ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Different Mouse Brains", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Choose Experimental Condition", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "Switch from one mouse brain to another to analyse the differences. Click 'Next' to continue.",
+                                "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Finish", id="analysis-tutorial-finish", color="success", size="sm", className="float-end")

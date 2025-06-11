@@ -374,13 +374,13 @@ def return_layout(basic_config, slice_index):
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Lipizones Exploration Tutorial",
+                                "Lipizones Exploration",
                                 style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "Welcome to the Lipizones page! Lipizones are lipid-based spatial territories in the brain. They often align with known cell-type distributions but also highlight distal axonal projections and metabolic compartments. By exploring lipizones, you can uncover key organizational principles of the brain, including connectivity, cytoarchitecture, and developmental patterning.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Next", id="lipizone-tutorial-next-1", color="primary", size="sm", className="float-end")
@@ -400,11 +400,11 @@ def return_layout(basic_config, slice_index):
                     # --- All Lipizones Button ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("All Lipizones", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader("Display All Lipizones", style={"fontWeight": "bold"}),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Default value.",
+                                        "This button displays all lipizones in the current slice by default. If you want to focus on specific lipizones, remember to first clear the current selection using the appropriate button.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Next", id="lipizone-tutorial-next-2", color="primary", size="sm", className="float-end")
@@ -424,11 +424,11 @@ def return_layout(basic_config, slice_index):
                     # --- Lipizones Selection ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Lipizones Hierarchy", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader("Navigate Lipizone Hierarchy", style={"fontWeight": "bold"}),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "Use the treemap to explore and select lipizones from a hierarchical structure. Lipizones are defined as 539 spatial clusters computed through an iterative bipartite splitter. You can navigate the hierarchy freely and stop at any level of detail. Once you’re satisfied with the selection, you can add those lipizones for visualization.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Next", id="lipizone-tutorial-next-3", color="primary", size="sm", className="float-end")
@@ -448,11 +448,11 @@ def return_layout(basic_config, slice_index):
                     # --- Add Selection Button ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Add Selection", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader("Visualize Selected Lipizones", style={"fontWeight": "bold"}),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "After selecting the desired lipizones from the treemap, click this button to add them to the current view. The display will update accordingly to show your selection.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Next", id="lipizone-tutorial-next-4", color="primary", size="sm", className="float-end")
@@ -472,11 +472,11 @@ def return_layout(basic_config, slice_index):
                     # --- Clear Selection Button ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Clear Selection", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader("Reset the Brain View", style={"fontWeight": "bold"}),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "Use this button to remove all currently selected lipizones and return to an empty brain view. This is helpful if you want to start over or explore a new subset.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Next", id="lipizone-tutorial-next-5", color="primary", size="sm", className="float-end")
@@ -496,11 +496,11 @@ def return_layout(basic_config, slice_index):
                     # --- One vs All Sections ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("One vs All Sections", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader("View All Slices at Once", style={"fontWeight": "bold"}),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Decide whether to display the selected lipids in one section or all sections. Click 'Next' to continue.",
+                                        "You can switch to a view that shows all brain sections at once. In this mode, only the first selected lipid will be displayed to keep the view clean and interpretable.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Next", id="lipizone-tutorial-next-6", color="primary", size="sm", className="float-end")
@@ -520,11 +520,11 @@ def return_layout(basic_config, slice_index):
                     # --- Annotations ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader("Overlay Anatomical Contours", style={"fontWeight": "bold"}),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                        "You can enable the Allen Brain Atlas annotations to overlay anatomical labels directly on the slices. This helps you navigate the brain and interpret lipid signals in their biological context.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Next", id="lipizone-tutorial-next-7", color="primary", size="sm", className="float-end")
@@ -544,11 +544,11 @@ def return_layout(basic_config, slice_index):
                     # --- Brain Slider ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader("Navigate Along Brain Anterior-Posterior Axis", style={"fontWeight": "bold"}),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                        "In the single-section view, you can navigate through the brain by selecting different slices along the rostro-caudal (front-to-back) axis. This allows detailed inspection of lipid signals at specific anatomical levels.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Next", id="lipizone-tutorial-next-8", color="primary", size="sm", className="float-end")
@@ -568,11 +568,11 @@ def return_layout(basic_config, slice_index):
                     # --- Brain Chips ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Different Mouse Brains", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader("Choose Experimental Condition", style={"fontWeight": "bold"}),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Switch from one mouse brain to another to analyse the differences. Click 'Next' to continue.",
+                                        "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Finish", id="lipizone-tutorial-finish", color="success", size="sm", className="float-end")

@@ -391,46 +391,46 @@ def return_layout(basic_config, slice_index):
                                 "minWidth": "200px",
                             },
                         ),
-                        dmc.Group(
-                            position="right",
-                            direction="row",
-                            style={
-                                "right": "1rem",
-                                "bottom": "0.5rem",
-                                "position": "fixed",
-                                "z-index": 1000,
-                            },
-                            class_name="position-absolute",
-                            spacing=0,
-                            children=[
-                                dmc.Button(
-                                    children="Download data",
-                                    id="page-2tris-download-data-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                    class_name="mt-1",
-                                    style={"margin-right": "0.5rem"},
-                                ),
-                                dmc.Button(
-                                    children="Download image",
-                                    id="page-2tris-download-image-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                    class_name="mt-1",
-                                ),
-                            ],
-                        ),
-                        dcc.Download(id="page-2tris-download-data"),
+                        # dmc.Group(
+                        #     position="right",
+                        #     direction="row",
+                        #     style={
+                        #         "right": "1rem",
+                        #         "bottom": "0.5rem",
+                        #         "position": "fixed",
+                        #         "z-index": 1000,
+                        #     },
+                        #     class_name="position-absolute",
+                        #     spacing=0,
+                        #     children=[
+                        #         dmc.Button(
+                        #             children="Download data",
+                        #             id="page-2tris-download-data-button",
+                        #             variant="filled",
+                        #             disabled=False,
+                        #             color="cyan",
+                        #             radius="md",
+                        #             size="xs",
+                        #             compact=False,
+                        #             loading=False,
+                        #             class_name="mt-1",
+                        #             style={"margin-right": "0.5rem"},
+                        #         ),
+                        #         dmc.Button(
+                        #             children="Download image",
+                        #             id="page-2tris-download-image-button",
+                        #             variant="filled",
+                        #             disabled=False,
+                        #             color="cyan",
+                        #             radius="md",
+                        #             size="xs",
+                        #             compact=False,
+                        #             loading=False,
+                        #             class_name="mt-1",
+                        #         ),
+                        #     ],
+                        # ),
+                        # dcc.Download(id="page-2tris-download-data"),
                     ],
                 ),
 
@@ -1007,7 +1007,6 @@ def page_peak_add_toast_selection(
 ):
     """This callback adds the selected peak to the selection."""
     logging.info("Entering function to update peak data")
-    print("\n================ page_peak_add_toast_selection ================")
     
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
@@ -1444,22 +1443,22 @@ def page_peak_add_toast_selection(
     return dash.no_update
 
 
-clientside_callback(
-    """
-    function(n_clicks){
-        if(n_clicks > 0){
-            domtoimage.toBlob(document.getElementById('page-2tris-graph-heatmap-mz-selection'))
-                .then(function (blob) {
-                    window.saveAs(blob, 'peak_selection_plot.png');
-                });
-        }
-        return null;
-    }
-    """,
-    Output("page-2tris-download-image-button", "n_clicks"),
-    Input("page-2tris-download-image-button", "n_clicks"),
-)
-"""This clientside callback is used to download the current heatmap."""
+# clientside_callback(
+#     """
+#     function(n_clicks){
+#         if(n_clicks > 0){
+#             domtoimage.toBlob(document.getElementById('page-2tris-graph-heatmap-mz-selection'))
+#                 .then(function (blob) {
+#                     window.saveAs(blob, 'peak_selection_plot.png');
+#                 });
+#         }
+#         return null;
+#     }
+#     """,
+#     Output("page-2tris-download-image-button", "n_clicks"),
+#     Input("page-2tris-download-image-button", "n_clicks"),
+# )
+# """This clientside callback is used to download the current heatmap."""
 
 
 @app.callback(

@@ -498,19 +498,6 @@ layout = (
                         },
                     ),
                     dmc.Alert(
-                        title="Tutorial Video",
-                        color="cyan",
-                        children=[
-                            "In each of the pages you will navigate, you will find some instructions. In case you want to be guided a bit more, please find a tutorial video clicking on the camera-icon on the sidebar!"
-                        ],
-                        style={
-                            "marginBottom": "1.5rem",
-                            "backgroundColor": "#232f3e",
-                            "color": "#e3f6ff",
-                            "borderLeft": "5px solid #1fafc8",
-                        },
-                    ),
-                    dmc.Alert(
                         title="Mobile Device Warning",
                         color="red",
                         children=[

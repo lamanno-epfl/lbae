@@ -142,7 +142,7 @@ def return_layout(basic_config, slice_index):
                             figure=figures.build_lipid_heatmap_from_image(
                                 figures.compute_image_lipids_genes(
                                     all_selected_lipids=["HexCer 42:2;O2"],
-                                    all_selected_genes=["Actr1b=ENSMUSG00000037351"],
+                                    all_selected_genes=["Mbp=ENSMUSG00000041607"],
                                     slice_index=slice_index,
                                     df_genes=df_genes,
                                     rgb_mode_lipids=False,
@@ -292,7 +292,7 @@ def return_layout(basic_config, slice_index):
                                         dmc.MultiSelect(
                                             id="page-6tris-dropdown-genes",
                                             data=get_gene_options(slice_index),# data.return_gene_options(),
-                                            value=["Actr1b=ENSMUSG00000037351"],
+                                            value=["Mbp=ENSMUSG00000041607"],
                                             searchable=True,
                                             nothingFound="No gene found",
                                             radius="md",
@@ -470,59 +470,58 @@ def return_layout(basic_config, slice_index):
                                 "minWidth": "200px",
                             },
                         ),
-                        dmc.Group(
-                            position="right",
-                            direction="row",
-                            style={
-                                "right": "1rem",
-                                "bottom": "0.5rem",
-                                "position": "fixed",
-                                "z-index": 1000,
-                            },
-                            class_name="position-absolute",
-                            spacing=0,
-                            children=[
-                                dmc.Button(
-                                    children="Download data",
-                                    id="page-6tris-download-data-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                    class_name="mt-1",
-                                    style={"margin-right": "0.5rem"},
-                                ),
-                                dmc.Button(
-                                    children="Download image",
-                                    id="page-6tris-download-image-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                    class_name="mt-1",
-                                ),
-                            ],
-                        ),
-                        dcc.Download(id="page-6tris-download-data"),
-
+                        # dmc.Group(
+                        #     position="right",
+                        #     direction="row",
+                        #     style={
+                        #         "right": "1rem",
+                        #         "bottom": "0.5rem",
+                        #         "position": "fixed",
+                        #         "z-index": 1000,
+                        #     },
+                        #     class_name="position-absolute",
+                        #     spacing=0,
+                        #     children=[
+                        #         dmc.Button(
+                        #             children="Download data",
+                        #             id="page-6tris-download-data-button",
+                        #             variant="filled",
+                        #             disabled=False,
+                        #             color="cyan",
+                        #             radius="md",
+                        #             size="xs",
+                        #             compact=False,
+                        #             loading=False,
+                        #             class_name="mt-1",
+                        #             style={"margin-right": "0.5rem"},
+                        #         ),
+                        #         dmc.Button(
+                        #             children="Download image",
+                        #             id="page-6tris-download-image-button",
+                        #             variant="filled",
+                        #             disabled=False,
+                        #             color="cyan",
+                        #             radius="md",
+                        #             size="xs",
+                        #             compact=False,
+                        #             loading=False,
+                        #             class_name="mt-1",
+                        #         ),
+                        #     ],
+                        # ),
+                        # dcc.Download(id="page-6tris-download-data"),
                         
                         # Tutorial Popovers with adjusted positions
                         dbc.Popover(
                             [
                                 dbc.PopoverHeader(
-                                    "Lipid vs Genes Tutorial",
+                                    "Lipids vs Genes",
                                     style={"fontWeight": "bold"}
                                 ),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            ".",
+                                            "Welcome to the Lipids vs Genes page! This view allows you to compare spatial lipid expression with gene expression in the same brain slices. By overlaying these two layers of information, you can explore how molecular distributions align across omics levels, and identify possible relationships between lipid metabolism and gene activity in specific brain regions.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lipigene-tutorial-next-1", color="primary", size="sm", className="float-end")
@@ -542,11 +541,11 @@ def return_layout(basic_config, slice_index):
                         # --- Lipid Selection ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Lipid Selection", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Choose Up to 3 Lipids", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Select up to 3 lipids from the dropdown menu. Click 'Next' to continue.",
+                                            "Select up to three lipids from the 172 confidently annotated. Lipids are grouped by family, and some appear under a “Multiple matches” category if they matched different molecules.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lipigene-tutorial-next-2", color="primary", size="sm", className="float-end")
@@ -566,11 +565,11 @@ def return_layout(basic_config, slice_index):
                         # --- RGB Mode ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("RGB Mode", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Color Map Options", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Activate the RGB mode to visualize the lipids as RGB images. Each lipid is displayed in a different color. Click 'Next' to continue.",
+                                            "When one lipid is selected, you can choose to display it using either the viridis colormap or the red channel of the RGB space. If two or three lipids are selected, the visualization automatically switches to RGB mode, where each lipid is mapped to a different channel: red for the first, green for the second, and blue for the third.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lipigene-tutorial-next-3", color="primary", size="sm", className="float-end")
@@ -590,11 +589,11 @@ def return_layout(basic_config, slice_index):
                         # --- Gene Selection ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Gene Selection", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Choose Up to 3 Genes", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Select up to 3 genes from the dropdown menu. Click 'Next' to continue.",
+                                            "Select up to three genes to display. You can compare their spatial expression with lipid signals to explore potential functional or anatomical relationships.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lipigene-tutorial-next-4", color="primary", size="sm", className="float-end")
@@ -614,11 +613,11 @@ def return_layout(basic_config, slice_index):
                         # --- Gene Filtering ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Filtering", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Filter Low-Expression Regions", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Filter each gene by its minimum expression level. Click 'Next' to continue.",
+                                            "For each selected gene, you’ll see a slider that lets you set a minimum expression threshold. This filters out pixels with low gene expression, helping you focus only on regions where the gene is meaningfully expressed and removing background noise from the visualization.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lipigene-tutorial-next-5", color="primary", size="sm", className="float-end")
@@ -639,11 +638,11 @@ def return_layout(basic_config, slice_index):
                         # --- Annotations ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Brain Anatomy", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Overlay Anatomical Contours", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                            "You can enable the Allen Brain Atlas annotations to overlay anatomical labels directly on the slices. This helps you navigate the brain and interpret lipid signals in their biological context.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Next", id="lipigene-tutorial-next-6", color="primary", size="sm", className="float-end")
@@ -663,11 +662,11 @@ def return_layout(basic_config, slice_index):
                         # --- Brain Slider ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Navigate Brain Slices", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader("Navigate Along Brain Anterior-Posterior Axis", style={"fontWeight": "bold"}),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                            "In the single-section view, you can navigate through the brain by selecting different slices along the rostro-caudal (front-to-back) axis. This allows detailed inspection of lipid signals at specific anatomical levels.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         dbc.Button("Finish", id="lipigene-tutorial-finish", color="success", size="sm", className="float-end")
@@ -1405,22 +1404,22 @@ def update_gene_thresholds(threshold_1, threshold_2, threshold_3):
     """Updates the gene threshold store values when sliders change."""
     return threshold_1, threshold_2, threshold_3
 
-clientside_callback(
-    """
-    function(n_clicks){
-        if(n_clicks > 0){
-            domtoimage.toBlob(document.getElementById('page-6tris-graph-heatmap-mz-selection'))
-                .then(function (blob) {
-                    window.saveAs(blob, 'lipid_selection_plot.png');
-                }
-            );
-        }
-    }
-    """,
-    Output("page-6tris-download-image-button", "n_clicks"),
-    Input("page-6tris-download-image-button", "n_clicks"),
-)
-"""This clientside callback is used to download the current heatmap."""
+# clientside_callback(
+#     """
+#     function(n_clicks){
+#         if(n_clicks > 0){
+#             domtoimage.toBlob(document.getElementById('page-6tris-graph-heatmap-mz-selection'))
+#                 .then(function (blob) {
+#                     window.saveAs(blob, 'lipid_selection_plot.png');
+#                 }
+#             );
+#         }
+#     }
+#     """,
+#     Output("page-6tris-download-image-button", "n_clicks"),
+#     Input("page-6tris-download-image-button", "n_clicks"),
+# )
+# """This clientside callback is used to download the current heatmap."""
 
 # Use clientside callback for tutorial step updates
 app.clientside_callback(

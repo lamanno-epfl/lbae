@@ -169,7 +169,7 @@ def return_layout(basic_config, slice_index):
                         color="cyan",
                         radius="md",
                         size="sm",
-                        style={"marginBottom": "5pxem"},
+                        style={"marginBottom": "5px"},
                     ),
                     html.Div(
                         id="3d-lipizones-treemap-container",  # Add this ID
@@ -283,13 +283,13 @@ def return_layout(basic_config, slice_index):
             dbc.Popover(
                 [
                     dbc.PopoverHeader(
-                        "3D Lipizones Exploration Tutorial",
+                        "3D Lipizones Exploration",
                         style={"fontWeight": "bold"}
                     ),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                ".",
+                                "Welcome to the 3D Lipizones page! This view lets you explore the spatial organization of lipizones across the entire mouse brain in three dimensions. By transitioning from 2D slices to full-volume rendering, you can better understand how lipid-based territories extend through brain structures, interact with anatomy, and reveal global organizational principles not easily visible in 2D.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="3d-lipizone-tutorial-next-1", color="primary", size="sm", className="float-end")
@@ -309,11 +309,11 @@ def return_layout(basic_config, slice_index):
             # --- All Lipizones Button ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("All Lipizones", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Display All Lipizones", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "When selected, all lipizones are displayed in 3D in a scatter plot, it differs from the treemap selection view.",
+                                "This button displays all lipizones in the current slice by default. If you want to focus on specific lipizones, remember to first clear the current selection using the appropriate button.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="3d-lipizone-tutorial-next-2", color="primary", size="sm", className="float-end")
@@ -333,11 +333,11 @@ def return_layout(basic_config, slice_index):
             # --- Lipizones Selection ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Lipizones Hierarchy", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Navigate Lipizones Hierarchy", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                ".",
+                                "Use the treemap to explore and select lipizones from a hierarchical structure. Lipizones are defined as 539 spatial clusters computed through an iterative bipartite splitter. You can navigate the hierarchy freely and stop at any level of detail. Once you're satisfied with the selection, you can add those lipizones for visualization.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="3d-lipizone-tutorial-next-3", color="primary", size="sm", className="float-end")
@@ -357,11 +357,11 @@ def return_layout(basic_config, slice_index):
             # --- Add Selection Button ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Add Selection", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Visualize Selected Lipizones", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                ".",
+                                "After selecting the desired lipizones from the treemap, click this button to add them to the current view. The display will update accordingly to show your selection.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             dbc.Button("Next", id="3d-lipizone-tutorial-next-4", color="primary", size="sm", className="float-end")
@@ -381,11 +381,11 @@ def return_layout(basic_config, slice_index):
             # --- Clear Selection Button ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Clear Selection", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader("Reset the Brain View", style={"fontWeight": "bold"}),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                ".",
+                                "Use this button to remove all currently selected lipizones and return to an empty brain view. This is helpful if you want to start over or explore a new subset.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                              dbc.Button("Finish", id="3d-lipizone-tutorial-finish", color="success", size="sm", className="float-end")
@@ -414,7 +414,7 @@ def return_layout(basic_config, slice_index):
 @app.callback(
     Output("3d-lipizones-current-treemap-selection", "data"),
     Output("3d-lipizones-current-selection-text", "children"),
-    Input("3d-lipizones-treemap", "clickData"),
+    Input("page-6-lipizones-treemap", "clickData"),
 )
 def update_current_selection(click_data):
     """Store the current treemap selection."""
@@ -446,6 +446,7 @@ def update_current_selection(click_data):
 
 @app.callback(
     Output("3d-lipizones-all-selected-lipizones", "data"),
+    Input("view-all-lipizones-btn", "n_clicks"),
     Input("3d-lipizones-add-selection-button", "n_clicks"),
     Input("3d-lipizones-clear-selection-button", "n_clicks"),
     State("3d-lipizones-current-treemap-selection", "data"),
@@ -453,6 +454,7 @@ def update_current_selection(click_data):
     prevent_initial_call=True
 )
 def handle_selection_changes(
+    view_all_clicks,
     add_clicks,
     clear_clicks,
     current_selection,
@@ -466,8 +468,20 @@ def handle_selection_changes(
     # Get which button was clicked
     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
     
+    # Handle view all button
+    if triggered_id == "view-all-lipizones-btn":
+        all_lipizones = {"names": [], "indices": []}
+        for lipizone_name in lipizone_data.df_hierarchy_lipizones["lipizone_names"].unique():
+            lipizone_indices = lipizone_data.df_hierarchy_lipizones.index[
+                lipizone_data.df_hierarchy_lipizones["lipizone_names"] == lipizone_name
+            ].tolist()
+            if lipizone_indices:
+                all_lipizones["names"].append(lipizone_name)
+                all_lipizones["indices"].extend(lipizone_indices[:1])
+        return all_lipizones
+    
     # Handle clear button
-    if triggered_id == "3d-lipizones-clear-selection-button":
+    elif triggered_id == "3d-lipizones-clear-selection-button":
         return {"names": [], "indices": []}
     
     # Handle add button
@@ -564,20 +578,15 @@ def update_3d_visualization(
         all_selected_lipizones, 
         view_all_lipizones
         ):
-    print("\n============= update_3d_visualization =============")
     start_time = time.time()
     ctx = dash.callback_context
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
-    print(f"Callback triggered by {trigger_id} with view_all_lipizones={view_all_lipizones}")
-    print("all_selected_lipizones", all_selected_lipizones)
-    print("view_all_lipizones", view_all_lipizones)
     
     logging.info(f"Callback triggered by {trigger_id} with view_all_lipizones={view_all_lipizones}")
     
     try:
         # If the "View All Lipizones" button was clicked
         if view_all_lipizones:
-            print("\n------------- view_all_lipizones -------------")
             logging.info("Displaying all lipizones view")
             try:
                 # Create figure with all lipizones

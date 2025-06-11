@@ -64,13 +64,11 @@ def global_store(
     l_expressions = []
 
     # Loop over all user-draw regions and pre-existing masks
-    print("l_shapes_and_masks = ", l_shapes_and_masks)
     for shape in l_shapes_and_masks:
         grah_scattergl_data = None
         # Compute lipid expressions from mask
         if shape[0] == "mask":
             mask_name = shape[1]
-            print("mask_name = ", mask_name)
             
             id_name = atlas.dic_name_acronym[mask_name]
             if id_name in atlas.dic_existing_masks[slice_index]:
@@ -943,7 +941,6 @@ def page_3_hover(hoverData, slice_index):
 )
 def page_3_reset_layout(cliked_reset, url):
     """This callback is used to reset the layout of the heatmap when navigating to this page."""
-    # print("\n============ page_3_reset_layout =============")
     return {}
 
 
@@ -986,7 +983,6 @@ def page_3_plot_heatmap(
     graph_input,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
-    # print("\n============ page_3_plot_heatmap =============")
     logging.info("Entering page_3_plot_heatmap")
 
     # Find out which input triggered the function
@@ -1646,7 +1642,6 @@ def page_3_empty_dropdown(clicked_reset, slice_index): #
 def page_3_button_compute_volcano(relayoutData, clicked_reset, mask):
     """This callback disables the button to compute volcano plot if no region has been selected or
     drawn."""
-    # print("\n============ page_3_button_compute_volcano =============")
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     
@@ -1681,7 +1676,6 @@ def page_3_button_compute_volcano(relayoutData, clicked_reset, mask):
 def page_3_display_volcano(clicked_reset, clicked_compute, mask, relayoutData):
     """This callback displays the volcano plot when clicking on the compute volcano button
     (and hide the corresponding alert)."""
-    # print("\n============ page_3_display_volcano =============")
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
 
@@ -1750,8 +1744,6 @@ def page_3_record_volcano(
 ):
     """This callback is used to compute and record the lipids' expression of the selected
     region(s)."""
-    # print("\n============ page_3_record_volcano =============")
-
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
@@ -1814,8 +1806,6 @@ def page_3_plot_volcano(
     relayoutData,
 ):
     """This callback is used to plot the volcano plot of the selected region(s)."""
-    # print("\n============ page_3_plot_volcano =============")
-
     # Find out which input triggered the function
     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
@@ -1980,7 +1970,6 @@ def update_group_selectors(
     current_a_data,
     current_b_data,
 ):
-    # print("\n============ update_group_selectors =============")
     # Find which input triggered the callback
     ctx = dash.callback_context
     trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -2026,7 +2015,6 @@ def partition_shapes(
     group_b_values,
     l_shapes_and_masks,
 ):
-    # print("\n============ partition_shapes =============")
     trigger_id = dash.callback_context.triggered[0]['prop_id'].split('.')[0]
     if l_shapes_and_masks is None:
         return dash.no_update, dash.no_update

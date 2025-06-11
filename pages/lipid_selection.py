@@ -306,52 +306,52 @@ def return_layout(basic_config, slice_index):
                                 "minWidth": "200px",
                             },
                         ),
-                        dmc.Group(
-                            position="right",
-                            direction="row",
-                            style={
-                                "right": "1rem",
-                                "bottom": "0.5rem",
-                                "position": "fixed",
-                                "z-index": 1000,
-                            },
-                            class_name="position-absolute",
-                            spacing=0,
-                            children=[
-                                dmc.Button(
-                                    children="Download data",
-                                    id="page-2-download-data-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                    class_name="mt-1",
-                                    style={"margin-right": "0.5rem"},
-                                ),
-                                dmc.Button(
-                                    children="Download image",
-                                    id="page-2-download-image-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                    class_name="mt-1",
-                                ),
-                            ],
-                        ),
-                        dcc.Download(id="page-2-download-data"),
+                        # dmc.Group(
+                        #     position="right",
+                        #     direction="row",
+                        #     style={
+                        #         "right": "1rem",
+                        #         "bottom": "0.5rem",
+                        #         "position": "fixed",
+                        #         "z-index": 1000,
+                        #     },
+                        #     class_name="position-absolute",
+                        #     spacing=0,
+                        #     children=[
+                        #         dmc.Button(
+                        #             children="Download data",
+                        #             id="page-2-download-data-button",
+                        #             variant="filled",
+                        #             disabled=False,
+                        #             color="cyan",
+                        #             radius="md",
+                        #             size="xs",
+                        #             compact=False,
+                        #             loading=False,
+                        #             class_name="mt-1",
+                        #             style={"margin-right": "0.5rem"},
+                        #         ),
+                        #         dmc.Button(
+                        #             children="Download image",
+                        #             id="page-2-download-image-button",
+                        #             variant="filled",
+                        #             disabled=False,
+                        #             color="cyan",
+                        #             radius="md",
+                        #             size="xs",
+                        #             compact=False,
+                        #             loading=False,
+                        #             class_name="mt-1",
+                        #         ),
+                        #     ],
+                        # ),
+                        # dcc.Download(id="page-2-download-data"),
 
                         # Tutorial Popovers with adjusted positions
                         dbc.Popover(
                             [
                                 dbc.PopoverHeader(
-                                    "Lipid Exploration",
+                                    "Lipids Exploration",
                                     style={"fontWeight": "bold"}
                                 ),
                                 dbc.PopoverBody(
@@ -1215,22 +1215,22 @@ def page_2_active_sections_control(lipid_1_index, lipid_2_index, lipid_3_index):
     # Enable control if at least one lipid is selected
     return len(active_lipids) == 0
 
-clientside_callback(
-    """
-    function(n_clicks){
-        if(n_clicks > 0){
-            domtoimage.toBlob(document.getElementById('page-2-graph-heatmap-mz-selection'))
-                .then(function (blob) {
-                    window.saveAs(blob, 'lipid_selection_plot.png');
-                }
-            );
-        }
-    }
-    """,
-    Output("page-2-download-image-button", "n_clicks"),
-    Input("page-2-download-image-button", "n_clicks"),
-)
-"""This clientside callback is used to download the current heatmap."""
+# clientside_callback(
+#     """
+#     function(n_clicks){
+#         if(n_clicks > 0){
+#             domtoimage.toBlob(document.getElementById('page-2-graph-heatmap-mz-selection'))
+#                 .then(function (blob) {
+#                     window.saveAs(blob, 'lipid_selection_plot.png');
+#                 }
+#             );
+#         }
+#     }
+#     """,
+#     Output("page-2-download-image-button", "n_clicks"),
+#     Input("page-2-download-image-button", "n_clicks"),
+# )
+# """This clientside callback is used to download the current heatmap."""
 
 @app.callback(
     Output("page-2-main-slider-style", "data"),

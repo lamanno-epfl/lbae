@@ -436,40 +436,40 @@ def return_layout(basic_config, slice_index):
                         ],
                     ),
                     # Controls at the bottom right
-                    html.Div(
-                        style={
-                            "right": "1rem",
-                            "bottom": "1rem",
-                            "position": "fixed",
-                            "z-index": 1000,
-                            "display": "flex",
-                            "flexDirection": "column",
-                            "gap": "0.5rem",
-                        },
-                        children=[
-                            dmc.Button(
-                                children="Download data",
-                                id="page-6-download-data-button",
-                                variant="filled",
-                                disabled=False,
-                                color="cyan",
-                                radius="md",
-                                size="sm",
-                                style={"width": "150px"},
-                            ),
-                            dmc.Button(
-                                children="Download image",
-                                id="page-6-download-image-button",
-                                variant="filled",
-                                disabled=False,
-                                color="cyan",
-                                radius="md",
-                                size="sm",
-                                style={"width": "150px"},
-                            ),
-                        ],
-                    ),
-                    dcc.Download(id="page-6-download-data"),
+                    # html.Div(
+                    #     style={
+                    #         "right": "1rem",
+                    #         "bottom": "1rem",
+                    #         "position": "fixed",
+                    #         "z-index": 1000,
+                    #         "display": "flex",
+                    #         "flexDirection": "column",
+                    #         "gap": "0.5rem",
+                    #     },
+                    #     children=[
+                    #         dmc.Button(
+                    #             children="Download data",
+                    #             id="page-6-download-data-button",
+                    #             variant="filled",
+                    #             disabled=False,
+                    #             color="cyan",
+                    #             radius="md",
+                    #             size="sm",
+                    #             style={"width": "150px"},
+                    #         ),
+                    #         dmc.Button(
+                    #             children="Download image",
+                    #             id="page-6-download-image-button",
+                    #             variant="filled",
+                    #             disabled=False,
+                    #             color="cyan",
+                    #             radius="md",
+                    #             size="sm",
+                    #             style={"width": "150px"},
+                    #         ),
+                    #     ],
+                    # ),
+                    # dcc.Download(id="page-6-download-data"),
                     
                     # Tutorial Popovers with adjusted positions
                     dbc.Popover(
@@ -733,9 +733,7 @@ def return_layout(basic_config, slice_index):
 def update_current_selection(click_data):
     """Store the current treemap selection."""
     input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    print("input_id", input_id)
     value = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    print("value", value)
     if not click_data:
         return None, "Click on a node in the tree to select all lipizones under it"
     
@@ -744,20 +742,17 @@ def update_current_selection(click_data):
     
     # Filter hierarchy based on the clicked node's path
     filtered = lipizone_data.df_hierarchy_lipizones.copy()
-    print("filtered", filtered.shape)
     # Get the level of the clicked node
     path_columns = ['level_1_name', 'level_2_name', 'level_3_name', 'level_4_name', 'subclass_name', 'lipizone_names']
     
     # Apply filters based on the entire path up to the clicked node
     for i, value in enumerate(current_path.split("/")):
-        print(i, "value", value)
         if i < len(path_columns):
             column = path_columns[i]
             filtered = filtered[filtered[column].astype(str) == str(value)]
     
     # Get all lipizones under this node
     lipizones = sorted(filtered["lipizone_names"].unique())
-    print("lipizones", len(lipizones))
     if lipizones:
         return lipizones, f"Selected: {clicked_label} ({len(lipizones)} lipizones)"
     
@@ -999,25 +994,6 @@ def page_6_plot_graph_heatmap_mz_selection(
     else:
         return dash.no_update
 
-
-@app.callback(
-    Output("page-6-one-section-button", "disabled"),
-    Output("page-6-all-sections-button", "disabled"),
-    
-    Input("page-6-all-selected-lipizones", "data"),
-)
-def page_6_active_download(
-    all_selected_lipizones):
-    """This callback is used to toggle on/off the display rgb and colormap buttons."""
-    logging.info("Enabled rgb and colormap buttons")
-    
-    # First check if we have lipizones in the all_selected_lipizones store
-    if all_selected_lipizones and len(all_selected_lipizones.get("names", [])) > 0:
-        return False, False
-    
-    else:
-        return True, True
-
 # Add callback to update badges
 @app.callback(
     Output("page-6-selected-lipizones-badges", "children"),
@@ -1207,7 +1183,6 @@ def update_pdf_viewer(all_selected_lipizones, n_clicks, current_style):
     pdf_exists = False
     for filename in safe_lipizone_names:
         pdf_path = os.path.join(ID_CARDS_PATH, f"lipizone_ID_card_{filename}.pdf")
-        print(pdf_path)
         if os.path.exists(pdf_path):
             pdf_exists = True
             break

@@ -313,46 +313,46 @@ def return_layout(basic_config, slice_index):
                                 "minWidth": "200px",
                             },
                         ),
-                        dmc.Group(
-                            position="right",
-                            direction="row",
-                            style={
-                                "right": "1rem",
-                                "bottom": "0.5rem",
-                                "position": "fixed",
-                                "z-index": 1000,
-                            },
-                            class_name="position-absolute",
-                            spacing=0,
-                            children=[
-                                dmc.Button(
-                                    children="Download data",
-                                    id="page-2bis-download-data-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                    class_name="mt-1",
-                                    style={"margin-right": "0.5rem"},
-                                ),
-                                dmc.Button(
-                                    children="Download image",
-                                    id="page-2bis-download-image-button",
-                                    variant="filled",
-                                    disabled=False,
-                                    color="cyan",
-                                    radius="md",
-                                    size="xs",
-                                    compact=False,
-                                    loading=False,
-                                    class_name="mt-1",
-                                ),
-                            ],
-                        ),
-                        dcc.Download(id="page-2bis-download-data"),
+                        # dmc.Group(
+                        #     position="right",
+                        #     direction="row",
+                        #     style={
+                        #         "right": "1rem",
+                        #         "bottom": "0.5rem",
+                        #         "position": "fixed",
+                        #         "z-index": 1000,
+                        #     },
+                        #     class_name="position-absolute",
+                        #     spacing=0,
+                        #     children=[
+                        #         dmc.Button(
+                        #             children="Download data",
+                        #             id="page-2bis-download-data-button",
+                        #             variant="filled",
+                        #             disabled=False,
+                        #             color="cyan",
+                        #             radius="md",
+                        #             size="xs",
+                        #             compact=False,
+                        #             loading=False,
+                        #             class_name="mt-1",
+                        #             style={"margin-right": "0.5rem"},
+                        #         ),
+                        #         dmc.Button(
+                        #             children="Download image",
+                        #             id="page-2bis-download-image-button",
+                        #             variant="filled",
+                        #             disabled=False,
+                        #             color="cyan",
+                        #             radius="md",
+                        #             size="xs",
+                        #             compact=False,
+                        #             loading=False,
+                        #             class_name="mt-1",
+                        #         ),
+                        #     ],
+                        # ),
+                        # dcc.Download(id="page-2bis-download-data"),
 
                         # Tutorial Popovers with adjusted positions
                         dbc.Popover(
@@ -892,7 +892,6 @@ def page_2bis_add_toast_selection(
             #     name = "_".join(lipid_name.split(" ")[::2])
             #     structure = "_".join(lipid_name.split(" ")[1::2])
             name = program_name
-            print("name:", name)
                 
             l_program_loc = (
                 program_data.get_annotations()
@@ -903,8 +902,7 @@ def page_2bis_add_toast_selection(
                 ]
                 .tolist()
             )
-            print("l_program_loc:", l_program_loc)
-
+            
             if len(l_program_loc) == 0:
                 l_program_loc = (
                     program_data.get_annotations()
@@ -1245,22 +1243,22 @@ def page_2bis_auto_toggle_rgb(
 #     # Enable control if at least one lipid is selected
 #     return len(active_programs) == 0
 
-clientside_callback(
-    """
-    function(n_clicks){
-        if(n_clicks > 0){
-            domtoimage.toBlob(document.getElementById('page-2bis-graph-heatmap-mz-selection'))
-                .then(function (blob) {
-                    window.saveAs(blob, 'lipid_selection_plot.png');
-                }
-            );
-        }
-    }
-    """,
-    Output("page-2bis-download-image-button", "n_clicks"),
-    Input("page-2bis-download-image-button", "n_clicks"),
-)
-"""This clientside callback is used to download the current heatmap."""
+# clientside_callback(
+#     """
+#     function(n_clicks){
+#         if(n_clicks > 0){
+#             domtoimage.toBlob(document.getElementById('page-2bis-graph-heatmap-mz-selection'))
+#                 .then(function (blob) {
+#                     window.saveAs(blob, 'lipid_selection_plot.png');
+#                 }
+#             );
+#         }
+#     }
+#     """,
+#     Output("page-2bis-download-image-button", "n_clicks"),
+#     Input("page-2bis-download-image-button", "n_clicks"),
+# )
+# """This clientside callback is used to download the current heatmap."""
 
 # @app.callback(
 #     Output("page-2bis-main-slider-style", "data"),

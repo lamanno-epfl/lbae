@@ -956,7 +956,6 @@ def return_layout(basic_config, slice_index):
 )
 def update_celltype_treemap(slice_index):
     """Update the celltype treemap when the slice changes."""
-    print("\n======== update_celltype_treemap =========")
     # Create new treemap data for celltypes with the current slice
     df_treemap_celltypes, node_colors_celltypes = (
         celltype_data.create_treemap_data_celltypes(slice_index=slice_index)
@@ -975,7 +974,6 @@ def update_celltype_treemap(slice_index):
 )
 def update_current_lipizone_selection(click_data):
     """Store the current treemap selection for lipizones."""
-    print("\n======== update_current_lipizone_selection =========")
     input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
 
@@ -1022,7 +1020,6 @@ def update_current_lipizone_selection(click_data):
 )
 def update_current_celltype_selection(click_data, slice_index):
     """Store the current treemap selection for celltypes."""
-    print("\n======== update_current_celltype_selection =========")
     input_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
     value = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
 
@@ -1332,7 +1329,6 @@ def page_6_plot_graph_heatmap_mz_selection(
     annotations_checked,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
-    print("\n======== page_6_plot_graph_heatmap_mz_selection =========")
     ctx = dash.callback_context
     if not ctx.triggered:
         return dash.no_update

@@ -15,7 +15,7 @@ Through this, we identified **539 spatial clusters** defined by lipidomic simila
 ![Lipizones](assets/lipizones.png)
 
 You can read the full manuscript on bioRxiv: `XXX`.
----
+
 ### Explore the Atlas
 
 This **interactive web explorer** enables you to browse and analyze the mouse brain lipidome in a dynamic, intuitive way:
@@ -31,15 +31,14 @@ This **interactive web explorer** enables you to browse and analyze the mouse br
 * Compare **lipizones** with **cell types** from **Langlieb et al. (2023)** (currently in development), or compare **lipid distributions with gene expression** from the same study’s imputed transcriptomic data.
 * Explore **3D reconstructions** of both lipid expressions and lipizones, rendered across the full brain volume.
 
----
 ### Data Access and Reuse
 
 Soon, you’ll be able to **download data directly** from the visualizations in this interface. However, since some data is interpolated and cleaned for display, we encourage users to explore the **full raw dataset** available on **Zenodo**, starting with the tutorials and code in the accompanying [GitHub repository](https://github.com/lamanno-epfl/EUCLID).
----
+
 ### Usage 
 
 You will be guided through the app thanks to popover tutorial, we hope you enjoy them!
----
+
 ### About the Project
 
 The **Lipid Brain Atlas Explorer** is a **Python Dash** web application developed as part of the **Lipid Brain Atlas project**, led by the [**Lipid Cell Biology Lab (EPFL)**](https://www.epfl.ch/labs/dangelo-lab/) and the [**Laboratory of Brain Development and Biological Data Science (EPFL)**](https://www.epfl.ch/labs/nsbl/).
@@ -57,3 +56,4 @@ For feedback or questions, please reach out to us at **[luca.fusarbassini@epfl.c
 *Francesca Venturi, Luca Fusar Bassini, Halima Hannah Schede and Colas Droin*
 
 _
+

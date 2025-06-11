@@ -17,7 +17,7 @@ We hope that this data will help you investigate the lipid architecture of the h
 The Lipid Brain Atlas Explorer is a Python Dash web-application developped as part of the **Lipid Brain Atlas project**, led by the [Lipid Cell Biology lab (EPFL)](https://www.epfl.ch/labs/dangelo-lab/) and the [Laboratory of Brain Development and Biological Data Science (EPFL)](https://www.epfl.ch/labs/nsbl/). We hope that this application will be of great help to query the Lipid Brain Atlas to guide your hypotheses and experiments, and more generally to achieve a better understanding of the cellular mechanisms involving lipids that are fundamental for nervous system development and function. -->
 
 <p align="center">
-  <img src="readme/mosaic.png" alt="Project diagram" width="800"/>
+  <img src="readme/mosaic.png" alt="Project diagram" width="1000"/>
 </p>
 
 **Lipids make up the majority of the brain’s dry weight.** They form the membranes of cells and subcellular compartments: from myelin to axons, dendrites, synapses, intracellular organelles, and neurotransmitter-laden vesicles. While foundational studies have explored lipid composition across mammalian brain regions, a **systematic mapping of the brain’s lipid metabolic architecture**—in relation to cell type, subcellular structure, functional anatomy, developmental origin, and connectivity—has long been missing.
@@ -26,12 +26,12 @@ That’s why we built the **Lipid Brain Atlas**.
 
 Using **matrix-assisted laser desorption/ionization mass spectrometry imaging (MALDI-MSI)**—a technique that ionizes micrometric portions of tissue and provides lipid-rich mass spectra—we mapped the spatial distribution of **172 lipids** at **quasi-cellular resolution**, across serial brain sections from **11 mice** (8 weeks old), covering the **entire brain volume**.
 <p align="center">
-  <img src="readme/lipids.png" alt="Project diagram" width="800"/>
+  <img src="readme/lipids.png" alt="Project diagram" width="1000"/>
 </p>
 
 Through this, we identified **539 spatial clusters** defined by lipidomic similarity—territories we termed **lipizones**. These lipizones were then characterized in terms of anatomy, cell type composition, subcellular organization, connectivity, and biochemical content, revealing their biological organization and potential functional roles. We also compared male and female brains, and extended our study to **pregnant mice** to capture physiological lipidomic variation.
 <p align="center">
-  <img src="readme/lipizones.png" alt="Project diagram" width="800"/>
+  <img src="readme/lipizones.png" alt="Project diagram" width="1000"/>
 </p>
 
 You can read the full manuscript on bioRxiv: `XXX`.

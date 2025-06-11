@@ -499,7 +499,7 @@ def return_main_content():
                     dmc.Drawer(
                         children=return_documentation(app),
                         id="documentation-offcanvas",
-                        title="LBAE documentation",
+                        # title="LBAE documentation",
                         opened=False,
                         padding="md",
                         size="85vh",

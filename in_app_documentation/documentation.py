@@ -26,8 +26,15 @@ def merge_md(write_doc=False):
     Returns:
         (str): A string representing the documentation of the app written in markdown.
     """
-    order_final_md = ["_overview", "_data", "_alignment", "_usage", "_about", "_further"]
+    order_final_md = [
+        "_overview", 
+        "_explore", 
+        "_data", 
+        "_usage",
+        "_about", 
+        ]
     final_md = "# Lipid Brain Atlas Explorer documentation \n\n"
+    # final_md = ""
     for filename in order_final_md:
         for file in os.listdir(os.path.join(os.getcwd(), "in_app_documentation")):
             if file.endswith(".md") and filename in file:
@@ -76,25 +83,31 @@ def convert_md(md, app):
     Returns:
         (list): A list of dash components representing the documentation.
     """
-    md = preprocess_md(md)
-    l_md = [x.split(".png)") for y in md.split("\n") for x in y.split("![](assets/")]
-    l_md = [x for x in l_md if x != ""]
-    for i, md in enumerate(l_md):
-        if len(md) > 1:
-            md[0] = dmc.Image(
-                src=app.get_asset_url(md[0] + ".png"),
-                height="400px",
+    # Find all markdown image links
+    pattern = r'!\[([^\]]*)\]\((assets/[^)]+)\)'
+    parts = []
+    last_end = 0
+    for match in re.finditer(pattern, md):
+        # Add text before the image
+        if match.start() > last_end:
+            parts.append(dcc.Markdown(md[last_end:match.start()]))
+        # Add the image as a Dash component
+        alt_text, img_path = match.groups()
+        parts.append(
+            dmc.Image(
+                src=app.get_asset_url(img_path.replace('assets/', '')),
+                alt=alt_text,
                 class_name="mx-auto my-5",
                 fit="contain",
             )
-            md[1] = dcc.Markdown(md[1])
-        else:
-            md[0] = dcc.Markdown(md[0])
-    l_md = [item for sublist in l_md for item in sublist]
-
+        )
+        last_end = match.end()
+    # Add any remaining text after the last image
+    if last_end < len(md):
+        parts.append(dcc.Markdown(md[last_end:]))
     # Space at the end for clarity
-    l_md += [dmc.Space(h=80)]
-    return l_md
+    parts += [dmc.Space(h=80)]
+    return parts
 
 
 def return_documentation(app, write_doc=False):

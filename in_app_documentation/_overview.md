@@ -1,4 +1,6 @@
-## Overview
+![Mosaic](assets/mosaic.png)
+
+### Overview
 
 **Lipids make up the majority of the brain’s dry weight.** They form the membranes of cells and subcellular compartments: from myelin to axons, dendrites, synapses, intracellular organelles, and neurotransmitter-laden vesicles. While foundational studies have explored lipid composition across mammalian brain regions, a **systematic mapping of the brain’s lipid metabolic architecture**—in relation to cell type, subcellular structure, functional anatomy, developmental origin, and connectivity—has long been missing.
 

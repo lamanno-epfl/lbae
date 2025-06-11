@@ -1,4 +1,4 @@
-## Explore the Atlas
+### Explore the Atlas
 
 This **interactive web explorer** enables you to browse and analyze the mouse brain lipidome in a dynamic, intuitive way:
 

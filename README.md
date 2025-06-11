@@ -16,8 +16,6 @@ We hope that this data will help you investigate the lipid architecture of the h
 
 The Lipid Brain Atlas Explorer is a Python Dash web-application developped as part of the **Lipid Brain Atlas project**, led by the [Lipid Cell Biology lab (EPFL)](https://www.epfl.ch/labs/dangelo-lab/) and the [Laboratory of Brain Development and Biological Data Science (EPFL)](https://www.epfl.ch/labs/nsbl/). We hope that this application will be of great help to query the Lipid Brain Atlas to guide your hypotheses and experiments, and more generally to achieve a better understanding of the cellular mechanisms involving lipids that are fundamental for nervous system development and function. -->
 
-## Welcome to the Lipid Brain Atlas Explorer
-
 <p align="center">
   <img src="readme/mosaic.png" alt="Project diagram" width="800"/>
 </p>
@@ -72,11 +70,6 @@ The **Lipid Brain Atlas Explorer** is a **Python Dash** web application develope
 We hope this tool will help you explore the **Lipid Brain Atlas**, guiding your experiments and hypotheses toward a deeper understanding of the **cellular and metabolic foundations** of nervous system development and function. By supporting your investigation into the **lipid architecture of the healthy mouse brain** and its **variability across physiological conditions**, we aim to contribute to **functional studies of brain lipids**—spanning **evolution**, **pathology**, and **therapeutic response**.
 
 For feedback or questions, please reach out to us at **[luca.fusarbassini@epfl.ch](mailto:luca.fusarbassini@epfl.ch)**.
-
----
-
-**Lausanne, 03/06/2025**
-*Francesca Venturi, Luca Fusar Bassini, Halima Hannah Schede, Colas Droin*
 
 <!-- ## Use and deployment
 

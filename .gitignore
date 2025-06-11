@@ -7,6 +7,6 @@ nohup.out
 *.ipynb
 prove.ipynb
 
-assets/
-
 annotation/
+
+assets/*.mp4

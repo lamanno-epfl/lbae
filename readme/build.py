@@ -8,9 +8,6 @@
 # ==================================================================================================
 import os
 
-# Move to root directory for easier path handling
-os.chdir("..")
-
 # ==================================================================================================
 # --- Functions
 # ==================================================================================================
@@ -20,17 +17,17 @@ def write_readme():
     """
     order_final_md = [
         "_overview",
+        "_explore",
         "_data",
-        "_alignment",
-        "_usage_readme",
-        "_deployment_readme",
-        "_technical_doc_readme",
-        "_citing_readme",
         "_about",
+        "_usage",
+        # "_deployment_readme",
+        # "_technical_doc_readme",
+        "_citing_readme",
     ]
     final_md = "# Lipid Brain Atlas Explorer documentation \n\n"
-    final_md += """<p align="center"><img src="readme/brain.gif" alt="animated" /></p>"""
-    final_md += "\n\n"
+    # final_md += """<p align="center"><img src="readme/mosaic.png" width="1000" /></p>"""
+    final_md += "![Mosaic](../assets/mosaic.png)\n"
     for filename in order_final_md:
         for file in list(os.listdir(os.path.join(os.getcwd(), "in_app_documentation"))) + list(
             os.listdir(os.path.join(os.getcwd(), "readme"))
@@ -49,19 +46,7 @@ def write_readme():
                     final_md += current_paragraph + "\n"
                 break
 
-    # Decrease image size and center them
-    image_1 = (
-        """<p align="center"><img src="assets/ressources/data_acquisition.png" width="300" /></p>"""
-    )
-    final_md = final_md.replace("![](assets/ressources/data_acquisition.png)", image_1)
-
-    image_2 = (
-        """<p align="center"><img src="assets/ressources/slice_cleaning.png" width="900" /></p>"""
-    )
-    final_md = final_md.replace("![](assets/ressources/slice_cleaning.png)", image_2)
-
     with open(os.path.join(os.getcwd(), "README.md"), "w") as f:
         f.write(final_md)
 
-
-# write_readme()
+write_readme()

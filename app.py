@@ -58,6 +58,19 @@ logging.info("Memory use after Launch import" + logmem())
 from modules.storage import Storage
 logging.info("Memory use after Storage import" + logmem())
 
+# --- Generate documentation files at startup ---
+try:
+    from readme.build import write_readme
+    write_readme()
+except Exception as e:
+    print(f"Could not generate README.md: {e}")
+
+try:
+    from in_app_documentation.documentation import merge_md
+    merge_md(write_doc=True)
+except Exception as e:
+    print(f"Could not generate documentation.md: {e}")
+
 # ==================================================================================================
 # --- App pre-computations
 # ==================================================================================================

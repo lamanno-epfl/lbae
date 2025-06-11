@@ -1,7 +1,6 @@
 # Lipid Brain Atlas Explorer documentation 
 
-<p align="center"><img src="readme/mosaic.png" width="1000" /></p>
-
+![Mosaic](assets/mosaic.png)
 ## Overview
 
 **Lipids make up the majority of the brain’s dry weight.** They form the membranes of cells and subcellular compartments: from myelin to axons, dendrites, synapses, intracellular organelles, and neurotransmitter-laden vesicles. While foundational studies have explored lipid composition across mammalian brain regions, a **systematic mapping of the brain’s lipid metabolic architecture**—in relation to cell type, subcellular structure, functional anatomy, developmental origin, and connectivity—has long been missing.
@@ -9,14 +8,10 @@
 That’s why we built the **Lipid Brain Atlas**.
 
 Using **matrix-assisted laser desorption/ionization mass spectrometry imaging (MALDI-MSI)**—a technique that ionizes micrometric portions of tissue and provides lipid-rich mass spectra—we mapped the spatial distribution of **172 lipids** at **quasi-cellular resolution**, across serial brain sections from **11 mice** (8 weeks old), covering the **entire brain volume**.
-<p align="center">
-  <img src="readme/lipids.png" alt="Project diagram" width="1000"/>
-</p>
+![Lipids](assets/lipids.png)
 
 Through this, we identified **539 spatial clusters** defined by lipidomic similarity—territories we termed **lipizones**. These lipizones were then characterized in terms of anatomy, cell type composition, subcellular organization, connectivity, and biochemical content, revealing their biological organization and potential functional roles. We also compared male and female brains, and extended our study to **pregnant mice** to capture physiological lipidomic variation.
-<p align="center">
-  <img src="readme/lipizones.png" alt="Project diagram" width="1000"/>
-</p>
+![Lipizones](assets/lipizones.png)
 
 You can read the full manuscript on bioRxiv: `XXX`.
 ## Explore the Atlas
@@ -45,12 +40,9 @@ The **Lipid Brain Atlas Explorer** is a **Python Dash** web application develope
 
 We hope this tool will help you explore the **Lipid Brain Atlas**, guiding your experiments and hypotheses toward a deeper understanding of the **cellular and metabolic foundations** of nervous system development and function. By supporting your investigation into the **lipid architecture of the healthy mouse brain** and its **variability across physiological conditions**, we aim to contribute to **functional studies of brain lipids**—spanning **evolution**, **pathology**, and **therapeutic response**.
 
-For feedback or questions, please reach out to us at **[luca.fusarbassini@epfl.ch](mailto:luca.fusarbassini@epfl.ch)**.
-
----
-
 The early version of the app (frontend and backend) was developed by Colas Droin under the supervision of Gioele La Manno and Giovanni d'Angelo, as part of the Lipid Brain Atlas project. The final version was updated and further developed by Francesca Venturi and Luca Fusar Bassini.
 
+For feedback or questions, please reach out to us at **[luca.fusarbassini@epfl.ch](mailto:luca.fusarbassini@epfl.ch)**.
 ## Usage 
 
 You will be guided through the app thanks to popover tutorial, we hope you enjoy them!

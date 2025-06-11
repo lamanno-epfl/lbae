@@ -9,6 +9,7 @@
 import dash_mantine_components as dmc
 import os
 from dash import dcc
+import re
 
 # ==================================================================================================
 # --- Functions
@@ -52,6 +53,19 @@ def load_md():
     return md
 
 
+def preprocess_md(md):
+    # Replace <img src="readme/xxx.png" ...> with ![](assets/xxx.png)
+    md = re.sub(
+        r'<img\s+src="readme/([^\"]+)"[^>]*>',
+        r'![](assets/\1)',
+        md
+    )
+    # Remove <p align="center"> and </p>
+    md = re.sub(r'<p align="center">', '', md)
+    md = re.sub(r'</p>', '', md)
+    return md
+
+
 def convert_md(md, app):
     """This function is used to convert the markdown documentation in a list of dash components.
 
@@ -62,8 +76,8 @@ def convert_md(md, app):
     Returns:
         (list): A list of dash components representing the documentation.
     """
-
-    l_md = [x.split(".png)") for y in md.split("\n") for x in y.split("![](")]
+    md = preprocess_md(md)
+    l_md = [x.split(".png)") for y in md.split("\n") for x in y.split("![](assets/")]
     l_md = [x for x in l_md if x != ""]
     for i, md in enumerate(l_md):
         if len(md) > 1:

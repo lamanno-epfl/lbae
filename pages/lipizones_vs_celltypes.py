@@ -86,7 +86,7 @@ def return_layout(basic_config, slice_index):
                     # "width": "10rem",
                     # "height": "3rem",
                     "backgroundColor": "transparent",
-                    "border": "3px solid #00bfff",
+                    "border": "3px solid #1fafc8",
                     "borderRadius": "4px",
                     # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
                     "cursor": "pointer",
@@ -298,9 +298,9 @@ def return_layout(basic_config, slice_index):
                                 },
                                 children=[
                                     dmc.Button(
-                                        children="Add current selection",
+                                        children="Add selection",
                                         id="page-6bis-add-lipizone-selection-button",
-                                        variant="filled",
+                                        variant="outline",
                                         color="cyan",
                                         radius="md",
                                         size="sm",
@@ -432,9 +432,9 @@ def return_layout(basic_config, slice_index):
                                 },
                                 children=[
                                     dmc.Button(
-                                        children="Add current selection",
+                                        children="Add selection",
                                         id="page-6bis-add-celltype-selection-button",
-                                        variant="filled",
+                                        variant="outline",
                                         color="cyan",
                                         radius="md",
                                         size="sm",
@@ -555,13 +555,13 @@ def return_layout(basic_config, slice_index):
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Lipizones vs Cell Types Tutorial",
+                                "Lipizones vs Cell Types",
                                 style={"fontWeight": "bold"},
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "Welcome to the Lipizones vs Cell Types page! This view allows you to compare the spatial distribution of lipizones with mapped brain cell types. By exploring both layers together, you can identify shared spatial patterns and assess how well lipid-based territories align with cellular architecture. This comparison is valuable for uncovering underlying biological structure, functional organization, and potential relationships between lipizones and cell-type diversity.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -580,20 +580,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- All Lipizones Button ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "All Lipizones", style={"fontWeight": "bold"}
+                                "Display All Lipizones", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Default value.",
+                                        "This button displays all lipizones in the current slice by default. If you want to focus on specific lipizones, remember to first clear the current selection using the appropriate button.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -612,20 +612,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Lipizones Selection ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Lipizones Hierarchy", style={"fontWeight": "bold"}
+                                "Navigate Lipizones Hierarchy", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "Use the treemap to explore and select lipizones from a hierarchical structure. Lipizones are defined as 539 spatial clusters computed through an iterative bipartite splitter. You can navigate the hierarchy freely and stop at any level of detail. Once you're satisfied with the selection, you can add those lipizones for visualization.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -644,20 +644,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Add Selection Button ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Add Selection", style={"fontWeight": "bold"}
+                                "Visualize Selected Lipizones", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "After selecting the desired lipizones from the treemap, click this button to add them to the current view. The display will update accordingly to show your selection.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -676,20 +676,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Clear Selection Button ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Clear Selection", style={"fontWeight": "bold"}
+                                "Reset the Brain View", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "Use this button to remove all currently selected lipizones and return to an empty brain view. This is helpful if you want to start over or explore a new subset.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -708,8 +708,8 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Cell Types Selection ---
@@ -717,12 +717,12 @@ def return_layout(basic_config, slice_index):
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "All Cell Types", style={"fontWeight": "bold"}
+                                "Display All Cell Types", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Default value.",
+                                        "This button displays all available cell types in the current brain slice. It’s the default view when you open the page. If you want to focus on specific cell types, make sure to clear the selection first before adding a subset.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -741,20 +741,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Cell Types Selection ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Cell Types Hierarchy", style={"fontWeight": "bold"}
+                                "Navigate Cell Types Hierarchy", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Check mackosko to blaim the un-interpretability, not our fault!",
+                                        "Use the treemap to explore and select from the set of mapped cell types. The cell type data originates from the work of the Macosko group at the Broad Institute, who identified and characterized a wide range of cell types in the mouse brain, including newly described populations with regional specializations. While the hierarchy may be less intuitive to navigate compared to the lipizones, it reflects the richness and complexity of the dataset. For further clarity and naming details, we encourage users to consult their original publications and accompanying data resources.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -773,20 +773,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Add Selection Button ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Add Selection", style={"fontWeight": "bold"}
+                                "Visualize Selected Cell Types", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "After choosing your cell types from the treemap, click this button to add them to the view. The selected cell types will be displayed alongside the lipizones, enabling visual comparison in the current slice.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -805,20 +805,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Clear Selection Button ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Clear Selection", style={"fontWeight": "bold"}
+                                "Reset Cell Type View", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        ".",
+                                        "Click here to remove all currently selected cell types and return to an empty view. This allows you to reset your selection and choose new ones as needed.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -837,20 +837,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Filter by Pixel Count ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Filter by Pixel Count", style={"fontWeight": "bold"}
+                                "Filter Sparse Cell Types", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Remove from the visualization cells with less than the selected amount of pixels pixels.",
+                                        "Use this slider to filter out cell types with low pixel counts in the current slice. This helps improve interpretability, as spatial correlation between lipizones and cell types is meaningful only when cell type presence is sufficiently dense in the region being examined.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -869,20 +869,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Annotations ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Brain Anatomy", style={"fontWeight": "bold"}
+                                "Overlay Anatomical Contours", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Explore the brain anatomy by activating the ABA toggle. Click 'Next' to continue.",
+                                        "You can enable the Allen Brain Atlas annotations to overlay anatomical labels directly on the slices. This helps you navigate the brain and interpret lipid signals in their biological context.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -901,20 +901,20 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                     # --- Brain Slider ---
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Navigate Brain Slices", style={"fontWeight": "bold"}
+                                "Navigate Along Brain Anterior-Posterior Axis", style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Go through the rostrocaudal axis by using the slider. Click 'Next' to continue.",
+                                        "In the single-section view, you can navigate through the brain by selecting different slices along the rostro-caudal (front-to-back) axis. This allows detailed inspection of lipid signals at specific anatomical levels.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(
@@ -933,8 +933,8 @@ def return_layout(basic_config, slice_index):
                         is_open=False,
                         style={
                             "zIndex": 9999,
-                            "border": "2px solid #00bfff",
-                            "boxShadow": "0 0 15px 2px #00bfff",
+                            "border": "2px solid #1fafc8",
+                            "boxShadow": "0 0 15px 2px #1fafc8",
                         },
                     ),
                 ],

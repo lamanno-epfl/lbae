@@ -57,7 +57,7 @@ def return_layout(basic_config, slice_index):
                         # "width": "10rem",
                         # "height": "3rem",
                         "backgroundColor": "transparent",
-                        "border": "3px solid #00bfff",
+                        "border": "3px solid #1fafc8",
                         "borderRadius": "4px",
                         # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
                         "cursor": "pointer",
@@ -457,8 +457,8 @@ def return_layout(basic_config, slice_index):
                     is_open=False,
                     style={
                         "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
+                        "border": "2px solid #1fafc8",
+                        "boxShadow": "0 0 15px 2px #1fafc8"
                     }
                 ),
                 # --- Peak Selection ---
@@ -481,8 +481,8 @@ def return_layout(basic_config, slice_index):
                     is_open=False,
                     style={
                         "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
+                        "border": "2px solid #1fafc8",
+                        "boxShadow": "0 0 15px 2px #1fafc8"
                     },
                 ),
                 # --- Spectrum Viewer ---
@@ -505,8 +505,8 @@ def return_layout(basic_config, slice_index):
                     is_open=False,
                     style={
                         "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
+                        "border": "2px solid #1fafc8",
+                        "boxShadow": "0 0 15px 2px #1fafc8"
                     },
                 ),
                 # --- RGB Mode ---
@@ -529,8 +529,8 @@ def return_layout(basic_config, slice_index):
                     is_open=False,
                     style={
                         "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
+                        "border": "2px solid #1fafc8",
+                        "boxShadow": "0 0 15px 2px #1fafc8"
                     },
                 ),
                 # # TODO: uncomment and add tutorial for one vs all sections when all sections view are computed and stored correctly
@@ -554,8 +554,8 @@ def return_layout(basic_config, slice_index):
                 #     is_open=False,
                 #     style={
                 #         "zIndex": 9999,
-                #         "border": "2px solid #00bfff",
-                #         "boxShadow": "0 0 15px 2px #00bfff"
+                #         "border": "2px solid #1fafc8",
+                #         "boxShadow": "0 0 15px 2px #1fafc8"
                 #     },
                 # ),
                 # --- Annotations ---
@@ -578,8 +578,8 @@ def return_layout(basic_config, slice_index):
                     is_open=False,
                     style={
                         "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
+                        "border": "2px solid #1fafc8",
+                        "boxShadow": "0 0 15px 2px #1fafc8"
                     },
                 ),
                 # --- Brain Slider ---
@@ -602,8 +602,8 @@ def return_layout(basic_config, slice_index):
                     is_open=False,
                     style={
                         "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
+                        "border": "2px solid #1fafc8",
+                        "boxShadow": "0 0 15px 2px #1fafc8"
                     },
                 ),
                 # --- Brain Chips ---
@@ -626,8 +626,8 @@ def return_layout(basic_config, slice_index):
                     is_open=False,
                     style={
                         "zIndex": 9999,
-                        "border": "2px solid #00bfff",
-                        "boxShadow": "0 0 15px 2px #00bfff"
+                        "border": "2px solid #1fafc8",
+                        "boxShadow": "0 0 15px 2px #1fafc8"
                     },
                 ),
 
@@ -1506,7 +1506,7 @@ def plot_section_mass_spectrum(slice_index, is_open):
         x=x_values,
         y=y_values,
         visible=True,
-        line_color="#00bfff",
+        line_color="#1fafc8",
         fill="tozeroy",
         )
     

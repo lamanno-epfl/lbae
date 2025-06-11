@@ -110,7 +110,7 @@ def return_layout(basic_config, slice_index):
                     # "width": "10rem",
                     # "height": "3rem",
                     "backgroundColor": "transparent",
-                    "border": "3px solid #00bfff",
+                    "border": "3px solid #1fafc8",
                     "borderRadius": "4px",
                     # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
                     "cursor": "pointer",
@@ -228,9 +228,9 @@ def return_layout(basic_config, slice_index):
                         },
                         children=[
                             dmc.Button(
-                                children="Add current selection",
+                                children="Add selection",
                                 id="3d-lipizones-add-selection-button",
-                                variant="filled",
+                                variant="outline",
                                 color="cyan",
                                 radius="md",
                                 size="sm",
@@ -302,8 +302,8 @@ def return_layout(basic_config, slice_index):
                 is_open=False,
                 style={
                     "zIndex": 9999,
-                    "border": "2px solid #00bfff",
-                    "boxShadow": "0 0 15px 2px #00bfff"
+                    "border": "2px solid #1fafc8",
+                    "boxShadow": "0 0 15px 2px #1fafc8"
                 }
             ),
             # --- All Lipizones Button ---
@@ -326,8 +326,8 @@ def return_layout(basic_config, slice_index):
                 is_open=False,
                 style={
                     "zIndex": 9999,
-                    "border": "2px solid #00bfff",
-                    "boxShadow": "0 0 15px 2px #00bfff"
+                    "border": "2px solid #1fafc8",
+                    "boxShadow": "0 0 15px 2px #1fafc8"
                 },
             ),
             # --- Lipizones Selection ---
@@ -350,8 +350,8 @@ def return_layout(basic_config, slice_index):
                 is_open=False,
                 style={
                     "zIndex": 9999,
-                    "border": "2px solid #00bfff",
-                    "boxShadow": "0 0 15px 2px #00bfff"
+                    "border": "2px solid #1fafc8",
+                    "boxShadow": "0 0 15px 2px #1fafc8"
                 },
             ),
             # --- Add Selection Button ---
@@ -374,8 +374,8 @@ def return_layout(basic_config, slice_index):
                 is_open=False,
                 style={
                     "zIndex": 9999,
-                    "border": "2px solid #00bfff",
-                    "boxShadow": "0 0 15px 2px #00bfff"
+                    "border": "2px solid #1fafc8",
+                    "boxShadow": "0 0 15px 2px #1fafc8"
                 },
             ),
             # --- Clear Selection Button ---
@@ -398,8 +398,8 @@ def return_layout(basic_config, slice_index):
                 is_open=False,
                 style={
                     "zIndex": 9999,
-                    "border": "2px solid #00bfff",
-                    "boxShadow": "0 0 15px 2px #00bfff"
+                    "border": "2px solid #1fafc8",
+                    "boxShadow": "0 0 15px 2px #1fafc8"
                 },
             ),
         ],

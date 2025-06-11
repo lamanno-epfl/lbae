@@ -61,7 +61,7 @@ def return_layout(basic_config, slice_index):
                         # "width": "10rem",
                         # "height": "3rem",
                         "backgroundColor": "transparent",
-                        "border": "3px solid #00bfff",
+                        "border": "3px solid #1fafc8",
                         "borderRadius": "4px",
                         # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
                         "cursor": "pointer",
@@ -370,8 +370,8 @@ def return_layout(basic_config, slice_index):
                             is_open=False,
                             style={
                                 "zIndex": 9999,
-                                "border": "2px solid #00bfff",
-                                "boxShadow": "0 0 15px 2px #00bfff"
+                                "border": "2px solid #1fafc8",
+                                "boxShadow": "0 0 15px 2px #1fafc8"
                             }
                         ),
                         # --- Lipid Selection ---
@@ -394,8 +394,8 @@ def return_layout(basic_config, slice_index):
                             is_open=False,
                             style={
                                 "zIndex": 9999,
-                                "border": "2px solid #00bfff",
-                                "boxShadow": "0 0 15px 2px #00bfff"
+                                "border": "2px solid #1fafc8",
+                                "boxShadow": "0 0 15px 2px #1fafc8"
                             },
                         ),
                         # --- RGB Mode ---
@@ -418,8 +418,8 @@ def return_layout(basic_config, slice_index):
                             is_open=False,
                             style={
                                 "zIndex": 9999,
-                                "border": "2px solid #00bfff",
-                                "boxShadow": "0 0 15px 2px #00bfff"
+                                "border": "2px solid #1fafc8",
+                                "boxShadow": "0 0 15px 2px #1fafc8"
                             },
                         ),
                         # --- One vs All Sections ---
@@ -442,8 +442,8 @@ def return_layout(basic_config, slice_index):
                             is_open=False,
                             style={
                                 "zIndex": 9999,
-                                "border": "2px solid #00bfff",
-                                "boxShadow": "0 0 15px 2px #00bfff"
+                                "border": "2px solid #1fafc8",
+                                "boxShadow": "0 0 15px 2px #1fafc8"
                             },
                         ),
                         # --- Annotations ---
@@ -466,8 +466,8 @@ def return_layout(basic_config, slice_index):
                             is_open=False,
                             style={
                                 "zIndex": 9999,
-                                "border": "2px solid #00bfff",
-                                "boxShadow": "0 0 15px 2px #00bfff"
+                                "border": "2px solid #1fafc8",
+                                "boxShadow": "0 0 15px 2px #1fafc8"
                             },
                         ),
                         # --- Brain Slider ---
@@ -490,8 +490,8 @@ def return_layout(basic_config, slice_index):
                             is_open=False,
                             style={
                                 "zIndex": 9999,
-                                "border": "2px solid #00bfff",
-                                "boxShadow": "0 0 15px 2px #00bfff"
+                                "border": "2px solid #1fafc8",
+                                "boxShadow": "0 0 15px 2px #1fafc8"
                             },
                         ),
                         # --- Brain Chips ---
@@ -514,8 +514,8 @@ def return_layout(basic_config, slice_index):
                             is_open=False,
                             style={
                                 "zIndex": 9999,
-                                "border": "2px solid #00bfff",
-                                "boxShadow": "0 0 15px 2px #00bfff"
+                                "border": "2px solid #1fafc8",
+                                "boxShadow": "0 0 15px 2px #1fafc8"
                             },
                         ),
                     ],

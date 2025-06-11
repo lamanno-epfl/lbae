@@ -20,9 +20,11 @@ import dash_mantine_components as dmc
 import numpy as np
 from scipy.ndimage import gaussian_filter
 import pickle
-# threadpoolctl import threadpool_limits, threadpool_info
-#threadpool_limits(limits=8)
 import os
+import re
+import PyPDF2
+import io
+from flask import send_file
 os.environ['OMP_NUM_THREADS'] = '6'
 
 # LBAE imports
@@ -30,10 +32,17 @@ from app import app, figures, data, atlas, lipizone_data, cache_flask
 import plotly.express as px
 
 # ==================================================================================================
+# --- Constants
+# ==================================================================================================
+
+# Path to the ID cards
+ID_CARDS_PATH = "./data/ID_cards"
+
+# ==================================================================================================
 # --- Helper functions
 # ==================================================================================================
 
-from modules.figures import black_aba_contours, is_light_color
+from modules.figures import black_aba_contours, is_light_color, clean_filenamePD
 
 # ==================================================================================================
 # --- Layout
@@ -64,12 +73,9 @@ def return_layout(basic_config, slice_index):
                     "top": "0.9em",
                     "left": "21.3em",
                     "zIndex": 2100,
-                    # "width": "10rem",
-                    # "height": "3rem",
                     "backgroundColor": "transparent",
                     "border": "3px solid #00bfff",
                     "borderRadius": "4px",
-                    # "boxShadow": "0 0 15px rgba(0, 191, 255, 0.7)",
                     "cursor": "pointer",
                 },
                 children=[
@@ -80,12 +86,9 @@ def return_layout(basic_config, slice_index):
                         size="sm",
                         className="tutorial-start-btn",
                         style={
-                            # "width": "100%",
-                            # "height": "100%",
                             "borderRadius": "4px",
                             "backgroundColor": "transparent",
                             "border": "none",
-                            # "color": "#00ffff",
                             "fontWeight": "bold",
                         }
                     )
@@ -116,7 +119,6 @@ def return_layout(basic_config, slice_index):
                             "background-color": "#1d1c1f",
                         },
                         figure=figures.build_lipid_heatmap_from_image(
-                            # compute_hybrid_image(['#f75400'], brain_id="ReferenceAtlas"),
                             figures.all_sections_lipizones_image(
                                 hex_colors_to_highlight=None, # all lipizones
                                 brain_id="ReferenceAtlas"),
@@ -125,6 +127,81 @@ def return_layout(basic_config, slice_index):
                             type_image="RGB",
                             return_go_image=False,
                         )
+                    ),
+                    # OffCanvas panel for ID cards
+                    dbc.Offcanvas(
+                        id="id-cards-panel",
+                        is_open=False,  # Closed by default
+                        backdrop=False,
+                        placement="end",
+                        style={
+                            "width": "calc(100% - 6rem)",
+                            "height": "100vh",
+                            "backgroundColor": "#1d1c1f",
+                            "padding": "0",
+                            "overflow": "hidden",
+                        },
+                        children=[
+                            dbc.Card(
+                                style={
+                                    "width": "100%",
+                                    "height": "100%",
+                                    "margin": "0",
+                                    "backgroundColor": "#1d1c1f",
+                                },
+                                children=[
+                                    dbc.CardHeader(
+                                        className="d-flex justify-content-between align-items-center",
+                                        style={
+                                            "backgroundColor": "#1d1c1f",
+                                            "color": "white",
+                                            "border": "none",
+                                            "padding": "1rem",
+                                        },
+                                        children=[
+                                            html.H3(
+                                                "Lipizones ID Cards",
+                                                style={
+                                                    "margin": "0",
+                                                    "color": "white",
+                                                    "fontSize": "1.8rem",
+                                                }
+                                            ),
+                                            dmc.Button(
+                                                children="Hide ID Cards",
+                                                id="close-id-cards-panel",
+                                                variant="filled",
+                                                color="red",
+                                                radius="md",
+                                                size="md",
+                                            ),
+                                        ]
+                                    ),
+                                    # PDF viewer container only
+                                    html.Div(
+                                        id="pdf-viewer-container",
+                                        style={
+                                            "width": "100%",
+                                            "height": "calc(100% - 4rem)",
+                                            "backgroundColor": "#1d1c1f",
+                                            "display": "flex",
+                                            "justifyContent": "center",
+                                            "alignItems": "center",
+                                        },
+                                        children=[
+                                            html.Div(
+                                                "Select lipizones to view their ID cards",
+                                                style={
+                                                    "color": "white",
+                                                    "fontSize": "1.2rem",
+                                                    "textAlign": "center",
+                                                }
+                                            )
+                                        ]
+                                    ),
+                                ]
+                            ),
+                        ],
                     ),
                     # Hover text
                     dmc.Text(
@@ -234,7 +311,7 @@ def return_layout(basic_config, slice_index):
                                     dmc.Button(
                                         children="Add current selection",
                                         id="page-6-add-selection-button",
-                                        variant="filled",
+                                        variant="outline",
                                         color="cyan",
                                         radius="md",
                                         size="sm",
@@ -270,6 +347,30 @@ def return_layout(basic_config, slice_index):
                                 },
                                 children=[
                                     html.H6("Selected Lipizones", style={"color": "white", "marginBottom": "10px"}),
+                                ]
+                            ),
+                            # View ID Cards button in bottom left, cyan
+                            html.Div(
+                                style={
+                                    "marginTop": "50px",
+                                    "display": "flex",
+                                    "flexDirection": "row",
+                                    "gap": "10px",
+                                    "width": "100%",  # Take full width of container
+                                },
+                                children=[
+                                    dmc.Button(
+                                        "View ID Cards",
+                                        id="view-id-cards-btn",
+                                        variant="filled",
+                                        color="cyan",
+                                        radius="md",
+                                        size="sm",
+                                        style={
+                                            "flex": "1",
+                                            "maxWidth": "100%",  # Ensure button doesn't exceed half the container
+                                        },
+                                    )
                                 ]
                             ),
                         ],
@@ -428,7 +529,7 @@ def return_layout(basic_config, slice_index):
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Use the treemap to explore and select lipizones from a hierarchical structure. Lipizones are defined as 539 spatial clusters computed through an iterative bipartite splitter. You can navigate the hierarchy freely and stop at any level of detail. Once you’re satisfied with the selection, you can add those lipizones for visualization.",
+                                        "Use the treemap to explore and select lipizones from a hierarchical structure. Lipizones are defined as 539 spatial clusters computed through an iterative bipartite splitter. You can navigate the hierarchy freely and stop at any level of detail. Once you're satisfied with the selection, you can add those lipizones for visualization.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     dbc.Button("Next", id="lipizone-tutorial-next-3", color="primary", size="sm", className="float-end")
@@ -493,6 +594,30 @@ def return_layout(basic_config, slice_index):
                             "boxShadow": "0 0 15px 2px #00bfff"
                         },
                     ),
+                    # --- View ID Cards Button ---
+                    dbc.Popover(
+                        [
+                            dbc.PopoverHeader("View Lipizones ID Cards", style={"fontWeight": "bold"}),
+                            dbc.PopoverBody(
+                                [
+                                    html.P(
+                                        "You can view the ID Card of any selected lipizone. This is a one-page PDF that summarizes key statistics and characteristics of the lipizone, serving as a detailed reference for further analysis or documentation.",
+                                        style={"color": "#333", "marginBottom": "15px"}
+                                    ),
+                                    dbc.Button("Next", id="lipizone-tutorial-next-6", color="primary", size="sm", className="float-end")
+                                ]
+                            ),
+                        ],
+                        id="lipizone-tutorial-popover-6",
+                        target="view-id-cards-btn",  # dropdown menu
+                        placement="right",
+                        is_open=False,
+                        style={
+                            "zIndex": 9999,
+                            "border": "2px solid #00bfff",
+                            "boxShadow": "0 0 15px 2px #00bfff"
+                        },
+                    ),
                     # --- One vs All Sections ---
                     dbc.Popover(
                         [
@@ -503,11 +628,11 @@ def return_layout(basic_config, slice_index):
                                         "You can switch to a view that shows all brain sections at once. In this mode, only the first selected lipid will be displayed to keep the view clean and interpretable.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-6", color="primary", size="sm", className="float-end")
+                                    dbc.Button("Next", id="lipizone-tutorial-next-7", color="primary", size="sm", className="float-end")
                                 ]
                             ),
                         ],
-                        id="lipizone-tutorial-popover-6",
+                        id="lipizone-tutorial-popover-7",
                         target="page-6-sections-mode",  # sections mode switch
                         placement="bottom",
                         is_open=False,
@@ -527,11 +652,11 @@ def return_layout(basic_config, slice_index):
                                         "You can enable the Allen Brain Atlas annotations to overlay anatomical labels directly on the slices. This helps you navigate the brain and interpret lipid signals in their biological context.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-7", color="primary", size="sm", className="float-end")
+                                    dbc.Button("Next", id="lipizone-tutorial-next-8", color="primary", size="sm", className="float-end")
                                 ]
                             ),
                         ],
-                        id="lipizone-tutorial-popover-7",
+                        id="lipizone-tutorial-popover-8",
                         target="page-6-toggle-annotations",  # annotations switch
                         placement="bottom",
                         is_open=False,
@@ -551,11 +676,11 @@ def return_layout(basic_config, slice_index):
                                         "In the single-section view, you can navigate through the brain by selecting different slices along the rostro-caudal (front-to-back) axis. This allows detailed inspection of lipid signals at specific anatomical levels.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-8", color="primary", size="sm", className="float-end")
+                                    dbc.Button("Next", id="lipizone-tutorial-next-9", color="primary", size="sm", className="float-end")
                                 ]
                             ),
                         ],
-                        id="lipizone-tutorial-popover-8",
+                        id="lipizone-tutorial-popover-9",
                         target="main-paper-slider",  # slider
                         placement="top",
                         is_open=False,
@@ -579,7 +704,7 @@ def return_layout(basic_config, slice_index):
                                 ]
                             ),
                         ],
-                        id="lipizone-tutorial-popover-9",
+                        id="lipizone-tutorial-popover-10",
                         target="main-brain",  # brain switch
                         placement="left",
                         is_open=False,
@@ -953,7 +1078,7 @@ def compute_page6_hide(lipizone_sections_mode, pathname):
 # Use clientside callback for tutorial step updates
 app.clientside_callback(
     """
-    function(start, next1, next2, next3, next4, next5, next6, next7, next8, finish) {
+    function(start, next1, next2, next3, next4, next5, next6, next7, next8, next9, finish) {
         const ctx = window.dash_clientside.callback_context;
         if (!ctx.triggered.length) {
             return window.dash_clientside.no_update;
@@ -977,6 +1102,8 @@ app.clientside_callback(
             return 8;
         } else if (trigger_id === 'lipizone-tutorial-next-8' && next8) {
             return 9;
+        } else if (trigger_id === 'lipizone-tutorial-next-9' && next9) {
+            return 10;
         } else if (trigger_id === 'lipizone-tutorial-finish' && finish) {
             return 0;
         }
@@ -993,6 +1120,7 @@ app.clientside_callback(
      Input("lipizone-tutorial-next-6", "n_clicks"),
      Input("lipizone-tutorial-next-7", "n_clicks"),
      Input("lipizone-tutorial-next-8", "n_clicks"),
+     Input("lipizone-tutorial-next-9", "n_clicks"),
      Input("lipizone-tutorial-finish", "n_clicks")],
     prevent_initial_call=True,
 )
@@ -1002,7 +1130,7 @@ app.clientside_callback(
     """
     function(step) {
         if (step === undefined || step === null) {
-            return [false, false, false, false, false, false, false, false, false];
+            return [false, false, false, false, false, false, false, false, false, false];
         }
         return [
             step === 1,
@@ -1014,10 +1142,11 @@ app.clientside_callback(
             step === 7,
             step === 8,
             step === 9,
+            step === 10,
         ];
     }
     """,
-    [Output(f"lipizone-tutorial-popover-{i}", "is_open") for i in range(1, 10)],
+    [Output(f"lipizone-tutorial-popover-{i}", "is_open") for i in range(1, 11)],
     Input("lipizone-tutorial-step", "data"),
     prevent_initial_call=True,
 )
@@ -1036,3 +1165,169 @@ app.clientside_callback(
     Input("lipizone-tutorial-finish", "n_clicks"),
     prevent_initial_call=True,
 )
+
+@app.callback(
+    Output("page-6-pdf-viewer-container", "children"),
+    Output("page-6-pdf-viewer-container", "style"),
+    Input("page-6-all-selected-lipizones", "data"),
+    Input("page-6-toggle-pdf-view", "n_clicks"),
+    State("page-6-pdf-viewer-container", "style"),
+)
+def update_pdf_viewer(all_selected_lipizones, n_clicks, current_style):
+    """Update the PDF viewer based on the selected lipizones and toggle button."""
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return dash.no_update, dash.no_update
+    
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    
+    # Handle toggle button click
+    if triggered_id == "page-6-toggle-pdf-view":
+        if current_style["display"] == "none":
+            current_style["display"] = "block"
+        else:
+            current_style["display"] = "none"
+        return dash.no_update, current_style
+    
+    # Handle lipizone selection
+    if not all_selected_lipizones or not all_selected_lipizones.get("names") or len(all_selected_lipizones["names"]) == 0:
+        return html.Div(
+            "Select lipizones to view their ID cards", 
+            style={
+                "color": "white", 
+                "textAlign": "center", 
+                "marginTop": "20%"
+            }
+        ), current_style
+    
+    # Get all selected lipizones and clean their names
+    safe_lipizone_names = [clean_filenamePD(name) for name in all_selected_lipizones["names"]]
+    
+    # Check if any PDFs exist
+    pdf_exists = False
+    for filename in safe_lipizone_names:
+        pdf_path = os.path.join(ID_CARDS_PATH, f"lipizone_ID_card_{filename}.pdf")
+        print(pdf_path)
+        if os.path.exists(pdf_path):
+            pdf_exists = True
+            break
+    
+    if not pdf_exists:
+        return html.Div(
+            "No ID cards found for the selected lipizones. Please ensure the ID cards are available in the data directory.", 
+            style={
+                "color": "white", 
+                "textAlign": "center", 
+                "marginTop": "20%",
+                "padding": "20px"
+            }
+        ), current_style
+    
+    # Join the filenames with commas for the URL
+    filenames_param = ','.join(safe_lipizone_names)
+    
+    # Create iframe with PDF viewer
+    return html.Iframe(
+        src=f"/merged-id-cards-pdf/{filenames_param}?toolbar=1&navpanes=1&scrollbar=1&statusbar=1",
+        style={
+            "width": "100%",
+            "height": "100%",
+            "border": "none",
+            "backgroundColor": "#1d1c1f",
+        }
+    ), current_style
+
+# Add route for serving merged PDFs
+@app.server.route('/merged-id-cards-pdf/<path:filenames>')
+def serve_merged_pdf(filenames):
+    try:
+        # Check if ID cards directory exists
+        if not os.path.exists(ID_CARDS_PATH):
+            logging.error(f"ID cards directory not found at {ID_CARDS_PATH}")
+            return "ID cards directory not found. Please ensure the data directory is properly set up.", 404
+
+        # Split filenames and construct full paths
+        pdf_paths = []
+        for filename in filenames.split(','):
+            pdf_path = os.path.join(ID_CARDS_PATH, f"lipizone_ID_card_{filename}.pdf")
+            if os.path.exists(pdf_path):
+                pdf_paths.append(pdf_path)
+            else:
+                logging.warning(f"PDF file not found: {pdf_path}")
+        
+        if not pdf_paths:
+            return "No PDFs found for the selected lipizones. Please ensure the ID cards are available in the data directory.", 404
+        
+        # If only one PDF, serve it directly
+        if len(pdf_paths) == 1:
+            return send_file(pdf_paths[0])
+        
+        # Merge PDFs
+        merger = PyPDF2.PdfMerger()
+        for pdf_path in pdf_paths:
+            try:
+                merger.append(pdf_path)
+            except Exception as e:
+                logging.error(f"Error appending PDF {pdf_path}: {e}")
+                continue
+        
+        if len(merger.pages) == 0:
+            return "No valid PDFs could be merged. Please check the PDF files in the data directory.", 404
+        
+        # Write to BytesIO
+        output = io.BytesIO()
+        merger.write(output)
+        merger.close()
+        
+        # Prepare for sending
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/pdf',
+            as_attachment=False,
+            download_name='merged_id_cards.pdf'
+        )
+    except Exception as e:
+        logging.error(f"Error serving merged PDF: {e}")
+        return f"Error serving PDFs: {str(e)}. Please check the server logs for more details.", 500
+
+# Callback to toggle the OffCanvas panel
+@app.callback(
+    Output("id-cards-panel", "is_open"),
+    [Input("view-id-cards-btn", "n_clicks"), Input("close-id-cards-panel", "n_clicks")],
+    [State("id-cards-panel", "is_open")],
+)
+def toggle_id_cards_panel(open_click, close_click, is_open):
+    ctx = dash.callback_context
+    if not ctx.triggered:
+        return is_open
+    button_id = ctx.triggered[0]["prop_id"].split(".")[0]
+    if button_id == "view-id-cards-btn" or button_id == "close-id-cards-panel":
+        return not is_open
+    return is_open
+
+# Callback to update the PDF viewer
+@app.callback(
+    Output("pdf-viewer-container", "children"),
+    Input("page-6-all-selected-lipizones", "data"),
+)
+def update_pdf_viewer(all_selected_lipizones):
+    if not all_selected_lipizones or not all_selected_lipizones.get("names") or len(all_selected_lipizones["names"]) == 0:
+        return html.Div(
+            "Select lipizones to view their ID cards",
+            style={
+                "color": "white",
+                "fontSize": "1.2rem",
+                "textAlign": "center",
+            }
+        )
+    cleaned_filenames = [clean_filenamePD(name) for name in all_selected_lipizones["names"]]
+    filenames_str = ",".join(cleaned_filenames)
+    return html.Iframe(
+        src=f"/merged-id-cards-pdf/{filenames_str}",
+        style={
+            "width": "100%",
+            "height": "100%",
+            "border": "none",
+        }
+    )

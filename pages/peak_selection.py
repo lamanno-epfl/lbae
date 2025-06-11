@@ -257,7 +257,7 @@ def return_layout(basic_config, slice_index):
                             variant="filled",
                             color="cyan",
                             radius="md",
-                            size="md",
+                            size="sm",
                             disabled=False,
                             compact=False,
                             loading=False,
@@ -670,7 +670,7 @@ def return_layout(basic_config, slice_index):
                                     disabled=False,
                                     color="red",
                                     radius="md",
-                                    size="md",
+                                    size="sm",
                                     compact=False,
                                     loading=False,
                                     style={
@@ -1704,11 +1704,11 @@ app.clientside_callback(
             step === 4,
             step === 5,
             step === 6,
-            step === 7,
+            step === 7
         ];
     }
     """,
-    [Output(f"peak-tutorial-popover-{i}", "is_open") for i in range(1, 7)], # TODO: change this to 8 when the tutorial for all sections is updated
+    [Output(f"peak-tutorial-popover-{i}", "is_open") for i in range(1, 8)], # TODO: change this to 8 when the tutorial for all sections is updated
     Input("peak-tutorial-step", "data"),
     prevent_initial_call=True,
 )

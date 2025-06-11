@@ -763,7 +763,7 @@ body .tooltip {
 
 .dash-bootstrap .popover {
   border: 3px solid #1fafc8 !important;
-  box-shadow: 0 0 15px rgba(0, 191, 255, 0.7) !important;
+  box-shadow: 0 0 15px #1fafc8 !important;
   border-radius: 4px !important;
   padding: 0 !important;
   background: #1d1c1f !important;

@@ -147,7 +147,7 @@ layout = html.Div(
                             id="super-tab-region-analysis",
                         ),
                         
-                        # SUPER-TAB: LIPIZONES
+                        # LIPIZONES (as a 1-option dropdown)
                         html.Div(
                             className="super-tab my-4",
                             children=[
@@ -166,18 +166,9 @@ layout = html.Div(
                                 html.Div(
                                     className="sub-menu",
                                     children=[
-                                        html.Div(
-                                            className="sub-menu-header",
-                                            children=[html.H6("LIPIZONES", className="mb-2 px-3")]
-                                        ),
                                         dbc.NavLink(
                                             "Lipizones",
                                             href="/lipizones-selection",
-                                            active="exact",
-                                        ),
-                                        dbc.NavLink(
-                                            "ID Cards",
-                                            href="/lipizones-id-cards",
                                             active="exact",
                                         ),
                                     ],

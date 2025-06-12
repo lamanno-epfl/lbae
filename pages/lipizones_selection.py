@@ -966,10 +966,16 @@ def page_6_plot_graph_heatmap_mz_selection(
 
         # Or if the current plot must be all sections
         elif sections_mode == "all":
+            image = figures.all_sections_lipizones_image(
+                hex_colors_to_highlight=hex_colors_to_highlight,
+                brain_id=brain_id
+            )
+            if brain_id == "ReferenceAtlas" or brain_id == "SecondAtlas":
+                image = np.pad(image, ((200, 200), (0, 0), (0, 0)), mode='edge')
+            else:
+                image = np.pad(image, ((800, 800), (0, 0), (0, 0)), mode='edge')
             return figures.build_lipid_heatmap_from_image(
-                figures.all_sections_lipizones_image(
-                    hex_colors_to_highlight=hex_colors_to_highlight,
-                    brain_id=brain_id),
+                image,
                 return_base64_string=False,
                 draw=False,
                 type_image="RGB",

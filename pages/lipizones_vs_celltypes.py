@@ -71,6 +71,32 @@ def return_layout(basic_config, slice_index):
             "background-color": "#1d1c1f",
         },
         children=[
+            # Add the warning alert at the top of the page
+            dmc.Alert(
+                title="Important Notice",
+                color="red",
+                children=html.Div([
+                    "Please refresh this page when coming from a different one.",
+                    html.Br(),
+                    "This ensures the slider properly responds to user interactions."
+                ], style={"textAlign": "left"}),
+                id="page-6bis-refresh-alert",
+                withCloseButton=True,
+                style={
+                    "position": "fixed",
+                    "top": "15%",
+                    "left": "50%",
+                    "transform": "translate(-50%, -50%)",
+                    "width": "500px",
+                    "backgroundColor": "#2d1d1d",
+                    "color": "#ffd6d6",
+                    "borderLeft": "5px solid #ff4d4f",
+                    "zIndex": 2000,
+                    "boxShadow": "0 4px 8px rgba(0, 0, 0, 0.2)",
+                    "borderRadius": "8px",
+                    "textAlign": "center",
+                },
+            ),
             dcc.Store(id="lipicell-tutorial-step", data=0),
             dcc.Store(
                 id="lipicell-tutorial-completed", storage_type="local", data=False
@@ -516,41 +542,41 @@ def return_layout(basic_config, slice_index):
                             ),  # Reduced from 10px
                         ],
                     ),
-                    # Controls at the bottom right
-                    html.Div(
-                        style={
-                            "right": "1rem",
-                            "bottom": "1rem",
-                            "position": "fixed",
-                            "z-index": 1000,
-                            "display": "flex",
-                            "flexDirection": "row",  # Changed from column to row
-                            "gap": "0.5rem",
-                        },
-                        children=[
-                            dmc.Button(
-                                children="Download data",
-                                id="page-6bis-download-data-button",
-                                variant="filled",
-                                disabled=False,
-                                color="cyan",
-                                radius="md",
-                                size="sm",
-                                style={"width": "150px"},
-                            ),
-                            dmc.Button(
-                                children="Download image",
-                                id="page-6bis-download-image-button",
-                                variant="filled",
-                                disabled=False,
-                                color="cyan",
-                                radius="md",
-                                size="sm",
-                                style={"width": "150px"},
-                            ),
-                        ],
-                    ),
-                    dcc.Download(id="page-6bis-download-data"),
+                    # # Controls at the bottom right
+                    # html.Div(
+                    #     style={
+                    #         "right": "1rem",
+                    #         "bottom": "1rem",
+                    #         "position": "fixed",
+                    #         "z-index": 1000,
+                    #         "display": "flex",
+                    #         "flexDirection": "row",  # Changed from column to row
+                    #         "gap": "0.5rem",
+                    #     },
+                    #     children=[
+                    #         dmc.Button(
+                    #             children="Download data",
+                    #             id="page-6bis-download-data-button",
+                    #             variant="filled",
+                    #             disabled=False,
+                    #             color="cyan",
+                    #             radius="md",
+                    #             size="sm",
+                    #             style={"width": "150px"},
+                    #         ),
+                    #         dmc.Button(
+                    #             children="Download image",
+                    #             id="page-6bis-download-image-button",
+                    #             variant="filled",
+                    #             disabled=False,
+                    #             color="cyan",
+                    #             radius="md",
+                    #             size="sm",
+                    #             style={"width": "150px"},
+                    #         ),
+                    #     ],
+                    # ),
+                    # dcc.Download(id="page-6bis-download-data"),
                     # Tutorial Popovers with adjusted positions
                     dbc.Popover(
                         [
@@ -722,7 +748,7 @@ def return_layout(basic_config, slice_index):
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "This button displays all available cell types in the current brain slice. It’s the default view when you open the page. If you want to focus on specific cell types, make sure to clear the selection first before adding a subset.",
+                                        "This button displays all available cell types in the current brain slice. It's the default view when you open the page. If you want to focus on specific cell types, make sure to clear the selection first before adding a subset.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     dbc.Button(

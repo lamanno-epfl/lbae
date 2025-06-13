@@ -68,6 +68,32 @@ def return_layout(basic_config, slice_index):
                 "overflow": "hidden",  # Prevent any scrolling
             },
             children=[
+                # Add the warning alert at the top of the page
+                dmc.Alert(
+                    title="Important Notice",
+                    color="red",
+                    children=html.Div([
+                        "Please refresh this page when coming from a different one.",
+                        html.Br(),
+                        "This ensures the slider properly responds to user interactions."
+                    ], style={"textAlign": "left"}),
+                    id="page-6tris-refresh-alert",
+                    withCloseButton=True,
+                    style={
+                        "position": "fixed",
+                        "top": "15%",
+                        "left": "50%",
+                        "transform": "translate(-50%, -50%)",
+                        "width": "500px",
+                        "backgroundColor": "#2d1d1d",
+                        "color": "#ffd6d6",
+                        "borderLeft": "5px solid #ff4d4f",
+                        "zIndex": 2000,
+                        "boxShadow": "0 4px 8px rgba(0, 0, 0, 0.2)",
+                        "borderRadius": "8px",
+                        "textAlign": "center",
+                    },
+                ),        
                 # Add a store component to hold the slider style
                 dcc.Store(id="page-6tris-main-slider-style", data={"display": "block"}),
                 dcc.Store(id="lipigene-tutorial-step", data=0),

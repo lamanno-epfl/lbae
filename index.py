@@ -12,7 +12,7 @@ also here that the URL routing is done.
 
 # Standard modules
 import dash_bootstrap_components as dbc
-from dash import dcc, html
+from dash import dcc, html, ClientsideFunction
 from dash.dependencies import Input, Output, State
 import uuid
 import logging
@@ -60,7 +60,7 @@ def return_main_content():
     main_content = html.Div(
         children=[
             # To handle url since multi-page app
-            dcc.Location(id="url", refresh=False),
+            dcc.Location(id="url", refresh=True),
             # Record session id, useful to trigger callbacks at initialization
             dcc.Store(id="session-id", data=session_id),
             # Record the slider index
@@ -559,6 +559,11 @@ def render_page_content(pathname, slice_index, brain):
     if pathname is not None:
         logging.info("Page" + pathname + " has been selected" + logmem())
 
+    # Validate slice index for lipizones-vs-celltypes page
+    if pathname == "/lipizones-vs-celltypes":
+        if slice_index >= 33:
+            slice_index = 3  # Default to slice 3 if out of range
+
     # Set the content according to the current pathname
     if pathname == "/":
         page = home.layout
@@ -659,14 +664,15 @@ def hide_brain_chips(pathname):
         "pregnant1", "pregnant2", "pregnant4"
     ]],
     Input("main-brain", "value"),
+    Input("url", "pathname"),
     [State(f"main-slider-{slider_id}", "value") for slider_id in [
         "1", "2", "male1", "male2", "male3", "female1", "female2", "female3",
         "pregnant1", "pregnant2", "pregnant4"
     ]],
     prevent_initial_call=False,
 )
-def update_slider_visibility(brain, *values):
-    """This callback is used to update the slider visibility based on the selected brain."""
+def update_slider_visibility(brain, pathname, *values):
+    """This callback is used to update the slider visibility based on the selected brain and current page."""
     # Base class for visible slider
     visible_class = "mt-2 mr-5 ml-2 mb-1 w-50"
     # Base class for hidden slider
@@ -676,6 +682,11 @@ def update_slider_visibility(brain, *values):
     classes = [hidden_class] * 11
     # Keep all values as is
     new_values = list(values)
+    
+    # Special case for lipizones-vs-celltypes page - only show main-slider-1
+    if pathname == "/lipizones-vs-celltypes":
+        classes[0] = visible_class  # Show only main-slider-1
+        return classes + new_values
     
     # Map brain names to slider indices
     brain_to_index = {

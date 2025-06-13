@@ -298,7 +298,7 @@ def return_layout(basic_config, slice_index=1):
                     ),
                     dmc.Text(
                         id="page-3-badge-input",
-                        children="Colors: NA",
+                        children="Colors: ",
                         class_name="position-absolute",
                         style={"left": "1%", "top": "9em"},
                     ),

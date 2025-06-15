@@ -358,7 +358,16 @@ def return_layout(basic_config, slice_index):
                         dbc.Popover(
                             [
                                 dbc.PopoverHeader(
-                                    "Lipid Programs Exploration",
+                                    [
+                                        "Lipid Programs Exploration",
+                                        dbc.Button(
+                                            "×",
+                                            id="lp-tutorial-close-1",
+                                            color="link",
+                                            className="float-end",
+                                            style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                        ),
+                                    ],
                                     style={"fontWeight": "bold"}
                                 ),
                                 dbc.PopoverBody(
@@ -367,7 +376,26 @@ def return_layout(basic_config, slice_index):
                                             "Welcome to Lipid Programs Exploration! This page allows you to visualize lipidomic features across the brain. You can select and explore either data-driven components from the NMF global embedding or Lipid Programs learned using the LipiMap model, which organizes lipids into functional biological modules.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
-                                        dbc.Button("Next", id="lp-tutorial-next-1", color="primary", size="sm", className="float-end")
+                                        html.Div(
+                                            [
+                                                dbc.Button(
+                                                    "Previous",
+                                                    id="lp-tutorial-prev-1",
+                                                    color="secondary",
+                                                    size="sm",
+                                                    className="float-start",
+                                                    disabled=True,
+                                                ),
+                                                dbc.Button(
+                                                    "Next",
+                                                    id="lp-tutorial-next-1",
+                                                    color="primary",
+                                                    size="sm",
+                                                    className="float-end",
+                                                ),
+                                            ],
+                                            style={"display": "flex", "justifyContent": "space-between"},
+                                        ),
                                     ]
                                 ),
                             ],
@@ -384,14 +412,44 @@ def return_layout(basic_config, slice_index):
                         # --- Peak Selection ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Choose Up to 3 Programs", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader(
+                                    [
+                                        "Choose Up to 3 Programs",
+                                        dbc.Button(
+                                            "×",
+                                            id="lp-tutorial-close-2",
+                                            color="link",
+                                            className="float-end",
+                                            style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                        ),
+                                    ],
+                                    style={"fontWeight": "bold"}
+                                ),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
                                             "You can select up to three lipid programs to display at once. The list includes both NMF components and Lipid Programs. Lipid Programs are grouped collections of lipids that are functionally or structurally related, as learned by the LipiMap model.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
-                                        dbc.Button("Next", id="lp-tutorial-next-2", color="primary", size="sm", className="float-end")
+                                        html.Div(
+                                            [
+                                                dbc.Button(
+                                                    "Previous",
+                                                    id="lp-tutorial-prev-2",
+                                                    color="secondary",
+                                                    size="sm",
+                                                    className="float-start",
+                                                ),
+                                                dbc.Button(
+                                                    "Next",
+                                                    id="lp-tutorial-next-2",
+                                                    color="primary",
+                                                    size="sm",
+                                                    className="float-end",
+                                                ),
+                                            ],
+                                            style={"display": "flex", "justifyContent": "space-between"},
+                                        ),
                                     ]
                                 ),
                             ],
@@ -408,14 +466,44 @@ def return_layout(basic_config, slice_index):
                         # --- RGB Mode ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Color Map Options", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader(
+                                    [
+                                        "Color Map Options",
+                                        dbc.Button(
+                                            "×",
+                                            id="lp-tutorial-close-3",
+                                            color="link",
+                                            className="float-end",
+                                            style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                        ),
+                                    ],
+                                    style={"fontWeight": "bold"}
+                                ),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
                                             "When one program is selected, you can choose to display it using either the PuOr colormap or the red channel of the RGB space. If two or three programs are selected, the visualization automatically switches to RGB mode, where each program is mapped to a different channel: red for the first, green for the second, and blue for the third.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
-                                        dbc.Button("Next", id="lp-tutorial-next-3", color="primary", size="sm", className="float-end")
+                                        html.Div(
+                                            [
+                                                dbc.Button(
+                                                    "Previous",
+                                                    id="lp-tutorial-prev-3",
+                                                    color="secondary",
+                                                    size="sm",
+                                                    className="float-start",
+                                                ),
+                                                dbc.Button(
+                                                    "Next",
+                                                    id="lp-tutorial-next-3",
+                                                    color="primary",
+                                                    size="sm",
+                                                    className="float-end",
+                                                ),
+                                            ],
+                                            style={"display": "flex", "justifyContent": "space-between"},
+                                        ),
                                     ]
                                 ),
                             ],
@@ -457,14 +545,44 @@ def return_layout(basic_config, slice_index):
                         # --- Annotations ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Overlay Anatomical Contours", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader(
+                                    [
+                                        "Overlay Anatomical Contours",
+                                        dbc.Button(
+                                            "×",
+                                            id="lp-tutorial-close-4",
+                                            color="link",
+                                            className="float-end",
+                                            style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                        ),
+                                    ],
+                                    style={"fontWeight": "bold"}
+                                ),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
                                             "You can enable the Allen Brain Atlas annotations to overlay anatomical labels directly on the slices. This helps you navigate the brain and interpret lipid signals in their biological context.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
-                                        dbc.Button("Next", id="lp-tutorial-next-4", color="primary", size="sm", className="float-end") # TODO: change this to 5 when the tutorial for all sections is updated
+                                        html.Div(
+                                            [
+                                                dbc.Button(
+                                                    "Previous",
+                                                    id="lp-tutorial-prev-4",
+                                                    color="secondary",
+                                                    size="sm",
+                                                    className="float-start",
+                                                ),
+                                                dbc.Button(
+                                                    "Next",
+                                                    id="lp-tutorial-next-4",
+                                                    color="primary",
+                                                    size="sm",
+                                                    className="float-end",
+                                                ),
+                                            ],
+                                            style={"display": "flex", "justifyContent": "space-between"},
+                                        ),
                                     ]
                                 ),
                             ],
@@ -481,14 +599,44 @@ def return_layout(basic_config, slice_index):
                         # --- Brain Slider ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Navigate Along Brain Anterior-Posterior Axis", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader(
+                                    [
+                                        "Navigate Along Brain Anterior-Posterior Axis",
+                                        dbc.Button(
+                                            "×",
+                                            id="lp-tutorial-close-5",
+                                            color="link",
+                                            className="float-end",
+                                            style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                        ),
+                                    ],
+                                    style={"fontWeight": "bold"}
+                                ),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
                                             "In the single-section view, you can navigate through the brain by selecting different slices along the rostro-caudal (front-to-back) axis. This allows detailed inspection of lipid signals at specific anatomical levels.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
-                                        dbc.Button("Next", id="lp-tutorial-next-5", color="primary", size="sm", className="float-end") # TODO: change this to 6 when the tutorial for all sections is updated
+                                        html.Div(
+                                            [
+                                                dbc.Button(
+                                                    "Previous",
+                                                    id="lp-tutorial-prev-5",
+                                                    color="secondary",
+                                                    size="sm",
+                                                    className="float-start",
+                                                ),
+                                                dbc.Button(
+                                                    "Next",
+                                                    id="lp-tutorial-next-5",
+                                                    color="primary",
+                                                    size="sm",
+                                                    className="float-end",
+                                                ),
+                                            ],
+                                            style={"display": "flex", "justifyContent": "space-between"},
+                                        ),
                                     ]
                                 ),
                             ],
@@ -505,14 +653,44 @@ def return_layout(basic_config, slice_index):
                         # --- Brain Chips ---
                         dbc.Popover(
                             [
-                                dbc.PopoverHeader("Choose Experimental Condition", style={"fontWeight": "bold"}),
+                                dbc.PopoverHeader(
+                                    [
+                                        "Choose Experimental Condition",
+                                        dbc.Button(
+                                            "×",
+                                            id="lp-tutorial-close-6",
+                                            color="link",
+                                            className="float-end",
+                                            style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                        ),
+                                    ],
+                                    style={"fontWeight": "bold"}
+                                ),
                                 dbc.PopoverBody(
                                     [
                                         html.P(
                                             "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
-                                        dbc.Button("Finish", id="lp-tutorial-finish", color="success", size="sm", className="float-end")
+                                        html.Div(
+                                            [
+                                                dbc.Button(
+                                                    "Previous",
+                                                    id="lp-tutorial-prev-6",
+                                                    color="secondary",
+                                                    size="sm",
+                                                    className="float-start",
+                                                ),
+                                                dbc.Button(
+                                                    "Finish",
+                                                    id="lp-tutorial-finish",
+                                                    color="success",
+                                                    size="sm",
+                                                    className="float-end",
+                                                ),
+                                            ],
+                                            style={"display": "flex", "justifyContent": "space-between"},
+                                        ),
                                     ]
                                 ),
                             ],
@@ -1329,38 +1507,65 @@ def page_2bis_auto_toggle_rgb(
 # Use clientside callback for tutorial step updates
 app.clientside_callback(
     """
-    function(start, next1, next2, next3, next4, next5, finish) { 
+    function(start, next1, next2, next3, next4, next5, finish,
+             prev1, prev2, prev3, prev4, prev5, prev6,
+             close1, close2, close3, close4, close5, close6) {
         const ctx = window.dash_clientside.callback_context;
         if (!ctx.triggered.length) {
             return window.dash_clientside.no_update;
         }
         const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
-        if (trigger_id === 'lp-start-tutorial-btn' && start) {
-            return 1;
-        } else if (trigger_id === 'lp-tutorial-next-1' && next1) {
-            return 2;
-        } else if (trigger_id === 'lp-tutorial-next-2' && next2) {
-            return 3;
-        } else if (trigger_id === 'lp-tutorial-next-3' && next3) {
-            return 4;
-        } else if (trigger_id === 'lp-tutorial-next-4' && next4) {
-            return 5;
-        } else if (trigger_id === 'lp-tutorial-next-5' && next5) {
-            return 6;
-        } else if (trigger_id === 'lp-tutorial-finish' && finish) {
+
+        // Close (×) always resets to 0
+        if (trigger_id.startsWith('lp-tutorial-close-')) {
             return 0;
         }
+
+        // Start
+        if (trigger_id === 'lp-start-tutorial-btn' && start) {
+            return 1;
+        }
+
+        // Next buttons
+        if (trigger_id === 'lp-tutorial-next-1' && next1) { return 2; }
+        if (trigger_id === 'lp-tutorial-next-2' && next2) { return 3; }
+        if (trigger_id === 'lp-tutorial-next-3' && next3) { return 4; }
+        if (trigger_id === 'lp-tutorial-next-4' && next4) { return 5; }
+        if (trigger_id === 'lp-tutorial-next-5' && next5) { return 6; }
+        if (trigger_id === 'lp-tutorial-finish' && finish) { return 0; }
+
+        // Previous buttons
+        if (trigger_id === 'lp-tutorial-prev-2' && prev2) { return 1; }
+        if (trigger_id === 'lp-tutorial-prev-3' && prev3) { return 2; }
+        if (trigger_id === 'lp-tutorial-prev-4' && prev4) { return 3; }
+        if (trigger_id === 'lp-tutorial-prev-5' && prev5) { return 4; }
+        if (trigger_id === 'lp-tutorial-prev-6' && prev6) { return 5; }
+
         return window.dash_clientside.no_update;
     }
     """,
     Output("lp-tutorial-step", "data"),
+
     [Input("lp-start-tutorial-btn", "n_clicks"),
      Input("lp-tutorial-next-1", "n_clicks"),
      Input("lp-tutorial-next-2", "n_clicks"),
      Input("lp-tutorial-next-3", "n_clicks"),
      Input("lp-tutorial-next-4", "n_clicks"),
      Input("lp-tutorial-next-5", "n_clicks"),
-     Input("lp-tutorial-finish", "n_clicks")],
+     Input("lp-tutorial-finish", "n_clicks"),
+     Input("lp-tutorial-prev-1", "n_clicks"),
+     Input("lp-tutorial-prev-2", "n_clicks"),
+     Input("lp-tutorial-prev-3", "n_clicks"),
+     Input("lp-tutorial-prev-4", "n_clicks"),
+     Input("lp-tutorial-prev-5", "n_clicks"),
+     Input("lp-tutorial-prev-6", "n_clicks"),
+     Input("lp-tutorial-close-1", "n_clicks"),
+     Input("lp-tutorial-close-2", "n_clicks"),
+     Input("lp-tutorial-close-3", "n_clicks"),
+     Input("lp-tutorial-close-4", "n_clicks"),
+     Input("lp-tutorial-close-5", "n_clicks"),
+     Input("lp-tutorial-close-6", "n_clicks"),
+     ],
     prevent_initial_call=True,
 )
 

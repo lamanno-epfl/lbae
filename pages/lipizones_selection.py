@@ -475,7 +475,16 @@ def return_layout(basic_config, slice_index):
                     dbc.Popover(
                         [
                             dbc.PopoverHeader(
-                                "Lipizones Exploration",
+                                [
+                                    "Lipizones Exploration",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-1",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
                                 style={"fontWeight": "bold"}
                             ),
                             dbc.PopoverBody(
@@ -484,7 +493,26 @@ def return_layout(basic_config, slice_index):
                                         "Welcome to the Lipizones page! Lipizones are lipid-based spatial territories in the brain. They often align with known cell-type distributions but also highlight distal axonal projections and metabolic compartments. By exploring lipizones, you can uncover key organizational principles of the brain, including connectivity, cytoarchitecture, and developmental patterning.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-1", color="primary", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-1",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                                disabled=True,
+                                            ),
+                                            dbc.Button(
+                                                "Next",
+                                                id="lipizone-tutorial-next-1",
+                                                color="primary",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -501,14 +529,44 @@ def return_layout(basic_config, slice_index):
                     # --- All Lipizones Button ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Display All Lipizones", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader(
+                                [
+                                    "Display All Lipizones",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-2",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
+                                style={"fontWeight": "bold"}
+                            ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
                                         "This button displays all lipizones in the current slice by default. If you want to focus on specific lipizones, remember to first clear the current selection using the appropriate button.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-2", color="primary", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-2",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                            ),
+                                            dbc.Button(
+                                                "Next",
+                                                id="lipizone-tutorial-next-2",
+                                                color="primary",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -525,14 +583,44 @@ def return_layout(basic_config, slice_index):
                     # --- Lipizones Selection ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Navigate Lipizones Hierarchy", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader(
+                                [
+                                    "Navigate Lipizones Hierarchy",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-3",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
+                                style={"fontWeight": "bold"}
+                            ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
                                         "Use the treemap to explore and select lipizones from a hierarchical structure. Lipizones are defined as 539 spatial clusters computed through an iterative bipartite splitter. You can navigate the hierarchy freely and stop at any level of detail. Once you're satisfied with the selection, you can add those lipizones for visualization.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-3", color="primary", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-3",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                            ),
+                                            dbc.Button(
+                                                "Next",
+                                                id="lipizone-tutorial-next-3",
+                                                color="primary",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -549,14 +637,44 @@ def return_layout(basic_config, slice_index):
                     # --- Add Selection Button ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Visualize Selected Lipizones", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader(
+                                [
+                                    "Visualize Selected Lipizones",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-4",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
+                                style={"fontWeight": "bold"}
+                            ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
                                         "After selecting the desired lipizones from the treemap, click this button to add them to the current view. The display will update accordingly to show your selection.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-4", color="primary", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-4",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                            ),
+                                            dbc.Button(
+                                                "Next",
+                                                id="lipizone-tutorial-next-4",
+                                                color="primary",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -573,14 +691,44 @@ def return_layout(basic_config, slice_index):
                     # --- Clear Selection Button ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Reset the Brain View", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader(
+                                [
+                                    "Reset the Brain View",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-5",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
+                                style={"fontWeight": "bold"}
+                            ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
                                         "Use this button to remove all currently selected lipizones and return to an empty brain view. This is helpful if you want to start over or explore a new subset.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-5", color="primary", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-5",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                            ),
+                                            dbc.Button(
+                                                "Next",
+                                                id="lipizone-tutorial-next-5",
+                                                color="primary",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -597,14 +745,44 @@ def return_layout(basic_config, slice_index):
                     # --- View ID Cards Button ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("View Lipizones ID Cards", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader(
+                                [
+                                    "View Lipizones ID Cards",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-6",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
+                                style={"fontWeight": "bold"}
+                            ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
                                         "You can view the ID Card of any selected lipizone. This is a one-page PDF that summarizes key statistics and characteristics of the lipizone, serving as a detailed reference for further analysis or documentation.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-6", color="primary", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-6",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                            ),
+                                            dbc.Button(
+                                                "Next",
+                                                id="lipizone-tutorial-next-6",
+                                                color="primary",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -621,14 +799,44 @@ def return_layout(basic_config, slice_index):
                     # --- One vs All Sections ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("View All Slices at Once", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader(
+                                [
+                                    "View All Slices at Once",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-7",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
+                                style={"fontWeight": "bold"}
+                            ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
                                         "You can switch to a view that shows all brain sections at once. In this mode, only the first selected lipid will be displayed to keep the view clean and interpretable.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-7", color="primary", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-7",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                            ),
+                                            dbc.Button(
+                                                "Next",
+                                                id="lipizone-tutorial-next-7",
+                                                color="primary",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -645,14 +853,44 @@ def return_layout(basic_config, slice_index):
                     # --- Annotations ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Overlay Anatomical Contours", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader(
+                                [
+                                    "Overlay Anatomical Contours",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-8",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
+                                style={"fontWeight": "bold"}
+                            ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
                                         "You can enable the Allen Brain Atlas annotations to overlay anatomical labels directly on the slices. This helps you navigate the brain and interpret lipid signals in their biological context.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-8", color="primary", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-8",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                            ),
+                                            dbc.Button(
+                                                "Next",
+                                                id="lipizone-tutorial-next-8",
+                                                color="primary",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -669,14 +907,44 @@ def return_layout(basic_config, slice_index):
                     # --- Brain Slider ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Navigate Along Brain Anterior-Posterior Axis", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader(
+                                [
+                                    "Navigate Along Brain Anterior-Posterior Axis",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-9",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
+                                style={"fontWeight": "bold"}
+                            ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
                                         "In the single-section view, you can navigate through the brain by selecting different slices along the rostro-caudal (front-to-back) axis. This allows detailed inspection of lipid signals at specific anatomical levels.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Next", id="lipizone-tutorial-next-9", color="primary", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-9",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                            ),
+                                            dbc.Button(
+                                                "Next",
+                                                id="lipizone-tutorial-next-9",
+                                                color="primary",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -693,14 +961,44 @@ def return_layout(basic_config, slice_index):
                     # --- Brain Chips ---
                     dbc.Popover(
                         [
-                            dbc.PopoverHeader("Choose Experimental Condition", style={"fontWeight": "bold"}),
+                            dbc.PopoverHeader(
+                                [
+                                    "Choose Experimental Condition",
+                                    dbc.Button(
+                                        "×",
+                                        id="lipizone-tutorial-close-10",
+                                        color="link",
+                                        className="float-end",
+                                        style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                                    ),
+                                ],
+                                style={"fontWeight": "bold"}
+                            ),
                             dbc.PopoverBody(
                                 [
                                     html.P(
                                         "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
-                                    dbc.Button("Finish", id="lipizone-tutorial-finish", color="success", size="sm", className="float-end")
+                                    html.Div(
+                                        [
+                                            dbc.Button(
+                                                "Previous",
+                                                id="lipizone-tutorial-prev-10",
+                                                color="secondary",
+                                                size="sm",
+                                                className="float-start",
+                                            ),
+                                            dbc.Button(
+                                                "Finish",
+                                                id="lipizone-tutorial-finish",
+                                                color="success",
+                                                size="sm",
+                                                className="float-end",
+                                            ),
+                                        ],
+                                        style={"display": "flex", "justifyContent": "space-between"},
+                                    ),
                                 ]
                             ),
                         ],
@@ -1060,39 +1358,53 @@ def compute_page6_hide(lipizone_sections_mode, pathname):
 # Use clientside callback for tutorial step updates
 app.clientside_callback(
     """
-    function(start, next1, next2, next3, next4, next5, next6, next7, next8, next9, finish) {
+    function(start, next1, next2, next3, next4, next5, next6, next7, next8, next9, finish,
+             prev1, prev2, prev3, prev4, prev5, prev6, prev7, prev8, prev9, prev10,
+             close1, close2, close3, close4, close5, close6, close7, close8, close9) {
         const ctx = window.dash_clientside.callback_context;
         if (!ctx.triggered.length) {
             return window.dash_clientside.no_update;
         }
         const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
-        if (trigger_id === 'lipizone-start-tutorial-btn' && start) {
-            return 1;
-        } else if (trigger_id === 'lipizone-tutorial-next-1' && next1) {
-            return 2;
-        } else if (trigger_id === 'lipizone-tutorial-next-2' && next2) {
-            return 3;
-        } else if (trigger_id === 'lipizone-tutorial-next-3' && next3) {
-            return 4;
-        } else if (trigger_id === 'lipizone-tutorial-next-4' && next4) {
-            return 5;
-        } else if (trigger_id === 'lipizone-tutorial-next-5' && next5) {
-            return 6;
-        } else if (trigger_id === 'lipizone-tutorial-next-6' && next6) {
-            return 7;
-        } else if (trigger_id === 'lipizone-tutorial-next-7' && next7) {
-            return 8;
-        } else if (trigger_id === 'lipizone-tutorial-next-8' && next8) {
-            return 9;
-        } else if (trigger_id === 'lipizone-tutorial-next-9' && next9) {
-            return 10;
-        } else if (trigger_id === 'lipizone-tutorial-finish' && finish) {
+
+        // Close (×) always resets to 0
+        if (trigger_id.startsWith('lipizone-tutorial-close-')) {
             return 0;
         }
+
+        // Start
+        if (trigger_id === 'lipizone-start-tutorial-btn' && start) {
+            return 1;
+        }
+
+        // Next buttons
+        if (trigger_id === 'lipizone-tutorial-next-1' && next1) { return 2; }
+        if (trigger_id === 'lipizone-tutorial-next-2' && next2) { return 3; }
+        if (trigger_id === 'lipizone-tutorial-next-3' && next3) { return 4; }
+        if (trigger_id === 'lipizone-tutorial-next-4' && next4) { return 5; }
+        if (trigger_id === 'lipizone-tutorial-next-5' && next5) { return 6; }
+        if (trigger_id === 'lipizone-tutorial-next-6' && next6) { return 7; }
+        if (trigger_id === 'lipizone-tutorial-next-7' && next7) { return 8; }
+        if (trigger_id === 'lipizone-tutorial-next-8' && next8) { return 9; }
+        if (trigger_id === 'lipizone-tutorial-next-9' && next9) { return 10; }
+        if (trigger_id === 'lipizone-tutorial-finish' && finish) { return 0; }
+
+        // Previous buttons
+        if (trigger_id === 'lipizone-tutorial-prev-2' && prev2) { return 1; }
+        if (trigger_id === 'lipizone-tutorial-prev-3' && prev3) { return 2; }
+        if (trigger_id === 'lipizone-tutorial-prev-4' && prev4) { return 3; }
+        if (trigger_id === 'lipizone-tutorial-prev-5' && prev5) { return 4; }
+        if (trigger_id === 'lipizone-tutorial-prev-6' && prev6) { return 5; }
+        if (trigger_id === 'lipizone-tutorial-prev-7' && prev7) { return 6; }
+        if (trigger_id === 'lipizone-tutorial-prev-8' && prev8) { return 7; }
+        if (trigger_id === 'lipizone-tutorial-prev-9' && prev9) { return 8; }
+        if (trigger_id === 'lipizone-tutorial-prev-10' && prev10) { return 9; }
+
         return window.dash_clientside.no_update;
     }
     """,
     Output("lipizone-tutorial-step", "data"),
+
     [Input("lipizone-start-tutorial-btn", "n_clicks"),
      Input("lipizone-tutorial-next-1", "n_clicks"),
      Input("lipizone-tutorial-next-2", "n_clicks"),
@@ -1103,7 +1415,28 @@ app.clientside_callback(
      Input("lipizone-tutorial-next-7", "n_clicks"),
      Input("lipizone-tutorial-next-8", "n_clicks"),
      Input("lipizone-tutorial-next-9", "n_clicks"),
-     Input("lipizone-tutorial-finish", "n_clicks")],
+     Input("lipizone-tutorial-finish", "n_clicks"),
+     Input("lipizone-tutorial-prev-1", "n_clicks"),
+     Input("lipizone-tutorial-prev-2", "n_clicks"),
+     Input("lipizone-tutorial-prev-3", "n_clicks"),
+     Input("lipizone-tutorial-prev-4", "n_clicks"),
+     Input("lipizone-tutorial-prev-5", "n_clicks"),
+     Input("lipizone-tutorial-prev-6", "n_clicks"),
+     Input("lipizone-tutorial-prev-7", "n_clicks"),
+     Input("lipizone-tutorial-prev-8", "n_clicks"),
+     Input("lipizone-tutorial-prev-9", "n_clicks"),
+     Input("lipizone-tutorial-prev-10", "n_clicks"),
+     Input("lipizone-tutorial-close-1", "n_clicks"),
+     Input("lipizone-tutorial-close-2", "n_clicks"),
+     Input("lipizone-tutorial-close-3", "n_clicks"),
+     Input("lipizone-tutorial-close-4", "n_clicks"),
+     Input("lipizone-tutorial-close-5", "n_clicks"),
+     Input("lipizone-tutorial-close-6", "n_clicks"),
+     Input("lipizone-tutorial-close-7", "n_clicks"),
+     Input("lipizone-tutorial-close-8", "n_clicks"),
+     Input("lipizone-tutorial-close-9", "n_clicks"),
+     Input("lipizone-tutorial-close-10", "n_clicks"),
+     ],
     prevent_initial_call=True,
 )
 

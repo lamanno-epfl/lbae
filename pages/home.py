@@ -183,21 +183,43 @@ layout = (
             dbc.Popover(
                 [
                     dbc.PopoverHeader(
-                        "Welcome to the Lipid Brain Atlas Explorer!",
+                        [
+                            "Welcome to the Lipid Brain Atlas Explorer!",
+                            dbc.Button(
+                                "×",
+                                id="home-tutorial-close-1",
+                                color="link",
+                                className="float-end",
+                                style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                            ),
+                        ],
                         style={"fontWeight": "bold"},
                     ),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "This tool lets you explore the mouse brain lipidome in 2D and 3D, across different conditions. You can inspect lipid patterns, analyze spatial clusters (lipizones), and uncover metabolic organization in the brain. Use the sidebar to navigate key features — let’s go over them!",
+                                "This tool lets you explore the mouse brain lipidome in 2D and 3D, across different conditions. You can inspect lipid patterns, analyze spatial clusters (lipizones), and uncover metabolic organization in the brain. Use the sidebar to navigate key features — let's go over them!",
                                 style={"color": "#333", "marginBottom": "15px"},
                             ),
-                            dbc.Button(
-                                "Next",
-                                id="home-tutorial-next-1",
-                                color="primary",
-                                size="sm",
-                                className="float-end",
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Previous",
+                                        id="home-tutorial-prev-1",
+                                        color="secondary",
+                                        size="sm",
+                                        className="float-start",
+                                        disabled=True,
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="home-tutorial-next-1",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ]
                     ),
@@ -215,19 +237,43 @@ layout = (
             # --- Home Button (now points to sidebar brain icon) ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Home Page", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader(
+                        [
+                            "Home Page",
+                            dbc.Button(
+                                "×",
+                                id="home-tutorial-close-2",
+                                color="link",
+                                className="float-end",
+                                style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                            ),
+                        ],
+                        style={"fontWeight": "bold"},
+                    ),
                     dbc.PopoverBody(
                         [
                             html.P(
                                 "This is the Home Page, where general information and alerts are displayed. Click this brain icon to return to this page anytime.",
                                 style={"color": "#333", "marginBottom": "15px"},
                             ),
-                            dbc.Button(
-                                "Next",
-                                id="home-tutorial-next-2",
-                                color="primary",
-                                size="sm",
-                                className="float-end",
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Previous",
+                                        id="home-tutorial-prev-2",
+                                        color="secondary",
+                                        size="sm",
+                                        className="float-start",
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="home-tutorial-next-2",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ]
                     ),
@@ -246,19 +292,42 @@ layout = (
             # --- Molecules ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Molecules", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader(
+                        [
+                            "Molecules",
+                            dbc.Button(
+                                "×",
+                                id="home-tutorial-close-3",
+                                color="link",
+                                className="float-end",
+                                style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                            ),
+                        ], style={"fontWeight": "bold"}
+                    ),
                     dbc.PopoverBody(
                         [
                             html.P(
                                 "Explore raw lipid data from 172 imputed lipids and ~1400 m/z peaks. Data is preprocessed using uMAIA and shown across brain sections.",
                                 style={"color": "#333", "marginBottom": "15px"},
                             ),
-                            dbc.Button(
-                                "Next",
-                                id="home-tutorial-next-3",
-                                color="primary",
-                                size="sm",
-                                className="float-end",
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Previous",
+                                        id="home-tutorial-prev-3",
+                                        color="secondary",
+                                        size="sm",
+                                        className="float-start",
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="home-tutorial-next-3",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ]
                     ),
@@ -277,19 +346,42 @@ layout = (
             # --- Lipid Programs ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Lipid Programs", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader(
+                        [
+                            "Lipid Programs",
+                            dbc.Button(
+                                "×",
+                                id="home-tutorial-close-4",
+                                color="link",
+                                className="float-end",
+                                style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                            ),
+                        ], style={"fontWeight": "bold"}
+                    ),
                     dbc.PopoverBody(
                         [
                             html.P(
                                 "This tab shows computed features from lipid data — including NMF embeddings and Lipid Programs that reflect biological lipid modules.",
                                 style={"color": "#333", "marginBottom": "15px"},
                             ),
-                            dbc.Button(
-                                "Next",
-                                id="home-tutorial-next-4",
-                                color="primary",
-                                size="sm",
-                                className="float-end",
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Previous",
+                                        id="home-tutorial-prev-4",
+                                        color="secondary",
+                                        size="sm",
+                                        className="float-start",
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="home-tutorial-next-4",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ]
                     ),
@@ -309,7 +401,16 @@ layout = (
             dbc.Popover(
                 [
                     dbc.PopoverHeader(
-                        "Differential Analysis", style={"fontWeight": "bold"}
+                        [
+                            "Differential Analysis",
+                            dbc.Button(
+                                "×",
+                                id="home-tutorial-close-5",
+                                color="link",
+                                className="float-end",
+                                style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                            ),
+                        ], style={"fontWeight": "bold"}
                     ),
                     dbc.PopoverBody(
                         [
@@ -317,12 +418,24 @@ layout = (
                                 "Compare brain regions using volcano plots to find lipids with significant expression differences.",
                                 style={"color": "#333", "marginBottom": "15px"},
                             ),
-                            dbc.Button(
-                                "Next",
-                                id="home-tutorial-next-5",
-                                color="primary",
-                                size="sm",
-                                className="float-end",
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Previous",
+                                        id="home-tutorial-prev-5",
+                                        color="secondary",
+                                        size="sm",
+                                        className="float-start",
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="home-tutorial-next-5",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ]
                     ),
@@ -341,19 +454,42 @@ layout = (
             # --- Lipizones ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Lipizones", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader(
+                        [
+                            "Lipizones",
+                            dbc.Button(
+                                "×",
+                                id="home-tutorial-close-6",
+                                color="link",
+                                className="float-end",
+                                style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                            ),
+                        ], style={"fontWeight": "bold"}
+                    ),
                     dbc.PopoverBody(
                         [
                             html.P(
                                 "Lipizones are spatial lipid clusters that reveal organization in gray and white matter. They highlight metabolic zones related to connectivity, cell types, and development.",
                                 style={"color": "#333", "marginBottom": "15px"},
                             ),
-                            dbc.Button(
-                                "Next",
-                                id="home-tutorial-next-6",
-                                color="primary",
-                                size="sm",
-                                className="float-end",
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Previous",
+                                        id="home-tutorial-prev-6",
+                                        color="secondary",
+                                        size="sm",
+                                        className="float-start",
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="home-tutorial-next-6",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ]
                     ),
@@ -372,19 +508,42 @@ layout = (
             # --- Comparisons ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Comparisons", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader(
+                        [
+                            "Comparisons",
+                            dbc.Button(
+                                "×",
+                                id="home-tutorial-close-7",
+                                color="link",
+                                className="float-end",
+                                style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                            ),
+                        ], style={"fontWeight": "bold"}
+                    ),
                     dbc.PopoverBody(
                         [
                             html.P(
                                 "Cross-compare lipid levels with gene expression or lipizones with cell types to spot shared spatial patterns.",
                                 style={"color": "#333", "marginBottom": "15px"},
                             ),
-                            dbc.Button(
-                                "Next",
-                                id="home-tutorial-next-7",
-                                color="primary",
-                                size="sm",
-                                className="float-end",
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Previous",
+                                        id="home-tutorial-prev-7",
+                                        color="secondary",
+                                        size="sm",
+                                        className="float-start",
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="home-tutorial-next-7",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ]
                     ),
@@ -403,19 +562,42 @@ layout = (
             # --- 3D Exploration ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("3D Exploration", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader(
+                        [
+                            "3D Exploration",
+                            dbc.Button(
+                                "×",
+                                id="home-tutorial-close-8",
+                                color="link",
+                                className="float-end",
+                                style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                            ),
+                        ], style={"fontWeight": "bold"}
+                    ),
                     dbc.PopoverBody(
                         [
                             html.P(
                                 "See lipid and lipizone patterns in 3D, mapped across the whole brain for immersive exploration.",
                                 style={"color": "#333", "marginBottom": "15px"},
                             ),
-                            dbc.Button(
-                                "Next",
-                                id="home-tutorial-next-8",
-                                color="primary",
-                                size="sm",
-                                className="float-end",
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Previous",
+                                        id="home-tutorial-prev-8",
+                                        color="secondary",
+                                        size="sm",
+                                        className="float-start",
+                                    ),
+                                    dbc.Button(
+                                        "Next",
+                                        id="home-tutorial-next-8",
+                                        color="primary",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ]
                     ),
@@ -434,19 +616,42 @@ layout = (
             # --- Documentation (now points to book icon) ---
             dbc.Popover(
                 [
-                    dbc.PopoverHeader("Documentation", style={"fontWeight": "bold"}),
+                    dbc.PopoverHeader(
+                        [
+                            "Documentation",
+                            dbc.Button(
+                                "×",
+                                id="home-tutorial-close-9",
+                                color="link",
+                                className="float-end",
+                                style={"color": "#666", "fontSize": "1.2rem", "padding": "0 0.5rem"},
+                            ),
+                        ], style={"fontWeight": "bold"}
+                    ),
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "This button provides a detailed introduction to the LBA Explorer, including key concepts and a set of useful links. It’s a great place to learn the background behind the project and find reference materials.",
+                                "This button provides a detailed introduction to the LBA Explorer, including key concepts and a set of useful links. It's a great place to learn the background behind the project and find reference materials.",
                                 style={"color": "#333", "marginBottom": "15px"},
                             ),
-                            dbc.Button(
-                                "Finish",
-                                id="home-tutorial-finish",
-                                color="success",
-                                size="sm",
-                                className="float-end",
+                            html.Div(
+                                [
+                                    dbc.Button(
+                                        "Previous",
+                                        id="home-tutorial-prev-9",
+                                        color="secondary",
+                                        size="sm",
+                                        className="float-start",
+                                    ),
+                                    dbc.Button(
+                                        "Finish",
+                                        id="home-tutorial-finish",
+                                        color="success",
+                                        size="sm",
+                                        className="float-end",
+                                    ),
+                                ],
+                                style={"display": "flex", "justifyContent": "space-between"},
                             ),
                         ]
                     ),
@@ -611,36 +816,48 @@ def sync_alerts_panel(is_open):
     return is_open, btn_style
 
 
-# Use clientside callback for tutorial step updates
 app.clientside_callback(
     """
-    function(start, next1, next2, next3, next4, next5, next6, next7, next8, finish) {
+    function(start, next1, next2, next3, next4, next5, next6, next7, next8, finish,
+             prev1, prev2, prev3, prev4, prev5, prev6, prev7, prev8, prev9,
+             close1, close2, close3, close4, close5, close6, close7, close8, close9) {
         const ctx = window.dash_clientside.callback_context;
         if (!ctx.triggered.length) {
             return window.dash_clientside.no_update;
         }
-        const trigger_id = ctx.triggered[0].prop_id.split('.')[0];
-        if (trigger_id === 'home-start-tutorial-btn' && start) {
-            return 1;
-        } else if (trigger_id === 'home-tutorial-next-1' && next1) {
-            return 2;
-        } else if (trigger_id === 'home-tutorial-next-2' && next2) {
-            return 3;
-        } else if (trigger_id === 'home-tutorial-next-3' && next3) {
-            return 4;
-        } else if (trigger_id === 'home-tutorial-next-4' && next4) {
-            return 5;
-        } else if (trigger_id === 'home-tutorial-next-5' && next5) {
-            return 6;
-        } else if (trigger_id === 'home-tutorial-next-6' && next6) {
-            return 7;
-        } else if (trigger_id === 'home-tutorial-next-7' && next7) {
-            return 8;
-        } else if (trigger_id === 'home-tutorial-next-8' && next8) {
-            return 9;
-        } else if (trigger_id === 'home-tutorial-finish' && finish) {
+        const trigger = ctx.triggered[0].prop_id.split('.')[0];
+        
+        // Close (×) always resets to 0
+        if (trigger.startsWith('home-tutorial-close-')) {
             return 0;
         }
+        
+        // Start
+        if (trigger === 'home-start-tutorial-btn' && start) {
+            return 1;
+        }
+        
+        // Next buttons
+        if (trigger === 'home-tutorial-next-1' && next1) { return 2; }
+        if (trigger === 'home-tutorial-next-2' && next2) { return 3; }
+        if (trigger === 'home-tutorial-next-3' && next3) { return 4; }
+        if (trigger === 'home-tutorial-next-4' && next4) { return 5; }
+        if (trigger === 'home-tutorial-next-5' && next5) { return 6; }
+        if (trigger === 'home-tutorial-next-6' && next6) { return 7; }
+        if (trigger === 'home-tutorial-next-7' && next7) { return 8; }
+        if (trigger === 'home-tutorial-next-8' && next8) { return 9; }
+        if (trigger === 'home-tutorial-finish' && finish) { return 0; }
+        
+        // Previous buttons
+        if (trigger === 'home-tutorial-prev-2' && prev2) { return 1; }
+        if (trigger === 'home-tutorial-prev-3' && prev3) { return 2; }
+        if (trigger === 'home-tutorial-prev-4' && prev4) { return 3; }
+        if (trigger === 'home-tutorial-prev-5' && prev5) { return 4; }
+        if (trigger === 'home-tutorial-prev-6' && prev6) { return 5; }
+        if (trigger === 'home-tutorial-prev-7' && prev7) { return 6; }
+        if (trigger === 'home-tutorial-prev-8' && prev8) { return 7; }
+        if (trigger === 'home-tutorial-prev-9' && prev9) { return 8; }
+        
         return window.dash_clientside.no_update;
     }
     """,
@@ -656,6 +873,24 @@ app.clientside_callback(
         Input("home-tutorial-next-7", "n_clicks"),
         Input("home-tutorial-next-8", "n_clicks"),
         Input("home-tutorial-finish", "n_clicks"),
+        Input("home-tutorial-prev-1", "n_clicks"),
+        Input("home-tutorial-prev-2", "n_clicks"),
+        Input("home-tutorial-prev-3", "n_clicks"),
+        Input("home-tutorial-prev-4", "n_clicks"),
+        Input("home-tutorial-prev-5", "n_clicks"),
+        Input("home-tutorial-prev-6", "n_clicks"),
+        Input("home-tutorial-prev-7", "n_clicks"),
+        Input("home-tutorial-prev-8", "n_clicks"),
+        Input("home-tutorial-prev-9", "n_clicks"),
+        Input("home-tutorial-close-1", "n_clicks"),
+        Input("home-tutorial-close-2", "n_clicks"),
+        Input("home-tutorial-close-3", "n_clicks"),
+        Input("home-tutorial-close-4", "n_clicks"),
+        Input("home-tutorial-close-5", "n_clicks"),
+        Input("home-tutorial-close-6", "n_clicks"),
+        Input("home-tutorial-close-7", "n_clicks"),
+        Input("home-tutorial-close-8", "n_clicks"),
+        Input("home-tutorial-close-9", "n_clicks"),
     ],
     prevent_initial_call=True,
 )

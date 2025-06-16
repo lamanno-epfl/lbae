@@ -453,7 +453,7 @@ def return_layout(basic_config, slice_index):
                         dbc.PopoverBody(
                             [
                                 html.P(
-                                    "Welcome to M/Z Peaks Exploration! This page lets you visualize the spatial distribution of detected m/z peaks across brain sections. As with the Lipid page, you can overlay anatomical structures from the Allen Brain Atlas to guide your interpretation of spatial patterns.",
+                                    "Welcome to M/Z Peaks Exploration! This page lets you visualize the spatial distribution of detected m/z peaks across brain sections. As with the Lipid page, you can overlay anatomical structures from the Allen Brain Atlas to guide your interpretation of spatial patterns. Feel free to zoom in and outon the visualization displayed and to move the brain around by clicking and dragging.",
                                     style={"color": "#333", "marginBottom": "15px"}
                                 ),
                                 html.Div(
@@ -803,7 +803,7 @@ def return_layout(basic_config, slice_index):
                         dbc.PopoverBody(
                             [
                                 html.P(
-                                    "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions.",
+                                    "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions. M stands for male, F for female.",
                                     style={"color": "#333", "marginBottom": "15px"}
                                 ),
                                 html.Div(

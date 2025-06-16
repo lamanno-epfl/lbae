@@ -1010,7 +1010,7 @@ def return_layout(basic_config, slice_index=1):
                     dbc.PopoverBody(
                         [
                             html.P(
-                                "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions.",
+                                "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions. M stands for male, F for female.",
                                 style={"color": "#333", "marginBottom": "15px"}
                             ),
                             html.Div(

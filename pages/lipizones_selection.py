@@ -490,7 +490,7 @@ def return_layout(basic_config, slice_index):
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Welcome to the Lipizones page! Lipizones are lipid-based spatial territories in the brain. They often align with known cell-type distributions but also highlight distal axonal projections and metabolic compartments. By exploring lipizones, you can uncover key organizational principles of the brain, including connectivity, cytoarchitecture, and developmental patterning.",
+                                        "Welcome to the Lipizones page! Lipizones are lipid-based spatial territories in the brain. They often align with known cell-type distributions but also highlight distal axonal projections and metabolic compartments. By exploring lipizones, you can uncover key organizational principles of the brain, including connectivity, cytoarchitecture, and developmental patterning. Feel free to zoom in and outon the visualization displayed and to move the brain around by clicking and dragging.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     html.Div(
@@ -977,7 +977,7 @@ def return_layout(basic_config, slice_index):
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions.",
+                                        "You can choose which mouse brain to view. Brain1 is the reference brain used for the atlas, but you can also explore Brain2, control male and female brains, and pregnant brains to see how lipid distributions differ across biological conditions. M stands for male, F for female.",
                                         style={"color": "#333", "marginBottom": "15px"}
                                     ),
                                     html.Div(

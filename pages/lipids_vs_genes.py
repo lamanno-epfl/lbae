@@ -611,7 +611,7 @@ def return_layout(basic_config, slice_index):
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Select up to three lipids from the 172 confidently annotated. Lipids are grouped by family, and some appear under a “Multiple matches” category if they matched different molecules.",
+                                            "Select up to three lipids from the 172 confidently annotated. Lipids are grouped by family, and some appear under a 'Multiple matches' category if they matched different molecules.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         html.Div(
@@ -773,7 +773,7 @@ def return_layout(basic_config, slice_index):
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "For each selected gene, you’ll see a slider that lets you set a minimum expression threshold. This filters out pixels with low gene expression, helping you focus only on regions where the gene is meaningfully expressed and removing background noise from the visualization.",
+                                            "For each selected gene, you'll see a slider that lets you set a minimum expression threshold. This filters out pixels with low gene expression, helping you focus only on regions where the gene is meaningfully expressed and removing background noise from the visualization.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         html.Div(
@@ -956,6 +956,7 @@ def page_6tris_hover(hoverData, slice_index):
     Output("page-6tris-badge-input-genes", "children"),
 
     Input("main-slider", "data"),
+    Input("page-6tris-rgb-switch", "checked"),
     Input("page-6tris-selected-lipid-1", "data"),
     Input("page-6tris-selected-lipid-2", "data"),
     Input("page-6tris-selected-lipid-3", "data"),
@@ -973,6 +974,7 @@ def page_6tris_hover(hoverData, slice_index):
 )
 def page_6tris_plot_graph_heatmap_mz_selection(
     slice_index,
+    rgb_switch,
     lipid_1_index,
     lipid_2_index,
     lipid_3_index,
@@ -1026,7 +1028,8 @@ def page_6tris_plot_graph_heatmap_mz_selection(
     active_lipids = [name for name in ll_lipid_names if name is not None]
     
     # Auto-set RGB mode when multiple lipids are selected
-    rgb_mode_lipids = len(active_lipids) > 1 or dash.callback_context.inputs.get('page-6tris-rgb-switch.checked', False)
+    rgb_mode_lipids = rgb_switch
+    print("rgb_mode_lipids", rgb_mode_lipids)
     
     # Handle annotations toggle separately to preserve figure state
     if id_input == "page-6tris-toggle-annotations":
@@ -1045,6 +1048,31 @@ def page_6tris_plot_graph_heatmap_mz_selection(
             draw=False,
             type_image="RGB",
             return_go_image=False,
+            overlay=overlay,
+        )
+        return fig, "Lipids selected", "Genes selected:"
+
+    if id_input == "main-slider":
+        print("\n--------------------------------")
+        print("main-slider")
+        print("active_lipids", active_lipids)
+        print("active_genes", active_genes)
+        print("rgb_mode_lipids", rgb_mode_lipids)
+        lipid_gene_image = figures.compute_image_lipids_genes(
+            all_selected_lipids=active_lipids,
+            all_selected_genes=active_genes,
+            gene_thresholds=[0] * len(active_genes),
+            slice_index=slice_index,
+            df_genes=df_genes,
+            rgb_mode_lipids=rgb_mode_lipids,
+        )
+        fig = figures.build_lipid_heatmap_from_image(
+            lipid_gene_image,
+            return_base64_string=False,
+            draw=False,
+            type_image="RGB",
+            return_go_image=False,
+            overlay=overlay,
         )
         return fig, "Lipids selected", "Genes selected:"
 
@@ -1070,6 +1098,7 @@ def page_6tris_plot_graph_heatmap_mz_selection(
             draw=False,
             type_image="RGB",
             return_go_image=False,
+            overlay=overlay,
         )
         return fig, "Lipids selected", "Genes selected:"
         
@@ -1089,6 +1118,7 @@ def page_6tris_plot_graph_heatmap_mz_selection(
             draw=False,
             type_image="RGB",
             return_go_image=False,
+            overlay=overlay,
         )
         return fig, "Lipids selected", "Genes selected:"
 
@@ -1138,7 +1168,7 @@ def page_6tris_add_toast_selection_lipids(
     
     # Initialize with default lipid if no selection exists
     if len(id_input) == 0 or (id_input == "page-6tris-dropdown-lipids" and l_lipid_names is None):
-        default_lipid = "SM 34:1;O2"
+        default_lipid = "HexCer 42:2;O2"
         name, structure = default_lipid.split(" ")
         l_lipid_loc = (
             data.get_annotations()

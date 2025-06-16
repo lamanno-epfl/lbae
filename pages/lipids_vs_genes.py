@@ -556,7 +556,7 @@ def return_layout(basic_config, slice_index):
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Welcome to the Lipids vs Genes page! This view allows you to compare spatial lipid expression with gene expression in the same brain slices. By overlaying these two layers of information, you can explore how molecular distributions align across omics levels, and identify possible relationships between lipid metabolism and gene activity in specific brain regions. Feel free to zoom in and outon the visualization displayed and to move the brain around by clicking and dragging.",
+                                            "Welcome to the Lipids vs Genes page! This view allows you to compare spatial lipid expression with gene expression in the same brain slices. By overlaying these two layers of information, you can explore how molecular distributions align across omics levels, and identify possible relationships between lipid metabolism and gene activity in specific brain regions. Feel free to zoom in and out on the visualization displayed and to move the brain around by clicking and dragging.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         html.Div(

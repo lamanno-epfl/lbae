@@ -596,7 +596,7 @@ def return_layout(basic_config, slice_index):
                             dbc.PopoverBody(
                                 [
                                     html.P(
-                                        "Welcome to the Lipizones vs Cell Types page! This view allows you to compare the spatial distribution of lipizones with mapped brain cell types. By exploring both layers together, you can identify shared spatial patterns and assess how well lipid-based territories align with cellular architecture. This comparison is valuable for uncovering underlying biological structure, functional organization, and potential relationships between lipizones and cell-type diversity. Feel free to zoom in and outon the visualization displayed and to move the brain around by clicking and dragging.",
+                                        "Welcome to the Lipizones vs Cell Types page! This view allows you to compare the spatial distribution of lipizones with mapped brain cell types. By exploring both layers together, you can identify shared spatial patterns and assess how well lipid-based territories align with cellular architecture. This comparison is valuable for uncovering underlying biological structure, functional organization, and potential relationships between lipizones and cell-type diversity. Feel free to zoom in and out on the visualization displayed and to move the brain around by clicking and dragging.",
                                         style={"color": "#333", "marginBottom": "15px"},
                                     ),
                                     html.Div(

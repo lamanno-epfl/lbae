@@ -373,7 +373,7 @@ def return_layout(basic_config, slice_index):
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Welcome to Lipid Programs Exploration! This page allows you to visualize lipidomic features across the brain. You can select and explore either data-driven components from the NMF global embedding or Lipid Programs learned using the LipiMap model, which organizes lipids into functional biological modules. Feel free to zoom in and outon the visualization displayed and to move the brain around by clicking and dragging.",
+                                            "Welcome to Lipid Programs Exploration! This page allows you to visualize lipidomic features across the brain. You can select and explore either data-driven components from the NMF global embedding or Lipid Programs learned using the LipiMap model, which organizes lipids into functional biological modules. Feel free to zoom in and out on the visualization displayed and to move the brain around by clicking and dragging.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         html.Div(

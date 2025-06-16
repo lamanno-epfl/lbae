@@ -366,7 +366,7 @@ def return_layout(basic_config, slice_index):
                                 dbc.PopoverBody(
                                     [
                                         html.P(
-                                            "Welcome to Lipid Exploration! This view lets you examine how lipid distributions vary across mouse brain sections. You can use anatomical overlays from the Allen Brain Atlas to better interpret spatial patterns and identify regional features. ",
+                                            "Welcome to Lipid Exploration! This view lets you examine how lipid distributions vary across mouse brain sections. You can use anatomical overlays from the Allen Brain Atlas to better interpret spatial patterns and identify regional features. Feel free to zoom in and out on the visualization displayed and to move the brain around by clicking and dragging.",
                                             style={"color": "#333", "marginBottom": "15px"}
                                         ),
                                         html.Div(

@@ -1562,7 +1562,9 @@ def serve_merged_pdf(filenames):
 
         # Split filenames and construct full paths
         pdf_paths = []
-        for filename in filenames.split(','):
+        # split the filenames by comma, but not by comma+space
+        split_filenames = re.split(r',(?! )', filenames)
+        for filename in split_filenames:
             pdf_path = os.path.join(ID_CARDS_PATH, f"lipizone_ID_card_{filename}.pdf")
             if os.path.exists(pdf_path):
                 pdf_paths.append(pdf_path)

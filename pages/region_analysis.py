@@ -2066,8 +2066,6 @@ def page_3_record_volcano(
         l_expressions_B = global_store(
             slice_index, l_shapes_and_masks_B
         )
-        print(len(l_expressions_A))
-        print(len(l_expressions_B))
 
         if l_expressions_A is not None and l_expressions_B is not None:
             if l_expressions_A != [] and l_expressions_B != []:

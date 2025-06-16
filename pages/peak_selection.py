@@ -986,7 +986,6 @@ def page_peak_plot_graph_heatmap_mz_selection(
     graph_input,
 ):
     """This callback plots the heatmap of the selected Peak(s)."""
-    print(f"\n========== page_peak_plot_graph_heatmap_mz_selection ==========")
     logging.info("Entering function to plot heatmap or RGB depending on Peak selection")
 
     # Find out which input triggered the function

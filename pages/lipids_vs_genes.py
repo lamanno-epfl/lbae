@@ -1029,7 +1029,6 @@ def page_6tris_plot_graph_heatmap_mz_selection(
     
     # Auto-set RGB mode when multiple lipids are selected
     rgb_mode_lipids = rgb_switch
-    print("rgb_mode_lipids", rgb_mode_lipids)
     
     # Handle annotations toggle separately to preserve figure state
     if id_input == "page-6tris-toggle-annotations":
@@ -1053,11 +1052,6 @@ def page_6tris_plot_graph_heatmap_mz_selection(
         return fig, "Lipids selected", "Genes selected:"
 
     if id_input == "main-slider":
-        print("\n--------------------------------")
-        print("main-slider")
-        print("active_lipids", active_lipids)
-        print("active_genes", active_genes)
-        print("rgb_mode_lipids", rgb_mode_lipids)
         lipid_gene_image = figures.compute_image_lipids_genes(
             all_selected_lipids=active_lipids,
             all_selected_genes=active_genes,

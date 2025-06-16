@@ -87,7 +87,7 @@ class StreamData:
             return sample
 
         except:
-            print("Missing sample")
+            logging.info("Missing sample")
             return np.nan
 
     def _init_metadata(self):
@@ -196,7 +196,6 @@ class StreamData:
     #         'acronym': acronym_points
     #     })
     #
-    #     # print unique values of the third column
     #     # if the elements of acronym_scatter["acronym"].values are None, replace them with "undefined"
     #     if slice_index in [33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0]:
     #         return np.full(self.image_shape, 'Undefined')
@@ -231,7 +230,6 @@ class StreamData:
     #     if fill_holes:
     #         # Count how many NaN values we have
     #         # nan_count_before = (arr == 'Undefined').sum()
-    #         # print(f"Found {nan_count_before} NaN values (holes) in the image")
 
     #         for i in range(arr.shape[0]):
     #             for j in range(arr.shape[1]):
@@ -249,8 +247,6 @@ class StreamData:
     #                         arr[y_index, z_index] = brain_region['acronym']
     #                 except:
     #                     continue
-    #                     # print error message
-    #                     # print(f"Error at {i}, {j}")
 
     #     return arr
 
@@ -320,7 +316,7 @@ class StreamData:
             # # stream_data.image --> stream_expression (dim: num_pixels, 1)
 
             if stream_data is None:
-                print(f"{stream_name} in slice {slice_index} was not found.")
+                logging.info(f"{stream_name} in slice {slice_index} was not found.")
                 return None
 
             # # Check if it's scatter data
@@ -365,22 +361,17 @@ class StreamData:
             if fill_holes:
                 # Count how many NaN values we have
                 nan_count_before = np.isnan(arr).sum()
-                # print(f"Found {nan_count_before} NaN values (holes) in the image")
 
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
                     filled_arr = self._fill_holes_nearest_neighbor(arr)
-
-                    # Count remaining NaN values after filling
-                    # nan_count_after = np.isnan(filled_arr).sum()
-                    # print(f"After filling: {nan_count_after} NaN values remain")
 
                     return filled_arr
 
             return arr
 
         except Exception as e:
-            print(f"Error extracting {stream_name} in slice {slice_index}: {str(e)}")
+            logging.info(f"Error extracting {stream_name} in slice {slice_index}: {str(e)}")
             return None
 
     def _fill_holes_nearest_neighbor(self, arr, max_distance=5):

@@ -937,7 +937,7 @@ class Figures:
                     if distances[closest_color_idx] < 0.05:
                         combined_mask_lipizones |= color_masks_lipizones[closest_color][:, :mid_point]
                 except:
-                    print(f"{target_rgb} not found in color_masks_lipizones")
+                    logging.info(f"{target_rgb} not found in color_masks_lipizones")
                     continue
         
         # Process right side (celltypes) with pixel enlargement
@@ -996,7 +996,7 @@ class Figures:
             #             current_mask = color_masks_celltypes[closest_color].T
             #             combined_mask_celltypes |= current_mask[:, mid_point:]
             #     except:
-            #         print(f"{celltype_name} not found in color_masks_celltypes")
+            #         logging.info(f"{celltype_name} not found in color_masks_celltypes")
             #         continue
         
         
@@ -1514,7 +1514,6 @@ class Figures:
             color_near_borders=False,
             keep_structure_id=None,
         )
-        # print(array_atlas_borders_root.shape)
 
         # IMPORTANT CHANGE: Use np.indices instead of np.mgrid to match the lipid visualization
         # Create coordinate grid based on array shape
@@ -1606,8 +1605,6 @@ class Figures:
         lipid_path = f"./data/3d_interpolated_native/{lipid_name}interpolation_log.npy"
         np3d = np.load(lipid_path)
 
-        # print(downsample_factor)
-
         # CRITICAL: Use the same downsampling factor for both datasets
         # Get root data with the same downsampling factor
         root_data = self.compute_3D_root_volume(
@@ -1634,8 +1631,6 @@ class Figures:
         else:
             # If no filtering, use the downsampled data as is
             sub_np3d_clean = sub_np3d
-
-        # print(sub_np3d_clean.shape)
 
         # Create coordinate grid for lipid data
         z, y, x = np.indices(sub_np3d_clean.shape)

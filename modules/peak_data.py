@@ -89,7 +89,7 @@ class PeakData:
                     if slice_index in brain_info[brain_id]["slice_indices"]:
                         return brain_id
         except:
-            print("Missing sample")
+            logging.info("Missing sample")
             return np.nan
 
     def _init_metadata(self):
@@ -228,7 +228,6 @@ class PeakData:
     #     """
     #     Retrieves the acronyms mask for a given slice index.
     #     """
-    #     # print(f"slice_index: {slice_index}")
     #     # z_coord = METADATA[METADATA["SectionID"] == slice_index]["x_index"].values
     #     # take the acronyms of the rows of metadata that have SectionID == slice_index
     #     acronym_points = ACRONYMS_PIXELS[slice_index]
@@ -242,7 +241,6 @@ class PeakData:
     #         'acronym': acronym_points
     #     })
 
-    #     # print unique values of the third column
     #     # if the elements of acronym_scatter["acronym"].values are None, replace them with "undefined"
     #     if slice_index in [33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0]:
     #         return np.full(self.image_shape, 'Undefined')
@@ -277,7 +275,6 @@ class PeakData:
     #     if fill_holes:
     #         # Count how many NaN values we have
     #         # nan_count_before = (arr == 'Undefined').sum()
-    #         # print(f"Found {nan_count_before} NaN values (holes) in the image")
 
     #         for i in range(arr.shape[0]):
     #             for j in range(arr.shape[1]):
@@ -295,8 +292,6 @@ class PeakData:
     #                         arr[y_index, z_index] = brain_region['acronym']
     #                 except:
     #                     continue
-    #                     # print error message
-    #                     # print(f"Error at {i}, {j}")
 
     #     return arr
 
@@ -372,7 +367,7 @@ class PeakData:
             # slice_data.images --> program_expression (dim: num_pixels, num_programs)
             
             if slice_data is None:
-                print(f"Slice {slice_index} was not found.")
+                logging.info(f"Slice {slice_index} was not found.")
                 return None
 
             # # Check if it's scatter data
@@ -385,7 +380,6 @@ class PeakData:
 
             # Create a DataFrame from the scatter points
             peak_data = slice_data.images[:, slice_data.content_names.index(peak_name)]
-            # print("slice_data.indices", slice_data.indices)
             scatter = pd.DataFrame({
                             "x": slice_data.indices[:, 2],
                             "y": slice_data.indices[:, 1],
@@ -413,22 +407,17 @@ class PeakData:
             if fill_holes:
                 # Count how many NaN values we have
                 nan_count_before = np.isnan(arr).sum()
-                # print(f"Found {nan_count_before} NaN values (holes) in the image")
 
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
                     filled_arr = self._fill_holes_nearest_neighbor(arr, slice_index)
-
-                    # Count remaining NaN values after filling
-                    # nan_count_after = np.isnan(filled_arr).sum()
-                    # print(f"After filling: {nan_count_after} NaN values remain")
 
                     return filled_arr
 
             return arr
 
         except Exception as e:
-            print(f"Error extracting {peak_name} in slice {slice_index}: {str(e)}")
+            logging.info(f"Error extracting {peak_name} in slice {slice_index}: {str(e)}")
             return None
 
     def _fill_holes_nearest_neighbor(self, arr, slice_index, max_distance=5):
@@ -496,7 +485,6 @@ class PeakData:
         # # valid point in the entire array (could be slow for large arrays)
         # remaining_nans = np.where(np.isnan(filled))
         # if len(remaining_nans[0]) > 0:
-        #     print(f"Using global search for {len(remaining_nans[0])} remaining holes")
             
         #     from scipy.spatial import cKDTree
             

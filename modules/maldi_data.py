@@ -144,7 +144,7 @@ class MaldiData:
                     if slice_index in brain_info[brain_id]["slice_indices"]:
                         return brain_id
         except:
-            print("Missing sample")
+            logging.info("Missing sample")
             return np.nan
 
     def _init_metadata(self):
@@ -410,7 +410,7 @@ class MaldiData:
             # slice_data.images --> lipid_expression (dim: num_pixels, num_lipids)
             
             if slice_data is None:
-                print(f"Slice {slice_index} was not found.")
+                logging.info(f"Slice {slice_index} was not found.")
                 return None
 
             # # Check if it's scatter data
@@ -423,7 +423,6 @@ class MaldiData:
 
             # Create a DataFrame from the scatter points
             lipid_data = slice_data.images[:, slice_data.content_names.index(lipid_name)]
-            # print("slice_data.indices", slice_data.indices)
             scatter = pd.DataFrame({
                             "x": slice_data.indices[:, 2],
                             "y": slice_data.indices[:, 1],
@@ -451,22 +450,20 @@ class MaldiData:
             if fill_holes:
                 # Count how many NaN values we have
                 nan_count_before = np.isnan(arr).sum()
-                # print(f"Found {nan_count_before} NaN values (holes) in the image")
 
                 if nan_count_before > 0:
                     # Fill holes using nearest neighbor interpolation
                     filled_arr = self._fill_holes_nearest_neighbor(arr, slice_index)
 
                     # Count remaining NaN values after filling
-                    # nan_count_after = np.isnan(filled_arr).sum()
-                    # print(f"After filling: {nan_count_after} NaN values remain")
+                    nan_count_after = np.isnan(filled_arr).sum()
 
                     return filled_arr
 
             return arr
 
         except Exception as e:
-            print(f"Error extracting {lipid_name} in slice {slice_index}: {str(e)}")
+            logging.info(f"Error extracting {lipid_name} in slice {slice_index}: {str(e)}")
             return None
 
     def _fill_holes_nearest_neighbor(self, arr, slice_index, max_distance=5):
@@ -612,7 +609,6 @@ class MaldiData:
         #     for lipid_name in self.get_available_lipids(slice_index)
         # ]).T
         pixels = self.get_lipids_image(slice_index).images[mask, :]
-        # print(pixels.shape)
         
         return pixels
 

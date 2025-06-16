@@ -66,7 +66,7 @@ class LipizoneSampleData:
         }
         with shelve.open(self.shelf_path) as db:
             db[sample] = data
-        print(f"Stored data for sample: {sample}")
+        logging.info(f"Stored data for sample: {sample}")
     
     def retrieve_sample_data(self, sample):
         """
@@ -138,7 +138,7 @@ class LipizoneSectionData:
         key = str(section)
         with shelve.open(self.shelf_path) as db:
             db[key] = data
-        print(f"Stored data for section: {key}")
+        logging.info(f"Stored data for section: {key}")
     
     def retrieve_section_data(self, section):
         """

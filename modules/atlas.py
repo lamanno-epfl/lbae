@@ -199,8 +199,6 @@ class Atlas:
         # self.array_coordinates_warped_data = skimage.io.imread(
         #     "data/tiff_files/coordinates_warped_data.tif"
         # )
-        # print("self.array_coordinates_warped_data:\n", self.array_coordinates_warped_data.shape)
-        # print(self.array_coordinates_warped_data[0])
         # deve avere dimensione num_slices x ABA_DIM[2] x ABA_DIM[1] x 3
         self.array_coordinates = np.load("./data/atlas/coords_array.npy")
         
@@ -238,7 +236,6 @@ class Atlas:
         #     nearest_neighbour_correction=True,
         #     atlas_correction=True,
         # )[1]
-        # print("self.array_projection_correspondence_corrected:\n", self.array_projection_correspondence_corrected.shape)
 
         # Load arrays of original images coordinates. It is used everytime a 3D object is computed.
         # Weights ~50mb
@@ -251,7 +248,6 @@ class Atlas:
         #     nearest_neighbour_correction=True,
         #     atlas_correction=True,
         # )[2]
-        # print("self.l_original_coor:\n", len(self.l_original_coor))
 
         # TODO: recompute the masks for 3D region identification
         # Dictionnary of existing masks per slice, which associates slice index (key) to a set of
@@ -268,7 +264,6 @@ class Atlas:
         #     # Since this function is called at startup, no data locking is needed
         #     self.save_all_projected_masks_and_spectra(cache_flask=None, sample=sample)
         self.dic_existing_masks = pickle.load(open('./data/atlas/dic_existing_masks.pkl', 'rb'))
-        # print("self.dic_existing_masks:\n", self.dic_existing_masks)
         # # These attributes are defined later as properties as they are only used during
         # # precomputations
         # self._array_projection_corrected = None
@@ -674,7 +669,6 @@ class Atlas:
 
     #     # Control that a mask can be provided one way or the other
     #     if projected_mask is None and mask_name is None:
-    #         print("Either a mask or a mask name must be provided")
     #         return None
 
     #     # If a mask name has been provided, get the corresponding mask array
@@ -702,7 +696,6 @@ class Atlas:
     #         self.array_projection_correspondence_corrected[slice_index],
     #     )
     #     if np.sum(list_index_bound_rows) == 0:
-    #         print("No selection could be found for current mask")
     #         grah_scattergl_data = None
     #     else:
     #         # Do the average

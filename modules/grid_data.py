@@ -111,8 +111,6 @@ def fill_holes_with_neighbor_averaging(pic, max_iterations=100, mask=None, weigh
     # Count initial holes within the mask
     initial_holes = np.sum(np.logical_and(np.isnan(filled_pic), mask))
     
-    # print(f"Initial holes within mask: {int(initial_holes)}")
-    
     while iteration < max_iterations:
         # Track whether any changes were made in this iteration
         changes_made = False
@@ -151,15 +149,11 @@ def fill_holes_with_neighbor_averaging(pic, max_iterations=100, mask=None, weigh
         filled_pic = new_pic
         holes_filled += filled_in_iteration
         
-        # print(f"Iteration {iteration+1}: Filled {filled_in_iteration} holes")
-        
         # If no changes were made, we're done
         if not changes_made:
             break
             
         iteration += 1
-    
-    # print(f"Completed in {iteration} iterations. Total holes filled: {holes_filled} out of {int(initial_holes)}")
     return filled_pic
 
 def fill_holes_with_gaussian_average(pic, max_iterations=100, mask=None, sigma=1.0):
@@ -300,7 +294,7 @@ def process_section(maindata, section_id, lipid_column, img_height=320, img_widt
             "value": sec[lipid_column].values
         })
     except KeyError as e:
-        # print(f"Column not found: {e}. Available columns: {sec.columns.tolist()}")
+        logging.info(f"Column not found: {e}. Available columns: {sec.columns.tolist()}")
         raise
     
     # Initialize empty image array
@@ -312,7 +306,7 @@ def process_section(maindata, section_id, lipid_column, img_height=320, img_widt
         y_indices = scatter["x"].astype(int).values
         values = scatter["value"].values
     except Exception as e:
-        # print(f"Error processing coordinates: {e}")
+        logging.info(f"Error processing coordinates: {e}")
         raise
     
     # Handle out of bounds indices
@@ -375,16 +369,16 @@ def create_section_grid(maindata, section_ids, lipid_column, cols=8):
             
             # Skip if section doesn't exist in the data
             if len(sec) == 0:
-                # print(f"Section {section_id} not found in data, skipping...")
+                logging.info(f"Section {section_id} not found in data, skipping...")
                 continue
                 
-            # print(f"Processing section {section_id}...")
+            logging.info(f"Processing section {section_id}...")
             rgba_image, mask = process_section(maindata, section_id, lipid_column)
             section_images.append(rgba_image)
             section_masks.append(mask)
             actual_sections.append(section_id)
         except Exception as e:
-            # print(f"Error processing section {section_id}: {e}")
+            logging.info(f"Error processing section {section_id}: {e}")
             continue
     
     # Return early if no sections were processed
@@ -511,7 +505,7 @@ class GridImageShelve:
             return sample
 
         except:
-            print("Missing sample")
+            logging.info("Missing sample")
             return np.nan
 
     def store_grid_image(self, lipid, sample, grid_image):
@@ -579,4 +573,3 @@ class GridImageShelve:
                 # add many nans as a padding on top and bottom of the image
                 grid_image = np.pad(grid_image, ((400, 400), (0, 0)), mode='edge')
                 self.store_grid_image(lipid, sample, grid_image)
-                # print(f"Stored grid image for lipid '{lipid}' and sample '{sample}'.")

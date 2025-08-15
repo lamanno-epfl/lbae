@@ -9,4 +9,6 @@ prove.ipynb
 
 annotation/
 
-assets/*.mp43d_interpolated_native/
+assets/*.mp4
+
+3d_interpolated_native/

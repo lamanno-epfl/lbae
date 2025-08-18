@@ -20,8 +20,9 @@ import dash_mantine_components as dmc
 import numpy as np
 # threadpoolctl import threadpool_limits, threadpool_info
 #threadpool_limits(limits=8)
-import os
-os.environ['OMP_NUM_THREADS'] = '6'
+# import os
+# os.environ['OMP_NUM_THREADS'] = '1'
+from dash.long_callback import DiskcacheLongCallbackManager
 
 # LBAE imports
 from app import app, figures, data, atlas, celltype_data
@@ -950,171 +951,265 @@ def page_6tris_hover(hoverData, slice_index):
 
     return dash.no_update
 
-@app.callback(
+# @app.callback(
+#     Output("page-6tris-graph-heatmap-mz-selection", "figure"),
+#     Output("page-6tris-badge-input", "children"),
+#     Output("page-6tris-badge-input-genes", "children"),
+
+#     Input("main-slider", "data"),
+#     Input("page-6tris-rgb-switch", "checked"),
+#     Input("page-6tris-selected-lipid-1", "data"),
+#     Input("page-6tris-selected-lipid-2", "data"),
+#     Input("page-6tris-selected-lipid-3", "data"),
+#     Input("page-6tris-toggle-annotations", "checked"),
+#     Input("main-brain", "value"),
+#     Input("page-6tris-selected-gene-1", "data"),
+#     Input("page-6tris-selected-gene-2", "data"),
+#     Input("page-6tris-selected-gene-3", "data"),
+#     Input("page-6tris-gene-threshold-1", "data"),
+#     Input("page-6tris-gene-threshold-2", "data"),
+#     Input("page-6tris-gene-threshold-3", "data"),
+
+#     State("page-6tris-badge-input", "children"),
+#     State("page-6tris-badge-input-genes", "children"),
+# )
+# def page_6tris_plot_graph_heatmap_mz_selection(
+#     slice_index,
+#     rgb_switch,
+#     lipid_1_index,
+#     lipid_2_index,
+#     lipid_3_index,
+#     annotations_checked,
+#     brain_id,
+#     gene_1_index,
+#     gene_2_index,
+#     gene_3_index,
+#     gene_threshold_1,
+#     gene_threshold_2,
+#     gene_threshold_3,
+#     graph_input,
+#     genes_input,
+# ):
+#     """This callback plots the heatmap of the selected lipid(s) and gene(s)."""
+#     logging.info("Entering function to plot heatmap or RGB depending on lipid/gene selection")
+#     # Find out which input triggered the function
+#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+#     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
+    
+#     overlay = data.get_aba_contours(slice_index) if annotations_checked else None
+
+#     # Get selected genes
+#     active_genes = []
+#     gene_thresholds = []
+#     if gene_1_index != -1 or gene_2_index != -1 or gene_3_index != -1:
+#         available_genes = get_gene_options(slice_index)
+#         gene_names = []
+#         if gene_1_index != -1 and gene_1_index < len(available_genes):
+#             gene_names.append(available_genes[gene_1_index])
+#             gene_thresholds.append(gene_threshold_1)
+#         if gene_2_index != -1 and gene_2_index < len(available_genes):
+#             gene_names.append(available_genes[gene_2_index])
+#             gene_thresholds.append(gene_threshold_2)
+#         if gene_3_index != -1 and gene_3_index < len(available_genes):
+#             gene_names.append(available_genes[gene_3_index])
+#             gene_thresholds.append(gene_threshold_3)
+#         active_genes = gene_names
+    
+#     # Get selected lipids
+#     ll_lipid_names = [
+#             ' '.join([
+#                 data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
+#                 + data.get_annotations().iloc[index]["structure"].split('_')[i] 
+#                 for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
+#             ])
+#         if index != -1
+#         else None
+#         for index in [lipid_1_index, lipid_2_index, lipid_3_index]
+#     ]
+#     active_lipids = [name for name in ll_lipid_names if name is not None]
+    
+#     # Auto-set RGB mode when multiple lipids are selected
+#     rgb_mode_lipids = rgb_switch
+    
+#     # Handle annotations toggle separately to preserve figure state
+#     if id_input == "page-6tris-toggle-annotations":
+        
+#         lipid_gene_image = figures.compute_image_lipids_genes(
+#                 all_selected_lipids=active_lipids,
+#                 all_selected_genes=active_genes,
+#                 gene_thresholds=gene_thresholds,
+#                 slice_index=slice_index,
+#                 df_genes=df_genes,
+#                 rgb_mode_lipids=rgb_mode_lipids,
+#             )
+#         fig = figures.build_lipid_heatmap_from_image(
+#             lipid_gene_image,
+#             return_base64_string=False,
+#             draw=False,
+#             type_image="RGB",
+#             return_go_image=False,
+#             overlay=overlay,
+#         )
+#         return fig, "Lipids selected", "Genes selected:"
+
+#     if id_input == "main-slider":
+#         lipid_gene_image = figures.compute_image_lipids_genes(
+#             all_selected_lipids=active_lipids,
+#             all_selected_genes=active_genes,
+#             gene_thresholds=[0] * len(active_genes),
+#             slice_index=slice_index,
+#             df_genes=df_genes,
+#             rgb_mode_lipids=rgb_mode_lipids,
+#         )
+#         fig = figures.build_lipid_heatmap_from_image(
+#             lipid_gene_image,
+#             return_base64_string=False,
+#             draw=False,
+#             type_image="RGB",
+#             return_go_image=False,
+#             overlay=overlay,
+#         )
+#         return fig, "Lipids selected", "Genes selected:"
+
+#     # If a gene selection or lipid selection has been modified
+#     if (
+#         id_input in ["page-6tris-selected-lipid-1", "page-6tris-selected-lipid-2", "page-6tris-selected-lipid-3", 
+#                      "page-6tris-selected-gene-1", "page-6tris-selected-gene-2", "page-6tris-selected-gene-3",
+#                      "page-6tris-rgb-switch", "page-6tris-gene-threshold-1", "page-6tris-gene-threshold-2", 
+#                      "page-6tris-gene-threshold-3"]
+#     ):
+#         # If both lipids and genes are selected, use the new function
+#         lipid_gene_image = figures.compute_image_lipids_genes(
+#             all_selected_lipids=active_lipids,
+#             all_selected_genes=active_genes,
+#             gene_thresholds=gene_thresholds,
+#             slice_index=slice_index,
+#             df_genes=df_genes,
+#             rgb_mode_lipids=rgb_mode_lipids,
+#         )
+#         fig = figures.build_lipid_heatmap_from_image(
+#             lipid_gene_image,
+#             return_base64_string=False,
+#             draw=False,
+#             type_image="RGB",
+#             return_go_image=False,
+#             overlay=overlay,
+#         )
+#         return fig, "Lipids selected", "Genes selected:"
+        
+#     # If no trigger, the page has just been loaded, so load new figure with default parameters
+#     else:
+#         lipid_gene_image = figures.compute_image_lipids_genes(
+#             all_selected_lipids=["HexCer 42:2;O2"],
+#             all_selected_genes=["Xkr4=ENSMUSG00000051951"],
+#             gene_thresholds=[0],
+#             slice_index=slice_index,
+#             df_genes=df_genes,
+#             rgb_mode_lipids=False,
+#         )
+#         fig = figures.build_lipid_heatmap_from_image(
+#             lipid_gene_image,
+#             return_base64_string=False,
+#             draw=False,
+#             type_image="RGB",
+#             return_go_image=False,
+#             overlay=overlay,
+#         )
+#         return fig, "Lipids selected", "Genes selected:"
+
+from dash.long_callback import DiskcacheLongCallbackManager  # (ok if unused globally)
+
+@app.long_callback(
     Output("page-6tris-graph-heatmap-mz-selection", "figure"),
     Output("page-6tris-badge-input", "children"),
     Output("page-6tris-badge-input-genes", "children"),
-
-    Input("main-slider", "data"),
-    Input("page-6tris-rgb-switch", "checked"),
-    Input("page-6tris-selected-lipid-1", "data"),
-    Input("page-6tris-selected-lipid-2", "data"),
-    Input("page-6tris-selected-lipid-3", "data"),
-    Input("page-6tris-toggle-annotations", "checked"),
-    Input("main-brain", "value"),
-    Input("page-6tris-selected-gene-1", "data"),
-    Input("page-6tris-selected-gene-2", "data"),
-    Input("page-6tris-selected-gene-3", "data"),
-    Input("page-6tris-gene-threshold-1", "data"),
-    Input("page-6tris-gene-threshold-2", "data"),
-    Input("page-6tris-gene-threshold-3", "data"),
-
-    State("page-6tris-badge-input", "children"),
-    State("page-6tris-badge-input-genes", "children"),
+    inputs=[
+        Input("main-slider", "data"),
+        Input("page-6tris-rgb-switch", "checked"),
+        Input("page-6tris-selected-lipid-1", "data"),
+        Input("page-6tris-selected-lipid-2", "data"),
+        Input("page-6tris-selected-lipid-3", "data"),
+        Input("page-6tris-toggle-annotations", "checked"),
+        Input("main-brain", "value"),
+        Input("page-6tris-selected-gene-1", "data"),
+        Input("page-6tris-selected-gene-2", "data"),
+        Input("page-6tris-selected-gene-3", "data"),
+        Input("page-6tris-gene-threshold-1", "data"),
+        Input("page-6tris-gene-threshold-2", "data"),
+        Input("page-6tris-gene-threshold-3", "data"),
+    ],
+    prevent_initial_call=True,
 )
-def page_6tris_plot_graph_heatmap_mz_selection(
+def page_6tris_plot_graph_heatmap_mz_selection_long(
     slice_index,
     rgb_switch,
     lipid_1_index,
     lipid_2_index,
     lipid_3_index,
     annotations_checked,
-    brain_id,
+    brain_id,              # not used by compute_image_lipids_genes, but fine to keep
     gene_1_index,
     gene_2_index,
     gene_3_index,
     gene_threshold_1,
     gene_threshold_2,
     gene_threshold_3,
-    graph_input,
-    genes_input,
 ):
-    """This callback plots the heatmap of the selected lipid(s) and gene(s)."""
-    logging.info("Entering function to plot heatmap or RGB depending on lipid/gene selection")
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    
+    # Optional Allen Brain Atlas overlay
     overlay = data.get_aba_contours(slice_index) if annotations_checked else None
 
-    # Get selected genes
-    active_genes = []
-    gene_thresholds = []
-    if gene_1_index != -1 or gene_2_index != -1 or gene_3_index != -1:
-        available_genes = get_gene_options(slice_index)
-        gene_names = []
-        if gene_1_index != -1 and gene_1_index < len(available_genes):
-            gene_names.append(available_genes[gene_1_index])
-            gene_thresholds.append(gene_threshold_1)
-        if gene_2_index != -1 and gene_2_index < len(available_genes):
-            gene_names.append(available_genes[gene_2_index])
-            gene_thresholds.append(gene_threshold_2)
-        if gene_3_index != -1 and gene_3_index < len(available_genes):
-            gene_names.append(available_genes[gene_3_index])
-            gene_thresholds.append(gene_threshold_3)
-        active_genes = gene_names
-    
-    # Get selected lipids
-    ll_lipid_names = [
-            ' '.join([
-                data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
-                + data.get_annotations().iloc[index]["structure"].split('_')[i] 
-                for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
-            ])
-        if index != -1
-        else None
-        for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-    ]
-    active_lipids = [name for name in ll_lipid_names if name is not None]
-    
-    # Auto-set RGB mode when multiple lipids are selected
-    rgb_mode_lipids = rgb_switch
-    
-    # Handle annotations toggle separately to preserve figure state
-    if id_input == "page-6tris-toggle-annotations":
-        
-        lipid_gene_image = figures.compute_image_lipids_genes(
-                all_selected_lipids=active_lipids,
-                all_selected_genes=active_genes,
-                gene_thresholds=gene_thresholds,
-                slice_index=slice_index,
-                df_genes=df_genes,
-                rgb_mode_lipids=rgb_mode_lipids,
-            )
-        fig = figures.build_lipid_heatmap_from_image(
-            lipid_gene_image,
-            return_base64_string=False,
-            draw=False,
-            type_image="RGB",
-            return_go_image=False,
-            overlay=overlay,
-        )
-        return fig, "Lipids selected", "Genes selected:"
+    # Helper: lipid index -> "Name Structure"
+    def idx_to_lipid_name(idx):
+        if idx is None or idx == -1:
+            return None
+        ann = data.get_annotations().iloc[idx]
+        parts = [f"{n} {s}" for n, s in zip(ann["name"].split("_"), ann["structure"].split("_"))]
+        return " ".join(parts)
 
-    if id_input == "main-slider":
-        lipid_gene_image = figures.compute_image_lipids_genes(
-            all_selected_lipids=active_lipids,
-            all_selected_genes=active_genes,
-            gene_thresholds=[0] * len(active_genes),
-            slice_index=slice_index,
-            df_genes=df_genes,
-            rgb_mode_lipids=rgb_mode_lipids,
-        )
-        fig = figures.build_lipid_heatmap_from_image(
-            lipid_gene_image,
-            return_base64_string=False,
-            draw=False,
-            type_image="RGB",
-            return_go_image=False,
-            overlay=overlay,
-        )
-        return fig, "Lipids selected", "Genes selected:"
+    # Collect selected lipids
+    lipids = list(filter(None, [
+        idx_to_lipid_name(lipid_1_index),
+        idx_to_lipid_name(lipid_2_index),
+        idx_to_lipid_name(lipid_3_index),
+    ]))
+    if not lipids:
+        lipids = ["HexCer 42:2;O2"]
 
-    # If a gene selection or lipid selection has been modified
-    if (
-        id_input in ["page-6tris-selected-lipid-1", "page-6tris-selected-lipid-2", "page-6tris-selected-lipid-3", 
-                     "page-6tris-selected-gene-1", "page-6tris-selected-gene-2", "page-6tris-selected-gene-3",
-                     "page-6tris-rgb-switch", "page-6tris-gene-threshold-1", "page-6tris-gene-threshold-2", 
-                     "page-6tris-gene-threshold-3"]
-    ):
-        # If both lipids and genes are selected, use the new function
-        lipid_gene_image = figures.compute_image_lipids_genes(
-            all_selected_lipids=active_lipids,
-            all_selected_genes=active_genes,
-            gene_thresholds=gene_thresholds,
-            slice_index=slice_index,
-            df_genes=df_genes,
-            rgb_mode_lipids=rgb_mode_lipids,
-        )
-        fig = figures.build_lipid_heatmap_from_image(
-            lipid_gene_image,
-            return_base64_string=False,
-            draw=False,
-            type_image="RGB",
-            return_go_image=False,
-            overlay=overlay,
-        )
-        return fig, "Lipids selected", "Genes selected:"
-        
-    # If no trigger, the page has just been loaded, so load new figure with default parameters
-    else:
-        lipid_gene_image = figures.compute_image_lipids_genes(
-            all_selected_lipids=["HexCer 42:2;O2"],
-            all_selected_genes=["Xkr4=ENSMUSG00000051951"],
-            gene_thresholds=[0],
-            slice_index=slice_index,
-            df_genes=df_genes,
-            rgb_mode_lipids=False,
-        )
-        fig = figures.build_lipid_heatmap_from_image(
-            lipid_gene_image,
-            return_base64_string=False,
-            draw=False,
-            type_image="RGB",
-            return_go_image=False,
-            overlay=overlay,
-        )
-        return fig, "Lipids selected", "Genes selected:"
+    # Collect selected genes + thresholds (guard against slice-specific option list)
+    available_genes = get_gene_options(slice_index)
+    genes = []
+    thresholds = []
+    for idx, thr in [
+        (gene_1_index, gene_threshold_1),
+        (gene_2_index, gene_threshold_2),
+        (gene_3_index, gene_threshold_3),
+    ]:
+        if idx is not None and idx != -1 and idx < len(available_genes):
+            genes.append(available_genes[idx])
+            thresholds.append(0 if thr is None else thr)
+
+    # RGB only matters when >1 lipid selected
+    rgb_mode_lipids = bool(rgb_switch) and len(lipids) > 1
+
+    # Build image then figure
+    lipid_gene_image = figures.compute_image_lipids_genes(
+        all_selected_lipids=lipids,
+        all_selected_genes=genes,
+        gene_thresholds=thresholds,
+        slice_index=slice_index,
+        df_genes=df_genes,
+        rgb_mode_lipids=rgb_mode_lipids,
+    )
+    fig = figures.build_lipid_heatmap_from_image(
+        lipid_gene_image,
+        return_base64_string=False,
+        draw=False,
+        type_image="RGB",
+        return_go_image=False,
+        overlay=overlay,
+    )
+    return fig, "Lipids selected", "Genes selected:"
+
 
 @app.callback(
     Output("page-6tris-badge-lipid-1", "children"),

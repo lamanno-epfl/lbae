@@ -92,7 +92,7 @@ class StreamData:
 
     def _init_metadata(self):
         """Initialize or load the metadata about stored brains and streams."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata"), flag="r") as db_metadata:
             if "brain_info" not in db_metadata:
                 db_metadata["brain_info"] = {}  # Dict[brain_id, Dict[slice_index, List[stream_names]]]
 
@@ -104,7 +104,7 @@ class StreamData:
             force_update: If True, overwrite existing data
         """
         # Update metadata
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata"), flag="r") as db_metadata:
             brain_info = db_metadata["brain_info"]
 
             if stream_data.brain_id not in brain_info:
@@ -120,7 +120,7 @@ class StreamData:
 
         # Store the actual image data
         key = f"{stream_data.brain_id}/slice_{stream_data.slice_index}/{stream_data.name}"
-        with shelve.open(os.path.join(self.path_data, "stream_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "stream_images"), flag="r") as db:
             if key in db and not force_update:
                 logging.warning(
                     f"Stream image {key} already exists. Use force_update=True to overwrite."
@@ -141,17 +141,17 @@ class StreamData:
         """
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
         key = f"{brain_id}/slice_{float(slice_index)}/{stream_name}"
-        with shelve.open(os.path.join(self.path_data, "stream_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "stream_images"), flag="r") as db:
             return db.get(key)
 
     def get_available_brains(self) -> List[str]:
         """Get list of available brain IDs in the database."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db:
+        with shelve.open(os.path.join(self.path_metadata, "metadata"), flag="r") as db:
             return list(db["brain_info"].keys())
 
     def get_available_slices(self, brain_id: str) -> List[int]:
         """Get list of available slice indices for a given brain."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db:
+        with shelve.open(os.path.join(self.path_metadata, "metadata"), flag="r") as db:
             brain_info = db["brain_info"]
             if brain_id not in brain_info:
                 return []
@@ -163,7 +163,7 @@ class StreamData:
     def get_available_streams(self, slice_index: int) -> List[str]:
         """Get list of available streams for a given brain and slice."""
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
-        with shelve.open(os.path.join(self.path_metadata, "metadata")) as db:
+        with shelve.open(os.path.join(self.path_metadata, "metadata"), flag="r") as db:
             brain_info = db["brain_info"]
             if brain_id not in brain_info or slice_index not in brain_info[brain_id]:
                 return []

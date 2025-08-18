@@ -10,5 +10,22 @@ prove.ipynb
 annotation/
 
 assets/*.mp4
-
 3d_interpolated_native/
+
+# Ignore folders
+3d_interpolated_native/
+
+# Ignore assets videos
+assets/*.mp4
+
+# Ignore logs
+final_multi_user_test_*.log
+
+# Ignore temporary scripts
+main-saved.py
+main_staging.py
+pages/threeD_exploration-stable.py
+
+# Ignore readme app scripts
+readme/
+

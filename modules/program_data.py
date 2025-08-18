@@ -83,7 +83,7 @@ class ProgramData:
 
     def get_brain_id_from_sliceindex(self, slice_index):
         try:
-            with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+            with shelve.open(os.path.join(self.path_metadata, "metadata_programs"), flag="r") as db_metadata:
                 brain_info = db_metadata["brain_info"]
                 for brain_id in self.get_available_brains():
                     if slice_index in brain_info[brain_id]["slice_indices"]:
@@ -94,7 +94,7 @@ class ProgramData:
 
     def _init_metadata(self):
         """Initialize or load the metadata about stored brains and lipids."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_programs"), flag="r") as db_metadata:
             if "brain_info" not in db_metadata:
                 db_metadata["brain_info"] = {}
 
@@ -110,7 +110,7 @@ class ProgramData:
             force_update: If True, overwrite existing data
         """
         # Update metadata
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_programs"), flag="r") as db_metadata:
             # if "brain_info" not in db_metadata:
             #     db_metadata["brain_info"] = {}
             brain_info = db_metadata["brain_info"]
@@ -130,7 +130,7 @@ class ProgramData:
 
         # Store the actual image data
         key = f"{slice_data.brain_id}/slice_{slice_data.slice_index}"
-        with shelve.open(os.path.join(self.path_data, "program_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "program_images"), flag="r") as db:
             if key in db and not force_update:
                 logging.warning(
                     f"Slice data {key} already exists. Use force_update=True to overwrite."
@@ -166,17 +166,17 @@ class ProgramData:
         """
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
         key = f"{brain_id}/slice_{float(slice_index)}"
-        with shelve.open(os.path.join(self.path_data, "program_images")) as db:
+        with shelve.open(os.path.join(self.path_data, "program_images"), flag="r") as db:
             return db.get(key)
 
     def get_available_brains(self) -> List[str]:
         """Get list of available brain IDs in the database."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_programs"), flag="r") as db_metadata:
             return list(db_metadata["brain_info"].keys())
 
     def get_available_slices(self, brain_id: str) -> List[int]:
         """Get list of available slice indices for a given brain."""
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_programs"), flag="r") as db_metadata:
             brain_info = db_metadata["brain_info"]
             if brain_id not in brain_info:
                 return []
@@ -191,7 +191,7 @@ class ProgramData:
         if slice_index is None:
             slice_index = self.get_slice_list()[0]
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
-        with shelve.open(os.path.join(self.path_metadata, "metadata_programs")) as db_metadata:
+        with shelve.open(os.path.join(self.path_metadata, "metadata_programs"), flag="r") as db_metadata:
             brain_info = db_metadata["brain_info"]
             if brain_id not in brain_info or slice_index not in brain_info[brain_id]['slice_indices']:
                 return []

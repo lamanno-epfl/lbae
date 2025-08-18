@@ -72,13 +72,13 @@ class CelltypeData:
             "color_masks": color_masks # dict
         }
         key = str(section)
-        with shelve.open(self.shelf_path) as db:
+        with shelve.open(self.shelf_path, flag="r") as db:
             db[key] = data
         logging.info(f"Stored data for section: {key}")
     
     def retrieve_section_data(self, section):
         key = str(section)
-        with shelve.open(self.shelf_path) as db:
+        with shelve.open(self.shelf_path, flag="r") as db:
             if key in db:
                 return db[key]
             else:

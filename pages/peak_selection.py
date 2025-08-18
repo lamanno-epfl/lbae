@@ -18,8 +18,10 @@ import pandas as pd
 from dash.dependencies import Input, Output, State, ALL
 import dash_mantine_components as dmc
 import numpy as np
-import os
-os.environ['OMP_NUM_THREADS'] = '6'
+# import os
+# os.environ['OMP_NUM_THREADS'] = '1'
+from dash.long_callback import DiskcacheLongCallbackManager  # ok if unused
+
 
 # LBAE imports
 from app import app, peak_figures, peak_data, cache_flask, atlas, grid_data
@@ -959,212 +961,289 @@ def page_peak_hover(hoverData, slice_index):
 
     return dash.no_update
 
-@app.callback(
+# @app.callback(
+#     Output("page-2tris-graph-heatmap-mz-selection", "figure"),
+#     Output("page-2tris-badge-input", "children"),
+
+#     Input("main-slider", "data"),
+#     Input("page-2tris-selected-peak-1", "data"),
+#     Input("page-2tris-selected-peak-2", "data"),
+#     Input("page-2tris-selected-peak-3", "data"),
+#     Input("page-2tris-rgb-switch", "checked"),
+#     # Input("page-2tris-sections-mode", "value"), # TODO: uncomment this when all sections view are computed and stored correctly
+#     Input("main-brain", "value"),
+#     Input("page-2tris-toggle-annotations", "checked"),
+
+#     State("page-2tris-badge-input", "children"),
+# )
+# def page_peak_plot_graph_heatmap_mz_selection(
+#     slice_index,
+#     peak_1_index,
+#     peak_2_index,
+#     peak_3_index,
+#     rgb_mode,
+#     # sections_mode, # TODO: uncomment this when all sections view are computed and stored correctly
+#     brain_id,
+#     annotations_checked,
+#     graph_input,
+# ):
+#     """This callback plots the heatmap of the selected Peak(s)."""
+#     logging.info("Entering function to plot heatmap or RGB depending on Peak selection")
+
+#     # Find out which input triggered the function
+#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+#     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
+    
+#     overlay = peak_data.get_aba_contours(slice_index) if annotations_checked else None
+    
+#     # Handle annotations toggle separately to preserve figure state
+#     if id_input == "page-2tris-toggle-annotations":
+#         if peak_1_index >= 0 or peak_2_index >= 0 or peak_3_index >= 0:
+#             ll_peak_names = [
+#                 peak_data.get_annotations().iloc[index]["name"].astype(str)
+#                 if index != -1
+#                 else None
+#                 for index in [peak_1_index, peak_2_index, peak_3_index]
+#             ]
+            
+#             # TODO: when all sections view are computed and stored correctly, uncomment this
+#             # # If all sections view is requested, only use first peak
+#             # if sections_mode == "all":
+#             #     active_peaks = [name for name in ll_peak_names if name is not None]
+#             #     first_peak = active_peaks[0] if active_peaks else "1000.169719"
+#             #     image = grid_data.retrieve_grid_image(
+#             #         lipid=first_peak,
+#             #         sample=brain_id
+#             #     )
+#             #     return(peak_figures.build_lipid_heatmap_from_image(
+#             #                 image, 
+#             #                 return_base64_string=False,
+#             #                 overlay=overlay),
+#             #             "Now displaying:")
+            
+#             if rgb_mode: # and sections_mode != "all": # TODO: uncomment this when all sections view are computed and stored correctly
+#                 return (
+#                     peak_figures.compute_rgb_image_per_lipid_selection(
+#                         slice_index,
+#                         ll_lipid_names=ll_peak_names,
+#                         cache_flask=cache_flask,
+#                         overlay=overlay,
+#                     ),
+#                     "Now displaying:",
+#                 )
+#             else:
+#                 # Check that only one peak is selected for colormap mode
+#                 active_peaks = [name for name in ll_peak_names if name is not None]
+#                 if len(active_peaks) == 1:
+#                     image = peak_figures.compute_image_per_lipid(
+#                         slice_index,
+#                         RGB_format=False,
+#                         lipid_name=active_peaks[0],
+#                         cache_flask=cache_flask,
+#                     )
+#                     return (
+#                         peak_figures.build_lipid_heatmap_from_image(
+#                             image, 
+#                             return_base64_string=False,
+#                             overlay=overlay,
+#                         ),
+#                         "Now displaying:",
+#                     )
+#                 else:
+#                     # If multiple peaks and not in RGB mode, force RGB mode (except in all sections mode)
+#                     # if sections_mode != "all":
+#                     return (
+#                         peak_figures.compute_rgb_image_per_lipid_selection(
+#                             slice_index,
+#                             ll_lipid_names=ll_peak_names,
+#                             cache_flask=cache_flask,
+#                             overlay=overlay,
+#                         ),
+#                         "Now displaying:",
+#                     )
+#                     # else:
+#                     #     TODO: when all sections view are computed and stored correctly, uncomment this
+#                     #     # In all sections mode, use only first peak
+#                     #     first_peak = active_peaks[0] if active_peaks else "1000.169719"
+#                     #     image = grid_data.retrieve_grid_image(
+#                     #         lipid=first_peak,
+#                     #         sample=brain_id
+#                     #     )
+#                     #     return(peak_figures.build_lipid_heatmap_from_image(
+#                                 # image, 
+#                                 # return_base64_string=False,
+#                                 # overlay=overlay),
+#                                 # "Now displaying:")
+
+#         return dash.no_update
+
+#     # If a peak selection has been done
+#     if (
+#         id_input == "page-2tris-selected-peak-1"
+#         or id_input == "page-2tris-selected-peak-2"
+#         or id_input == "page-2tris-selected-peak-3"
+#         or id_input == "page-2tris-rgb-switch"
+#         # or id_input == "page-2tris-sections-mode" # TODO: uncomment this when all sections view are computed and stored correctly
+#         or id_input == "main-brain"
+#         or id_input == "main-slider"
+#     ):
+#         if peak_1_index >= 0 or peak_2_index >= 0 or peak_3_index >= 0:
+#             ll_peak_names = [
+#                 peak_data.get_annotations().iloc[index]["name"].astype(str)
+#                 if index != -1
+#                 else None
+#                 for index in [peak_1_index, peak_2_index, peak_3_index]
+#             ]
+
+#             # TODO: when all sections view are computed and stored correctly, uncomment this
+#             # # If all sections view is requested
+#             # if sections_mode == "all":
+#             #     TODO:
+                
+#             #     return(peak_figures.build_lipid_heatmap_from_image(
+#             #                 image, 
+#             #                 return_base64_string=False,
+#             #                 overlay=overlay),
+#             #             "Now displaying:")
+            
+#             # Handle normal display mode (RGB or colormap)
+#             # else:
+#             active_peaks = [name for name in ll_peak_names if name is not None]
+#             if rgb_mode:
+#                 return (
+#                     peak_figures.compute_rgb_image_per_lipid_selection(
+#                         slice_index,
+#                         ll_lipid_names=ll_peak_names,
+#                         cache_flask=cache_flask,
+#                         overlay=overlay,
+#                     ),
+#                     "Now displaying:",
+#                 )
+#             else:
+#                 # If not in RGB mode, use first peak only
+#                 first_peak = active_peaks[0] if active_peaks else "1000.169719"
+#                 image = peak_figures.compute_image_per_lipid(
+#                     slice_index,
+#                     RGB_format=False,
+#                     lipid_name=first_peak,
+#                     cache_flask=cache_flask,
+#                 )
+#                 return (
+#                     peak_figures.build_lipid_heatmap_from_image(
+#                         image, 
+#                         return_base64_string=False,
+#                         overlay=overlay,
+#                     ),
+#                     "Now displaying:",
+#                 )
+#         elif (
+#             id_input == "main-slider" and graph_input == "Now displaying:"
+#         ):
+#             logging.info(f"No peak has been selected, the current peak is 1000.169719 and the slice is {slice_index}")
+#             return (
+#                 peak_figures.compute_heatmap_per_lipid(slice_index, 
+#                                                 '1000.169719',
+#                                                 cache_flask=cache_flask,
+#                                                 overlay=overlay),
+#                 "Now displaying:",
+#             )
+#         else:
+#             # No peak has been selected
+#             logging.info(f"No peak has been selected, the current peak is 1000.169719 and the slice is {slice_index}")
+#             return (
+#                 peak_figures.compute_heatmap_per_lipid(slice_index, 
+#                                                 '1000.169719',
+#                                                 cache_flask=cache_flask,
+#                                                 overlay=overlay),
+#                 "Now displaying:",
+#             )
+
+#     # If no trigger, the page has just been loaded, so load new figure with default parameters
+#     else:
+#         return (
+#             peak_figures.compute_heatmap_per_lipid(slice_index, 
+#                                             '1000.169719',
+#                                             cache_flask=cache_flask,
+#                                             overlay=overlay),
+#             "Now displaying:",
+#         )
+
+
+@app.long_callback(
     Output("page-2tris-graph-heatmap-mz-selection", "figure"),
     Output("page-2tris-badge-input", "children"),
-
-    Input("main-slider", "data"),
-    Input("page-2tris-selected-peak-1", "data"),
-    Input("page-2tris-selected-peak-2", "data"),
-    Input("page-2tris-selected-peak-3", "data"),
-    Input("page-2tris-rgb-switch", "checked"),
-    # Input("page-2tris-sections-mode", "value"), # TODO: uncomment this when all sections view are computed and stored correctly
-    Input("main-brain", "value"),
-    Input("page-2tris-toggle-annotations", "checked"),
-
-    State("page-2tris-badge-input", "children"),
+    inputs=[
+        Input("main-slider", "data"),
+        Input("page-2tris-selected-peak-1", "data"),
+        Input("page-2tris-selected-peak-2", "data"),
+        Input("page-2tris-selected-peak-3", "data"),
+        Input("page-2tris-rgb-switch", "checked"),
+        # Input("page-2tris-sections-mode", "value"),  # keep commented until ready
+        Input("main-brain", "value"),
+        Input("page-2tris-toggle-annotations", "checked"),
+    ],
+    state=[State("page-2tris-badge-input", "children")],
+    prevent_initial_call=True,
 )
-def page_peak_plot_graph_heatmap_mz_selection(
+def page_peak_plot_graph_heatmap_mz_selection_long(
     slice_index,
     peak_1_index,
     peak_2_index,
     peak_3_index,
     rgb_mode,
-    # sections_mode, # TODO: uncomment this when all sections view are computed and stored correctly
     brain_id,
     annotations_checked,
-    graph_input,
+    _badge_children,  # not used; kept for signature parity
 ):
-    """This callback plots the heatmap of the selected Peak(s)."""
-    logging.info("Entering function to plot heatmap or RGB depending on Peak selection")
-
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    
+    """Deterministic render of peak image (single or RGB) without callback_context."""
     overlay = peak_data.get_aba_contours(slice_index) if annotations_checked else None
-    
-    # Handle annotations toggle separately to preserve figure state
-    if id_input == "page-2tris-toggle-annotations":
-        if peak_1_index >= 0 or peak_2_index >= 0 or peak_3_index >= 0:
-            ll_peak_names = [
-                peak_data.get_annotations().iloc[index]["name"].astype(str)
-                if index != -1
-                else None
-                for index in [peak_1_index, peak_2_index, peak_3_index]
-            ]
-            
-            # TODO: when all sections view are computed and stored correctly, uncomment this
-            # # If all sections view is requested, only use first peak
-            # if sections_mode == "all":
-            #     active_peaks = [name for name in ll_peak_names if name is not None]
-            #     first_peak = active_peaks[0] if active_peaks else "1000.169719"
-            #     image = grid_data.retrieve_grid_image(
-            #         lipid=first_peak,
-            #         sample=brain_id
-            #     )
-            #     return(peak_figures.build_lipid_heatmap_from_image(
-            #                 image, 
-            #                 return_base64_string=False,
-            #                 overlay=overlay),
-            #             "Now displaying:")
-            
-            if rgb_mode: # and sections_mode != "all": # TODO: uncomment this when all sections view are computed and stored correctly
-                return (
-                    peak_figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=ll_peak_names,
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    ),
-                    "Now displaying:",
-                )
-            else:
-                # Check that only one peak is selected for colormap mode
-                active_peaks = [name for name in ll_peak_names if name is not None]
-                if len(active_peaks) == 1:
-                    image = peak_figures.compute_image_per_lipid(
-                        slice_index,
-                        RGB_format=False,
-                        lipid_name=active_peaks[0],
-                        cache_flask=cache_flask,
-                    )
-                    return (
-                        peak_figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                else:
-                    # If multiple peaks and not in RGB mode, force RGB mode (except in all sections mode)
-                    # if sections_mode != "all":
-                    return (
-                        peak_figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_peak_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                    # else:
-                    #     TODO: when all sections view are computed and stored correctly, uncomment this
-                    #     # In all sections mode, use only first peak
-                    #     first_peak = active_peaks[0] if active_peaks else "1000.169719"
-                    #     image = grid_data.retrieve_grid_image(
-                    #         lipid=first_peak,
-                    #         sample=brain_id
-                    #     )
-                    #     return(peak_figures.build_lipid_heatmap_from_image(
-                                # image, 
-                                # return_base64_string=False,
-                                # overlay=overlay),
-                                # "Now displaying:")
 
-        return dash.no_update
+    # Resolve selected peak names from indices (ignore -1/None)
+    indices = [peak_1_index, peak_2_index, peak_3_index]
+    names = []
+    for idx in indices:
+        if isinstance(idx, (int, np.integer)) and idx >= 0:
+            try:
+                names.append(str(peak_data.get_annotations().iloc[idx]["name"]))
+            except Exception:
+                pass
 
-    # If a peak selection has been done
-    if (
-        id_input == "page-2tris-selected-peak-1"
-        or id_input == "page-2tris-selected-peak-2"
-        or id_input == "page-2tris-selected-peak-3"
-        or id_input == "page-2tris-rgb-switch"
-        # or id_input == "page-2tris-sections-mode" # TODO: uncomment this when all sections view are computed and stored correctly
-        or id_input == "main-brain"
-        or id_input == "main-slider"
-    ):
-        if peak_1_index >= 0 or peak_2_index >= 0 or peak_3_index >= 0:
-            ll_peak_names = [
-                peak_data.get_annotations().iloc[index]["name"].astype(str)
-                if index != -1
-                else None
-                for index in [peak_1_index, peak_2_index, peak_3_index]
-            ]
-
-            # TODO: when all sections view are computed and stored correctly, uncomment this
-            # # If all sections view is requested
-            # if sections_mode == "all":
-            #     TODO:
-                
-            #     return(peak_figures.build_lipid_heatmap_from_image(
-            #                 image, 
-            #                 return_base64_string=False,
-            #                 overlay=overlay),
-            #             "Now displaying:")
-            
-            # Handle normal display mode (RGB or colormap)
-            # else:
-            active_peaks = [name for name in ll_peak_names if name is not None]
-            if rgb_mode:
-                return (
-                    peak_figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=ll_peak_names,
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    ),
-                    "Now displaying:",
-                )
-            else:
-                # If not in RGB mode, use first peak only
-                first_peak = active_peaks[0] if active_peaks else "1000.169719"
-                image = peak_figures.compute_image_per_lipid(
-                    slice_index,
-                    RGB_format=False,
-                    lipid_name=first_peak,
-                    cache_flask=cache_flask,
-                )
-                return (
-                    peak_figures.build_lipid_heatmap_from_image(
-                        image, 
-                        return_base64_string=False,
-                        overlay=overlay,
-                    ),
-                    "Now displaying:",
-                )
-        elif (
-            id_input == "main-slider" and graph_input == "Now displaying:"
-        ):
-            logging.info(f"No peak has been selected, the current peak is 1000.169719 and the slice is {slice_index}")
-            return (
-                peak_figures.compute_heatmap_per_lipid(slice_index, 
-                                                '1000.169719',
-                                                cache_flask=cache_flask,
-                                                overlay=overlay),
-                "Now displaying:",
-            )
-        else:
-            # No peak has been selected
-            logging.info(f"No peak has been selected, the current peak is 1000.169719 and the slice is {slice_index}")
-            return (
-                peak_figures.compute_heatmap_per_lipid(slice_index, 
-                                                '1000.169719',
-                                                cache_flask=cache_flask,
-                                                overlay=overlay),
-                "Now displaying:",
-            )
-
-    # If no trigger, the page has just been loaded, so load new figure with default parameters
-    else:
-        return (
-            peak_figures.compute_heatmap_per_lipid(slice_index, 
-                                            '1000.169719',
-                                            cache_flask=cache_flask,
-                                            overlay=overlay),
-            "Now displaying:",
+    # No selection → default single-peak heatmap
+    if not names:
+        fig = peak_figures.compute_heatmap_per_lipid(
+            slice_index,
+            "1000.169719",
+            cache_flask=cache_flask,
+            overlay=overlay,
         )
+        return fig, "Now displaying:"
+
+    # If RGB mode (or multiple peaks), render RGB
+    if rgb_mode or len(names) > 1:
+        padded = [names[i] if i < len(names) else None for i in range(3)]
+        fig = peak_figures.compute_rgb_image_per_lipid_selection(
+            slice_index,
+            ll_lipid_names=padded,
+            cache_flask=cache_flask,
+            overlay=overlay,
+        )
+        return fig, "Now displaying:"
+
+    # Otherwise render single-peak colormap
+    first = names[0]
+    image = peak_figures.compute_image_per_lipid(
+        slice_index,
+        RGB_format=False,
+        lipid_name=first,
+        cache_flask=cache_flask,
+    )
+    fig = peak_figures.build_lipid_heatmap_from_image(
+        image,
+        return_base64_string=False,
+        overlay=overlay,
+    )
+    return fig, "Now displaying:"
+
 
 
 @app.callback(

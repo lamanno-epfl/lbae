@@ -64,7 +64,7 @@ class LipizoneSampleData:
             "grayscale_image": grayscale_image, 
             "color_masks": color_masks,
         }
-        with shelve.open(self.shelf_path) as db:
+        with shelve.open(self.shelf_path, flag="r") as db:
             db[sample] = data
         logging.info(f"Stored data for sample: {sample}")
     
@@ -82,7 +82,7 @@ class LipizoneSampleData:
         Raises:
             KeyError: If the sample is not found in the database.
         """
-        with shelve.open(self.shelf_path) as db:
+        with shelve.open(self.shelf_path, flag="r") as db:
             if sample in db:
                 return db[sample]
             else:
@@ -136,7 +136,7 @@ class LipizoneSectionData:
         }
         # Use the section name (or id) as the key (converted to string)
         key = str(section)
-        with shelve.open(self.shelf_path) as db:
+        with shelve.open(self.shelf_path, flag="r") as db:
             db[key] = data
         logging.info(f"Stored data for section: {key}")
     
@@ -155,7 +155,7 @@ class LipizoneSectionData:
             KeyError: If the section is not found in the database.
         """
         key = str(section)
-        with shelve.open(self.shelf_path) as db:
+        with shelve.open(self.shelf_path, flag="r") as db:
             if key in db:
                 return db[key]
             else:

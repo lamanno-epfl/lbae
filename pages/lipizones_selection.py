@@ -25,7 +25,8 @@ import re
 import PyPDF2
 import io
 from flask import send_file
-os.environ['OMP_NUM_THREADS'] = '6'
+# os.environ['OMP_NUM_THREADS'] = '1'
+from dash.long_callback import DiskcacheLongCallbackManager
 
 # LBAE imports
 from app import app, figures, data, atlas, lipizone_data, cache_flask
@@ -1174,129 +1175,197 @@ def page_6_active_sections_control(all_selected_lipizones):
         return False
     return True
 
-@app.callback(
+# @app.callback(
+#     Output("page-6-graph-heatmap-mz-selection", "figure"),
+#     Input("main-slider", "data"),
+#     Input("page-6-all-selected-lipizones", "data"),
+#     Input("page-6-sections-mode", "value"),
+#     Input("main-brain", "value"),
+#     Input("page-6-toggle-annotations", "checked"),
+# )
+# def page_6_plot_graph_heatmap_mz_selection(
+#     slice_index,
+#     all_selected_lipizones,
+#     sections_mode,
+#     brain_id,
+#     annotations_checked,
+# ):
+#     """This callback plots the heatmap of the selected lipid(s)."""
+#     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
+#     # Find out which input triggered the function
+#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    
+#     overlay = black_aba_contours(data.get_aba_contours(slice_index)) if annotations_checked else None
+
+#     # Get the names of all selected lipizones
+#     selected_lipizone_names = all_selected_lipizones.get("names", [])
+    
+#     # Define hex_colors_to_highlight using all selected lipizones
+#     hex_colors_to_highlight = [lipizone_data.lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_data.lipizone_to_color]
+    
+#     # Handle annotations toggle separately to preserve figure state
+#     # the annotations can only be displayed if one section is selected
+#     if id_input == "page-6-toggle-annotations":
+#         # Check if we have any selected lipizones
+        
+#         # Try to get the section data for the current slice and brain
+#         try:
+#             hybrid_image = figures.one_section_lipizones_image(
+#                 slice_index,
+#                 hex_colors_to_highlight=hex_colors_to_highlight,
+#             )
+            
+#             return figures.build_lipid_heatmap_from_image(
+#                 hybrid_image,
+#                 return_base64_string=False,
+#                 draw=False,
+#                 type_image="RGB",
+#                 return_go_image=False,
+#                 overlay=overlay,
+#             )
+#         except KeyError as e:
+#             # If section data not found, fall back to the hybrid image
+#             logging.warning(f"Section data not found: {e}. Displaying all lipizones.")
+#             return figures.build_lipid_heatmap_from_image(
+#                 # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+#                 figures.one_section_lipizones_image(
+#                     slice_index,
+#                     hex_colors_to_highlight=None, # all lipizones
+#                 ),
+#                 return_base64_string=False,
+#                 draw=False,
+#                 type_image="RGB",
+#                 return_go_image=False,
+#                 overlay=overlay,
+#             )
+    
+#     # If a lipid selection has been done
+#     if (
+#         id_input == "page-6-all-selected-lipizones"
+#         or id_input == "page-6-sections-mode"
+#         or id_input == "main-brain"
+#         or id_input == "main-slider"
+#     ):
+        
+#         if sections_mode == "one":
+#             # Try to get the section data for the current slice and brain
+#             hybrid_image = figures.one_section_lipizones_image(
+#                 slice_index=slice_index,
+#                 hex_colors_to_highlight=hex_colors_to_highlight,
+#             )
+            
+#             return figures.build_lipid_heatmap_from_image(
+#                 hybrid_image,
+#                 return_base64_string=False,
+#                 draw=False,
+#                 type_image="RGB",
+#                 return_go_image=False,
+#                 overlay=overlay,
+#             )
+
+#         # Or if the current plot must be all sections
+#         elif sections_mode == "all":
+#             image = figures.all_sections_lipizones_image(
+#                 hex_colors_to_highlight=hex_colors_to_highlight,
+#                 brain_id=brain_id
+#             )
+#             if brain_id == "ReferenceAtlas" or brain_id == "SecondAtlas":
+#                 image = np.pad(image, ((200, 200), (0, 0), (0, 0)), mode='edge')
+#             else:
+#                 image = np.pad(image, ((800, 800), (0, 0), (0, 0)), mode='edge')
+#             return figures.build_lipid_heatmap_from_image(
+#                 image,
+#                 return_base64_string=False,
+#                 draw=False,
+#                 type_image="RGB",
+#                 return_go_image=False,
+#             )
+#         else:
+#             # it should never happen
+#             logging.info("Section mode is neither 'one-section' nor 'all-sections'. Displaying default all lipizones and all sections")
+#             return figures.build_lipid_heatmap_from_image(
+#                 # compute_hybrid_image(hex_colors_to_highlight, brain_id),
+#                 figures.all_sections_lipizones_image(
+#                     hex_colors_to_highlight=None, # all lipizones
+#                     brain_id=brain_id),
+#                 return_base64_string=False,
+#                 draw=False,
+#                 type_image="RGB",
+#                 return_go_image=False,
+#                 overlay=overlay,
+#             )
+
+#     # If no trigger, the page has just been loaded, so load new figure with default parameters
+#     else:
+#         return dash.no_update
+
+
+from dash.long_callback import DiskcacheLongCallbackManager  # ok if not used directly
+
+@app.long_callback(
     Output("page-6-graph-heatmap-mz-selection", "figure"),
-    Input("main-slider", "data"),
-    Input("page-6-all-selected-lipizones", "data"),
-    Input("page-6-sections-mode", "value"),
-    Input("main-brain", "value"),
-    Input("page-6-toggle-annotations", "checked"),
+    inputs=[
+        Input("main-slider", "data"),
+        Input("page-6-all-selected-lipizones", "data"),
+        Input("page-6-sections-mode", "value"),
+        Input("main-brain", "value"),
+        Input("page-6-toggle-annotations", "checked"),
+    ],
+    prevent_initial_call=True,
 )
-def page_6_plot_graph_heatmap_mz_selection(
+def page_6_plot_graph_heatmap_mz_selection_long(
     slice_index,
     all_selected_lipizones,
     sections_mode,
     brain_id,
     annotations_checked,
 ):
-    """This callback plots the heatmap of the selected lipid(s)."""
-    logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    
-    overlay = black_aba_contours(data.get_aba_contours(slice_index)) if annotations_checked else None
+    # Selected lipizones → hex colors (None means “show all”)
+    selected_names = (all_selected_lipizones or {}).get("names", []) or []
+    hex_colors_to_highlight = (
+        [lipizone_data.lipizone_to_color[n] for n in selected_names if n in lipizone_data.lipizone_to_color]
+        if selected_names else None
+    )
 
-    # Get the names of all selected lipizones
-    selected_lipizone_names = all_selected_lipizones.get("names", [])
-    
-    # Define hex_colors_to_highlight using all selected lipizones
-    hex_colors_to_highlight = [lipizone_data.lipizone_to_color[name] for name in selected_lipizone_names if name in lipizone_data.lipizone_to_color]
-    
-    # Handle annotations toggle separately to preserve figure state
-    # the annotations can only be displayed if one section is selected
-    if id_input == "page-6-toggle-annotations":
-        # Check if we have any selected lipizones
-        
-        # Try to get the section data for the current slice and brain
-        try:
-            hybrid_image = figures.one_section_lipizones_image(
-                slice_index,
-                hex_colors_to_highlight=hex_colors_to_highlight,
-            )
-            
-            return figures.build_lipid_heatmap_from_image(
-                hybrid_image,
-                return_base64_string=False,
-                draw=False,
-                type_image="RGB",
-                return_go_image=False,
-                overlay=overlay,
-            )
-        except KeyError as e:
-            # If section data not found, fall back to the hybrid image
-            logging.warning(f"Section data not found: {e}. Displaying all lipizones.")
-            return figures.build_lipid_heatmap_from_image(
-                # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                figures.one_section_lipizones_image(
-                    slice_index,
-                    hex_colors_to_highlight=None, # all lipizones
-                ),
-                return_base64_string=False,
-                draw=False,
-                type_image="RGB",
-                return_go_image=False,
-                overlay=overlay,
-            )
-    
-    # If a lipid selection has been done
-    if (
-        id_input == "page-6-all-selected-lipizones"
-        or id_input == "page-6-sections-mode"
-        or id_input == "main-brain"
-        or id_input == "main-slider"
-    ):
-        
-        if sections_mode == "one":
-            # Try to get the section data for the current slice and brain
-            hybrid_image = figures.one_section_lipizones_image(
-                slice_index=slice_index,
-                hex_colors_to_highlight=hex_colors_to_highlight,
-            )
-            
-            return figures.build_lipid_heatmap_from_image(
-                hybrid_image,
-                return_base64_string=False,
-                draw=False,
-                type_image="RGB",
-                return_go_image=False,
-                overlay=overlay,
-            )
+    # Annotations only for single-section view
+    overlay = (
+        black_aba_contours(data.get_aba_contours(slice_index))
+        if (annotations_checked and sections_mode == "one") else None
+    )
 
-        # Or if the current plot must be all sections
-        elif sections_mode == "all":
-            image = figures.all_sections_lipizones_image(
-                hex_colors_to_highlight=hex_colors_to_highlight,
-                brain_id=brain_id
-            )
-            if brain_id == "ReferenceAtlas" or brain_id == "SecondAtlas":
-                image = np.pad(image, ((200, 200), (0, 0), (0, 0)), mode='edge')
-            else:
-                image = np.pad(image, ((800, 800), (0, 0), (0, 0)), mode='edge')
-            return figures.build_lipid_heatmap_from_image(
-                image,
-                return_base64_string=False,
-                draw=False,
-                type_image="RGB",
-                return_go_image=False,
-            )
+    if sections_mode == "all":
+        image = figures.all_sections_lipizones_image(
+            hex_colors_to_highlight=hex_colors_to_highlight,
+            brain_id=brain_id
+        )
+        if brain_id in ("ReferenceAtlas", "SecondAtlas"):
+            image = np.pad(image, ((200, 200), (0, 0), (0, 0)), mode="edge")
         else:
-            # it should never happen
-            logging.info("Section mode is neither 'one-section' nor 'all-sections'. Displaying default all lipizones and all sections")
-            return figures.build_lipid_heatmap_from_image(
-                # compute_hybrid_image(hex_colors_to_highlight, brain_id),
-                figures.all_sections_lipizones_image(
-                    hex_colors_to_highlight=None, # all lipizones
-                    brain_id=brain_id),
-                return_base64_string=False,
-                draw=False,
-                type_image="RGB",
-                return_go_image=False,
-                overlay=overlay,
-            )
+            image = np.pad(image, ((800, 800), (0, 0), (0, 0)), mode="edge")
 
-    # If no trigger, the page has just been loaded, so load new figure with default parameters
-    else:
-        return dash.no_update
+        return figures.build_lipid_heatmap_from_image(
+            image,
+            return_base64_string=False,
+            draw=False,
+            type_image="RGB",
+            return_go_image=False,
+        )
+
+    # sections_mode == "one"
+    hybrid_image = figures.one_section_lipizones_image(
+        slice_index=slice_index,
+        hex_colors_to_highlight=hex_colors_to_highlight,
+    )
+    return figures.build_lipid_heatmap_from_image(
+        hybrid_image,
+        return_base64_string=False,
+        draw=False,
+        type_image="RGB",
+        return_go_image=False,
+        overlay=overlay,
+    )
+
+
 
 # Add callback to update badges
 @app.callback(

@@ -43,7 +43,7 @@ args = parser.parse_args()
 
 # --- Global Configuration ---
 SEED = args.seed if args.seed is not None else random.randint(0, 2**32 - 1)
-BASE_URL = "http://127.0.0.1:8050"
+BASE_URL = "http://127.0.0.1:8081"
 REFRESH_CHANCE = 0.03
 
 # --- Logging Configuration ---
@@ -635,7 +635,7 @@ async def run_user_session(browser, user_id, seed, duration_minutes, screenshot_
         try:
             current_url = page.url
         except:
-            current_url = "http://127.0.0.1:8050/"
+            current_url = "http://127.0.0.1:8081/"
         new_page.goto(current_url)
         return new_page
 

@@ -70,7 +70,7 @@ class Storage:
         complete_file_name = data_folder + "/" + file_name
 
         # Dump in db
-        with shelve.open(self.path_db) as db:
+        with shelve.open(self.path_db, flag="r") as db:
             db[complete_file_name] = object
 
     def load_shelved_object(self, data_folder, file_name):
@@ -86,7 +86,7 @@ class Storage:
         complete_file_name = data_folder + "/" + file_name
 
         # Load from in db
-        with shelve.open(self.path_db) as db:
+        with shelve.open(self.path_db, flag="r") as db:
             return db[complete_file_name]
 
     def check_shelved_object(self, data_folder, file_name):
@@ -102,7 +102,7 @@ class Storage:
         complete_file_name = data_folder + "/" + file_name
 
         # Load from in db
-        with shelve.open(self.path_db) as db:
+        with shelve.open(self.path_db, flag="r") as db:
             if complete_file_name in db:
                 return True
             else:
@@ -148,7 +148,7 @@ class Storage:
                 complete_file_name += "_" + str(value)
 
         # Load the shelve
-        db = shelve.open(db_path)
+        db = shelve.open(db_path, flag="r")
         # Check if the object is in the folder already and return it
         if complete_file_name in db and not force_update:
             logging.info("Returning " + complete_file_name + " from shelve file." + logmem())
@@ -167,7 +167,7 @@ class Storage:
             object = compute_function(**compute_function_args)
 
             # Reopen shelve
-            db = shelve.open(db_path)
+            db = shelve.open(db_path, flag="r")
 
             # Save the result in a pickle file
             db[complete_file_name] = object
@@ -180,7 +180,7 @@ class Storage:
     def empty_shelve(self):
         """This method erases all entries in the shelve database."""
         # Load from in db
-        with shelve.open(self.path_db) as db:
+        with shelve.open(self.path_db, flag="r") as db:
 
             # Completely empty database
             for key in db:
@@ -190,7 +190,7 @@ class Storage:
         """This method list the size of all objects in the shelve database."""
 
         # Load from in db
-        with shelve.open(self.path_db) as db:
+        with shelve.open(self.path_db, flag="r") as db:
 
             tot_size = 0
             # List size

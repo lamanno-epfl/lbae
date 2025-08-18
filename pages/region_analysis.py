@@ -33,6 +33,10 @@ from app import app, figures, data, atlas, cache_flask
 import config
 from modules.tools.image import convert_image_to_base64
 from config import l_colors
+from dash.long_callback import DiskcacheLongCallbackManager  # ok if unused
+
+# import os
+# os.environ['OMP_NUM_THREADS'] = '1'
 
 # ==================================================================================================
 # --- Helper functions
@@ -120,34 +124,69 @@ def global_store(
         
     return l_expressions
 
+# def differential_lipids(l_A, l_B):
+#     results = []
+#     # l_A and l_B are lists of numpy arrays, same amount of columns, different amount of rows
+#     # create 2 dataframes that stack the arrays
+#     A_df = pd.DataFrame(np.vstack(l_A), columns=data.get_available_lipids(1.0))
+#     B_df = pd.DataFrame(np.vstack(l_B), columns=data.get_available_lipids(11))
+#     meanA = A_df.mean(axis=0)
+#     meanB = B_df.mean(axis=0)
+#     log2fold_change = np.log2(meanB / (meanA + 1e-7)) # if meanA > 0 and meanB > 0 else np.nan
+    
+#     for i, lip in enumerate(data.get_available_lipids(1.0)):
+       
+#         # Wilcoxon test or t-test
+#         # try:
+#         _, p_value = mannwhitneyu(A_df[lip], B_df[lip], alternative='two-sided')
+#         # _, p_value = ttest_ind(A_df[lip], B_df[lip])
+#         # except ValueError:
+#         #     p_value = np.nan
+    
+#         results.append({'lipid': lip, 'log2fold_change': log2fold_change.iloc[i], 'p_value': p_value})
+
+#     results_df = pd.DataFrame(results)
+
+#     # correct for multiple testing
+#     reject, pvals_corrected, _, _ = multipletests(results_df['p_value'].values, alpha=0.05, method='fdr_bh')
+#     results_df['p_value_corrected'] = pvals_corrected
+    
+#     return results_df
+
 def differential_lipids(l_A, l_B):
-    results = []
-    # l_A and l_B are lists of numpy arrays, same amount of columns, different amount of rows
-    # create 2 dataframes that stack the arrays
-    A_df = pd.DataFrame(np.vstack(l_A), columns=data.get_available_lipids(1.0))
-    B_df = pd.DataFrame(np.vstack(l_B), columns=data.get_available_lipids(11))
+    """
+    l_A and l_B are lists of np.ndarrays (rows=pixels, cols=lipids).
+    We build aligned DataFrames and compute MWU + FDR with safe guards.
+    """
+    # Use the SAME lipid list for both groups to guarantee alignment
+    lipid_cols = list(data.get_available_lipids(1.0))  # single source of truth
+
+    A_df = pd.DataFrame(np.vstack(l_A), columns=lipid_cols)
+    B_df = pd.DataFrame(np.vstack(l_B), columns=lipid_cols)
+
     meanA = A_df.mean(axis=0)
     meanB = B_df.mean(axis=0)
-    log2fold_change = np.log2(meanB / (meanA + 1e-7)) # if meanA > 0 and meanB > 0 else np.nan
-    
-    for i, lip in enumerate(data.get_available_lipids(1.0)):
-       
-        # Wilcoxon test or t-test
-        # try:
-        _, p_value = mannwhitneyu(A_df[lip], B_df[lip], alternative='two-sided')
-        # _, p_value = ttest_ind(A_df[lip], B_df[lip])
-        # except ValueError:
-        #     p_value = np.nan
-    
-        results.append({'lipid': lip, 'log2fold_change': log2fold_change.iloc[i], 'p_value': p_value})
+    log2fold_change = np.log2(np.maximum(meanB, 1e-12) / np.maximum(meanA, 1e-12))
+
+    results = []
+    for lip in lipid_cols:
+        # Mann–Whitney U (robust for unequal n, non-normal)
+        try:
+            _, p = mannwhitneyu(A_df[lip], B_df[lip], alternative="two-sided")
+        except Exception:
+            p = np.nan
+        results.append({"lipid": lip, "log2fold_change": float(log2fold_change[lip]), "p_value": p})
 
     results_df = pd.DataFrame(results)
 
-    # correct for multiple testing
-    reject, pvals_corrected, _, _ = multipletests(results_df['p_value'].values, alpha=0.05, method='fdr_bh')
-    results_df['p_value_corrected'] = pvals_corrected
-    
+    # Replace NaNs/zeros to avoid -inf after -log10
+    safe_p = results_df["p_value"].replace([0, np.nan], np.finfo(float).tiny).values
+    reject, pvals_corrected, _, _ = multipletests(safe_p, alpha=0.05, method="fdr_bh")
+    results_df["p_value_corrected"] = pvals_corrected
+
     return results_df
+
+
 
 
 # ==================================================================================================
@@ -1023,7 +1062,7 @@ def return_layout(basic_config, slice_index=1):
                                         className="float-start",
                                     ),
                                     dbc.Button(
-                                        "Finsih",
+                                        "Finish",
                                         id="analysis-tutorial-finish",
                                         color="success",
                                         size="sm",
@@ -1788,7 +1827,9 @@ def page_3_add_toast_selection(
 
         # If lipids have been added from dropdown menu
         elif id_input == "page-3-dropdown-lipids":
-            if len(l_lipid_names[-1]) == 2:
+            # if len(l_lipid_names[-1]) == 2:
+            #     name, structure = l_lipid_names[-1].split(" ")
+            if len(l_lipid_names[-1].split(" ")) == 2:
                 name, structure = l_lipid_names[-1].split(" ")
             else:   
                 name = "_".join(l_lipid_names[-1].split(" ")[::2])
@@ -1839,7 +1880,7 @@ def page_3_add_toast_selection(
                 change_made = True
 
             # If it's a new lipid selection, fill the first available header
-            if lipid_string not in [header_1, header_2, header_2]:
+            if lipid_string not in [header_1, header_2, header_3]:
                 # Check first slot available
                 if class_name_badge_1 == "d-none":
                     header_1 = lipid_string
@@ -2011,229 +2052,323 @@ def page_3_display_volcano(clicked_reset, clicked_compute, mask, relayoutData):
 
     return dash.no_update
 
-@app.callback(
-    Output("dcc-store-list-volcano-A", "data"),
-    Output("dcc-store-list-volcano-B", "data"),
+# @app.callback(
+#     Output("dcc-store-list-volcano-A", "data"),
+#     Output("dcc-store-list-volcano-B", "data"),
     
-    Input("page-3-button-compute-volcano", "n_clicks"),
-    Input("page-3-dcc-store-path-heatmap", "data"),
-    Input("page-3-reset-button", "n_clicks"),
-    Input("url", "pathname"),
-    Input("main-slider", "data"),
-    State("page-3-dropdown-brain-regions", "value"),
-    # State("dcc-store-shapes-and-masks", "data"),
-    State("dcc-store-shapes-and-masks-A", "data"),
-    State("dcc-store-shapes-and-masks-B", "data"),
-    State("page-3-graph-heatmap-mz-selection", "relayoutData"),
-    State("session-id", "data"),
-    prevent_initial_call=True,
-)
-def page_3_record_volcano(
-    clicked_compute,
-    l_paths,
-    cliked_reset,
-    url,
-    slice_index,
-    l_mask_name,
-    # l_shapes_and_masks,
-    l_shapes_and_masks_A,
-    l_shapes_and_masks_B,
-    relayoutData,
-    session_id,
-):
-    """This callback is used to compute and record the lipids' expression of the selected
-    region(s)."""
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
+#     Input("page-3-button-compute-volcano", "n_clicks"),
+#     Input("page-3-dcc-store-path-heatmap", "data"),
+#     Input("page-3-reset-button", "n_clicks"),
+#     Input("url", "pathname"),
+#     Input("main-slider", "data"),
+#     State("page-3-dropdown-brain-regions", "value"),
+#     # State("dcc-store-shapes-and-masks", "data"),
+#     State("dcc-store-shapes-and-masks-A", "data"),
+#     State("dcc-store-shapes-and-masks-B", "data"),
+#     State("page-3-graph-heatmap-mz-selection", "relayoutData"),
+#     State("session-id", "data"),
+#     prevent_initial_call=True,
+# )
+# def page_3_record_volcano(
+#     clicked_compute,
+#     l_paths,
+#     cliked_reset,
+#     url,
+#     slice_index,
+#     l_mask_name,
+#     # l_shapes_and_masks,
+#     l_shapes_and_masks_A,
+#     l_shapes_and_masks_B,
+#     relayoutData,
+#     session_id,
+# ):
+#     """This callback is used to compute and record the lipids' expression of the selected
+#     region(s)."""
+#     # Find out which input triggered the function
+#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+#     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
     
-    # If a new slice is loaded or the page just got loaded, do nothing because
-    # of automatic relayout of the heatmap which is automatically triggered when the page is loaded
-    if len(id_input) == 0 or (value_input == "relayoutData" and relayoutData == {"autosize": True}):
-        return dash.no_update
+#     # If a new slice is loaded or the page just got loaded, do nothing because
+#     # of automatic relayout of the heatmap which is automatically triggered when the page is loaded
+#     if len(id_input) == 0 or (value_input == "relayoutData" and relayoutData == {"autosize": True}):
+#         return dash.no_update
 
-    # Delete everything when clicking reset
-    elif id_input == "page-3-reset-button": # or id_input == "url":
-        return [], []
+#     # Delete everything when clicking reset
+#     elif id_input == "page-3-reset-button": # or id_input == "url":
+#         return [], []
 
-    # If the user clicked on the button after drawing a region and/or selecting a structure
-    elif id_input == "page-3-button-compute-volcano" and len(l_shapes_and_masks_A) > 0 and len(l_shapes_and_masks_B) > 0:
-        logging.info("Starting to compute volcano plot")
+#     # If the user clicked on the button after drawing a region and/or selecting a structure
+#     elif id_input == "page-3-button-compute-volcano" and len(l_shapes_and_masks_A) > 0 and len(l_shapes_and_masks_B) > 0:
+#         logging.info("Starting to compute volcano plot")
 
-        l_expressions_A = global_store(
-            slice_index, l_shapes_and_masks_A
-        )
-        l_expressions_B = global_store(
-            slice_index, l_shapes_and_masks_B
-        )
+#         l_expressions_A = global_store(
+#             slice_index, l_shapes_and_masks_A
+#         )
+#         l_expressions_B = global_store(
+#             slice_index, l_shapes_and_masks_B
+#         )
 
-        if l_expressions_A is not None and l_expressions_B is not None:
-            if l_expressions_A != [] and l_expressions_B != []:
-                logging.info("Volcano plot computed, returning it now")
-                # Return a dummy variable to indicate that the volcano plot has been computed and
-                # trigger the callback
-                return l_expressions_A, l_expressions_B # "A ok", "B ok"
-        logging.warning("A bug appeared during volcano plot computation")
+#         if l_expressions_A is not None and l_expressions_B is not None:
+#             if l_expressions_A != [] and l_expressions_B != []:
+#                 logging.info("Volcano plot computed, returning it now")
+#                 # Return a dummy variable to indicate that the volcano plot has been computed and
+#                 # trigger the callback
+#                 return l_expressions_A, l_expressions_B # "A ok", "B ok"
+#         logging.warning("A bug appeared during volcano plot computation")
 
-    return [], []
+#     return [], []
 
 
-@app.callback(
-    Output("page-3-graph-volcano", "figure"),
+# @app.callback(
+#     Output("page-3-graph-volcano", "figure"),
 
-    Input("page-3-reset-button", "n_clicks"),
-    Input("dcc-store-list-volcano-A", "data"),
-    Input("dcc-store-list-volcano-B", "data"),
-    Input("main-slider", "data"),
+#     Input("page-3-reset-button", "n_clicks"),
+#     Input("dcc-store-list-volcano-A", "data"),
+#     Input("dcc-store-list-volcano-B", "data"),
+#     Input("main-slider", "data"),
     
-    State("page-3-dropdown-brain-regions", "value"),
-    State("dcc-store-shapes-and-masks-A", "data"),
-    State("dcc-store-shapes-and-masks-B", "data"),
-    State("page-3-graph-heatmap-mz-selection", "relayoutData"),
-    prevent_initial_call=True,
-)
-def page_3_plot_volcano(
-    cliked_reset,
-    l_expressions_A,
-    l_expressions_B,
-    slice_index,
-    l_mask_name,
-    l_shapes_and_masks_A,
-    l_shapes_and_masks_B,
-    relayoutData,
-):
-    """This callback is used to plot the volcano plot of the selected region(s)."""
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
+#     State("page-3-dropdown-brain-regions", "value"),
+#     State("dcc-store-shapes-and-masks-A", "data"),
+#     State("dcc-store-shapes-and-masks-B", "data"),
+#     State("page-3-graph-heatmap-mz-selection", "relayoutData"),
+#     prevent_initial_call=True,
+# )
+# def page_3_plot_volcano(
+#     cliked_reset,
+#     l_expressions_A,
+#     l_expressions_B,
+#     slice_index,
+#     l_mask_name,
+#     l_shapes_and_masks_A,
+#     l_shapes_and_masks_B,
+#     relayoutData,
+# ):
+#     """This callback is used to plot the volcano plot of the selected region(s)."""
+#     # Find out which input triggered the function
+#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+#     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
 
-    # If a new slice is loaded or the page just got loaded, do nothing
-    if len(id_input) == 0:
-        return dash.no_update
+#     # If a new slice is loaded or the page just got loaded, do nothing
+#     if len(id_input) == 0:
+#         return dash.no_update
 
-    # Delete everything when clicking reset
-    elif id_input == "page-3-reset-button" or l_expressions_A is None or l_expressions_A == [] or l_expressions_B is None or l_expressions_B == []:
-        return go.Figure().update_layout(template="plotly_dark") # figures.return_empty_spectrum()
+#     # Delete everything when clicking reset
+#     elif id_input == "page-3-reset-button" or l_expressions_A is None or l_expressions_A == [] or l_expressions_B is None or l_expressions_B == []:
+#         return go.Figure().update_layout(template="plotly_dark") # figures.return_empty_spectrum()
 
-    # Do nothing if l_expressions is None or []
-    elif id_input == "dcc-store-list-volcano-A" or id_input == "dcc-store-list-volcano-B":
-        if len(l_expressions_A) > 0 or l_expressions_A == "ok" or len(l_expressions_B) > 0 or l_expressions_B == "ok":
-            logging.info("Starting volcano plotting now")
-            # l_expressions_A = global_store(
-            #     slice_index, l_shapes_and_masks_A
-            # )
-            # l_expressions_B = global_store(
-            #     slice_index, l_shapes_and_masks_B
-            # )
+#     # Do nothing if l_expressions is None or []
+#     elif id_input == "dcc-store-list-volcano-A" or id_input == "dcc-store-list-volcano-B":
+#         if len(l_expressions_A) > 0 or l_expressions_A == "ok" or len(l_expressions_B) > 0 or l_expressions_B == "ok":
+#             logging.info("Starting volcano plotting now")
+#             # l_expressions_A = global_store(
+#             #     slice_index, l_shapes_and_masks_A
+#             # )
+#             # l_expressions_B = global_store(
+#             #     slice_index, l_shapes_and_masks_B
+#             # )
             
-            # Compute differential lipids
-            difflips = differential_lipids(l_expressions_A, l_expressions_B)
+#             # Compute differential lipids
+#             difflips = differential_lipids(l_expressions_A, l_expressions_B)
 
-            colors = pd.read_hdf("./data/annotations/lipidclasscolors.h5ad", key="table")
-            colors.loc['PA'] = {'count': 0, 'classcolors': '#D3D3D3'}
-            colors.loc['LPA'] = {'count': 0, 'classcolors': '#D3D3D3'}
+#             colors = pd.read_hdf("./data/annotations/lipidclasscolors.h5ad", key="table")
+#             colors.loc['PA'] = {'count': 0, 'classcolors': '#D3D3D3'}
+#             colors.loc['LPA'] = {'count': 0, 'classcolors': '#D3D3D3'}
 
-            fc_cutoff = 0.2
-            pvalue_cutoff = 0.01
+#             fc_cutoff = 0.2
+#             pvalue_cutoff = 0.01
 
-            min_pval = np.min(difflips[difflips['p_value_corrected'] > 0]['p_value_corrected'])
-            difflips['p_value_corrected'] = np.clip(difflips['p_value_corrected'], min_pval, 1)
-            difflips['minus_log10_p'] = -np.log10(difflips['p_value_corrected'])
+#             min_pval = np.min(difflips[difflips['p_value_corrected'] > 0]['p_value_corrected'])
+#             difflips['p_value_corrected'] = np.clip(difflips['p_value_corrected'], min_pval, 1)
+#             difflips['minus_log10_p'] = -np.log10(difflips['p_value_corrected'])
 
-            # Compute the actual fold change from log2 fold change
-            difflips['fold_change'] = 2 ** difflips['log2fold_change']
+#             # Compute the actual fold change from log2 fold change
+#             difflips['fold_change'] = 2 ** difflips['log2fold_change']
 
-            # Extract the lipid family (assuming it is the first word in the lipid name)
-            difflips['lipid_family'] = difflips['lipid'].apply(lambda x: x.split(' ')[0])
+#             # Extract the lipid family (assuming it is the first word in the lipid name)
+#             difflips['lipid_family'] = difflips['lipid'].apply(lambda x: x.split(' ')[0])
 
-            # Compute marker size: smaller for non-significant points, larger for significant points
-            difflips['marker_size'] = np.where(
-                (difflips['log2fold_change'] > -fc_cutoff) & (difflips['log2fold_change'] < fc_cutoff),
-                3,   # smaller size for non-significant points
-                10   # larger size for significant points
-            )
+#             # Compute marker size: smaller for non-significant points, larger for significant points
+#             difflips['marker_size'] = np.where(
+#                 (difflips['log2fold_change'] > -fc_cutoff) & (difflips['log2fold_change'] < fc_cutoff),
+#                 3,   # smaller size for non-significant points
+#                 10   # larger size for significant points
+#             )
 
-            # Custom color mapping based on lipid family
-            lipid_to_color = colors['classcolors'].to_dict()
-            custom_color_map = {family: color for family, color in lipid_to_color.items()}
+#             # Custom color mapping based on lipid family
+#             lipid_to_color = colors['classcolors'].to_dict()
+#             custom_color_map = {family: color for family, color in lipid_to_color.items()}
 
-            # Create figure
-            fig = go.Figure()
+#             # Create figure
+#             fig = go.Figure()
 
-            # Add scatter plot for each lipid family
-            for family in difflips['lipid_family'].unique():
-                mask = difflips['lipid_family'] == family
-                fig.add_trace(
-                    go.Scatter(
-                        x=difflips[mask]['log2fold_change'],
-                        y=difflips[mask]['minus_log10_p'],
-                        mode='markers',
-                        name=family,
-                        marker=dict(
-                            size=difflips[mask]['marker_size'],
-                            color=custom_color_map[family],
-                            line=dict(width=0)
-                        ),
-                        customdata=np.column_stack((
-                            difflips[mask]['lipid'],
-                            difflips[mask]['p_value_corrected'],
-                            difflips[mask]['fold_change']
-                        )),
-                        hovertemplate='Lipid: %{customdata[0]}'
-                        # hovertemplate='Lipid: %{customdata[0]}<br>p-value: %{customdata[1]:.2e}<br>Fold Change: %{customdata[2]:.3f}<extra></extra>'
-                    )
-                )
+#             # Add scatter plot for each lipid family
+#             for family in difflips['lipid_family'].unique():
+#                 mask = difflips['lipid_family'] == family
+#                 fig.add_trace(
+#                     go.Scatter(
+#                         x=difflips[mask]['log2fold_change'],
+#                         y=difflips[mask]['minus_log10_p'],
+#                         mode='markers',
+#                         name=family,
+#                         marker=dict(
+#                             size=difflips[mask]['marker_size'],
+#                             color=custom_color_map[family],
+#                             line=dict(width=0)
+#                         ),
+#                         customdata=np.column_stack((
+#                             difflips[mask]['lipid'],
+#                             difflips[mask]['p_value_corrected'],
+#                             difflips[mask]['fold_change']
+#                         )),
+#                         hovertemplate='Lipid: %{customdata[0]}'
+#                         # hovertemplate='Lipid: %{customdata[0]}<br>p-value: %{customdata[1]:.2e}<br>Fold Change: %{customdata[2]:.3f}<extra></extra>'
+#                     )
+#                 )
 
-            # Add vertical lines for fold change cutoffs
-            fig.add_vline(x=-fc_cutoff, line_dash="dash", line_color="grey", line_width=1)
-            fig.add_vline(x=fc_cutoff, line_dash="dash", line_color="grey", line_width=1)
+#             # Add vertical lines for fold change cutoffs
+#             fig.add_vline(x=-fc_cutoff, line_dash="dash", line_color="grey", line_width=1)
+#             fig.add_vline(x=fc_cutoff, line_dash="dash", line_color="grey", line_width=1)
 
-            # Add horizontal line for significance threshold
-            sig_y = -np.log10(pvalue_cutoff)
-            fig.add_hline(y=sig_y, line_dash="dash", line_color="grey", line_width=1)
+#             # Add horizontal line for significance threshold
+#             sig_y = -np.log10(pvalue_cutoff)
+#             fig.add_hline(y=sig_y, line_dash="dash", line_color="grey", line_width=1)
 
-            # range_x_axis = [min(difflips['log2fold_change']) - 0.1, max(difflips['log2fold_change']) + 0.1]
-            # range_y_axis = [0, max(difflips['minus_log10_p']) + 50]
+#             # range_x_axis = [min(difflips['log2fold_change']) - 0.1, max(difflips['log2fold_change']) + 0.1]
+#             # range_y_axis = [0, max(difflips['minus_log10_p']) + 50]
 
-            # Update layout
-            fig.update_layout(
-                showlegend=True,
-                legend_title_text='Lipid Family',
-                xaxis_title='Log₂(Fold Change), where Fold Change = <sup>Mean Intensity in Group B</sup> / <sub>Mean Intensity in Group A</sub>',
-                yaxis_title='-Log₁₀(p-Value)',
-                xaxis=dict(
-                    # range=range_x_axis,
-                    showspikes=True,
-                    spikemode='toaxis',
-                    spikesnap='cursor',
-                    spikethickness=1,
-                    spikedash='dot'
+#             # Update layout
+#             fig.update_layout(
+#                 showlegend=True,
+#                 legend_title_text='Lipid Family',
+#                 xaxis_title='Log₂(Fold Change), where Fold Change = <sup>Mean Intensity in Group B</sup> / <sub>Mean Intensity in Group A</sub>',
+#                 yaxis_title='-Log₁₀(p-Value)',
+#                 xaxis=dict(
+#                     # range=range_x_axis,
+#                     showspikes=True,
+#                     spikemode='toaxis',
+#                     spikesnap='cursor',
+#                     spikethickness=1,
+#                     spikedash='dot'
+#                 ),
+#                 yaxis=dict(
+#                     # range=range_y_axis,
+#                     showspikes=True,
+#                     spikemode='toaxis',
+#                     spikesnap='cursor',
+#                     spikethickness=1,
+#                     spikedash='dot'
+#                 ),
+#                 hovermode='closest',
+#                 template="plotly_dark",
+#                 margin=dict(l=50, r=50, t=30, b=70, pad=5),  # Reduce margins
+#                 autosize=True,  # Allow the plot to resize with container
+#             )
+
+#             fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
+#             fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
+
+#             logging.info("Volcano plotted. Returning it now")
+
+#             # Return dummy variable for ll_idx_labels to confirm that it has been computed
+#             # # save the figure in the working directory
+#             # fig.write_html("volcano.html")
+#             return fig
+
+#     return dash.no_update
+
+
+@app.long_callback(
+    Output("page-3-graph-volcano", "figure"),
+    inputs=[
+        Input("page-3-button-compute-volcano", "n_clicks"),
+        Input("main-slider", "data"),
+    ],
+    state=[
+        State("dcc-store-shapes-and-masks-A", "data"),
+        State("dcc-store-shapes-and-masks-B", "data"),
+    ],
+    prevent_initial_call=True,
+)
+def build_volcano_figure(_n_clicks, slice_index, l_shapes_and_masks_A, l_shapes_and_masks_B):
+    import plotly.graph_objects as go
+
+    # Defensive defaults
+    if not l_shapes_and_masks_A or not l_shapes_and_masks_B:
+        return go.Figure().update_layout(template="plotly_dark")
+
+    # Compute expressions directly (no storing of arrays in dcc.Store)
+    l_expressions_A = global_store(slice_index, l_shapes_and_masks_A)
+    l_expressions_B = global_store(slice_index, l_shapes_and_masks_B)
+
+    if not l_expressions_A or not l_expressions_B:
+        return go.Figure().update_layout(template="plotly_dark")
+
+    difflips = differential_lipids(l_expressions_A, l_expressions_B)
+
+    # Safeguards & transforms
+    fc_cutoff = 0.2
+    pvalue_cutoff = 0.01
+
+    # ensure strictly positive before -log10
+    safe_p = np.clip(difflips["p_value_corrected"].replace([0, np.nan], np.finfo(float).tiny), np.finfo(float).tiny, 1.0)
+    difflips["minus_log10_p"] = -np.log10(safe_p)
+    difflips["fold_change"] = np.power(2.0, difflips["log2fold_change"])
+    difflips["lipid_family"] = difflips["lipid"].apply(lambda x: x.split(" ")[0] if isinstance(x, str) else "Unknown")
+    difflips["marker_size"] = np.where(
+        (difflips["log2fold_change"].abs() < fc_cutoff), 3, 10
+    )
+
+    # Colors per lipid family (fallback to grey if missing)
+    try:
+        colors = pd.read_hdf("./data/annotations/lipidclasscolors.h5ad", key="table")
+    except Exception:
+        colors = pd.DataFrame({"classcolors": {}})
+    for fam in ["PA", "LPA"]:
+        if fam not in colors.index:
+            colors.loc[fam] = {"count": 0, "classcolors": "#D3D3D3"}
+    lipid_to_color = colors["classcolors"].to_dict()
+    default_color = "#D3D3D3"
+
+    fig = go.Figure()
+    for family, sub in difflips.groupby("lipid_family"):
+        fig.add_trace(
+            go.Scatter(
+                x=sub["log2fold_change"],
+                y=sub["minus_log10_p"],
+                mode="markers",
+                name=family,
+                marker=dict(
+                    size=sub["marker_size"],
+                    color=lipid_to_color.get(family, default_color),
+                    line=dict(width=0),
                 ),
-                yaxis=dict(
-                    # range=range_y_axis,
-                    showspikes=True,
-                    spikemode='toaxis',
-                    spikesnap='cursor',
-                    spikethickness=1,
-                    spikedash='dot'
-                ),
-                hovermode='closest',
-                template="plotly_dark",
-                margin=dict(l=50, r=50, t=30, b=70, pad=5),  # Reduce margins
-                autosize=True,  # Allow the plot to resize with container
+                customdata=np.column_stack((sub["lipid"], sub["p_value_corrected"], sub["fold_change"])),
+                hovertemplate="Lipid: %{customdata[0]}<extra></extra>",
             )
+        )
 
-            fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
-            fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
+    # Threshold lines
+    fig.add_vline(x=-fc_cutoff, line_dash="dash", line_color="grey", line_width=1)
+    fig.add_vline(x=fc_cutoff,  line_dash="dash", line_color="grey", line_width=1)
+    fig.add_hline(y=-np.log10(pvalue_cutoff), line_dash="dash", line_color="grey", line_width=1)
 
-            logging.info("Volcano plotted. Returning it now")
+    fig.update_layout(
+        showlegend=True,
+        legend_title_text="Lipid Family",
+        xaxis_title="Log₂(Fold Change), where Fold Change = Mean(B) / Mean(A)",
+        yaxis_title="-Log₁₀(p-Value)",
+        xaxis=dict(showspikes=True, spikemode="toaxis", spikesnap="cursor", spikethickness=1, spikedash="dot"),
+        yaxis=dict(showspikes=True, spikemode="toaxis", spikesnap="cursor", spikethickness=1, spikedash="dot"),
+        hovermode="closest",
+        template="plotly_dark",
+        margin=dict(l=50, r=50, t=30, b=70, pad=5),
+        autosize=True,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+    return fig
 
-            # Return dummy variable for ll_idx_labels to confirm that it has been computed
-            # # save the figure in the working directory
-            # fig.write_html("volcano.html")
-            return fig
 
-    return dash.no_update
 
 @app.callback(
     Output("page-4-drawer-region-selection", "is_open"),

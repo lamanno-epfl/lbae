@@ -518,7 +518,7 @@ class GridImageShelve:
             grid_image (np.ndarray): The grid image to store.
         """
         key = f"{lipid}_{sample}_grid"
-        with shelve.open(self.shelf_path) as db:
+        with shelve.open(self.shelf_path, flag="r") as db:
             db[key] = grid_image
 
     def retrieve_grid_image(self, lipid, sample=None, slice_index=None):
@@ -545,7 +545,7 @@ class GridImageShelve:
             sample = self.get_brain_id_from_sliceindex(slice_index)
 
         key = f"{lipid}_{sample}_grid"
-        with shelve.open(self.shelf_path) as db:
+        with shelve.open(self.shelf_path, flag="r") as db:
             if key in db:
                 return db[key]
             else:

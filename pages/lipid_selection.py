@@ -20,8 +20,8 @@ import dash_mantine_components as dmc
 import numpy as np
 # threadpoolctl import threadpool_limits, threadpool_info
 #threadpool_limits(limits=8)
-import os
-os.environ['OMP_NUM_THREADS'] = '6'
+# import os
+# os.environ['OMP_NUM_THREADS'] = '1'
 
 # LBAE imports
 from app import app, figures, data, cache_flask, atlas, grid_data
@@ -759,22 +759,243 @@ def page_2_hover(hoverData, slice_index):
 
     return dash.no_update
 
-@app.callback(
+# @app.callback(
+#     Output("page-2-graph-heatmap-mz-selection", "figure"),
+#     Output("page-2-badge-input", "children"),
+
+#     Input("main-slider", "data"),
+#     Input("page-2-selected-lipid-1", "data"),
+#     Input("page-2-selected-lipid-2", "data"),
+#     Input("page-2-selected-lipid-3", "data"),
+#     Input("page-2-rgb-switch", "checked"),
+#     Input("page-2-sections-mode", "value"),
+#     Input("main-brain", "value"),
+#     Input("page-2-toggle-annotations", "checked"),
+
+#     State("page-2-badge-input", "children"),
+# )
+# def page_2_plot_graph_heatmap_mz_selection(
+#     slice_index,
+#     lipid_1_index,
+#     lipid_2_index,
+#     lipid_3_index,
+#     rgb_mode,
+#     sections_mode,
+#     brain_id,
+#     annotations_checked,
+#     graph_input,
+# ):
+#     """This callback plots the heatmap of the selected lipid(s)."""
+#     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
+
+#     # Find out which input triggered the function
+#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+#     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
+    
+#     overlay = data.get_aba_contours(slice_index) if annotations_checked else None
+
+#     # Handle annotations toggle separately to preserve figure state
+#     if id_input == "page-2-toggle-annotations":
+#         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
+#             ll_lipid_names = [
+#                     ' '.join([
+#                         data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
+#                         + data.get_annotations().iloc[index]["structure"].split('_')[i] 
+#                         for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
+#                     ])
+#                 if index != -1
+#                 else None
+#                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
+#             ]
+        
+#             # If all sections view is requested, only use first lipid
+#             if sections_mode == "all":
+#                 active_lipids = [name for name in ll_lipid_names if name is not None]
+#                 first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+#                 image = grid_data.retrieve_grid_image(
+#                     lipid=first_lipid,
+#                     sample=brain_id
+#                 )
+#                 return(figures.build_lipid_heatmap_from_image(
+#                             image, 
+#                             return_base64_string=False,
+#                             overlay=overlay),
+#                         "Now displaying:")
+            
+#             if rgb_mode and sections_mode != "all":
+#                 return (
+#                     figures.compute_rgb_image_per_lipid_selection(
+#                         slice_index,
+#                         ll_lipid_names=ll_lipid_names,
+#                         cache_flask=cache_flask,
+#                         overlay=overlay,
+#                     ),
+#                     "Now displaying:",
+#                 )
+#             else:
+#                 # Check that only one lipid is selected for colormap mode
+#                 active_lipids = [name for name in ll_lipid_names if name is not None]
+#                 if len(active_lipids) == 1:
+#                     image = figures.compute_image_per_lipid(
+#                         slice_index,
+#                         RGB_format=False,
+#                         lipid_name=active_lipids[0],
+#                         cache_flask=cache_flask,
+#                     )
+#                     return (
+#                         figures.build_lipid_heatmap_from_image(
+#                             image, 
+#                             return_base64_string=False,
+#                             overlay=overlay,
+#                         ),
+#                         "Now displaying:",
+#                     )
+#                 else:
+#                     # If multiple lipids and not in RGB mode, force RGB mode (except in all sections mode)
+#                     if sections_mode != "all":
+#                         return (
+#                             figures.compute_rgb_image_per_lipid_selection(
+#                                 slice_index,
+#                                 ll_lipid_names=ll_lipid_names,
+#                                 cache_flask=cache_flask,
+#                                 overlay=overlay,
+#                             ),
+#                             "Now displaying:",
+#                         )
+#                     else:
+#                         # In all sections mode, use only first lipid
+#                         first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+#                         image = grid_data.retrieve_grid_image(
+#                             lipid=first_lipid,
+#                             sample=brain_id
+#                         )
+#                         return(figures.build_lipid_heatmap_from_image(
+#                                     image, 
+#                                     return_base64_string=False,
+#                                     overlay=overlay),
+#                                 "Now displaying:")
+
+#         return dash.no_update
+    # # If a lipid selection has been done
+    # if (
+    #     id_input == "page-2-selected-lipid-1"
+    #     or id_input == "page-2-selected-lipid-2"
+    #     or id_input == "page-2-selected-lipid-3"
+    #     or id_input == "page-2-rgb-switch"
+    #     or id_input == "page-2-sections-mode"
+    #     or id_input == "main-brain"
+    #     or id_input == "main-slider"
+    # ):
+    #     if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
+    #         ll_lipid_names = [
+    #                 ' '.join([
+    #                     data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
+    #                     + data.get_annotations().iloc[index]["structure"].split('_')[i] 
+    #                     for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
+    #                 ])
+    #             if index != -1
+    #             else None
+    #             for index in [lipid_1_index, lipid_2_index, lipid_3_index]
+    #         ]
+
+    #         # If all sections view is requested
+    #         if sections_mode == "all":
+    #             active_lipids = [name for name in ll_lipid_names if name is not None]
+    #             # Use first available lipid for all sections view
+    #             first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+    #             image = grid_data.retrieve_grid_image(
+    #                 lipid=first_lipid,
+    #                 sample=brain_id
+    #             )
+                
+    #             return(figures.build_lipid_heatmap_from_image(
+    #                         image, 
+    #                         return_base64_string=False,
+    #                         overlay=overlay),
+    #                     "Now displaying:")
+            
+    #         # Handle normal display mode (RGB or colormap)
+    #         else:
+    #             active_lipids = [name for name in ll_lipid_names if name is not None]
+    #             if rgb_mode:
+    #                 return (
+    #                     figures.compute_rgb_image_per_lipid_selection(
+    #                         slice_index,
+    #                         ll_lipid_names=ll_lipid_names,
+    #                         cache_flask=cache_flask,
+    #                         overlay=overlay,
+    #                     ),
+    #                     "Now displaying:",
+    #                 )
+    #             else:
+    #                 # If not in RGB mode, use first lipid only
+    #                 first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
+    #                 image = figures.compute_image_per_lipid(
+    #                     slice_index,
+    #                     RGB_format=False,
+    #                     lipid_name=first_lipid,
+    #                     cache_flask=cache_flask,
+    #                 )
+    #                 return (
+    #                     figures.build_lipid_heatmap_from_image(
+    #                         image, 
+    #                         return_base64_string=False,
+    #                         overlay=overlay,
+    #                     ),
+    #                     "Now displaying:",
+    #                 )
+    #     elif (
+    #         id_input == "main-slider" and graph_input == "Now displaying:"
+    #     ):
+    #         logging.info(f"No lipid has been selected, the current lipid is HexCer 42:2;O2 and the slice is {slice_index}")
+    #         return (
+    #             figures.compute_heatmap_per_lipid(slice_index, 
+    #                                             "HexCer 42:2;O2",
+    #                                             cache_flask=cache_flask,
+    #                                             overlay=overlay),
+    #             "Now displaying:",
+    #         )
+    #     else:
+    #         # No lipid has been selected
+    #         logging.info(f"No lipid has been selected, the current lipid is HexCer 42:2;O2 and the slice is {slice_index}")
+    #         return (
+    #             figures.compute_heatmap_per_lipid(slice_index, 
+    #                                             "HexCer 42:2;O2",
+    #                                             cache_flask=cache_flask,
+    #                                             overlay=overlay),
+    #             "Now displaying:",
+    #         )
+
+    # # If no trigger, the page has just been loaded, so load new figure with default parameters
+    # else:
+    #     return (
+    #         figures.compute_heatmap_per_lipid(slice_index, 
+    #                                         "HexCer 42:2;O2",
+    #                                         cache_flask=cache_flask,
+    #                                         overlay=overlay),
+    #         "Now displaying:",
+    #     )
+
+
+from dash.long_callback import DiskcacheLongCallbackManager
+from dash import no_update
+
+@app.long_callback(
     Output("page-2-graph-heatmap-mz-selection", "figure"),
     Output("page-2-badge-input", "children"),
-
-    Input("main-slider", "data"),
-    Input("page-2-selected-lipid-1", "data"),
-    Input("page-2-selected-lipid-2", "data"),
-    Input("page-2-selected-lipid-3", "data"),
-    Input("page-2-rgb-switch", "checked"),
-    Input("page-2-sections-mode", "value"),
-    Input("main-brain", "value"),
-    Input("page-2-toggle-annotations", "checked"),
-
-    State("page-2-badge-input", "children"),
+    inputs=[
+        Input("main-slider", "data"),
+        Input("page-2-selected-lipid-1", "data"),
+        Input("page-2-selected-lipid-2", "data"),
+        Input("page-2-selected-lipid-3", "data"),
+        Input("page-2-rgb-switch", "checked"),
+        Input("page-2-sections-mode", "value"),
+        Input("main-brain", "value"),
+        Input("page-2-toggle-annotations", "checked"),
+    ],
+    prevent_initial_call=True,
 )
-def page_2_plot_graph_heatmap_mz_selection(
+def page_2_plot_graph_heatmap_mz_selection_long(
     slice_index,
     lipid_1_index,
     lipid_2_index,
@@ -783,199 +1004,57 @@ def page_2_plot_graph_heatmap_mz_selection(
     sections_mode,
     brain_id,
     annotations_checked,
-    graph_input,
 ):
-    """This callback plots the heatmap of the selected lipid(s)."""
-    logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
-
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    
+    """Compute the figure based on current state (no callback_context)."""
     overlay = data.get_aba_contours(slice_index) if annotations_checked else None
 
-    # Handle annotations toggle separately to preserve figure state
-    if id_input == "page-2-toggle-annotations":
-        if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-            ll_lipid_names = [
-                    ' '.join([
-                        data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
-                        + data.get_annotations().iloc[index]["structure"].split('_')[i] 
-                        for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
-                    ])
-                if index != -1
-                else None
-                for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-            ]
-        
-            # If all sections view is requested, only use first lipid
-            if sections_mode == "all":
-                active_lipids = [name for name in ll_lipid_names if name is not None]
-                first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                image = grid_data.retrieve_grid_image(
-                    lipid=first_lipid,
-                    sample=brain_id
-                )
-                return(figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay),
-                        "Now displaying:")
-            
-            if rgb_mode and sections_mode != "all":
-                return (
-                    figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=ll_lipid_names,
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    ),
-                    "Now displaying:",
-                )
-            else:
-                # Check that only one lipid is selected for colormap mode
-                active_lipids = [name for name in ll_lipid_names if name is not None]
-                if len(active_lipids) == 1:
-                    image = figures.compute_image_per_lipid(
-                        slice_index,
-                        RGB_format=False,
-                        lipid_name=active_lipids[0],
-                        cache_flask=cache_flask,
-                    )
-                    return (
-                        figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                else:
-                    # If multiple lipids and not in RGB mode, force RGB mode (except in all sections mode)
-                    if sections_mode != "all":
-                        return (
-                            figures.compute_rgb_image_per_lipid_selection(
-                                slice_index,
-                                ll_lipid_names=ll_lipid_names,
-                                cache_flask=cache_flask,
-                                overlay=overlay,
-                            ),
-                            "Now displaying:",
-                        )
-                    else:
-                        # In all sections mode, use only first lipid
-                        first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                        image = grid_data.retrieve_grid_image(
-                            lipid=first_lipid,
-                            sample=brain_id
-                        )
-                        return(figures.build_lipid_heatmap_from_image(
-                                    image, 
-                                    return_base64_string=False,
-                                    overlay=overlay),
-                                "Now displaying:")
+    # Helper: index -> "Name Structure"
+    def idx_to_name(idx):
+        if idx is None or idx == -1:
+            return None
+        ann = data.get_annotations().iloc[idx]
+        # Reconstruct "name structure" the same way your original code does
+        name_parts = ann["name"].split("_")
+        struct_parts = ann["structure"].split("_")
+        parts = []
+        for i in range(len(name_parts)):
+            parts.append(name_parts[i] + " " + struct_parts[i])
+        return " ".join(parts)
 
-        return dash.no_update
+    n1, n2, n3 = map(idx_to_name, [lipid_1_index, lipid_2_index, lipid_3_index])
+    active = [n for n in [n1, n2, n3] if n]
 
-    # If a lipid selection has been done
-    if (
-        id_input == "page-2-selected-lipid-1"
-        or id_input == "page-2-selected-lipid-2"
-        or id_input == "page-2-selected-lipid-3"
-        or id_input == "page-2-rgb-switch"
-        or id_input == "page-2-sections-mode"
-        or id_input == "main-brain"
-        or id_input == "main-slider"
-    ):
-        if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-            ll_lipid_names = [
-                    ' '.join([
-                        data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
-                        + data.get_annotations().iloc[index]["structure"].split('_')[i] 
-                        for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
-                    ])
-                if index != -1
-                else None
-                for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-            ]
-
-            # If all sections view is requested
-            if sections_mode == "all":
-                active_lipids = [name for name in ll_lipid_names if name is not None]
-                # Use first available lipid for all sections view
-                first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                image = grid_data.retrieve_grid_image(
-                    lipid=first_lipid,
-                    sample=brain_id
-                )
-                
-                return(figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay),
-                        "Now displaying:")
-            
-            # Handle normal display mode (RGB or colormap)
-            else:
-                active_lipids = [name for name in ll_lipid_names if name is not None]
-                if rgb_mode:
-                    return (
-                        figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_lipid_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                else:
-                    # If not in RGB mode, use first lipid only
-                    first_lipid = active_lipids[0] if active_lipids else "HexCer 42:2;O2"
-                    image = figures.compute_image_per_lipid(
-                        slice_index,
-                        RGB_format=False,
-                        lipid_name=first_lipid,
-                        cache_flask=cache_flask,
-                    )
-                    return (
-                        figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-        elif (
-            id_input == "main-slider" and graph_input == "Now displaying:"
-        ):
-            logging.info(f"No lipid has been selected, the current lipid is HexCer 42:2;O2 and the slice is {slice_index}")
-            return (
-                figures.compute_heatmap_per_lipid(slice_index, 
-                                                "HexCer 42:2;O2",
-                                                cache_flask=cache_flask,
-                                                overlay=overlay),
-                "Now displaying:",
-            )
-        else:
-            # No lipid has been selected
-            logging.info(f"No lipid has been selected, the current lipid is HexCer 42:2;O2 and the slice is {slice_index}")
-            return (
-                figures.compute_heatmap_per_lipid(slice_index, 
-                                                "HexCer 42:2;O2",
-                                                cache_flask=cache_flask,
-                                                overlay=overlay),
-                "Now displaying:",
-            )
-
-    # If no trigger, the page has just been loaded, so load new figure with default parameters
-    else:
-        return (
-            figures.compute_heatmap_per_lipid(slice_index, 
-                                            "HexCer 42:2;O2",
-                                            cache_flask=cache_flask,
-                                            overlay=overlay),
-            "Now displaying:",
+    # All-sections mode: show only first lipid
+    if sections_mode == "all":
+        first = active[0] if active else "HexCer 42:2;O2"
+        image = grid_data.retrieve_grid_image(lipid=first, sample=brain_id)
+        fig = figures.build_lipid_heatmap_from_image(
+            image, return_base64_string=False, overlay=overlay
         )
+        return fig, "Now displaying:"
+
+    # Single-section mode
+    if rgb_mode and len(active) > 1:
+        fig = figures.compute_rgb_image_per_lipid_selection(
+            slice_index,
+            ll_lipid_names=[n1, n2, n3],
+            cache_flask=cache_flask,
+            overlay=overlay,
+        )
+        return fig, "Now displaying:"
+
+    # Fallback: single-lipid colormap
+    first = active[0] if active else "HexCer 42:2;O2"
+    image = figures.compute_image_per_lipid(
+        slice_index, RGB_format=False, lipid_name=first, cache_flask=cache_flask
+    )
+    fig = figures.build_lipid_heatmap_from_image(
+        image, return_base64_string=False, overlay=overlay
+    )
+    return fig, "Now displaying:"
+
+
+
 
 @app.callback(
     Output("page-2-badge-lipid-1", "children"),

@@ -20,12 +20,12 @@ import dash_mantine_components as dmc
 import numpy as np
 from tqdm import tqdm
 from scipy.ndimage import gaussian_filter
+from dash.long_callback import DiskcacheLongCallbackManager
 
 # threadpoolctl import threadpool_limits, threadpool_info
 # threadpool_limits(limits=8)
-import os
-
-os.environ["OMP_NUM_THREADS"] = "6"
+# import os
+# os.environ["OMP_NUM_THREADS"] = "1"
 import pickle
 import plotly.express as px
 
@@ -1602,89 +1602,142 @@ def page_6_hover(hoverData, slice_index):
     return dash.no_update
 
 
-@app.callback(
+# @app.callback(
+#     Output("page-6bis-graph-heatmap-mz-selection", "figure"),
+#     Input("main-slider", "data"),
+#     Input("page-6bis-all-selected-lipizones", "data"),
+#     Input("page-6bis-all-selected-celltypes", "data"),
+#     Input("page-6bis-toggle-annotations", "checked"),
+#     prevent_initial_call=True,
+# )
+# def page_6_plot_graph_heatmap_mz_selection(
+#     slice_index,
+#     all_selected_lipizones,
+#     all_selected_celltypes,
+#     annotations_checked,
+# ):
+#     """This callback plots the heatmap of the selected lipid(s)."""
+#     ctx = dash.callback_context
+#     if not ctx.triggered:
+#         return dash.no_update
+
+#     # Get which input triggered the callback
+#     triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+#     input_id = ctx.triggered[0]["prop_id"].split(".")[1]
+
+#     # Handle annotations overlay
+#     overlay = (
+#         black_aba_contours(data.get_aba_contours(slice_index))
+#         if annotations_checked
+#         else None
+#     )
+
+#     # If annotations toggle was triggered, preserve current selections
+#     if triggered_id == "page-6bis-toggle-annotations":
+#         lipizones_celltypes_image = figures.compute_image_lipizones_celltypes(
+#             all_selected_lipizones, all_selected_celltypes, slice_index
+#         )
+
+#         fig = figures.build_lipid_heatmap_from_image(
+#             lipizones_celltypes_image,
+#             return_base64_string=False,
+#             draw=False,
+#             type_image="RGB",
+#             return_go_image=False,
+#             overlay=overlay,
+#         )
+
+#         return fig
+
+#     # Handle other triggers (slider, selections, brain change)
+#     if (
+#         all_selected_lipizones and len(all_selected_lipizones.get("names", [])) > 0
+#     ) or (all_selected_celltypes and len(all_selected_celltypes.get("names", [])) > 0):
+#         lipizones_celltypes_image = figures.compute_image_lipizones_celltypes(
+#             all_selected_lipizones, all_selected_celltypes, slice_index
+#         )
+
+#         fig = figures.build_lipid_heatmap_from_image(
+#             lipizones_celltypes_image,
+#             return_base64_string=False,
+#             draw=False,
+#             type_image="RGB",
+#             return_go_image=False,
+#             overlay=overlay,
+#         )
+
+#         return fig
+
+#     else:
+#         # No selections, use default color for choroid plexus
+#         hex_colors_to_highlight = ["#f75400"]
+#         fig = figures.build_lipid_heatmap_from_image(
+#             figures.compute_image_lipizones_celltypes(
+#                 {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []},
+#                 {"names": list(celltype_data.celltype_to_color.keys()), "indices": []},
+#                 slice_index,
+#             ),
+#             return_base64_string=False,
+#             draw=False,
+#             type_image="RGB",
+#             return_go_image=False,
+#             overlay=overlay,
+#         )
+
+#         return fig
+
+
+from dash.long_callback import DiskcacheLongCallbackManager  # safe if unused
+
+@app.long_callback(
     Output("page-6bis-graph-heatmap-mz-selection", "figure"),
-    Input("main-slider", "data"),
-    Input("page-6bis-all-selected-lipizones", "data"),
-    Input("page-6bis-all-selected-celltypes", "data"),
-    Input("page-6bis-toggle-annotations", "checked"),
+    inputs=[
+        Input("main-slider", "data"),
+        Input("page-6bis-all-selected-lipizones", "data"),
+        Input("page-6bis-all-selected-celltypes", "data"),
+        Input("page-6bis-toggle-annotations", "checked"),
+    ],
     prevent_initial_call=True,
 )
-def page_6_plot_graph_heatmap_mz_selection(
+def page_6bis_plot_graph_heatmap_mz_selection_long(
     slice_index,
     all_selected_lipizones,
     all_selected_celltypes,
     annotations_checked,
 ):
-    """This callback plots the heatmap of the selected lipid(s)."""
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        return dash.no_update
-
-    # Get which input triggered the callback
-    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
-    input_id = ctx.triggered[0]["prop_id"].split(".")[1]
-
-    # Handle annotations overlay
+    # Overlay (annotations)
     overlay = (
         black_aba_contours(data.get_aba_contours(slice_index))
-        if annotations_checked
-        else None
+        if annotations_checked else None
     )
 
-    # If annotations toggle was triggered, preserve current selections
-    if triggered_id == "page-6bis-toggle-annotations":
-        lipizones_celltypes_image = figures.compute_image_lipizones_celltypes(
-            all_selected_lipizones, all_selected_celltypes, slice_index
+    # Determine if anything is selected
+    has_lip = bool(all_selected_lipizones and all_selected_lipizones.get("names"))
+    has_cell = bool(all_selected_celltypes and all_selected_celltypes.get("names"))
+
+    if has_lip or has_cell:
+        image = figures.compute_image_lipizones_celltypes(
+            all_selected_lipizones or {"names": [], "indices": []},
+            all_selected_celltypes or {"names": [], "indices": []},
+            slice_index,
         )
-
-        fig = figures.build_lipid_heatmap_from_image(
-            lipizones_celltypes_image,
-            return_base64_string=False,
-            draw=False,
-            type_image="RGB",
-            return_go_image=False,
-            overlay=overlay,
-        )
-
-        return fig
-
-    # Handle other triggers (slider, selections, brain change)
-    if (
-        all_selected_lipizones and len(all_selected_lipizones.get("names", [])) > 0
-    ) or (all_selected_celltypes and len(all_selected_celltypes.get("names", [])) > 0):
-        lipizones_celltypes_image = figures.compute_image_lipizones_celltypes(
-            all_selected_lipizones, all_selected_celltypes, slice_index
-        )
-
-        fig = figures.build_lipid_heatmap_from_image(
-            lipizones_celltypes_image,
-            return_base64_string=False,
-            draw=False,
-            type_image="RGB",
-            return_go_image=False,
-            overlay=overlay,
-        )
-
-        return fig
-
     else:
-        # No selections, use default color for choroid plexus
-        hex_colors_to_highlight = ["#f75400"]
-        fig = figures.build_lipid_heatmap_from_image(
-            figures.compute_image_lipizones_celltypes(
-                {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []},
-                {"names": list(celltype_data.celltype_to_color.keys()), "indices": []},
-                slice_index,
-            ),
-            return_base64_string=False,
-            draw=False,
-            type_image="RGB",
-            return_go_image=False,
-            overlay=overlay,
+        # Default view: show everything (same as initial layout)
+        image = figures.compute_image_lipizones_celltypes(
+            {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []},
+            {"names": list(celltype_data.celltype_to_color.keys()), "indices": []},
+            slice_index,
         )
 
-        return fig
+    return figures.build_lipid_heatmap_from_image(
+        image,
+        return_base64_string=False,
+        draw=False,
+        type_image="RGB",
+        return_go_image=False,
+        overlay=overlay,
+    )
+
 
 
 # Add callback to update badges

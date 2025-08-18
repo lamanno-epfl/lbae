@@ -511,6 +511,25 @@ def return_main_content():
     )
     return main_content
 
+# --- Hidden validation stubs for IDs that appear in logs ---
+from dash import html, dcc
+
+def _validation_stubs():
+    return html.Div([
+        # page 2bis / 2tris pieces
+        dcc.Graph(id="page-2tris-graph-heatmap-mz-selection"),
+        html.Div(id="page-2tris-badge-input"),
+        dcc.Graph(id="page-2bis-graph-heatmap-mz-selection"),
+        html.Div(id="page-2bis-badge-input"),
+
+        # region-analysis volcano stores
+        dcc.Store(id="dcc-store-list-volcano-A"),
+        dcc.Store(id="dcc-store-list-volcano-B"),
+
+        # page 6 heatmap
+        dcc.Graph(id="page-6-graph-heatmap-mz-selection"),
+    ], style={"display": "none"})
+
 
 def return_validation_layout(main_content, initial_slice=3):
     """This function compute the layout of the app, including the main container, the sidebar and
@@ -538,6 +557,8 @@ def return_validation_layout(main_content, initial_slice=3):
             region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
             threeD_lipizones.return_layout(basic_config, initial_slice),
+
+            _validation_stubs(),
         ]
     )
 

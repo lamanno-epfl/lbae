@@ -214,7 +214,8 @@ logging.info("Memory use after three main object have been instantiated" + logme
 
 # Compute and shelve potentially missing objects
 launch = Launch(data, atlas, figures, storage)
-launch.launch()
+if os.environ.get("LBAE_PRECOMPUTE", "1") == "1":
+    launch.launch()
 
 logging.info("Memory use after main functions have been compiled" + logmem())
 
@@ -230,7 +231,7 @@ launch_uid = uuid4()
 cache_long_callback = diskcache.Cache(cache_dir)
 long_callback_manager = DiskcacheLongCallbackManager(
     cache_long_callback,
-    cache_by=[lambda: launch_uid],
+    #####cache_by=[lambda: launch_uid],
     expire=500,
 )
 

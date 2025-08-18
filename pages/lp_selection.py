@@ -18,10 +18,11 @@ import pandas as pd
 from dash.dependencies import Input, Output, State, ALL
 import dash_mantine_components as dmc
 import numpy as np
+from dash.long_callback import DiskcacheLongCallbackManager
 # threadpoolctl import threadpool_limits, threadpool_info
 #threadpool_limits(limits=8)
-import os
-os.environ['OMP_NUM_THREADS'] = '6'
+# import os
+# os.environ['OMP_NUM_THREADS'] = '1'
 
 # LBAE imports
 from app import app, program_figures, program_data, cache_flask, atlas, grid_data
@@ -737,229 +738,309 @@ def page_2bis_hover(hoverData, slice_index):
 
     return dash.no_update
 
-@app.callback(
+# @app.callback(
+#     Output("page-2bis-graph-heatmap-mz-selection", "figure"),
+#     Output("page-2bis-badge-input", "children"),
+
+#     Input("main-slider", "data"),
+#     Input("page-2bis-selected-program-1", "data"),
+#     Input("page-2bis-selected-program-2", "data"),
+#     Input("page-2bis-selected-program-3", "data"),
+#     Input("page-2bis-rgb-switch", "checked"),
+#     # Input("page-2bis-sections-mode", "value"), # TODO: uncomment this when we compute and store the all-sections mode
+#     Input("main-brain", "value"),
+#     Input("page-2bis-toggle-annotations", "checked"),
+
+#     State("page-2bis-badge-input", "children"),
+# )
+# def page_2bis_plot_graph_heatmap_mz_selection(
+#     slice_index,
+#     program_1_index,
+#     program_2_index,
+#     program_3_index,
+#     rgb_mode,
+#     # sections_mode, # TODO: uncomment this when we compute and store the all-sections mode
+#     brain_id,
+#     annotations_checked,
+#     graph_input,
+# ):
+#     """This callback plots the heatmap of the selected lipid program(s)."""
+#     logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
+
+#     # Find out which input triggered the function
+#     id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+#     value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
+    
+#     # overlay = program_data.get_aba_contours(slice_index) if annotations_checked else None
+#     overlay = cyan_aba_contours(program_data.get_aba_contours(slice_index)) if annotations_checked else None
+
+#     # Handle annotations toggle separately to preserve figure state
+#     if id_input == "page-2bis-toggle-annotations":
+#         if program_1_index >= 0 or program_2_index >= 0 or program_3_index >= 0:
+#             ll_program_names = [
+#                 program_data.get_annotations().iloc[index]["name"]
+                
+#                 if index != -1
+#                 else None
+#                 for index in [program_1_index, program_2_index, program_3_index]
+#             ]
+    
+#             # # If all sections view is requested, only use first lipid
+#             # if sections_mode == "all":
+#             #     active_programs = [name for name in ll_program_names if name is not None]
+#             #     first_program = active_programs[0] if active_programs else "mitochondrion"
+#             #     image = grid_data.retrieve_grid_image(
+#             #         lipid=first_program,
+#             #         sample=brain_id
+#             #     )
+#             #     return(program_figures.build_lipid_heatmap_from_image(
+#             #                 image, 
+#             #                 return_base64_string=False,
+#             #                 overlay=overlay,
+#             #                 colormap_type="PuOr"),
+#             #             "Now displaying:")
+            
+#             if rgb_mode:
+#                 # and sections_mode != "all" # TODO: uncomment this when we compute and store the all-sections mode
+#                 return (
+#                     program_figures.compute_rgb_image_per_lipid_selection(
+#                         slice_index,
+#                         ll_lipid_names=ll_program_names,
+#                         cache_flask=cache_flask,
+#                         overlay=overlay,
+#                     ),
+#                     "Now displaying:",
+#                 )
+#             else:
+#                 # Check that only one lipid is selected for colormap mode
+#                 active_programs = [name for name in ll_program_names if name is not None]
+#                 if len(active_programs) == 1:
+#                     image = program_figures.compute_image_per_lipid(
+#                         slice_index,
+#                         RGB_format=False,
+#                         lipid_name=active_programs[0],
+#                         cache_flask=cache_flask,
+#                     )
+#                     return (
+#                         program_figures.build_lipid_heatmap_from_image(
+#                             image, 
+#                             return_base64_string=False,
+#                             overlay=overlay,
+#                             colormap_type="PuOr",
+#                         ),
+#                         "Now displaying:",
+#                     )
+#                 else:
+#                     # If multiple lipids and not in RGB mode, force RGB mode (except in all sections mode)
+#                     # if sections_mode != "all":
+#                     return (
+#                         program_figures.compute_rgb_image_per_lipid_selection(
+#                             slice_index,
+#                             ll_lipid_names=ll_program_names,
+#                             cache_flask=cache_flask,
+#                             overlay=overlay,
+#                         ),
+#                         "Now displaying:",
+#                     )
+#                     # TODO: uncomment this when we compute and store the all-sections mode
+#                     # else:
+#                     #     # In all sections mode, use only first lipid
+#                     #     first_program = active_programs[0] if active_programs else "mitochondrion"
+#                     #     image = grid_data.retrieve_grid_image(
+#                     #         lipid=first_program,
+#                     #         sample=brain_id
+#                     #     )
+#                     #     return(program_figures.build_lipid_heatmap_from_image(
+#                     #                 image, 
+#                     #                 return_base64_string=False,
+#                     #                 overlay=overlay,
+#                     #                 colormap_type="PuOr"),
+#                     #             "Now displaying:")
+
+#         return dash.no_update
+
+#     # If a lipid selection has been done
+#     if (
+#         id_input == "page-2bis-selected-program-1"
+#         or id_input == "page-2bis-selected-program-2"
+#         or id_input == "page-2bis-selected-program-3"
+#         or id_input == "page-2bis-rgb-switch"
+#         # or id_input == "page-2bis-sections-mode" # TODO: uncomment this when we compute and store the all-sections mode
+#         or id_input == "main-brain"
+#         or id_input == "main-slider"
+#     ):
+#         if program_1_index >= 0 or program_2_index >= 0 or program_3_index >= 0:
+#             ll_program_names = [
+#                 program_data.get_annotations().iloc[index]["name"]
+                
+#                 if index != -1
+#                 else None
+#                 for index in [program_1_index, program_2_index, program_3_index]
+#             ]
+
+#             # TODO: uncomment this when we compute and store the all-sections mode
+#             # # If all sections view is requested
+#             # if sections_mode == "all":
+#             #     active_programs = [name for name in ll_program_names if name is not None]
+#             #     # Use first available lipid for all sections view
+#             #     first_program = active_programs[0] if active_programs else "mitochondrion"
+#             #     image = grid_data.retrieve_grid_image(
+#             #         lipid=first_program,
+#             #         sample=brain_id
+#             #     )
+                
+#             #     return(program_figures.build_lipid_heatmap_from_image(
+#             #                 image, 
+#             #                 return_base64_string=False,
+#             #                 overlay=overlay,
+#             #                 colormap_type="PuOr"),
+#             #             "Now displaying:")
+            
+#             # Handle normal display mode (RGB or colormap)
+#             # else:
+#             active_programs = [name for name in ll_program_names if name is not None]
+#             if rgb_mode:
+#                 return (
+#                     program_figures.compute_rgb_image_per_lipid_selection(
+#                         slice_index,
+#                         ll_lipid_names=ll_program_names,
+#                         cache_flask=cache_flask,
+#                         overlay=overlay,
+#                     ),
+#                     "Now displaying:",
+#                 )
+#             else:
+#                 # If not in RGB mode, use first lipid only
+#                 first_program = active_programs[0] if active_programs else "mitochondrion"
+#                 image = program_figures.compute_image_per_lipid(
+#                     slice_index,
+#                     RGB_format=False,
+#                     lipid_name=first_program,
+#                     cache_flask=cache_flask,
+#                 )
+#                 return (
+#                     program_figures.build_lipid_heatmap_from_image(
+#                         image, 
+#                         return_base64_string=False,
+#                         overlay=overlay,
+#                         colormap_type="PuOr",
+#                     ),
+#                     "Now displaying:",
+#                 )
+#         elif (
+#             id_input == "main-slider" and graph_input == "Now displaying:"
+#         ):
+#             logging.info(f"No lipid has been selected, the current lipid is mitochondrion and the slice is {slice_index}")
+#             return (
+#                 program_figures.compute_heatmap_per_lipid(slice_index, 
+#                                                 "mitochondrion",
+#                                                 cache_flask=cache_flask,
+#                                                 overlay=overlay,
+#                                                 colormap_type="PuOr"),
+#                 "Now displaying:",
+#             )
+#         else:
+#             # No lipid has been selected
+#             logging.info(f"No lipid has been selected, the current lipid is mitochondrion and the slice is {slice_index}")
+#             return (
+#                 program_figures.compute_heatmap_per_lipid(slice_index, 
+#                                                 "mitochondrion",
+#                                                 cache_flask=cache_flask,
+#                                                 overlay=overlay,
+#                                                 colormap_type="PuOr"),
+#                 "Now displaying:",
+#             )
+
+#     # If no trigger, the page has just been loaded, so load new figure with default parameters
+#     else:
+#         return (
+#             program_figures.compute_heatmap_per_lipid(slice_index, 
+#                                             "mitochondrion",
+#                                             cache_flask=cache_flask,
+#                                             overlay=overlay,
+#                                             colormap_type="PuOr"),
+#             "Now displaying:",
+#         )
+
+from dash.long_callback import DiskcacheLongCallbackManager  # ok if unused
+
+@app.long_callback(
     Output("page-2bis-graph-heatmap-mz-selection", "figure"),
     Output("page-2bis-badge-input", "children"),
-
-    Input("main-slider", "data"),
-    Input("page-2bis-selected-program-1", "data"),
-    Input("page-2bis-selected-program-2", "data"),
-    Input("page-2bis-selected-program-3", "data"),
-    Input("page-2bis-rgb-switch", "checked"),
-    # Input("page-2bis-sections-mode", "value"), # TODO: uncomment this when we compute and store the all-sections mode
-    Input("main-brain", "value"),
-    Input("page-2bis-toggle-annotations", "checked"),
-
-    State("page-2bis-badge-input", "children"),
+    inputs=[
+        Input("main-slider", "data"),
+        Input("page-2bis-selected-program-1", "data"),
+        Input("page-2bis-selected-program-2", "data"),
+        Input("page-2bis-selected-program-3", "data"),
+        Input("page-2bis-rgb-switch", "checked"),
+        Input("main-brain", "value"),
+        Input("page-2bis-toggle-annotations", "checked"),
+    ],
+    state=[State("page-2bis-badge-input", "children")],
+    prevent_initial_call=True,
 )
-def page_2bis_plot_graph_heatmap_mz_selection(
+def page_2bis_plot_graph_heatmap_mz_selection_long(
     slice_index,
     program_1_index,
     program_2_index,
     program_3_index,
     rgb_mode,
-    # sections_mode, # TODO: uncomment this when we compute and store the all-sections mode
     brain_id,
     annotations_checked,
-    graph_input,
+    graph_input,   # kept for signature parity; not used
 ):
-    """This callback plots the heatmap of the selected lipid program(s)."""
-    logging.info("Entering function to plot heatmap or RGB depending on lipid selection")
-
-    # Find out which input triggered the function
-    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-    
-    # overlay = program_data.get_aba_contours(slice_index) if annotations_checked else None
+    # ABA overlay (cyan)
     overlay = cyan_aba_contours(program_data.get_aba_contours(slice_index)) if annotations_checked else None
 
-    # Handle annotations toggle separately to preserve figure state
-    if id_input == "page-2bis-toggle-annotations":
-        if program_1_index >= 0 or program_2_index >= 0 or program_3_index >= 0:
-            ll_program_names = [
-                program_data.get_annotations().iloc[index]["name"]
-                
-                if index != -1
-                else None
-                for index in [program_1_index, program_2_index, program_3_index]
-            ]
-    
-            # # If all sections view is requested, only use first lipid
-            # if sections_mode == "all":
-            #     active_programs = [name for name in ll_program_names if name is not None]
-            #     first_program = active_programs[0] if active_programs else "mitochondrion"
-            #     image = grid_data.retrieve_grid_image(
-            #         lipid=first_program,
-            #         sample=brain_id
-            #     )
-            #     return(program_figures.build_lipid_heatmap_from_image(
-            #                 image, 
-            #                 return_base64_string=False,
-            #                 overlay=overlay,
-            #                 colormap_type="PuOr"),
-            #             "Now displaying:")
-            
-            if rgb_mode:
-                # and sections_mode != "all" # TODO: uncomment this when we compute and store the all-sections mode
-                return (
-                    program_figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=ll_program_names,
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    ),
-                    "Now displaying:",
-                )
-            else:
-                # Check that only one lipid is selected for colormap mode
-                active_programs = [name for name in ll_program_names if name is not None]
-                if len(active_programs) == 1:
-                    image = program_figures.compute_image_per_lipid(
-                        slice_index,
-                        RGB_format=False,
-                        lipid_name=active_programs[0],
-                        cache_flask=cache_flask,
-                    )
-                    return (
-                        program_figures.build_lipid_heatmap_from_image(
-                            image, 
-                            return_base64_string=False,
-                            overlay=overlay,
-                            colormap_type="PuOr",
-                        ),
-                        "Now displaying:",
-                    )
-                else:
-                    # If multiple lipids and not in RGB mode, force RGB mode (except in all sections mode)
-                    # if sections_mode != "all":
-                    return (
-                        program_figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_program_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        ),
-                        "Now displaying:",
-                    )
-                    # TODO: uncomment this when we compute and store the all-sections mode
-                    # else:
-                    #     # In all sections mode, use only first lipid
-                    #     first_program = active_programs[0] if active_programs else "mitochondrion"
-                    #     image = grid_data.retrieve_grid_image(
-                    #         lipid=first_program,
-                    #         sample=brain_id
-                    #     )
-                    #     return(program_figures.build_lipid_heatmap_from_image(
-                    #                 image, 
-                    #                 return_base64_string=False,
-                    #                 overlay=overlay,
-                    #                 colormap_type="PuOr"),
-                    #             "Now displaying:")
+    # Resolve selected program names from indices (ignore -1 / None)
+    indices = [program_1_index, program_2_index, program_3_index]
+    names = []
+    for idx in indices:
+        if isinstance(idx, (int, np.integer)) and idx >= 0:
+            try:
+                names.append(program_data.get_annotations().iloc[idx]["name"])
+            except Exception:
+                pass
 
-        return dash.no_update
-
-    # If a lipid selection has been done
-    if (
-        id_input == "page-2bis-selected-program-1"
-        or id_input == "page-2bis-selected-program-2"
-        or id_input == "page-2bis-selected-program-3"
-        or id_input == "page-2bis-rgb-switch"
-        # or id_input == "page-2bis-sections-mode" # TODO: uncomment this when we compute and store the all-sections mode
-        or id_input == "main-brain"
-        or id_input == "main-slider"
-    ):
-        if program_1_index >= 0 or program_2_index >= 0 or program_3_index >= 0:
-            ll_program_names = [
-                program_data.get_annotations().iloc[index]["name"]
-                
-                if index != -1
-                else None
-                for index in [program_1_index, program_2_index, program_3_index]
-            ]
-
-            # TODO: uncomment this when we compute and store the all-sections mode
-            # # If all sections view is requested
-            # if sections_mode == "all":
-            #     active_programs = [name for name in ll_program_names if name is not None]
-            #     # Use first available lipid for all sections view
-            #     first_program = active_programs[0] if active_programs else "mitochondrion"
-            #     image = grid_data.retrieve_grid_image(
-            #         lipid=first_program,
-            #         sample=brain_id
-            #     )
-                
-            #     return(program_figures.build_lipid_heatmap_from_image(
-            #                 image, 
-            #                 return_base64_string=False,
-            #                 overlay=overlay,
-            #                 colormap_type="PuOr"),
-            #             "Now displaying:")
-            
-            # Handle normal display mode (RGB or colormap)
-            # else:
-            active_programs = [name for name in ll_program_names if name is not None]
-            if rgb_mode:
-                return (
-                    program_figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=ll_program_names,
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    ),
-                    "Now displaying:",
-                )
-            else:
-                # If not in RGB mode, use first lipid only
-                first_program = active_programs[0] if active_programs else "mitochondrion"
-                image = program_figures.compute_image_per_lipid(
-                    slice_index,
-                    RGB_format=False,
-                    lipid_name=first_program,
-                    cache_flask=cache_flask,
-                )
-                return (
-                    program_figures.build_lipid_heatmap_from_image(
-                        image, 
-                        return_base64_string=False,
-                        overlay=overlay,
-                        colormap_type="PuOr",
-                    ),
-                    "Now displaying:",
-                )
-        elif (
-            id_input == "main-slider" and graph_input == "Now displaying:"
-        ):
-            logging.info(f"No lipid has been selected, the current lipid is mitochondrion and the slice is {slice_index}")
-            return (
-                program_figures.compute_heatmap_per_lipid(slice_index, 
-                                                "mitochondrion",
-                                                cache_flask=cache_flask,
-                                                overlay=overlay,
-                                                colormap_type="PuOr"),
-                "Now displaying:",
-            )
-        else:
-            # No lipid has been selected
-            logging.info(f"No lipid has been selected, the current lipid is mitochondrion and the slice is {slice_index}")
-            return (
-                program_figures.compute_heatmap_per_lipid(slice_index, 
-                                                "mitochondrion",
-                                                cache_flask=cache_flask,
-                                                overlay=overlay,
-                                                colormap_type="PuOr"),
-                "Now displaying:",
-            )
-
-    # If no trigger, the page has just been loaded, so load new figure with default parameters
-    else:
-        return (
-            program_figures.compute_heatmap_per_lipid(slice_index, 
-                                            "mitochondrion",
-                                            cache_flask=cache_flask,
-                                            overlay=overlay,
-                                            colormap_type="PuOr"),
-            "Now displaying:",
+    # No selection → default single-program heatmap
+    if not names:
+        fig = program_figures.compute_heatmap_per_lipid(
+            slice_index,
+            "mitochondrion",
+            cache_flask=cache_flask,
+            overlay=overlay,
+            colormap_type="PuOr",
         )
+        return fig, "Now displaying:"
+
+    # If RGB mode (or multiple programs), render RGB
+    if rgb_mode or len(names) > 1:
+        # pad/truncate to 3 entries as the RGB helper expects up to 3
+        padded = [names[i] if i < len(names) else None for i in range(3)]
+        fig = program_figures.compute_rgb_image_per_lipid_selection(
+            slice_index,
+            ll_lipid_names=padded,
+            cache_flask=cache_flask,
+            overlay=overlay,
+        )
+        return fig, "Now displaying:"
+
+    # Otherwise render single-program colormap
+    first = names[0]
+    image = program_figures.compute_image_per_lipid(
+        slice_index,
+        RGB_format=False,
+        lipid_name=first,
+        cache_flask=cache_flask,
+    )
+    fig = program_figures.build_lipid_heatmap_from_image(
+        image,
+        return_base64_string=False,
+        overlay=overlay,
+        colormap_type="PuOr",
+    )
+    return fig, "Now displaying:"
+
 
 @app.callback(
     Output("page-2bis-badge-program-1", "children"),

@@ -276,6 +276,54 @@ cache_flask.init_app(app.server, config=CACHE_CONFIG)
 cache_flask.set("locked-cleaning", False)
 cache_flask.set("locked-reading", False)
 
+# ADD THIS: Periodic cache cleanup to prevent memory accumulation
+import threading
+import time
+import psutil
+
+def periodic_cache_cleanup():
+    """Clean up caches periodically to prevent memory accumulation."""
+    while True:
+        try:
+            time.sleep(300)  # Every 5 minutes
+            
+            # Check if memory usage is high
+            memory_percent = psutil.virtual_memory().percent
+            if memory_percent > 75:  # If memory > 75%
+                logging.warning(f"High memory usage detected ({memory_percent}%), clearing caches")
+                
+                # Clear Redis cache
+                try:
+                    figures.clear_all_redis_cache()
+                    logging.info("Cleared Redis cache due to high memory usage")
+                except Exception as e:
+                    logging.error(f"Failed to clear Redis cache: {e}")
+                
+                # Clear Flask cache
+                try:
+                    cache_flask.clear()
+                    logging.info("Cleared Flask cache due to high memory usage")
+                except Exception as e:
+                    logging.error(f"Failed to clear Flask cache: {e}")
+                
+                # ADD THIS: Clear long callback cache
+                try:
+                    long_callback_manager.clear_cache()
+                    logging.info("Cleared long callback cache due to high memory usage")
+                except Exception as e:
+                    logging.error(f"Failed to clear long callback cache: {e}")
+                
+                # Force garbage collection
+                import gc
+                gc.collect()
+                
+        except Exception as e:
+            logging.error(f"Cache cleanup error: {e}")
+
+# Start cleanup thread
+cleanup_thread = threading.Thread(target=periodic_cache_cleanup, daemon=True)
+cleanup_thread.start()
+
 # Add basic configuration and slice index
 # basic_config = {
 #     "brain": "brain_1",
@@ -306,5 +354,6 @@ __all__ = [
     'figures', 
     'program_figures',
     'peak_figures',
+    'cache_flask','long_callback_manager' #############################
     # 'stream_figures',
     ]

@@ -15,6 +15,10 @@ from tqdm import tqdm
 import zarr
 import plotly.express as px
 
+# Redis caching imports
+import redis
+import hashlib
+
 # Make sure to import or define these functions:
 # from your_module import create_section_grid, normalize_grid_with_percentiles
 
@@ -66,6 +70,53 @@ class CelltypeData:
 
         self.df_hierarchy_celltypes = pd.read_csv(os.path.join(self.path_data, "celltypes_hierarchy.csv"))
         self.celltype_to_color = pickle.load(open(os.path.join(self.path_data, "celltype_to_color.pkl"), "rb"))
+
+        # Initialize Redis client for caching
+        try:
+            self._redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
+            # Test connection
+            self._redis_client.ping()
+            self._use_redis = True
+            logging.info("CelltypeData Redis cache initialized successfully")
+        except Exception as e:
+            self._use_redis = False
+            logging.warning(f"CelltypeData Redis cache not available: {e}. Caching will be disabled.")
+
+    def _generate_cache_key(self, method_name, *args, **kwargs):
+        """Generate a unique cache key for the given method and arguments."""
+        # Create a hash of the method name and arguments
+        args_str = str(args) + str(sorted(kwargs.items()))
+        args_hash = hashlib.md5(args_str.encode()).hexdigest()
+        return f"celltype:{method_name}:{args_hash}"
+
+    def _get_from_cache(self, cache_key):
+        """Try to get a cached result from Redis."""
+        if not self._use_redis:
+            return None
+        
+        try:
+            cached_result = self._redis_client.get(cache_key)
+            if cached_result:
+                logging.info(f"CACHE HIT! Returning cached {cache_key[:30]}...")
+                return pickle.loads(cached_result)
+        except Exception as e:
+            logging.warning(f"Error reading from cache: {e}")
+        
+        return None
+
+    def _save_to_cache(self, cache_key, result, expire_seconds=3600):
+        """Save a result to Redis cache."""
+        if not self._use_redis:
+            return
+        
+        try:
+            # Serialize the result
+            serialized_result = pickle.dumps(result)
+            # Save to cache with expiration (1 hour default)
+            self._redis_client.set(cache_key, serialized_result, ex=expire_seconds)
+            logging.info(f"Saved {cache_key[:30]}... to cache")
+        except Exception as e:
+            logging.warning(f"Error saving to cache: {e}")
     
     def store_section_data(self, section, color_masks):
         data = {
@@ -77,11 +128,26 @@ class CelltypeData:
         logging.info(f"Stored data for section: {key}")
     
     def retrieve_section_data(self, section):
+        # Generate cache key for this request
+        cache_key = self._generate_cache_key("retrieve_section_data", section)
+        
+        # Try to get result from cache first
+        cached_result = self._get_from_cache(cache_key)
+        if cached_result is not None:
+            return cached_result
+        
+        logging.info(f"CACHE MISS! Generating celltype data for section {section}")
+        
         key = str(section)
         with shelve.open(self.shelf_path, flag="r") as db:
             if key in db:
-                return db[key]
+                result = db[key]
+                # Save result to cache for future use
+                self._save_to_cache(cache_key, result)
+                return result
             else:
+                # Don't cache KeyError exceptions
+                logging.warning(f"Data for section '{key}' not found.")
                 raise KeyError(f"Data for section '{key}' not found.")
                 
     def create_treemap_data_celltypes(self, slice_index=1.0,):

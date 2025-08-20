@@ -12,6 +12,10 @@ from scipy.ndimage import generic_filter
 from collections import Counter
 import pickle
 
+# Redis caching imports
+import redis
+import hashlib
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
@@ -128,6 +132,53 @@ class MaldiData:
         #     self.acronyms_masks[slice_idx] = self.get_acronym_mask(slice_idx)
         # self.acronyms_masks_with_holes = ACRONYM_MASKS_WITH_HOLES
 
+        # Initialize Redis client for caching
+        try:
+            self._redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
+            # Test connection
+            self._redis_client.ping()
+            self._use_redis = True
+            logging.info("MaldiData Redis cache initialized successfully")
+        except Exception as e:
+            self._use_redis = False
+            logging.warning(f"MaldiData Redis cache not available: {e}. Caching will be disabled.")
+
+    def _generate_cache_key(self, method_name, *args, **kwargs):
+        """Generate a unique cache key for the given method and arguments."""
+        # Create a hash of the method name and arguments
+        args_str = str(args) + str(sorted(kwargs.items()))
+        args_hash = hashlib.md5(args_str.encode()).hexdigest()
+        return f"maldi:{method_name}:{args_hash}"
+
+    def _get_from_cache(self, cache_key):
+        """Try to get a cached result from Redis."""
+        if not self._use_redis:
+            return None
+        
+        try:
+            cached_result = self._redis_client.get(cache_key)
+            if cached_result:
+                logging.info(f"CACHE HIT! Returning cached {cache_key[:30]}...")
+                return pickle.loads(cached_result)
+        except Exception as e:
+            logging.warning(f"Error reading from cache: {e}")
+        
+        return None
+
+    def _save_to_cache(self, cache_key, result, expire_seconds=3600):
+        """Save a result to Redis cache."""
+        if not self._use_redis:
+            return
+        
+        try:
+            # Serialize the result
+            serialized_result = pickle.dumps(result)
+            # Save to cache with expiration (1 hour default)
+            self._redis_client.set(cache_key, serialized_result, ex=expire_seconds)
+            logging.info(f"Saved {cache_key[:30]}... to cache")
+        except Exception as e:
+            logging.warning(f"Error saving to cache: {e}")
+
     def get_annotations(self) -> pd.DataFrame:
         return self._df_annotations
 
@@ -219,10 +270,29 @@ class MaldiData:
         Returns:
             SliceData object if found, None otherwise
         """
+        # Generate cache key for this request
+        cache_key = self._generate_cache_key("get_lipids_image", slice_index)
+        
+        # Try to get result from cache first
+        cached_result = self._get_from_cache(cache_key)
+        if cached_result is not None:
+            return cached_result
+        
+        logging.info(f"CACHE MISS! Generating lipid image for slice {slice_index}")
+        
         brain_id = self.get_brain_id_from_sliceindex(slice_index)
         key = f"{brain_id}/slice_{float(slice_index)}"
         with shelve.open(os.path.join(self.path_data, "lipid_images"), flag="r") as db:
-            return db.get(key)
+            result = db.get(key)
+            
+            # Only cache valid results, not None values
+            if result is not None:
+                self._save_to_cache(cache_key, result)
+            else:
+                # Don't cache None results - they might be temporary failures
+                logging.warning(f"No data found for slice {slice_index}, brain_id {brain_id}")
+            
+            return result
 
     def get_available_brains(self) -> List[str]:
         """Get list of available brain IDs in the database."""
@@ -260,7 +330,11 @@ class MaldiData:
             slice_index: Index of the slice
             lipid_name: Name of the lipid
         """
-        return self.get_lipids_image(slice_index).indices #, self.get_available_lipids(slice_index)[0]).indices
+        slice_data = self.get_lipids_image(slice_index)
+        if slice_data is None:
+            logging.warning(f"Cannot get image indices for slice {slice_index} - slice data is None")
+            return None
+        return slice_data.indices #, self.get_available_lipids(slice_index)[0]).indices
 
     # def get_acronym_mask(self, slice_index, fill_holes=True):
     #     """
@@ -349,8 +423,26 @@ class MaldiData:
                             in orange (255, 165, 0) with transparency 243 for lines and 255
                             for background
         """
+        # Generate cache key for this request
+        cache_key = self._generate_cache_key("get_aba_contours", slice_index)
+        
+        # Try to get result from cache first
+        cached_result = self._get_from_cache(cache_key)
+        if cached_result is not None:
+            return cached_result
+        
+        logging.info(f"CACHE MISS! Generating ABA contours for slice {slice_index}")
+        
         # acronym_points = METADATA[METADATA["SectionID"] == slice_index][["z_index", "y_index", "x_index"]].values
         coordinates = self.get_image_indices(slice_index)
+        if coordinates is None:
+            logging.warning(f"Cannot generate ABA contours for slice {slice_index} - no image indices available")
+            # Return a blank contour image
+            blank_image = np.ones((self.image_shape[0], self.image_shape[1], 4), dtype=np.uint8)
+            blank_image[:, :, :3] = 255
+            blank_image[:, :, 3] = 0
+            return blank_image
+            
         coordinates_scatter = pd.DataFrame(coordinates, columns=["x_index", "y", "x"])
  
         # Convert coordinates to integers for indexing
@@ -381,6 +473,9 @@ class MaldiData:
                         array_image_atlas[i, j] = [255, 165, 0, 200]
                 except:
                     continue
+        
+        # Save result to cache for future use
+        self._save_to_cache(cache_key, array_image_atlas)
         
         return array_image_atlas
 

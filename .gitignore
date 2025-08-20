@@ -29,3 +29,6 @@ pages/threeD_exploration-stable.py
 # Ignore readme app scripts
 readme/
 
+# Ignore test stability files and artifacts
+mixedtests_stability/
+

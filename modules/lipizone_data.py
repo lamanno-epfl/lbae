@@ -12,6 +12,11 @@ from scipy.ndimage import generic_filter
 from collections import Counter
 import pickle
 from tqdm import tqdm
+import zarr
+
+# Redis caching imports
+import redis
+import hashlib
 import plotly.express as px
 
 from modules.figures import calculate_mean_color
@@ -112,6 +117,53 @@ class LipizoneSectionData:
         if not os.path.exists(self.path_data):
             os.makedirs(self.path_data)
         self.shelf_path = os.path.join(self.path_data, self.filename)
+
+        # Initialize Redis client for caching
+        try:
+            self._redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
+            # Test connection
+            self._redis_client.ping()
+            self._use_redis = True
+            logging.info("LipizoneSectionData Redis cache initialized successfully")
+        except Exception as e:
+            self._use_redis = False
+            logging.warning(f"LipizoneSectionData Redis cache not available: {e}. Caching will be disabled.")
+
+    def _generate_cache_key(self, method_name, *args, **kwargs):
+        """Generate a unique cache key for the given method and arguments."""
+        # Create a hash of the method name and arguments
+        args_str = str(args) + str(sorted(kwargs.items()))
+        args_hash = hashlib.md5(args_str.encode()).hexdigest()
+        return f"lipizone_section:{method_name}:{args_hash}"
+
+    def _get_from_cache(self, cache_key):
+        """Try to get a cached result from Redis."""
+        if not self._use_redis:
+            return None
+        
+        try:
+            cached_result = self._redis_client.get(cache_key)
+            if cached_result:
+                logging.info(f"CACHE HIT! Returning cached {cache_key[:30]}...")
+                return pickle.loads(cached_result)
+        except Exception as e:
+            logging.warning(f"Error reading from cache: {e}")
+        
+        return None
+
+    def _save_to_cache(self, cache_key, result, expire_seconds=3600):
+        """Save a result to Redis cache."""
+        if not self._use_redis:
+            return
+        
+        try:
+            # Serialize the result
+            serialized_result = pickle.dumps(result)
+            # Save to cache with expiration (1 hour default)
+            self._redis_client.set(cache_key, serialized_result, ex=expire_seconds)
+            logging.info(f"Saved {cache_key[:30]}... to cache")
+        except Exception as e:
+            logging.warning(f"Error saving to cache: {e}")
     
     def store_section_data(
         self, 
@@ -154,11 +206,26 @@ class LipizoneSectionData:
         Raises:
             KeyError: If the section is not found in the database.
         """
+        # Generate cache key for this request
+        cache_key = self._generate_cache_key("retrieve_section_data", section)
+        
+        # Try to get result from cache first
+        cached_result = self._get_from_cache(cache_key)
+        if cached_result is not None:
+            return cached_result
+        
+        logging.info(f"CACHE MISS! Generating lipizone section data for section {section}")
+        
         key = str(section)
         with shelve.open(self.shelf_path, flag="r") as db:
             if key in db:
-                return db[key]
+                result = db[key]
+                # Save result to cache for future use
+                self._save_to_cache(cache_key, result)
+                return result
             else:
+                # Don't cache KeyError exceptions
+                logging.warning(f"Data for section '{key}' not found.")
                 raise KeyError(f"Data for section '{key}' not found.")
 
 class LipizoneData:
@@ -229,6 +296,53 @@ class LipizoneData:
 
         # New constant for the color array file
         self.COLOR_ARRAY_PATH = os.path.join(self.path_data, "color_array_fullres.npy")
+
+        # Initialize Redis client for caching
+        try:
+            self._redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
+            # Test connection
+            self._redis_client.ping()
+            self._use_redis = True
+            logging.info("LipizoneData Redis cache initialized successfully")
+        except Exception as e:
+            self._use_redis = False
+            logging.warning(f"LipizoneData Redis cache not available: {e}. Caching will be disabled.")
+
+    def _generate_cache_key(self, method_name, *args, **kwargs):
+        """Generate a unique cache key for the given method and arguments."""
+        # Create a hash of the method name and arguments
+        args_str = str(args) + str(sorted(kwargs.items()))
+        args_hash = hashlib.md5(args_str.encode()).hexdigest()
+        return f"lipizone:{method_name}:{args_hash}"
+
+    def _get_from_cache(self, cache_key):
+        """Try to get a cached result from Redis."""
+        if not self._use_redis:
+            return None
+        
+        try:
+            cached_result = self._redis_client.get(cache_key)
+            if cached_result:
+                logging.info(f"CACHE HIT! Returning cached {cache_key[:30]}...")
+                return pickle.loads(cached_result)
+        except Exception as e:
+            logging.warning(f"Error reading from cache: {e}")
+        
+        return None
+
+    def _save_to_cache(self, cache_key, result, expire_seconds=3600):
+        """Save a result to Redis cache."""
+        if not self._use_redis:
+            return
+        
+        try:
+            # Serialize the result
+            serialized_result = pickle.dumps(result)
+            # Save to cache with expiration (1 hour default)
+            self._redis_client.set(cache_key, serialized_result, ex=expire_seconds)
+            logging.info(f"Saved {cache_key[:30]}... to cache")
+        except Exception as e:
+            logging.warning(f"Error saving to cache: {e}")
 
     def create_treemap_data_lipizones(self):
         """Create data structure for treemap visualization with color information."""

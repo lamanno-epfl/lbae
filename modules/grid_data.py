@@ -15,6 +15,10 @@ from tqdm import tqdm
 
 from scipy import ndimage
 
+# Redis caching imports
+import redis
+import hashlib
+
 # Make sure to import or define these functions:
 # from your_module import create_section_grid, normalize_grid_with_percentiles
 
@@ -468,6 +472,53 @@ class GridImageShelve:
         self.shelf_path = os.path.join(self.path_data, self.filename)
         self.lookup_brainid = pd.read_csv("./data/annotations/lookup_brainid.csv", index_col=0)
 
+        # Initialize Redis client for caching
+        try:
+            self._redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
+            # Test connection
+            self._redis_client.ping()
+            self._use_redis = True
+            logging.info("GridData Redis cache initialized successfully")
+        except Exception as e:
+            self._use_redis = False
+            logging.warning(f"GridData Redis cache not available: {e}. Caching will be disabled.")
+
+    def _generate_cache_key(self, method_name, *args, **kwargs):
+        """Generate a unique cache key for the given method and arguments."""
+        # Create a hash of the method name and arguments
+        args_str = str(args) + str(sorted(kwargs.items()))
+        args_hash = hashlib.md5(args_str.encode()).hexdigest()
+        return f"grid:{method_name}:{args_hash}"
+
+    def _get_from_cache(self, cache_key):
+        """Try to get a cached result from Redis."""
+        if not self._use_redis:
+            return None
+        
+        try:
+            cached_result = self._redis_client.get(cache_key)
+            if cached_result:
+                logging.info(f"CACHE HIT! Returning cached {cache_key[:30]}...")
+                return pickle.loads(cached_result)
+        except Exception as e:
+            logging.warning(f"Error reading from cache: {e}")
+        
+        return None
+
+    def _save_to_cache(self, cache_key, result, expire_seconds=3600):
+        """Save a result to Redis cache."""
+        if not self._use_redis:
+            return
+        
+        try:
+            # Serialize the result
+            serialized_result = pickle.dumps(result)
+            # Save to cache with expiration (1 hour default)
+            self._redis_client.set(cache_key, serialized_result, ex=expire_seconds)
+            logging.info(f"Saved {cache_key[:30]}... to cache")
+        except Exception as e:
+            logging.warning(f"Error saving to cache: {e}")
+
     def create_grid_image(self, maindata, lipid, sample):
         """
         Given the main DataFrame, a lipid, and a sample,
@@ -538,6 +589,16 @@ class GridImageShelve:
             KeyError: If no grid image is found for the given key.
             ValueError: If neither sample nor slice_index is provided.
         """
+        # Generate cache key for this request
+        cache_key = self._generate_cache_key("retrieve_grid_image", lipid, sample, slice_index)
+        
+        # Try to get result from cache first
+        cached_result = self._get_from_cache(cache_key)
+        if cached_result is not None:
+            return cached_result
+        
+        logging.info(f"CACHE MISS! Generating grid image for lipid {lipid}, sample {sample}")
+        
         if sample is None and slice_index is None:
             raise ValueError("Either sample or slice_index must be provided")
             
@@ -547,8 +608,13 @@ class GridImageShelve:
         key = f"{lipid}_{sample}_grid"
         with shelve.open(self.shelf_path, flag="r") as db:
             if key in db:
-                return db[key]
+                result = db[key]
+                # Save result to cache for future use
+                self._save_to_cache(cache_key, result)
+                return result
             else:
+                # Don't cache KeyError exceptions
+                logging.warning(f"Grid image for lipid '{lipid}' and sample '{sample}' not found.")
                 raise KeyError(f"Grid image for lipid '{lipid}' and sample '{sample}' not found.")
 
     def process_maindata(self, maindata, lipids=None, samples=None):

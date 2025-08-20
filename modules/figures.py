@@ -36,6 +36,11 @@ import matplotlib.colors as mcolors
 from matplotlib.cm import PuRd, viridis
 import matplotlib.pyplot as plt
 
+# Redis caching imports
+import redis
+import pickle
+import hashlib
+
 
 # LBAE imports
 from modules.tools.image import convert_image_to_base64
@@ -235,7 +240,7 @@ class Figures:
             used in a 3D representation of the brain.
     """
 
-    __slots__ = ["_data", "_celltype_data", "_lipizone_data", "_atlas", "_storage"]
+    __slots__ = ["_data", "_celltype_data", "_lipizone_data", "_atlas", "_storage", "_redis_client", "_use_redis"]
 
     # ==============================================================================================
     # --- Constructor
@@ -360,13 +365,125 @@ class Figures:
 
         logging.info("Figures object instantiated" + logmem())
 
-    # ==============================================================================================
-    # --- Methods used mainly in load_slice
-    # ==============================================================================================
+        # Initialize Redis client for caching
+        try:
+            self._redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
+            # Test connection
+            self._redis_client.ping()
+            self._use_redis = True
+            logging.info("Redis cache initialized successfully")
+        except Exception as e:
+            self._use_redis = False
+            logging.warning(f"Redis cache not available: {e}. Caching will be disabled.")
+
 
     # ==============================================================================================
     # --- Methods used mainly in lipid_selection
     # ==============================================================================================
+
+    def _generate_cache_key(self, image, return_base64_string, draw, type_image, return_go_image, overlay, colormap_type, session_id=None):
+        """Generate a unique cache key for the given parameters."""
+        # Create a hash of the image data and parameters
+        image_hash = hashlib.md5(image.tobytes()).hexdigest()
+        params_hash = hashlib.md5(
+            f"{return_base64_string}_{draw}_{type_image}_{return_go_image}_{colormap_type}".encode()
+        ).hexdigest()
+        
+        # For overlay, create a hash if it exists
+        overlay_hash = ""
+        if overlay is not None:
+            overlay_hash = hashlib.md5(overlay.tobytes()).hexdigest()
+        
+        # Include session ID if provided for better cleanup
+        if session_id:
+            return f"heatmap:{session_id}:{image_hash}:{params_hash}:{overlay_hash}"
+        
+        return f"heatmap:{image_hash}:{params_hash}:{overlay_hash}"
+
+    def _get_from_cache(self, cache_key):
+        """Try to get a cached result from Redis."""
+        if not self._use_redis:
+            return None
+        
+        try:
+            cached_result = self._redis_client.get(cache_key)
+            if cached_result:
+                logging.info("CACHE HIT! Returning saved figure.")
+                return pickle.loads(cached_result)
+        except Exception as e:
+            logging.warning(f"Error reading from cache: {e}")
+        
+        return None
+
+    def _save_to_cache(self, cache_key, result, expire_seconds=1800):  # 30 min instead of 1 hour
+        """Save a result to Redis cache."""
+        if not self._use_redis:
+            return
+        
+        try:
+            # Serialize the result
+            serialized_result = pickle.dumps(result)
+            # Save to cache with expiration (1 hour default)
+            self._redis_client.set(cache_key, serialized_result, ex=expire_seconds)
+            logging.info(f"Saved result to cache with key: {cache_key[:50]}...")
+        except Exception as e:
+            logging.warning(f"Error saving to cache: {e}")
+
+    def clear_cache(self):
+        """Clear all cached results from Redis."""
+        if not self._use_redis:
+            logging.warning("Redis cache not available")
+            return
+        
+        try:
+            # Get all keys matching our heatmap pattern
+            pattern = "heatmap:*"
+            keys = self._redis_client.keys(pattern)
+            
+            if keys:
+                # Delete all matching keys
+                deleted_count = self._redis_client.delete(*keys)
+                logging.info(f"Cleared {deleted_count} cached items from Redis")
+            else:
+                logging.info("No cached items found to clear")
+                
+        except Exception as e:
+            logging.error(f"Error clearing cache: {e}")
+
+    def clear_all_redis_cache(self):
+        """Clear ALL data from Redis database (use with caution!)."""
+        if not self._use_redis:
+            logging.warning("Redis cache not available")
+            return
+        
+        try:
+            # FLUSHDB removes all keys from the current database
+            self._redis_client.flushdb()
+            logging.info("COMPLETELY CLEARED ALL REDIS CACHE DATA")
+        except Exception as e:
+            logging.error(f"Error clearing all Redis cache: {e}")
+
+    def get_cache_stats(self):
+        """Get statistics about the Redis cache."""
+        if not self._use_redis:
+            return {"status": "Redis not available"}
+        
+        try:
+            # Get all keys matching our heatmap pattern
+            pattern = "heatmap:*"
+            keys = self._redis_client.keys(pattern)
+            
+            # Get memory usage info
+            info = self._redis_client.info('memory')
+            
+            return {
+                "status": "Redis available",
+                "cached_items": len(keys),
+                "memory_used_mb": info.get('used_memory_human', 'Unknown'),
+                "memory_peak_mb": info.get('used_memory_peak_human', 'Unknown')
+            }
+        except Exception as e:
+            return {"status": f"Error getting stats: {e}"}
 
     def compute_image_per_lipid(
         self,
@@ -448,7 +565,7 @@ class Figures:
                 resulting Plotly Figure. Defaults to False.
             type_image (string, optional): The type of the image to be converted to a base64 string.
                 If image_array is in 3D, type must be RGB. If 4D, type must be RGBA. Else, no
-                requirement (None). Defaults to None.
+                requirement (None). Defaults to False.
             return_go_image (bool, optional): If True, the go.Image is returned directly, before
                 being integrated to a Plotly Figure. Defaults to False.
             overlay (np.ndarray, optional): An array representing the overlay to be added to the
@@ -460,7 +577,19 @@ class Figures:
                 a Plotly Figure.
         """
 
+        # Generate cache key for this request
+        cache_key = self._generate_cache_key(
+            image, return_base64_string, draw, type_image, return_go_image, overlay, colormap_type
+        )
+        
+        # Try to get result from cache first
+        cached_result = self._get_from_cache(cache_key)
+        if cached_result is not None:
+            return cached_result
+        
+        logging.info("CACHE MISS! Generating new figure.")
         logging.info("Converting image to string")
+        
         # Set optimize to False to gain computation time
         base64_string = convert_image_to_base64(
             image, 
@@ -521,6 +650,9 @@ class Figures:
         fig._config = {'scrollZoom': True}
         
         logging.info("Returning figure")
+
+        # Save result to cache for future use
+        self._save_to_cache(cache_key, fig)
 
         return fig
 

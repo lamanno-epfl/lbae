@@ -244,11 +244,11 @@ layout = html.Div(
                                             href="/3D-exploration",
                                             active="exact",
                                         ),
-                                        dbc.NavLink(
-                                            "3D Lipizones",
-                                            href="/3D-lipizones",
-                                            active="exact",
-                                        ),
+                                        # dbc.NavLink(
+                                        #     "3D Lipizones",
+                                        #     href="/3D-lipizones",
+                                        #     active="exact",
+                                        # ),
                                     ],
                                 ),
                             ],

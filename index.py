@@ -31,7 +31,7 @@ from pages import (
     threeD_exploration,
     lp_selection,
     # lipizones_id_cards,
-    threeD_lipizones,
+    # threeD_lipizones,
     peak_selection,
 )
 from in_app_documentation.documentation import return_documentation
@@ -146,8 +146,8 @@ def return_main_content():
 
             # Store to track view state
             dcc.Store(id="all-lipizones-view-state", data=False),
-            dcc.Store(id="3d-lipizones-current-treemap-selection", data=None),
-            dcc.Store(id="3d-lipizones-all-selected-lipizones", data={"names": [], "indices": []}),
+            # dcc.Store(id="3d-lipizones-current-treemap-selection", data=None),
+            # dcc.Store(id="3d-lipizones-all-selected-lipizones", data={"names": [], "indices": []}),
 
             # Store to track hide state for main slider
             dcc.Store(id="page-2-hide-store", data=""),
@@ -556,7 +556,7 @@ def return_validation_layout(main_content, initial_slice=3):
             # lipizones_id_cards.return_layout(basic_config, initial_slice),
             region_analysis.return_layout(basic_config, initial_slice),
             threeD_exploration.return_layout(basic_config, initial_slice),
-            threeD_lipizones.return_layout(basic_config, initial_slice),
+            # threeD_lipizones.return_layout(basic_config, initial_slice),
 
             _validation_stubs(),
         ]
@@ -616,8 +616,8 @@ def render_page_content(pathname, slice_index, brain):
     elif pathname == "/3D-exploration":
         page = threeD_exploration.return_layout(basic_config, slice_index)
 
-    elif pathname == "/3D-lipizones":
-        page = threeD_lipizones.return_layout(basic_config, slice_index)
+    # elif pathname == "/3D-lipizones":
+    #     page = threeD_lipizones.return_layout(basic_config, slice_index)
 
     else:
         # If the user tries to reach a different page, return a 404 message
@@ -659,8 +659,8 @@ def hide_brain_chips(pathname):
     or pathname == "/lipizones-vs-celltypes" \
     or pathname == "/lipizones-id-cards" \
     or pathname == "/lipids-vs-genes" \
-    or pathname == "/3D-exploration" \
-    or pathname == "/3D-lipizones":
+    or pathname == "/3D-exploration":# \
+    # or pathname == "/3D-lipizones":
         return {"display": "none"}
     else:
         return {

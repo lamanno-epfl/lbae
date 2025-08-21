@@ -1694,7 +1694,13 @@ def page_3_plot_heatmap_long(
                 return fig, "Colors: ", l_color_mask, False, l_shapes_and_masks
 
         # either graph is already here
-        return dash.no_update
+        return (
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
+            dash.no_update,
+        )
 
 @app.callback(
     Output("page-3-badge-lipid-1", "children"),

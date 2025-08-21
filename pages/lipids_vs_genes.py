@@ -57,6 +57,19 @@ def get_gene_options(slice_index):
 
 
 def return_layout(basic_config, slice_index):
+    SAFE_DEFAULT_SLICE = 1
+    try:
+        # We attempt to get the data for the incoming slice_index. This is the
+        # exact operation that was causing the crash.
+        celltype_data.retrieve_section_data(int(slice_index))
+    except KeyError:
+        # If it fails, it means the index is invalid for this page.
+        # We log a warning and fall back to our safe default value.
+        logging.warning(
+            f"Invalid slice_index '{slice_index}' for lipids_vs_genes page. "
+            f"Falling back to default: {SAFE_DEFAULT_SLICE}."
+        )
+        slice_index = SAFE_DEFAULT_SLICE
     page = (
         html.Div(
             style={
@@ -99,6 +112,8 @@ def return_layout(basic_config, slice_index):
                 dcc.Store(id="page-6tris-main-slider-style", data={"display": "block"}),
                 dcc.Store(id="lipigene-tutorial-step", data=0),
                 dcc.Store(id="lipigene-tutorial-completed", storage_type="local", data=False),
+
+                html.Div(id="page-6tris-refresh-trigger"),
 
                 # Add tutorial button under welcome text
                 html.Div(
@@ -930,6 +945,38 @@ def return_layout(basic_config, slice_index):
 # ==================================================================================================
 # --- Callbacks
 # ==================================================================================================
+
+clientside_callback(
+    """
+    function(pathname) {
+        // Get the specific path for this page (e.g., '/lipids-genes')
+        const page_path = '/lipids-vs-genes';
+        
+        // A unique key for this page in sessionStorage
+        const hasReloadedKey = 'hasReloadedPage6';
+
+        if (pathname === page_path) {
+            // Check if the page has already been reloaded in this session
+            const hasReloaded = sessionStorage.getItem(hasReloadedKey);
+
+            if (!hasReloaded) {
+                // If it hasn't been reloaded, set the flag and then reload the page
+                sessionStorage.setItem(hasReloadedKey, 'true');
+                window.location.reload();
+            }
+        } else {
+            // If we navigate away from this page, remove the flag
+            // This ensures it will reload the next time we visit it
+            sessionStorage.removeItem(hasReloadedKey);
+        }
+        
+        // This callback doesn't need to return anything to a component
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("page-6tris-refresh-trigger", "data-dummy"), # Dummy output
+    Input("url", "pathname") # Assuming dcc.Location has id='url' in your main app.py
+)
 
 @app.callback(
     Output("page-6tris-graph-hover-text", "children"),

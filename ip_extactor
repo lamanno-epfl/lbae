@@ -1,0 +1,1 @@
+sudo cat /var/log/supervisor/my-website.log* | awk '{print $1}' | sort -u > unique_ips.txt

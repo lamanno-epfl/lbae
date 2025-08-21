@@ -1282,64 +1282,30 @@ def page_3_reset_layout(cliked_reset, url):
     return {}
 
 
-# @app.callback(
-#     Output("page-3-graph-heatmap-mz-selection", "figure"),
-#     Output("page-3-badge-input", "children"),
-#     Output("dcc-store-color-mask", "data"),
-#     Output("dcc-store-reset", "data"),
-#     Output("dcc-store-shapes-and-masks", "data"),
+@app.callback(
+    Output("page-3-graph-heatmap-mz-selection", "figure"),
+    Output("page-3-badge-input", "children"),
+    Output("dcc-store-color-mask", "data"),
+    Output("dcc-store-reset", "data"),
+    Output("dcc-store-shapes-and-masks", "data"),
 
-#     Input("page-3-graph-heatmap-mz-selection", "relayoutData"),
-#     Input("main-slider", "data"),
-#     Input("page-3-reset-button", "n_clicks"),
-#     Input("page-3-dropdown-brain-regions", "value"),
-#     Input("url", "pathname"),
-#     Input("page-3-selected-lipid-1", "data"),
-#     Input("page-3-selected-lipid-2", "data"),
-#     Input("page-3-selected-lipid-3", "data"),
-#     Input("page-3-toggle-annotations", "checked"),
+    Input("page-3-graph-heatmap-mz-selection", "relayoutData"),
+    Input("main-slider", "data"),
+    Input("page-3-reset-button", "n_clicks"),
+    Input("page-3-dropdown-brain-regions", "value"),
+    Input("url", "pathname"),
+    Input("page-3-selected-lipid-1", "data"),
+    Input("page-3-selected-lipid-2", "data"),
+    Input("page-3-selected-lipid-3", "data"),
+    Input("page-3-toggle-annotations", "checked"),
     
-#     State("dcc-store-color-mask", "data"),
-#     State("dcc-store-reset", "data"),
-#     State("dcc-store-shapes-and-masks", "data"),
-#     State("page-3-badge-input", "children"),
-#     prevent_initial_call=True,
-# )
-# def page_3_plot_heatmap(
-
-from app import long_callback_limiter
-@app.long_callback(
-    output=[
-        Output("page-3-graph-heatmap-mz-selection", "figure"),
-        Output("page-3-badge-input", "children"),
-        Output("dcc-store-color-mask", "data"),
-        Output("dcc-store-reset", "data"),
-        Output("dcc-store-shapes-and-masks", "data"),
-    ],
-    inputs=[
-        Input("page-3-graph-heatmap-mz-selection", "relayoutData"),
-        Input("main-slider", "data"),
-        Input("page-3-reset-button", "n_clicks"),
-        Input("page-3-dropdown-brain-regions", "value"),
-        Input("url", "pathname"),
-        Input("page-3-selected-lipid-1", "data"),
-        Input("page-3-selected-lipid-2", "data"),
-        Input("page-3-selected-lipid-3", "data"),
-        Input("page-3-toggle-annotations", "checked"),
-    ],
-    state=[
-        State("dcc-store-color-mask", "data"),
-        State("dcc-store-reset", "data"),
-        State("dcc-store-shapes-and-masks", "data"),
-        State("page-3-badge-input", "children"),
-    ],
-    running=[
-        # While the image is computing, dim the graph area to show something is happening
-        (Output("page-3-graph-heatmap-mz-selection", "style"), {"opacity": 0.5}, {"opacity": 1}),
-    ],
+    State("dcc-store-color-mask", "data"),
+    State("dcc-store-reset", "data"),
+    State("dcc-store-shapes-and-masks", "data"),
+    State("page-3-badge-input", "children"),
     prevent_initial_call=True,
 )
-def page_3_plot_heatmap_long(
+def page_3_plot_heatmap(
     relayoutData,
     slice_index,
     cliked_reset,
@@ -1355,124 +1321,26 @@ def page_3_plot_heatmap_long(
     graph_input,
 ):
     """This callback plots the heatmap of the selected lipid(s)."""
-    with long_callback_limiter:
-        logging.info("Entering page_3_plot_heatmap (with semaphore)")
+    logging.info("Entering page_3_plot_heatmap")
 
-        # Find out which input triggered the function
-        id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
-        value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
-        
-        # Define overlay based on annotations toggle
-        overlay = data.get_aba_contours(slice_index) if annotations_checked else None
+    # Find out which input triggered the function
+    id_input = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    value_input = dash.callback_context.triggered[0]["prop_id"].split(".")[1]
+    
+    # Define overlay based on annotations toggle
+    overlay = data.get_aba_contours(slice_index) if annotations_checked else None
 
-        # If a lipid selection has been done
-        if (
-            id_input == "page-3-selected-lipid-1"
-            or id_input == "page-3-selected-lipid-2"
-            or id_input == "page-3-selected-lipid-3"
-            or id_input == "page-3-colormap-button"
-            or (
-                (id_input == "main-slider")
-                and graph_input == "Colors: "
-            )
-        ):
-            if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
-                ll_lipid_names = [
-                    ' '.join([
-                        data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
-                        + data.get_annotations().iloc[index]["structure"].split('_')[i] 
-                        for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
-                        ])
-                    if index != -1
-                    else None
-                    for index in [lipid_1_index, lipid_2_index, lipid_3_index]
-                ]
-                
-                # Or if the current plot must be an RGB image
-                if (
-                    id_input == "main-slider"
-                    and graph_input == "Colors: "
-                ):
-                    fig = figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_lipid_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        )
-                    fig.update_layout(
-                        dragmode="drawclosedpath",
-                        newshape=dict(
-                            fillcolor=l_colors[0],
-                            opacity=0.7,
-                            line=dict(color="white", width=1),
-                        ),
-                        autosize=True,
-                    )
-                    return fig, "Colors: ", [], True, [],
-
-                # Plot RBG By default
-                else:
-                    logging.info("Right before calling the graphing function")
-                    fig = figures.compute_rgb_image_per_lipid_selection(
-                            slice_index,
-                            ll_lipid_names=ll_lipid_names,
-                            cache_flask=cache_flask,
-                            overlay=overlay,
-                        )
-                    fig.update_layout(
-                        dragmode="drawclosedpath",
-                        newshape=dict(
-                            fillcolor=l_colors[0],
-                            opacity=0.7,
-                            line=dict(color="white", width=1),
-                        ),
-                        autosize=True,
-                    )
-                    return fig, "Colors: ", [], True, []
-            
-            elif (
-                id_input == "main-slider" and graph_input == "Colors: "
-            ):
-                fig = figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=["HexCer 42:2;O2", None, None],
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    )
-                fig.update_layout(
-                    dragmode="drawclosedpath",
-                    newshape=dict(
-                        fillcolor=l_colors[0],
-                        opacity=0.7,
-                        line=dict(color="white", width=1),
-                    ),
-                    autosize=True,
-                )
-                return fig, "Colors: " + "HexCer 42:2;O2", [], True, []
-
-            else:
-                # No lipid has been selected
-                fig = figures.compute_rgb_image_per_lipid_selection(
-                        slice_index,
-                        ll_lipid_names=["HexCer 42:2;O2", None, None],
-                        cache_flask=cache_flask,
-                        overlay=overlay,
-                    )
-                fig.update_layout(
-                    dragmode="drawclosedpath",
-                    newshape=dict(
-                        fillcolor=l_colors[0],
-                        opacity=0.7,
-                        line=dict(color="white", width=1),
-                    ),
-                    autosize=True,
-                )
-                return fig, "Colors: " + "HexCer 42:2;O2", [], True, []
-        
-        # ------------------------------------------------------------------------------------------------
-        # If a new slice is loaded or the page just got loaded
-        # do nothing because of automatic relayout of the heatmap which is automatically triggered when
-        # the page is loaded
+    # If a lipid selection has been done
+    if (
+        id_input == "page-3-selected-lipid-1"
+        or id_input == "page-3-selected-lipid-2"
+        or id_input == "page-3-selected-lipid-3"
+        or id_input == "page-3-colormap-button"
+        or (
+            (id_input == "main-slider")
+            and graph_input == "Colors: "
+        )
+    ):
         if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
             ll_lipid_names = [
                 ' '.join([
@@ -1484,217 +1352,307 @@ def page_3_plot_heatmap_long(
                 else None
                 for index in [lipid_1_index, lipid_2_index, lipid_3_index]
             ]
-        else:
-            ll_lipid_names = ["HexCer 42:2;O2", None, None]
-        
-        # Drawing or selecting a brain region
-        if (
-            len(id_input) == 0
-            or id_input == "page-3-reset-button"
-            or id_input == "url"
-        ):
-            fig = figures.compute_rgb_image_per_lipid_selection(
-                    slice_index,
-                    ll_lipid_names=ll_lipid_names, # ["HexCer 42:2;O2", None, None],
-                    cache_flask=cache_flask,
-                    overlay=overlay,
-                )
-            fig.update_layout(
-                dragmode="drawclosedpath",
-                newshape=dict(
-                    fillcolor=l_colors[0],
-                    opacity=0.7,
-                    line=dict(color="white", width=1),
-                ),
-                autosize=True,
-            )
-            return fig, "Colors: ", [], True, []
-
-        # Fix bug with automatic relayout
-        if value_input == "relayoutData" and relayoutData == {"autosize": True}:
-        # ✅ THIS IS THE CORRECT FIX
-            return (
-                dash.no_update,
-                dash.no_update,
-                dash.no_update,
-                dash.no_update,
-                dash.no_update,
-            )
-
-        # Handle annotations toggle separately to preserve shapes
-        if id_input == "page-3-toggle-annotations":
-            fig = figures.compute_rgb_image_per_lipid_selection(
-                slice_index,
-                ll_lipid_names=ll_lipid_names,
-                cache_flask=cache_flask,
-                overlay=overlay,
-            )
             
-            # Preserve existing shapes and layout settings
-            if relayoutData and "shapes" in relayoutData:
-                fig.update_layout(shapes=relayoutData["shapes"])
-            
-            # Preserve existing color masks
-            if l_shapes_and_masks:
-                for shape_or_mask in l_shapes_and_masks:
-                    if shape_or_mask[0] == "mask":
-                        mask_name = shape_or_mask[1]
-                        base64_string = shape_or_mask[2]
-                        fig.add_trace(
-                            go.Image(visible=True, source=base64_string, hoverinfo="skip")
-                        )
-            
-            fig.update_layout(
-                dragmode="drawclosedpath",
-                newshape=dict(
-                    fillcolor=l_colors[len(l_shapes_and_masks) % 7] if l_shapes_and_masks else l_colors[0],
-                    opacity=0.7,
-                    line=dict(color="white", width=1),
-                ),
-                autosize=True,
-            )
-            return fig, graph_input, l_color_mask, False, l_shapes_and_masks
-
-        # Fix other bug with automatic dropdown selection
-        if (
-            id_input == "page-3-dropdown-brain-regions"
-            and relayoutData is None
-            and cliked_reset is None
-            and (l_mask_name is None or len(l_mask_name) == 0)
-        ):
-            fig = figures.compute_rgb_image_per_lipid_selection(
-                    slice_index,
-                    ll_lipid_names=ll_lipid_names, # ["HexCer 42:2;O2", None, None],
-                    cache_flask=cache_flask,
-                    overlay=overlay,
-                )
-            fig.update_layout(
-                dragmode="drawclosedpath",
-                newshape=dict(
-                    fillcolor=l_colors[0],
-                    opacity=0.7,
-                    line=dict(color="white", width=1),
-                ),
-                autosize=True,
-            )
-            return fig, "Colors: ", [], True, []
-
-        # If the user selected a new mask or drew on the plot
-        if id_input == "page-3-graph-heatmap-mz-selection" or id_input == "page-3-dropdown-brain-regions":
-            # Check that a mask has actually been selected
-            if l_mask_name is not None or relayoutData is not None:
-                # Rebuild figure
+            # Or if the current plot must be an RGB image
+            if (
+                id_input == "main-slider"
+                and graph_input == "Colors: "
+            ):
                 fig = figures.compute_rgb_image_per_lipid_selection(
-                    slice_index,
-                    ll_lipid_names=ll_lipid_names, # ["HexCer 42:2;O2", None, None],
-                    cache_flask=cache_flask,
-                    overlay=overlay,
-                )
-                color_idx = None
-                col_next = None
-                if l_mask_name is not None:
-                    # If a mask has been selected
-                    if len(l_mask_name) > 0:
-                        for idx_mask, mask_name in enumerate(l_mask_name):
-                            id_name = atlas.dic_name_acronym[mask_name]
-                            if id_name in atlas.dic_existing_masks[slice_index]:
-                                descendants = atlas.bg_atlas.get_structure_descendants(id_name)
-
-                                acronym_mask = data.acronyms_masks[slice_index]
-                                mask2D = np.isin(acronym_mask, descendants + [id_name])
-                            else:
-                                logging.warning("The mask " + str(mask_name) + " couldn't be found")
-
-                            if idx_mask < len(l_color_mask):
-                                color_rgb = l_color_mask[idx_mask]
-                            else:
-                                color_idx = len(l_color_mask)
-                                if relayoutData is not None:
-                                    if "shapes" in relayoutData:
-                                        color_idx += len(relayoutData["shapes"])
-                                color = config.l_colors[color_idx % 7][1:]
-                                color_rgb = [int(color[i : i + 2], 16) for i in (0, 2, 4)] + [255]
-                                l_color_mask.append(color_rgb)
-
-                            l_images = [
-                                mask2D * color
-                                # normalized_projected_mask * color
-                                for c, color in zip(["r", "g", "b", "a"], color_rgb)
-                            ]
-                            
-                            # Reoder axis to match plotly go.image requirements
-                            array_image = np.moveaxis(np.array(l_images, dtype=np.uint8), 0, 2)
-
-                            # Convert image to string to save space (new image as each mask must have a
-                            # different color)
-                            base64_string = convert_image_to_base64(
-                                array_image, optimize=True, format="webp", type="RGBA"
-                            )
-                            fig.add_trace(
-                                go.Image(visible=True, source=base64_string, hoverinfo="skip")
-                            )
-                            fig.update_layout(
-                                dragmode="drawclosedpath",
-                            )
-
-                            if id_input == "page-3-dropdown-brain-regions" and color_idx is not None:
-                                # Save in l_shapes_and_masks
-                                l_shapes_and_masks.append(["mask", mask_name, base64_string, color_idx])
-
-                # If a region has been drawn by the user
-                if relayoutData is not None:
-                    if "shapes" in relayoutData:
-                        if len(relayoutData["shapes"]) > 0:
-                            if not reset or value_input == "relayoutData":
-                                if "path" in relayoutData["shapes"][-1]:
-                                    fig["layout"]["shapes"] = relayoutData["shapes"]  #
-                                    col_next = config.l_colors[
-                                        (len(relayoutData["shapes"]) + len(l_color_mask)) % 7
-                                    ]
-
-                                    # compute color and save in l_shapes_and_masks
-                                    if id_input == "page-3-graph-heatmap-mz-selection":
-                                        color_idx_for_registration = len(l_color_mask)
-                                        if relayoutData is not None:
-                                            if "shapes" in relayoutData:
-                                                color_idx_for_registration += len(
-                                                    relayoutData["shapes"]
-                                                )
-                                        l_shapes_and_masks.append(
-                                            [
-                                                "shape",
-                                                f"Shape {color_idx_for_registration - 1}",
-                                                relayoutData["shapes"][-1],
-                                                color_idx_for_registration - 1,
-                                            ]
-                                        )
-                # Update col_next
-                if color_idx is not None and col_next is None:
-                    col_next = config.l_colors[(color_idx + 1) % 7]
-                elif col_next is None:
-                    col_next = config.l_colors[0]
+                        slice_index,
+                        ll_lipid_names=ll_lipid_names,
+                        cache_flask=cache_flask,
+                        overlay=overlay,
+                    )
                 fig.update_layout(
                     dragmode="drawclosedpath",
                     newshape=dict(
-                        fillcolor=col_next,
+                        fillcolor=l_colors[0],
                         opacity=0.7,
                         line=dict(color="white", width=1),
                     ),
+                    autosize=True,
                 )
+                return fig, "Colors: ", [], True, [],
 
-                # Update drag mode
-                if relayoutData is not None:
-                    if "shapes" in relayoutData:
-                        if len(relayoutData["shapes"]) + len(l_color_mask) > 10:
-                            fig.update_layout(dragmode=False)
-                if len(l_color_mask) > 10:
-                    fig.update_layout(dragmode=False)
+            # Plot RBG By default
+            else:
+                logging.info("Right before calling the graphing function")
+                fig = figures.compute_rgb_image_per_lipid_selection(
+                        slice_index,
+                        ll_lipid_names=ll_lipid_names,
+                        cache_flask=cache_flask,
+                        overlay=overlay,
+                    )
+                fig.update_layout(
+                    dragmode="drawclosedpath",
+                    newshape=dict(
+                        fillcolor=l_colors[0],
+                        opacity=0.7,
+                        line=dict(color="white", width=1),
+                    ),
+                    autosize=True,
+                )
+                return fig, "Colors: ", [], True, []
+        
+        elif (
+            id_input == "main-slider" and graph_input == "Colors: "
+        ):
+            fig = figures.compute_rgb_image_per_lipid_selection(
+                    slice_index,
+                    ll_lipid_names=["HexCer 42:2;O2", None, None],
+                    cache_flask=cache_flask,
+                    overlay=overlay,
+                )
+            fig.update_layout(
+                dragmode="drawclosedpath",
+                newshape=dict(
+                    fillcolor=l_colors[0],
+                    opacity=0.7,
+                    line=dict(color="white", width=1),
+                ),
+                autosize=True,
+            )
+            return fig, "Colors: " + "HexCer 42:2;O2", [], True, []
 
-                # Return figure and corresponding data
-                return fig, "Colors: ", l_color_mask, False, l_shapes_and_masks
+        else:
+            # No lipid has been selected
+            fig = figures.compute_rgb_image_per_lipid_selection(
+                    slice_index,
+                    ll_lipid_names=["HexCer 42:2;O2", None, None],
+                    cache_flask=cache_flask,
+                    overlay=overlay,
+                )
+            fig.update_layout(
+                dragmode="drawclosedpath",
+                newshape=dict(
+                    fillcolor=l_colors[0],
+                    opacity=0.7,
+                    line=dict(color="white", width=1),
+                ),
+                autosize=True,
+            )
+            return fig, "Colors: " + "HexCer 42:2;O2", [], True, []
+    
+    # ------------------------------------------------------------------------------------------------
+    # If a new slice is loaded or the page just got loaded
+    # do nothing because of automatic relayout of the heatmap which is automatically triggered when
+    # the page is loaded
+    if lipid_1_index >= 0 or lipid_2_index >= 0 or lipid_3_index >= 0:
+        ll_lipid_names = [
+            ' '.join([
+                data.get_annotations().iloc[index]["name"].split('_')[i] + ' ' 
+                + data.get_annotations().iloc[index]["structure"].split('_')[i] 
+                for i in range(len(data.get_annotations().iloc[index]["name"].split('_')))
+                ])
+            if index != -1
+            else None
+            for index in [lipid_1_index, lipid_2_index, lipid_3_index]
+        ]
+    else:
+        ll_lipid_names = ["HexCer 42:2;O2", None, None]
+    
+    # Drawing or selecting a brain region
+    if (
+        len(id_input) == 0
+        or id_input == "page-3-reset-button"
+        or id_input == "url"
+    ):
+        fig = figures.compute_rgb_image_per_lipid_selection(
+                slice_index,
+                ll_lipid_names=ll_lipid_names, # ["HexCer 42:2;O2", None, None],
+                cache_flask=cache_flask,
+                overlay=overlay,
+            )
+        fig.update_layout(
+            dragmode="drawclosedpath",
+            newshape=dict(
+                fillcolor=l_colors[0],
+                opacity=0.7,
+                line=dict(color="white", width=1),
+            ),
+            autosize=True,
+        )
+        return fig, "Colors: ", [], True, []
 
-        # either graph is already here
+    # Fix bug with automatic relayout
+    if value_input == "relayoutData" and relayoutData == {"autosize": True}:
         return dash.no_update
+
+    # Handle annotations toggle separately to preserve shapes
+    if id_input == "page-3-toggle-annotations":
+        fig = figures.compute_rgb_image_per_lipid_selection(
+            slice_index,
+            ll_lipid_names=ll_lipid_names,
+            cache_flask=cache_flask,
+            overlay=overlay,
+        )
+        
+        # Preserve existing shapes and layout settings
+        if relayoutData and "shapes" in relayoutData:
+            fig.update_layout(shapes=relayoutData["shapes"])
+        
+        # Preserve existing color masks
+        if l_shapes_and_masks:
+            for shape_or_mask in l_shapes_and_masks:
+                if shape_or_mask[0] == "mask":
+                    mask_name = shape_or_mask[1]
+                    base64_string = shape_or_mask[2]
+                    fig.add_trace(
+                        go.Image(visible=True, source=base64_string, hoverinfo="skip")
+                    )
+        
+        fig.update_layout(
+            dragmode="drawclosedpath",
+            newshape=dict(
+                fillcolor=l_colors[len(l_shapes_and_masks) % 7] if l_shapes_and_masks else l_colors[0],
+                opacity=0.7,
+                line=dict(color="white", width=1),
+            ),
+            autosize=True,
+        )
+        return fig, graph_input, l_color_mask, False, l_shapes_and_masks
+
+    # Fix other bug with automatic dropdown selection
+    if (
+        id_input == "page-3-dropdown-brain-regions"
+        and relayoutData is None
+        and cliked_reset is None
+        and (l_mask_name is None or len(l_mask_name) == 0)
+    ):
+        fig = figures.compute_rgb_image_per_lipid_selection(
+                slice_index,
+                ll_lipid_names=ll_lipid_names, # ["HexCer 42:2;O2", None, None],
+                cache_flask=cache_flask,
+                overlay=overlay,
+            )
+        fig.update_layout(
+            dragmode="drawclosedpath",
+            newshape=dict(
+                fillcolor=l_colors[0],
+                opacity=0.7,
+                line=dict(color="white", width=1),
+            ),
+            autosize=True,
+        )
+        return fig, "Colors: ", [], True, []
+
+    # If the user selected a new mask or drew on the plot
+    if id_input == "page-3-graph-heatmap-mz-selection" or id_input == "page-3-dropdown-brain-regions":
+        # Check that a mask has actually been selected
+        if l_mask_name is not None or relayoutData is not None:
+            # Rebuild figure
+            fig = figures.compute_rgb_image_per_lipid_selection(
+                slice_index,
+                ll_lipid_names=ll_lipid_names, # ["HexCer 42:2;O2", None, None],
+                cache_flask=cache_flask,
+                overlay=overlay,
+            )
+            color_idx = None
+            col_next = None
+            if l_mask_name is not None:
+                # If a mask has been selected
+                if len(l_mask_name) > 0:
+                    for idx_mask, mask_name in enumerate(l_mask_name):
+                        id_name = atlas.dic_name_acronym[mask_name]
+                        if id_name in atlas.dic_existing_masks[slice_index]:
+                            descendants = atlas.bg_atlas.get_structure_descendants(id_name)
+
+                            acronym_mask = data.acronyms_masks[slice_index]
+                            mask2D = np.isin(acronym_mask, descendants + [id_name])
+                        else:
+                            logging.warning("The mask " + str(mask_name) + " couldn't be found")
+
+                        if idx_mask < len(l_color_mask):
+                            color_rgb = l_color_mask[idx_mask]
+                        else:
+                            color_idx = len(l_color_mask)
+                            if relayoutData is not None:
+                                if "shapes" in relayoutData:
+                                    color_idx += len(relayoutData["shapes"])
+                            color = config.l_colors[color_idx % 7][1:]
+                            color_rgb = [int(color[i : i + 2], 16) for i in (0, 2, 4)] + [255]
+                            l_color_mask.append(color_rgb)
+
+                        l_images = [
+                            mask2D * color
+                            # normalized_projected_mask * color
+                            for c, color in zip(["r", "g", "b", "a"], color_rgb)
+                        ]
+                        
+                        # Reoder axis to match plotly go.image requirements
+                        array_image = np.moveaxis(np.array(l_images, dtype=np.uint8), 0, 2)
+
+                        # Convert image to string to save space (new image as each mask must have a
+                        # different color)
+                        base64_string = convert_image_to_base64(
+                            array_image, optimize=True, format="webp", type="RGBA"
+                        )
+                        fig.add_trace(
+                            go.Image(visible=True, source=base64_string, hoverinfo="skip")
+                        )
+                        fig.update_layout(
+                            dragmode="drawclosedpath",
+                        )
+
+                        if id_input == "page-3-dropdown-brain-regions" and color_idx is not None:
+                            # Save in l_shapes_and_masks
+                            l_shapes_and_masks.append(["mask", mask_name, base64_string, color_idx])
+
+            # If a region has been drawn by the user
+            if relayoutData is not None:
+                if "shapes" in relayoutData:
+                    if len(relayoutData["shapes"]) > 0:
+                        if not reset or value_input == "relayoutData":
+                            if "path" in relayoutData["shapes"][-1]:
+                                fig["layout"]["shapes"] = relayoutData["shapes"]  #
+                                col_next = config.l_colors[
+                                    (len(relayoutData["shapes"]) + len(l_color_mask)) % 7
+                                ]
+
+                                # compute color and save in l_shapes_and_masks
+                                if id_input == "page-3-graph-heatmap-mz-selection":
+                                    color_idx_for_registration = len(l_color_mask)
+                                    if relayoutData is not None:
+                                        if "shapes" in relayoutData:
+                                            color_idx_for_registration += len(
+                                                relayoutData["shapes"]
+                                            )
+                                    l_shapes_and_masks.append(
+                                        [
+                                            "shape",
+                                            f"Shape {color_idx_for_registration - 1}",
+                                            relayoutData["shapes"][-1],
+                                            color_idx_for_registration - 1,
+                                        ]
+                                    )
+            # Update col_next
+            if color_idx is not None and col_next is None:
+                col_next = config.l_colors[(color_idx + 1) % 7]
+            elif col_next is None:
+                col_next = config.l_colors[0]
+            fig.update_layout(
+                dragmode="drawclosedpath",
+                newshape=dict(
+                    fillcolor=col_next,
+                    opacity=0.7,
+                    line=dict(color="white", width=1),
+                ),
+            )
+
+            # Update drag mode
+            if relayoutData is not None:
+                if "shapes" in relayoutData:
+                    if len(relayoutData["shapes"]) + len(l_color_mask) > 10:
+                        fig.update_layout(dragmode=False)
+            if len(l_color_mask) > 10:
+                fig.update_layout(dragmode=False)
+
+            # Return figure and corresponding data
+            return fig, "Colors: ", l_color_mask, False, l_shapes_and_masks
+
+    # either graph is already here
+    return dash.no_update
 
 @app.callback(
     Output("page-3-badge-lipid-1", "children"),
@@ -2318,7 +2276,7 @@ def page_3_display_volcano(clicked_reset, clicked_compute, mask, relayoutData):
 
 #     return dash.no_update
 
-from app import long_callback_limiter
+
 @app.long_callback(
     Output("page-3-graph-volcano", "figure"),
     inputs=[
@@ -2332,85 +2290,83 @@ from app import long_callback_limiter
     prevent_initial_call=True,
 )
 def build_volcano_figure(_n_clicks, slice_index, l_shapes_and_masks_A, l_shapes_and_masks_B):
-    with long_callback_limiter:
-        logging.info("Entering page_3_plot_heatmap_long (with semaphore)")
-        import plotly.graph_objects as go
+    import plotly.graph_objects as go
 
-        # Defensive defaults
-        if not l_shapes_and_masks_A or not l_shapes_and_masks_B:
-            return go.Figure().update_layout(template="plotly_dark")
+    # Defensive defaults
+    if not l_shapes_and_masks_A or not l_shapes_and_masks_B:
+        return go.Figure().update_layout(template="plotly_dark")
 
-        # Compute expressions directly (no storing of arrays in dcc.Store)
-        l_expressions_A = global_store(slice_index, l_shapes_and_masks_A)
-        l_expressions_B = global_store(slice_index, l_shapes_and_masks_B)
+    # Compute expressions directly (no storing of arrays in dcc.Store)
+    l_expressions_A = global_store(slice_index, l_shapes_and_masks_A)
+    l_expressions_B = global_store(slice_index, l_shapes_and_masks_B)
 
-        if not l_expressions_A or not l_expressions_B:
-            return go.Figure().update_layout(template="plotly_dark")
+    if not l_expressions_A or not l_expressions_B:
+        return go.Figure().update_layout(template="plotly_dark")
 
-        difflips = differential_lipids(l_expressions_A, l_expressions_B)
+    difflips = differential_lipids(l_expressions_A, l_expressions_B)
 
-        # Safeguards & transforms
-        fc_cutoff = 0.2
-        pvalue_cutoff = 0.01
+    # Safeguards & transforms
+    fc_cutoff = 0.2
+    pvalue_cutoff = 0.01
 
-        # ensure strictly positive before -log10
-        safe_p = np.clip(difflips["p_value_corrected"].replace([0, np.nan], np.finfo(float).tiny), np.finfo(float).tiny, 1.0)
-        difflips["minus_log10_p"] = -np.log10(safe_p)
-        difflips["fold_change"] = np.power(2.0, difflips["log2fold_change"])
-        difflips["lipid_family"] = difflips["lipid"].apply(lambda x: x.split(" ")[0] if isinstance(x, str) else "Unknown")
-        difflips["marker_size"] = np.where(
-            (difflips["log2fold_change"].abs() < fc_cutoff), 3, 10
-        )
+    # ensure strictly positive before -log10
+    safe_p = np.clip(difflips["p_value_corrected"].replace([0, np.nan], np.finfo(float).tiny), np.finfo(float).tiny, 1.0)
+    difflips["minus_log10_p"] = -np.log10(safe_p)
+    difflips["fold_change"] = np.power(2.0, difflips["log2fold_change"])
+    difflips["lipid_family"] = difflips["lipid"].apply(lambda x: x.split(" ")[0] if isinstance(x, str) else "Unknown")
+    difflips["marker_size"] = np.where(
+        (difflips["log2fold_change"].abs() < fc_cutoff), 3, 10
+    )
 
-        # Colors per lipid family (fallback to grey if missing)
-        try:
-            colors = pd.read_hdf("./data/annotations/lipidclasscolors.h5ad", key="table")
-        except Exception:
-            colors = pd.DataFrame({"classcolors": {}})
-        for fam in ["PA", "LPA"]:
-            if fam not in colors.index:
-                colors.loc[fam] = {"count": 0, "classcolors": "#D3D3D3"}
-        lipid_to_color = colors["classcolors"].to_dict()
-        default_color = "#D3D3D3"
+    # Colors per lipid family (fallback to grey if missing)
+    try:
+        colors = pd.read_hdf("./data/annotations/lipidclasscolors.h5ad", key="table")
+    except Exception:
+        colors = pd.DataFrame({"classcolors": {}})
+    for fam in ["PA", "LPA"]:
+        if fam not in colors.index:
+            colors.loc[fam] = {"count": 0, "classcolors": "#D3D3D3"}
+    lipid_to_color = colors["classcolors"].to_dict()
+    default_color = "#D3D3D3"
 
-        fig = go.Figure()
-        for family, sub in difflips.groupby("lipid_family"):
-            fig.add_trace(
-                go.Scatter(
-                    x=sub["log2fold_change"],
-                    y=sub["minus_log10_p"],
-                    mode="markers",
-                    name=family,
-                    marker=dict(
-                        size=sub["marker_size"],
-                        color=lipid_to_color.get(family, default_color),
-                        line=dict(width=0),
-                    ),
-                    customdata=np.column_stack((sub["lipid"], sub["p_value_corrected"], sub["fold_change"])),
-                    hovertemplate="Lipid: %{customdata[0]}<extra></extra>",
-                )
+    fig = go.Figure()
+    for family, sub in difflips.groupby("lipid_family"):
+        fig.add_trace(
+            go.Scatter(
+                x=sub["log2fold_change"],
+                y=sub["minus_log10_p"],
+                mode="markers",
+                name=family,
+                marker=dict(
+                    size=sub["marker_size"],
+                    color=lipid_to_color.get(family, default_color),
+                    line=dict(width=0),
+                ),
+                customdata=np.column_stack((sub["lipid"], sub["p_value_corrected"], sub["fold_change"])),
+                hovertemplate="Lipid: %{customdata[0]}<extra></extra>",
             )
-
-        # Threshold lines
-        fig.add_vline(x=-fc_cutoff, line_dash="dash", line_color="grey", line_width=1)
-        fig.add_vline(x=fc_cutoff,  line_dash="dash", line_color="grey", line_width=1)
-        fig.add_hline(y=-np.log10(pvalue_cutoff), line_dash="dash", line_color="grey", line_width=1)
-
-        fig.update_layout(
-            showlegend=True,
-            legend_title_text="Lipid Family",
-            xaxis_title="Log₂(Fold Change), where Fold Change = Mean(B) / Mean(A)",
-            yaxis_title="-Log₁₀(p-Value)",
-            xaxis=dict(showspikes=True, spikemode="toaxis", spikesnap="cursor", spikethickness=1, spikedash="dot"),
-            yaxis=dict(showspikes=True, spikemode="toaxis", spikesnap="cursor", spikethickness=1, spikedash="dot"),
-            hovermode="closest",
-            template="plotly_dark",
-            margin=dict(l=50, r=50, t=30, b=70, pad=5),
-            autosize=True,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
         )
-        return fig
+
+    # Threshold lines
+    fig.add_vline(x=-fc_cutoff, line_dash="dash", line_color="grey", line_width=1)
+    fig.add_vline(x=fc_cutoff,  line_dash="dash", line_color="grey", line_width=1)
+    fig.add_hline(y=-np.log10(pvalue_cutoff), line_dash="dash", line_color="grey", line_width=1)
+
+    fig.update_layout(
+        showlegend=True,
+        legend_title_text="Lipid Family",
+        xaxis_title="Log₂(Fold Change), where Fold Change = Mean(B) / Mean(A)",
+        yaxis_title="-Log₁₀(p-Value)",
+        xaxis=dict(showspikes=True, spikemode="toaxis", spikesnap="cursor", spikethickness=1, spikedash="dot"),
+        yaxis=dict(showspikes=True, spikemode="toaxis", spikesnap="cursor", spikethickness=1, spikedash="dot"),
+        hovermode="closest",
+        template="plotly_dark",
+        margin=dict(l=50, r=50, t=30, b=70, pad=5),
+        autosize=True,
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+    )
+    return fig
 
 
 

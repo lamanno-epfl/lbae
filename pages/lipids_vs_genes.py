@@ -1118,6 +1118,7 @@ def page_6tris_hover(hoverData, slice_index):
 #         return fig, "Lipids selected", "Genes selected:"
 
 from dash.long_callback import DiskcacheLongCallbackManager  # (ok if unused globally)
+from app import long_callback_limiter
 
 @app.long_callback(
     Output("page-6tris-graph-heatmap-mz-selection", "figure"),
@@ -1155,60 +1156,62 @@ def page_6tris_plot_graph_heatmap_mz_selection_long(
     gene_threshold_2,
     gene_threshold_3,
 ):
-    # Optional Allen Brain Atlas overlay
-    overlay = data.get_aba_contours(slice_index) if annotations_checked else None
+    with long_callback_limiter:
+        logging.info("Entering page_3_plot_heatmap_long (with semaphore)")
+        # Optional Allen Brain Atlas overlay
+        overlay = data.get_aba_contours(slice_index) if annotations_checked else None
 
-    # Helper: lipid index -> "Name Structure"
-    def idx_to_lipid_name(idx):
-        if idx is None or idx == -1:
-            return None
-        ann = data.get_annotations().iloc[idx]
-        parts = [f"{n} {s}" for n, s in zip(ann["name"].split("_"), ann["structure"].split("_"))]
-        return " ".join(parts)
+        # Helper: lipid index -> "Name Structure"
+        def idx_to_lipid_name(idx):
+            if idx is None or idx == -1:
+                return None
+            ann = data.get_annotations().iloc[idx]
+            parts = [f"{n} {s}" for n, s in zip(ann["name"].split("_"), ann["structure"].split("_"))]
+            return " ".join(parts)
 
-    # Collect selected lipids
-    lipids = list(filter(None, [
-        idx_to_lipid_name(lipid_1_index),
-        idx_to_lipid_name(lipid_2_index),
-        idx_to_lipid_name(lipid_3_index),
-    ]))
-    if not lipids:
-        lipids = ["HexCer 42:2;O2"]
+        # Collect selected lipids
+        lipids = list(filter(None, [
+            idx_to_lipid_name(lipid_1_index),
+            idx_to_lipid_name(lipid_2_index),
+            idx_to_lipid_name(lipid_3_index),
+        ]))
+        if not lipids:
+            lipids = ["HexCer 42:2;O2"]
 
-    # Collect selected genes + thresholds (guard against slice-specific option list)
-    available_genes = get_gene_options(slice_index)
-    genes = []
-    thresholds = []
-    for idx, thr in [
-        (gene_1_index, gene_threshold_1),
-        (gene_2_index, gene_threshold_2),
-        (gene_3_index, gene_threshold_3),
-    ]:
-        if idx is not None and idx != -1 and idx < len(available_genes):
-            genes.append(available_genes[idx])
-            thresholds.append(0 if thr is None else thr)
+        # Collect selected genes + thresholds (guard against slice-specific option list)
+        available_genes = get_gene_options(slice_index)
+        genes = []
+        thresholds = []
+        for idx, thr in [
+            (gene_1_index, gene_threshold_1),
+            (gene_2_index, gene_threshold_2),
+            (gene_3_index, gene_threshold_3),
+        ]:
+            if idx is not None and idx != -1 and idx < len(available_genes):
+                genes.append(available_genes[idx])
+                thresholds.append(0 if thr is None else thr)
 
-    # RGB only matters when >1 lipid selected
-    rgb_mode_lipids = bool(rgb_switch) and len(lipids) > 1
+        # RGB only matters when >1 lipid selected
+        rgb_mode_lipids = bool(rgb_switch) and len(lipids) > 1
 
-    # Build image then figure
-    lipid_gene_image = figures.compute_image_lipids_genes(
-        all_selected_lipids=lipids,
-        all_selected_genes=genes,
-        gene_thresholds=thresholds,
-        slice_index=slice_index,
-        df_genes=df_genes,
-        rgb_mode_lipids=rgb_mode_lipids,
-    )
-    fig = figures.build_lipid_heatmap_from_image(
-        lipid_gene_image,
-        return_base64_string=False,
-        draw=False,
-        type_image="RGB",
-        return_go_image=False,
-        overlay=overlay,
-    )
-    return fig, "Lipids selected", "Genes selected:"
+        # Build image then figure
+        lipid_gene_image = figures.compute_image_lipids_genes(
+            all_selected_lipids=lipids,
+            all_selected_genes=genes,
+            gene_thresholds=thresholds,
+            slice_index=slice_index,
+            df_genes=df_genes,
+            rgb_mode_lipids=rgb_mode_lipids,
+        )
+        fig = figures.build_lipid_heatmap_from_image(
+            lipid_gene_image,
+            return_base64_string=False,
+            draw=False,
+            type_image="RGB",
+            return_go_image=False,
+            overlay=overlay,
+        )
+        return fig, "Lipids selected", "Genes selected:"
 
 
 @app.callback(

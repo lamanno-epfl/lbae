@@ -963,6 +963,7 @@ def page_2bis_hover(hoverData, slice_index):
 #         )
 
 from dash.long_callback import DiskcacheLongCallbackManager  # ok if unused
+from app import long_callback_limiter
 
 @app.long_callback(
     Output("page-2bis-graph-heatmap-mz-selection", "figure"),
@@ -989,57 +990,59 @@ def page_2bis_plot_graph_heatmap_mz_selection_long(
     annotations_checked,
     graph_input,   # kept for signature parity; not used
 ):
-    # ABA overlay (cyan)
-    overlay = cyan_aba_contours(program_data.get_aba_contours(slice_index)) if annotations_checked else None
+    with long_callback_limiter:
+        logging.info("Entering page_3_plot_heatmap_long (with semaphore)")
+        # ABA overlay (cyan)
+        overlay = cyan_aba_contours(program_data.get_aba_contours(slice_index)) if annotations_checked else None
 
-    # Resolve selected program names from indices (ignore -1 / None)
-    indices = [program_1_index, program_2_index, program_3_index]
-    names = []
-    for idx in indices:
-        if isinstance(idx, (int, np.integer)) and idx >= 0:
-            try:
-                names.append(program_data.get_annotations().iloc[idx]["name"])
-            except Exception:
-                pass
+        # Resolve selected program names from indices (ignore -1 / None)
+        indices = [program_1_index, program_2_index, program_3_index]
+        names = []
+        for idx in indices:
+            if isinstance(idx, (int, np.integer)) and idx >= 0:
+                try:
+                    names.append(program_data.get_annotations().iloc[idx]["name"])
+                except Exception:
+                    pass
 
-    # No selection → default single-program heatmap
-    if not names:
-        fig = program_figures.compute_heatmap_per_lipid(
+        # No selection → default single-program heatmap
+        if not names:
+            fig = program_figures.compute_heatmap_per_lipid(
+                slice_index,
+                "mitochondrion",
+                cache_flask=cache_flask,
+                overlay=overlay,
+                colormap_type="PuOr",
+            )
+            return fig, "Now displaying:"
+
+        # If RGB mode (or multiple programs), render RGB
+        if rgb_mode or len(names) > 1:
+            # pad/truncate to 3 entries as the RGB helper expects up to 3
+            padded = [names[i] if i < len(names) else None for i in range(3)]
+            fig = program_figures.compute_rgb_image_per_lipid_selection(
+                slice_index,
+                ll_lipid_names=padded,
+                cache_flask=cache_flask,
+                overlay=overlay,
+            )
+            return fig, "Now displaying:"
+
+        # Otherwise render single-program colormap
+        first = names[0]
+        image = program_figures.compute_image_per_lipid(
             slice_index,
-            "mitochondrion",
+            RGB_format=False,
+            lipid_name=first,
             cache_flask=cache_flask,
+        )
+        fig = program_figures.build_lipid_heatmap_from_image(
+            image,
+            return_base64_string=False,
             overlay=overlay,
             colormap_type="PuOr",
         )
         return fig, "Now displaying:"
-
-    # If RGB mode (or multiple programs), render RGB
-    if rgb_mode or len(names) > 1:
-        # pad/truncate to 3 entries as the RGB helper expects up to 3
-        padded = [names[i] if i < len(names) else None for i in range(3)]
-        fig = program_figures.compute_rgb_image_per_lipid_selection(
-            slice_index,
-            ll_lipid_names=padded,
-            cache_flask=cache_flask,
-            overlay=overlay,
-        )
-        return fig, "Now displaying:"
-
-    # Otherwise render single-program colormap
-    first = names[0]
-    image = program_figures.compute_image_per_lipid(
-        slice_index,
-        RGB_format=False,
-        lipid_name=first,
-        cache_flask=cache_flask,
-    )
-    fig = program_figures.build_lipid_heatmap_from_image(
-        image,
-        return_base64_string=False,
-        overlay=overlay,
-        colormap_type="PuOr",
-    )
-    return fig, "Now displaying:"
 
 
 @app.callback(

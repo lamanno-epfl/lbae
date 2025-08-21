@@ -1168,6 +1168,7 @@ def page_peak_hover(hoverData, slice_index):
 #             "Now displaying:",
 #         )
 
+from app import long_callback_limiter
 
 @app.long_callback(
     Output("page-2tris-graph-heatmap-mz-selection", "figure"),
@@ -1194,55 +1195,57 @@ def page_peak_plot_graph_heatmap_mz_selection_long(
     brain_id,
     annotations_checked,
     _badge_children,  # not used; kept for signature parity
-):
+):  
     """Deterministic render of peak image (single or RGB) without callback_context."""
-    overlay = peak_data.get_aba_contours(slice_index) if annotations_checked else None
+    with long_callback_limiter:
+        logging.info("Entering page_3_plot_heatmap_long (with semaphore)")
+        overlay = peak_data.get_aba_contours(slice_index) if annotations_checked else None
 
-    # Resolve selected peak names from indices (ignore -1/None)
-    indices = [peak_1_index, peak_2_index, peak_3_index]
-    names = []
-    for idx in indices:
-        if isinstance(idx, (int, np.integer)) and idx >= 0:
-            try:
-                names.append(str(peak_data.get_annotations().iloc[idx]["name"]))
-            except Exception:
-                pass
+        # Resolve selected peak names from indices (ignore -1/None)
+        indices = [peak_1_index, peak_2_index, peak_3_index]
+        names = []
+        for idx in indices:
+            if isinstance(idx, (int, np.integer)) and idx >= 0:
+                try:
+                    names.append(str(peak_data.get_annotations().iloc[idx]["name"]))
+                except Exception:
+                    pass
 
-    # No selection → default single-peak heatmap
-    if not names:
-        fig = peak_figures.compute_heatmap_per_lipid(
+        # No selection → default single-peak heatmap
+        if not names:
+            fig = peak_figures.compute_heatmap_per_lipid(
+                slice_index,
+                "1000.169719",
+                cache_flask=cache_flask,
+                overlay=overlay,
+            )
+            return fig, "Now displaying:"
+
+        # If RGB mode (or multiple peaks), render RGB
+        if rgb_mode or len(names) > 1:
+            padded = [names[i] if i < len(names) else None for i in range(3)]
+            fig = peak_figures.compute_rgb_image_per_lipid_selection(
+                slice_index,
+                ll_lipid_names=padded,
+                cache_flask=cache_flask,
+                overlay=overlay,
+            )
+            return fig, "Now displaying:"
+
+        # Otherwise render single-peak colormap
+        first = names[0]
+        image = peak_figures.compute_image_per_lipid(
             slice_index,
-            "1000.169719",
+            RGB_format=False,
+            lipid_name=first,
             cache_flask=cache_flask,
+        )
+        fig = peak_figures.build_lipid_heatmap_from_image(
+            image,
+            return_base64_string=False,
             overlay=overlay,
         )
         return fig, "Now displaying:"
-
-    # If RGB mode (or multiple peaks), render RGB
-    if rgb_mode or len(names) > 1:
-        padded = [names[i] if i < len(names) else None for i in range(3)]
-        fig = peak_figures.compute_rgb_image_per_lipid_selection(
-            slice_index,
-            ll_lipid_names=padded,
-            cache_flask=cache_flask,
-            overlay=overlay,
-        )
-        return fig, "Now displaying:"
-
-    # Otherwise render single-peak colormap
-    first = names[0]
-    image = peak_figures.compute_image_per_lipid(
-        slice_index,
-        RGB_format=False,
-        lipid_name=first,
-        cache_flask=cache_flask,
-    )
-    fig = peak_figures.build_lipid_heatmap_from_image(
-        image,
-        return_base64_string=False,
-        overlay=overlay,
-    )
-    return fig, "Now displaying:"
 
 
 

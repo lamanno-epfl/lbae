@@ -1301,6 +1301,7 @@ def page_6_active_sections_control(all_selected_lipizones):
 
 
 from dash.long_callback import DiskcacheLongCallbackManager  # ok if not used directly
+from app import long_callback_limiter
 
 @app.long_callback(
     Output("page-6-graph-heatmap-mz-selection", "figure"),
@@ -1320,52 +1321,52 @@ def page_6_plot_graph_heatmap_mz_selection_long(
     brain_id,
     annotations_checked,
 ):
-    # Selected lipizones → hex colors (None means “show all”)
-    selected_names = (all_selected_lipizones or {}).get("names", []) or []
-    hex_colors_to_highlight = (
-        [lipizone_data.lipizone_to_color[n] for n in selected_names if n in lipizone_data.lipizone_to_color]
-        if selected_names else None
-    )
-
-    # Annotations only for single-section view
-    overlay = (
-        black_aba_contours(data.get_aba_contours(slice_index))
-        if (annotations_checked and sections_mode == "one") else None
-    )
-
-    if sections_mode == "all":
-        image = figures.all_sections_lipizones_image(
-            hex_colors_to_highlight=hex_colors_to_highlight,
-            brain_id=brain_id
+    with long_callback_limiter:
+        logging.info("Entering page_3_plot_heatmap_long (with semaphore)")
+        # Selected lipizones → hex colors (None means “show all”)
+        selected_names = (all_selected_lipizones or {}).get("names", []) or []
+        hex_colors_to_highlight = (
+            [lipizone_data.lipizone_to_color[n] for n in selected_names if n in lipizone_data.lipizone_to_color]
+            if selected_names else None
         )
-        if brain_id in ("ReferenceAtlas", "SecondAtlas"):
-            image = np.pad(image, ((200, 200), (0, 0), (0, 0)), mode="edge")
-        else:
-            image = np.pad(image, ((800, 800), (0, 0), (0, 0)), mode="edge")
 
+        # Annotations only for single-section view
+        overlay = (
+            black_aba_contours(data.get_aba_contours(slice_index))
+            if (annotations_checked and sections_mode == "one") else None
+        )
+
+        if sections_mode == "all":
+            image = figures.all_sections_lipizones_image(
+                hex_colors_to_highlight=hex_colors_to_highlight,
+                brain_id=brain_id
+            )
+            if brain_id in ("ReferenceAtlas", "SecondAtlas"):
+                image = np.pad(image, ((200, 200), (0, 0), (0, 0)), mode="edge")
+            else:
+                image = np.pad(image, ((800, 800), (0, 0), (0, 0)), mode="edge")
+
+            return figures.build_lipid_heatmap_from_image(
+                image,
+                return_base64_string=False,
+                draw=False,
+                type_image="RGB",
+                return_go_image=False,
+            )
+
+        # sections_mode == "one"
+        hybrid_image = figures.one_section_lipizones_image(
+            slice_index=slice_index,
+            hex_colors_to_highlight=hex_colors_to_highlight,
+        )
         return figures.build_lipid_heatmap_from_image(
-            image,
+            hybrid_image,
             return_base64_string=False,
             draw=False,
             type_image="RGB",
             return_go_image=False,
+            overlay=overlay,
         )
-
-    # sections_mode == "one"
-    hybrid_image = figures.one_section_lipizones_image(
-        slice_index=slice_index,
-        hex_colors_to_highlight=hex_colors_to_highlight,
-    )
-    return figures.build_lipid_heatmap_from_image(
-        hybrid_image,
-        return_base64_string=False,
-        draw=False,
-        type_image="RGB",
-        return_go_image=False,
-        overlay=overlay,
-    )
-
-
 
 # Add callback to update badges
 @app.callback(

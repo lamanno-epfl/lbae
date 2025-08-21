@@ -67,7 +67,7 @@ def return_main_content():
             # --- ⬇️ ADD THIS HEARTBEAT SECTION ⬇️ ---
             dcc.Interval(
                 id='heartbeat-interval',
-                interval=15 * 1000, ###############################
+                interval=60 * 1000,
                 n_intervals=0
             ),
             html.Div(id='heartbeat-dummy-output', style={'display': 'none'}),

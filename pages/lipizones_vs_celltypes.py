@@ -1688,6 +1688,7 @@ def page_6_hover(hoverData, slice_index):
 
 
 from dash.long_callback import DiskcacheLongCallbackManager  # safe if unused
+from app import long_callback_limiter
 
 @app.long_callback(
     Output("page-6bis-graph-heatmap-mz-selection", "figure"),
@@ -1705,38 +1706,40 @@ def page_6bis_plot_graph_heatmap_mz_selection_long(
     all_selected_celltypes,
     annotations_checked,
 ):
-    # Overlay (annotations)
-    overlay = (
-        black_aba_contours(data.get_aba_contours(slice_index))
-        if annotations_checked else None
-    )
-
-    # Determine if anything is selected
-    has_lip = bool(all_selected_lipizones and all_selected_lipizones.get("names"))
-    has_cell = bool(all_selected_celltypes and all_selected_celltypes.get("names"))
-
-    if has_lip or has_cell:
-        image = figures.compute_image_lipizones_celltypes(
-            all_selected_lipizones or {"names": [], "indices": []},
-            all_selected_celltypes or {"names": [], "indices": []},
-            slice_index,
-        )
-    else:
-        # Default view: show everything (same as initial layout)
-        image = figures.compute_image_lipizones_celltypes(
-            {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []},
-            {"names": list(celltype_data.celltype_to_color.keys()), "indices": []},
-            slice_index,
+    with long_callback_limiter:
+        logging.info("Entering page_3_plot_heatmap_long (with semaphore)")
+        # Overlay (annotations)
+        overlay = (
+            black_aba_contours(data.get_aba_contours(slice_index))
+            if annotations_checked else None
         )
 
-    return figures.build_lipid_heatmap_from_image(
-        image,
-        return_base64_string=False,
-        draw=False,
-        type_image="RGB",
-        return_go_image=False,
-        overlay=overlay,
-    )
+        # Determine if anything is selected
+        has_lip = bool(all_selected_lipizones and all_selected_lipizones.get("names"))
+        has_cell = bool(all_selected_celltypes and all_selected_celltypes.get("names"))
+
+        if has_lip or has_cell:
+            image = figures.compute_image_lipizones_celltypes(
+                all_selected_lipizones or {"names": [], "indices": []},
+                all_selected_celltypes or {"names": [], "indices": []},
+                slice_index,
+            )
+        else:
+            # Default view: show everything (same as initial layout)
+            image = figures.compute_image_lipizones_celltypes(
+                {"names": list(lipizone_data.lipizone_to_color.keys()), "indices": []},
+                {"names": list(celltype_data.celltype_to_color.keys()), "indices": []},
+                slice_index,
+            )
+
+        return figures.build_lipid_heatmap_from_image(
+            image,
+            return_base64_string=False,
+            draw=False,
+            type_image="RGB",
+            return_go_image=False,
+            overlay=overlay,
+        )
 
 
 

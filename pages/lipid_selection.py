@@ -979,6 +979,7 @@ def page_2_hover(hoverData, slice_index):
 
 from dash.long_callback import DiskcacheLongCallbackManager
 from dash import no_update
+from app import long_callback_limiter
 
 @app.long_callback(
     Output("page-2-graph-heatmap-mz-selection", "figure"),
@@ -1005,53 +1006,54 @@ def page_2_plot_graph_heatmap_mz_selection_long(
     brain_id,
     annotations_checked,
 ):
-    """Compute the figure based on current state (no callback_context)."""
-    overlay = data.get_aba_contours(slice_index) if annotations_checked else None
+    with long_callback_limiter:
+        """Compute the figure based on current state (no callback_context)."""
+        overlay = data.get_aba_contours(slice_index) if annotations_checked else None
 
-    # Helper: index -> "Name Structure"
-    def idx_to_name(idx):
-        if idx is None or idx == -1:
-            return None
-        ann = data.get_annotations().iloc[idx]
-        # Reconstruct "name structure" the same way your original code does
-        name_parts = ann["name"].split("_")
-        struct_parts = ann["structure"].split("_")
-        parts = []
-        for i in range(len(name_parts)):
-            parts.append(name_parts[i] + " " + struct_parts[i])
-        return " ".join(parts)
+        # Helper: index -> "Name Structure"
+        def idx_to_name(idx):
+            if idx is None or idx == -1:
+                return None
+            ann = data.get_annotations().iloc[idx]
+            # Reconstruct "name structure" the same way your original code does
+            name_parts = ann["name"].split("_")
+            struct_parts = ann["structure"].split("_")
+            parts = []
+            for i in range(len(name_parts)):
+                parts.append(name_parts[i] + " " + struct_parts[i])
+            return " ".join(parts)
 
-    n1, n2, n3 = map(idx_to_name, [lipid_1_index, lipid_2_index, lipid_3_index])
-    active = [n for n in [n1, n2, n3] if n]
+        n1, n2, n3 = map(idx_to_name, [lipid_1_index, lipid_2_index, lipid_3_index])
+        active = [n for n in [n1, n2, n3] if n]
 
-    # All-sections mode: show only first lipid
-    if sections_mode == "all":
+        # All-sections mode: show only first lipid
+        if sections_mode == "all":
+            first = active[0] if active else "HexCer 42:2;O2"
+            image = grid_data.retrieve_grid_image(lipid=first, sample=brain_id)
+            fig = figures.build_lipid_heatmap_from_image(
+                image, return_base64_string=False, overlay=overlay
+            )
+            return fig, "Now displaying:"
+
+        # Single-section mode
+        if rgb_mode and len(active) > 1:
+            fig = figures.compute_rgb_image_per_lipid_selection(
+                slice_index,
+                ll_lipid_names=[n1, n2, n3],
+                cache_flask=cache_flask,
+                overlay=overlay,
+            )
+            return fig, "Now displaying:"
+
+        # Fallback: single-lipid colormap
         first = active[0] if active else "HexCer 42:2;O2"
-        image = grid_data.retrieve_grid_image(lipid=first, sample=brain_id)
+        image = figures.compute_image_per_lipid(
+            slice_index, RGB_format=False, lipid_name=first, cache_flask=cache_flask
+        )
         fig = figures.build_lipid_heatmap_from_image(
             image, return_base64_string=False, overlay=overlay
         )
         return fig, "Now displaying:"
-
-    # Single-section mode
-    if rgb_mode and len(active) > 1:
-        fig = figures.compute_rgb_image_per_lipid_selection(
-            slice_index,
-            ll_lipid_names=[n1, n2, n3],
-            cache_flask=cache_flask,
-            overlay=overlay,
-        )
-        return fig, "Now displaying:"
-
-    # Fallback: single-lipid colormap
-    first = active[0] if active else "HexCer 42:2;O2"
-    image = figures.compute_image_per_lipid(
-        slice_index, RGB_format=False, lipid_name=first, cache_flask=cache_flask
-    )
-    fig = figures.build_lipid_heatmap_from_image(
-        image, return_base64_string=False, overlay=overlay
-    )
-    return fig, "Now displaying:"
 
 
 

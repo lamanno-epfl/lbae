@@ -239,8 +239,10 @@ server = flask.Flask(__name__)
 server.secret_key = 'e54f725a15888eab4eb35f95ec35b59dfa1fef344328d03b'
 
 # --- Queuing System Configuration ---
-MAX_ACTIVE_USERS = 2 ############################
-INACTIVITY_TIMEOUT_SECONDS = 30  ############################
+MAX_ACTIVE_USERS = 25 
+INACTIVITY_TIMEOUT_SECONDS = 60
+QUEUE_TIMEOUT_SECONDS = 15 * 60 # (15 minutes)
+long_callback_limiter = threading.Semaphore(4) 
 
 # --- Connect to Redis ---
 # Assumes Redis is running on localhost:6379. decode_responses=True is important.
@@ -293,6 +295,7 @@ def check_user_queue():
         current_queue = redis_client.lrange('queued_users', 0, -1)
         if user_id not in current_queue:
             redis_client.rpush('queued_users', user_id)
+            redis_client.hset('queued_timestamps', user_id, time.time())
 
         # For now, just return a simple "waiting" message with a 503 "Service Unavailable" status code.
         try:
@@ -406,8 +409,6 @@ cleanup_thread.start()
 # }
 # slice_index = 0
 
-#################################################################################################### ????
-
 # Add the route to serve PDF files
 @app.server.route('/lipizone-id-cards-pdf/<lipizone_name>')
 def serve_pdf(lipizone_name):
@@ -448,7 +449,7 @@ __all__ = [
     'figures', 
     'program_figures',
     'peak_figures',
-    'cache_flask','long_callback_manager' #############################
+    'cache_flask','long_callback_manager' 
     # 'stream_figures',
     ]
 
@@ -457,12 +458,16 @@ __all__ = [
 # --------------------------------------------------------------------------------------------------
 # In app.py, REPLACE the entire manage_queue function with this one.
 
+# In app.py, REPLACE the entire manage_queue function with this one.
+
 def manage_queue():
     """
-    This function runs in a background thread to manage the user queue.
-    It demotes inactive users and promotes users from the queue.
+    Manages user queue:
+    1. Removes stale users from the queue.
+    2. Demotes inactive users.
+    3. Promotes waiting users to fill empty spots.
     """
-    logging.info("✅ Queue manager thread started.")
+    logging.info("✅ Upgraded Queue manager thread started (v2 with queue timeout).")
     while True:
         try:
             lock = redis_client.set('queue_manager_lock', '1', ex=60, nx=True)
@@ -470,11 +475,25 @@ def manage_queue():
                 time.sleep(15)
                 continue
 
-            # --- ⬇️ NEW: Find and demote inactive users ⬇️ ---
+            # --- 1. Purge stale users from the queue ---
+            queued_timestamps = redis_client.hgetall('queued_timestamps')
+            stale_queued_users = []
+            for user_id, ts_str in queued_timestamps.items():
+                if (time.time() - float(ts_str)) > QUEUE_TIMEOUT_SECONDS:
+                    stale_queued_users.append(user_id)
+            
+            if stale_queued_users:
+                logging.warning(f"JANITOR: Purging {len(stale_queued_users)} stale users from queue: {stale_queued_users}")
+                for user_id in stale_queued_users:
+                    redis_client.lrem('queued_users', 0, user_id)
+                    # We will add a set for efficiency later if needed. For now, this is fine.
+                    redis_client.hdel('queued_timestamps', user_id)
+            
+            # --- 2. Demote inactive users ---
             inactive_users = []
             active_users = redis_client.smembers('active_users')
-            user_activity = redis_client.hgetall('user_activity') 
-
+            user_activity = redis_client.hgetall('user_activity')
+            
             for user_id in active_users:
                 last_seen_str = user_activity.get(user_id)
                 if last_seen_str and (time.time() - float(last_seen_str)) > INACTIVITY_TIMEOUT_SECONDS:
@@ -485,10 +504,10 @@ def manage_queue():
                 for user_id in inactive_users:
                     redis_client.srem('active_users', user_id)
                     redis_client.hdel('user_activity', user_id)
-                    redis_client.rpush('queued_users', user_id) # Add to the end of the line
-            # --- ⬆️ End of new section ⬆️ ---
+                    redis_client.rpush('queued_users', user_id)
+                    redis_client.hset('queued_timestamps', user_id, time.time()) # Set their queue entry time
 
-            # --- Promote users from the queue if there are spots (this part is the same) ---
+            # --- 3. Promote users from the queue ---
             current_active_count = redis_client.scard('active_users')
             if current_active_count < MAX_ACTIVE_USERS:
                 slots_to_fill = MAX_ACTIVE_USERS - current_active_count
@@ -496,6 +515,7 @@ def manage_queue():
                     next_user = redis_client.lpop('queued_users')
                     if next_user:
                         logging.info(f"JANITOR: Promoting user {next_user} from queue.")
+                        redis_client.hdel('queued_timestamps', next_user) # Clean up queue timestamp
                         redis_client.sadd('active_users', next_user)
                         redis_client.hset('user_activity', next_user, time.time())
                     else:
@@ -505,7 +525,7 @@ def manage_queue():
         finally:
             if lock:
                 redis_client.delete('queue_manager_lock')
-
+        
         time.sleep(10)
 
 

@@ -668,7 +668,7 @@ def page_4_add_toast_region_selection(
 
     return dash.no_update
 
-
+from app import long_callback_limiter
 # Function to plot page-4-graph-volume when its state get updated
 @app.long_callback(
     output=Output("page-4-graph-volume", "figure"),
@@ -701,32 +701,34 @@ def page_4_plot_graph_volume(
     brain,
 ):
     """Plot the 3D volume for the selected lipid within selected structures."""
-    if not is_open_modal:
-        logging.info("Modal closed, deleting graph")
-        return {}
+    with long_callback_limiter:
+        logging.info("Entering page_3_plot_heatmap_long (with semaphore)")
+        if not is_open_modal:
+            logging.info("Modal closed, deleting graph")
+            return {}
 
-    # Build the ID set for selected regions (include descendants)
-    set_id = set([])
-    for acronym in l_selected_regions:
-        set_id = set_id.union(atlas.dic_acronym_children_id[acronym])
-    if len(set_id) == 0:
-        set_id = None  # whole brain
+        # Build the ID set for selected regions (include descendants)
+        set_id = set([])
+        for acronym in l_selected_regions:
+            set_id = set_id.union(atlas.dic_acronym_children_id[acronym])
+        if len(set_id) == 0:
+            set_id = None  # whole brain
 
-    decrease_resolution_factor = 2
-    logging.info(
-        "For the computation of 3D volume, decrease_resolution_factor is "
-        + str(decrease_resolution_factor)
-    )
+        decrease_resolution_factor = 2
+        logging.info(
+            "For the computation of 3D volume, decrease_resolution_factor is "
+            + str(decrease_resolution_factor)
+        )
 
-    return figures.compute_3D_volume_figure(
-        lipid_name=name_lipid_1,
-        annotation_path=None,
-        set_id_regions=set_id,
-        downsample_factor=decrease_resolution_factor,
-        opacity=0.1,
-        surface_count=40,
-        colorscale="Inferno",
-    )
+        return figures.compute_3D_volume_figure(
+            lipid_name=name_lipid_1,
+            annotation_path=None,
+            set_id_regions=set_id,
+            downsample_factor=decrease_resolution_factor,
+            opacity=0.1,
+            surface_count=40,
+            colorscale="Inferno",
+        )
 
 
 @app.callback(

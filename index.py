@@ -63,6 +63,16 @@ def return_main_content():
             dcc.Location(id="url", refresh=True),
             # Record session id, useful to trigger callbacks at initialization
             dcc.Store(id="session-id", data=session_id),
+
+            # --- ⬇️ ADD THIS HEARTBEAT SECTION ⬇️ ---
+            dcc.Interval(
+                id='heartbeat-interval',
+                interval=15 * 1000, ###############################
+                n_intervals=0
+            ),
+            html.Div(id='heartbeat-dummy-output', style={'display': 'none'}),
+            # --- ⬆️ END OF HEARTBEAT SECTION ⬆️ ---
+
             # Record the slider index
             dcc.Store(id="main-slider", data=3),
             
@@ -788,3 +798,26 @@ def update_slider_visibility_modes(pathname, hide2, hide6):
 
     # 4) On any remaining page, hide it:
     return "d-none"
+
+# Add this at the end of index.py, for example
+
+app.clientside_callback(
+    """
+    function(n_intervals) {
+        if (n_intervals > 0) {
+            fetch('/heartbeat', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'inactive') {
+                    // The server thinks we timed out. Force a reload.
+                    // The bouncer will then either let us back in or re-queue us.
+                    window.location.reload();
+                }
+            });
+        }
+        return dash_clientside.no_update;
+    }
+    """,
+    Output('heartbeat-dummy-output', 'children'),
+    Input('heartbeat-interval', 'n_intervals')
+)

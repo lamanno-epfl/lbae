@@ -20,6 +20,12 @@ import logging
 from uuid import uuid4
 import diskcache
 import os
+import redis
+from flask import session, request, render_template_string, jsonify
+import time
+import threading
+import atexit
+import os
 
 # LBAE modules
 from modules.tools.misc import logmem
@@ -226,6 +232,75 @@ logging.info("Memory use after main functions have been compiled" + logmem())
 # Launch server
 server = flask.Flask(__name__)
 
+# --- ⬇️ ADD THIS ENTIRE BLOCK ⬇️ ---
+
+# Set a secret key for session management.
+# For production, it's best to set this from an environment variable.
+server.secret_key = 'e54f725a15888eab4eb35f95ec35b59dfa1fef344328d03b'
+
+# --- Queuing System Configuration ---
+MAX_ACTIVE_USERS = 2 ############################
+INACTIVITY_TIMEOUT_SECONDS = 30  ############################
+
+# --- Connect to Redis ---
+# Assumes Redis is running on localhost:6379. decode_responses=True is important.
+redis_client = redis.Redis(decode_responses=True)
+logging.info("Connected to Redis for session management.")
+
+# --- The "Gatekeeper" Logic (Foundation) ---
+# In app.py, replace your @server.before_request function with this one:
+
+@server.before_request
+def check_user_queue():
+    # Allow requests for assets (CSS, JS) and internal Dash callbacks to pass through unchecked.
+    # This is CRITICAL for the app to function.
+    if request.path.startswith('/assets') or request.path.startswith('/_dash-') or request.path in ['/check-status', '/heartbeat']:
+        return
+
+    # Assign a unique session ID if one doesn't exist
+    if 'user_id' not in session:
+        session['user_id'] = str(uuid4())
+        logging.info(f"New user connected. Assigned ID: {session['user_id']}")
+
+    user_id = session['user_id']
+    is_active = redis_client.sismember('active_users', user_id)
+
+    # --- HAPPY PATH: User is already active ---
+    if is_active:
+        # Update their activity timestamp and let them through.
+        redis_client.hset('user_activity', user_id, time.time())
+        return  # Let the request proceed to the Dash app
+
+    # --- NEW USER PATH: User is not yet active ---
+    active_count = redis_client.scard('active_users')
+
+    # Check if a spot is available
+    if active_count < MAX_ACTIVE_USERS:
+        # A spot is free! Make this user active.
+        logging.info(f"User {user_id} granted access. Active count: {active_count + 1}/{MAX_ACTIVE_USERS}")
+        redis_client.sadd('active_users', user_id)
+        redis_client.hset('user_activity', user_id, time.time())
+        # Just in case they were in the queue from a previous timed-out session
+        redis_client.lrem('queued_users', 0, user_id)
+        return  # Let the request proceed to the Dash app
+
+    # --- APP IS FULL PATH ---
+    else:
+        logging.info(f"App is full. User {user_id} is being sent to the queue.")
+        
+        # Add to the end of the queue only if they aren't already there
+        # This check prevents duplicate entries if the user refreshes the waiting page
+        current_queue = redis_client.lrange('queued_users', 0, -1)
+        if user_id not in current_queue:
+            redis_client.rpush('queued_users', user_id)
+
+        # For now, just return a simple "waiting" message with a 503 "Service Unavailable" status code.
+        try:
+            return render_template_string(open('queue.html').read()), 503
+        except FileNotFoundError:
+            return "<h1>Waiting Room</h1><p>Please wait...</p>", 503 # Fallback if file is missing
+# --- ⬆️ END OF NEW BLOCK ⬆️ ---
+
 # Prepare long callback support
 launch_uid = uuid4()
 cache_long_callback = diskcache.Cache(cache_dir)
@@ -340,6 +415,25 @@ def serve_pdf(lipizone_name):
     pdf_filename = f"lipizone_ID_card_{lipizone_name}.pdf"
     return flask.send_from_directory(ID_CARDS_PATH, pdf_filename)
 
+
+@server.route('/check-status')
+def check_status():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'error', 'message': 'No session'})
+
+    if redis_client.sismember('active_users', user_id):
+        return jsonify({'status': 'active'})
+    else:
+        try:
+            queue = redis_client.lrange('queued_users', 0, -1)
+            position = queue.index(user_id) + 1
+            return jsonify({'status': 'queued', 'position': position, 'total': len(queue)})
+        except ValueError:
+            # Not in the queue and not active. This can happen if they timed out.
+            # Tell the client to reload; the gatekeeper will re-evaluate them.
+            return jsonify({'status': 'reload'})
+
 # Make grid_data available for import
 __all__ = [
     'data', 
@@ -357,3 +451,84 @@ __all__ = [
     'cache_flask','long_callback_manager' #############################
     # 'stream_figures',
     ]
+
+# --------------------------------------------------------------------------------------------------
+# --- Janitor Function (Queue Management) ---
+# --------------------------------------------------------------------------------------------------
+# In app.py, REPLACE the entire manage_queue function with this one.
+
+def manage_queue():
+    """
+    This function runs in a background thread to manage the user queue.
+    It demotes inactive users and promotes users from the queue.
+    """
+    logging.info("✅ Queue manager thread started.")
+    while True:
+        try:
+            lock = redis_client.set('queue_manager_lock', '1', ex=60, nx=True)
+            if not lock:
+                time.sleep(15)
+                continue
+
+            # --- ⬇️ NEW: Find and demote inactive users ⬇️ ---
+            inactive_users = []
+            active_users = redis_client.smembers('active_users')
+            user_activity = redis_client.hgetall('user_activity') 
+
+            for user_id in active_users:
+                last_seen_str = user_activity.get(user_id)
+                if last_seen_str and (time.time() - float(last_seen_str)) > INACTIVITY_TIMEOUT_SECONDS:
+                    inactive_users.append(user_id)
+
+            if inactive_users:
+                logging.info(f"JANITOR: Demoting {len(inactive_users)} inactive users: {inactive_users}")
+                for user_id in inactive_users:
+                    redis_client.srem('active_users', user_id)
+                    redis_client.hdel('user_activity', user_id)
+                    redis_client.rpush('queued_users', user_id) # Add to the end of the line
+            # --- ⬆️ End of new section ⬆️ ---
+
+            # --- Promote users from the queue if there are spots (this part is the same) ---
+            current_active_count = redis_client.scard('active_users')
+            if current_active_count < MAX_ACTIVE_USERS:
+                slots_to_fill = MAX_ACTIVE_USERS - current_active_count
+                for _ in range(slots_to_fill):
+                    next_user = redis_client.lpop('queued_users')
+                    if next_user:
+                        logging.info(f"JANITOR: Promoting user {next_user} from queue.")
+                        redis_client.sadd('active_users', next_user)
+                        redis_client.hset('user_activity', next_user, time.time())
+                    else:
+                        break
+        except Exception as e:
+            logging.error(f"Error in queue manager thread: {e}", exc_info=True)
+        finally:
+            if lock:
+                redis_client.delete('queue_manager_lock')
+
+        time.sleep(10)
+
+
+# --- Start the background thread ---
+# This check prevents the thread from starting twice in debug mode. It's safe for gunicorn.
+if not os.environ.get("WERKZEUG_RUN_MAIN"):
+    queue_manager_thread = threading.Thread(target=manage_queue, daemon=True)
+    queue_manager_thread.start()
+
+    # A cleanup function to ensure the lock is cleared when the app shuts down cleanly.
+    @atexit.register
+    def clear_redis_lock():
+        logging.info("Application shutting down, clearing queue manager lock.")
+        redis_client.delete('queue_manager_lock')
+
+
+@server.route('/heartbeat', methods=['POST'])
+def heartbeat():
+    user_id = session.get('user_id')
+    if user_id and redis_client.sismember('active_users', user_id):
+        redis_client.hset('user_activity', user_id, time.time())
+        return jsonify({'status': 'ok'})
+
+    # If a user sends a heartbeat but isn't active (e.g., they timed out),
+    # tell them their session is inactive so their page reloads.
+    return jsonify({'status': 'inactive'}), 200

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-g">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You are in a queue</title>
+    <style>
+        body {
+            background-color: #1d1c1f;
+            color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            padding: 40px;
+            border-radius: 8px;
+            background-color: #343a40;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #00bfff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Receiving Exceptional Usage</h1>
+        <div class="spinner"></div>
+        <p>The application is currently at full capacity. Please wait, this page will automatically load when a spot becomes available.</p>
+        <p>Your position in the queue: <b id="queue-pos">...</b> of <b id="queue-total">...</b></p>
+    </div>
+
+    <script>
+        // This script will periodically ask the server "is it my turn yet?"
+        async function checkStatus() {
+            try {
+                const response = await fetch('/check-status');
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                if (data.status === 'active') {
+                    // It's our turn! Reload the page to get the real app.
+                    window.location.reload();
+                } else if (data.status === 'queued') {
+                    // Still waiting, update our position.
+                    document.getElementById('queue-pos').innerText = data.position;
+                    document.getElementById('queue-total').innerText = data.total;
+                } else if (data.status === 'reload') {
+                    // The server can't find us, maybe we timed out. Let's reload to re-queue.
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error("Error checking status:", error);
+            }
+        }
+        
+        // Check immediately on page load, and then every 5 seconds.
+        checkStatus(); 
+        setInterval(checkStatus, 5000);
+    </script>
+</body>
+</html>

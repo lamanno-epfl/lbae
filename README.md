@@ -14,7 +14,7 @@ Using **matrix-assisted laser desorption/ionization mass spectrometry imaging (M
 Through this, we identified **539 spatial clusters** defined by lipidomic similarity—territories we termed **lipizones**. These lipizones were then characterized in terms of anatomy, cell type composition, subcellular organization, connectivity, and biochemical content, revealing their biological organization and potential functional roles. We also compared male and female brains, and extended our study to **pregnant mice** to capture physiological lipidomic variation.
 ![Lipizones](assets/lipizones.png)
 
-You can read the full manuscript on bioRxiv: `XXX`.
+You can read the full manuscript on bioRxiv: https://www.biorxiv.org/cgi/content/short/2025.10.13.682018v1.
 
 ### Explore the Atlas
 
@@ -59,5 +59,5 @@ _
 
 ## Citing
 
-If this app has been useful to your research work, you can cite our paper: `XXX`.
+If this app has been useful to your research work, you can cite our paper: https://www.biorxiv.org/cgi/content/short/2025.10.13.682018v1.
 
